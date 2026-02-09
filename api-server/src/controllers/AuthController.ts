@@ -36,7 +36,7 @@ export class AuthController {
 
       // Create token with simplified options
       const token = jwt.sign(
-        { userId: user.id, username: user.username },
+        { userId: user.id, username: user.username, tokenVersion: user.tokenVersion ?? 0 },
         jwtSecret,
         { expiresIn: '1h' } // Simplified to fixed expiration for now
       );
@@ -85,6 +85,7 @@ export class AuthController {
       const user = new User();
       user.username = username;
       user.email = email;
+      user.tokenVersion = 0;
       await user.setPassword(password);
 
       await this.userRepository.save(user);
@@ -132,6 +133,9 @@ export class AuthController {
         res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
+
+      user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+      await this.userRepository.save(user);
 
       // Generate JWT
       const token = this.generateAuthToken(user);
@@ -181,6 +185,47 @@ export class AuthController {
         console.error('An unknown error occurred while fetching profile');
       }
       res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async validateToken(
+    req: Request,
+    res: Response<{ user: { id: number; username: string; email: string } } | { error: string }>
+  ): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'No token provided' });
+        return;
+      }
+
+      const token = authHeader.split(' ')[1];
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        res.status(500).json({ error: 'JWT_SECRET is not defined in environment variables' });
+        return;
+      }
+
+      const decoded = jwt.verify(token, jwtSecret) as { userId: number; tokenVersion: number };
+      const user = await this.userRepository.findOne({ where: { id: decoded.userId } });
+      if (!user) {
+        res.status(401).json({ error: 'User not found' });
+        return;
+      }
+
+      if ((user.tokenVersion ?? 0) !== (decoded.tokenVersion ?? 0)) {
+        res.status(401).json({ error: 'Token invalidated' });
+        return;
+      }
+
+      res.json({ user: { id: user.id, username: user.username, email: user.email } });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Validate token error:', error.message);
+      } else {
+        console.error('An unknown error occurred during token validation');
+      }
+      res.status(401).json({ error: 'Invalid or expired token' });
     }
   }
 }

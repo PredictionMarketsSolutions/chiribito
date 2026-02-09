@@ -15,7 +15,7 @@ const dbConfig: DataSourceOptions = {
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
   entities: [User],
-  migrations: [],
+  migrations: ["src/migrations/*.ts"],
   subscribers: [],
 };
 

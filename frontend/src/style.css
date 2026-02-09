@@ -130,6 +130,12 @@ button {
   text-transform: uppercase;
 }
 
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
 button.accent {
   background: linear-gradient(120deg, #0f4d3d, #1c6b4e);
 }
@@ -305,7 +311,15 @@ button.accent {
 }
 
 .seat.turn {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.55),
+    0 0 18px rgba(255, 255, 255, 0.35);
+  animation: turn-pulse 1.2s ease-in-out infinite;
+}
+
+.seat.turn .seat-pill.turn {
+  opacity: 1;
+  animation: turn-chip-blink 0.9s steps(2, end) infinite;
 }
 
 .seat.winner {
@@ -344,7 +358,54 @@ button.accent {
 }
 
 .seat.you {
-  border-color: rgba(216, 181, 106, 0.8);
+  border-color: rgba(216, 181, 106, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(216, 181, 106, 0.55),
+    0 12px 22px rgba(6, 12, 12, 0.5);
+}
+
+.seat.you::before {
+  content: "Tu puesto";
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(216, 181, 106, 0.95);
+  color: #0e1114;
+}
+
+@keyframes turn-pulse {
+  0% {
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.55),
+      0 0 10px rgba(255, 255, 255, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.85),
+      0 0 26px rgba(255, 255, 255, 0.55);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.55),
+      0 0 10px rgba(255, 255, 255, 0.25);
+  }
+}
+
+@keyframes turn-chip-blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .seat.folded {

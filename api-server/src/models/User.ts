@@ -15,6 +15,9 @@ export class User {
   @Column({ name: 'password_hash' })
   passwordHash!: string;
 
+  @Column({ name: 'token_version', default: 0 })
+  tokenVersion!: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

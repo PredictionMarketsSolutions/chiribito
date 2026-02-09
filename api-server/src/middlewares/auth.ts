@@ -20,7 +20,8 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { 
       userId: number; 
-      username: string 
+      username: string;
+      tokenVersion: number;
     };
 
     // Check if user still exists
@@ -29,6 +30,10 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
 
     if (!user) {
       return res.status(401).json({ error: 'User no longer exists' });
+    }
+
+    if ((user.tokenVersion ?? 0) !== (decoded.tokenVersion ?? 0)) {
+      return res.status(401).json({ error: 'Token invalidated' });
     }
 
     // Add user to request

@@ -24,6 +24,12 @@ const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
 const playersList = document.querySelector<HTMLUListElement>("#players")!;
 const apiUrlEl = document.querySelector<HTMLSpanElement>("#api-url")!;
 const wsUrlEl = document.querySelector<HTMLSpanElement>("#ws-url")!;
+const startGameButton = document.querySelector<HTMLButtonElement>("#start-game")!;
+const checkButton = document.querySelector<HTMLButtonElement>("#check")!;
+const callButton = document.querySelector<HTMLButtonElement>("#call")!;
+const foldButton = document.querySelector<HTMLButtonElement>("#fold")!;
+const betButton = document.querySelector<HTMLButtonElement>("#bet")!;
+const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
 
 apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
@@ -59,6 +65,76 @@ let room: Room | null = null;
 let currentSessionId: string | null = null;
 let lastWinningHand = "-";
 let lastWinners: string[] = [];
+let tokenMonitorId: number | null = null;
+let tokenInvalidNotified = false;
+
+function resetRoomUi(message?: string) {
+  room = null;
+  currentSessionId = null;
+  lastWinningHand = "-";
+  lastWinners = [];
+  roomStatus.textContent = message || "not joined";
+  phaseStatus.textContent = "waiting";
+  turnStatus.textContent = "-";
+  potStatus.textContent = "0";
+  betStatus.textContent = "0";
+  communityStatus.textContent = "-";
+  handStatus.textContent = "-";
+  winningHandStatus.textContent = "-";
+  winnersStatus.textContent = "-";
+  potChip.textContent = "0";
+  phaseChip.textContent = "waiting";
+  turnChip.textContent = "-";
+  winningHandChip.textContent = "-";
+  renderCardRow(communityCardsEl, [], 5);
+  renderCardRow(handCardsEl, [], 2);
+  playersList.innerHTML = "";
+  renderSeats({ users: new Map(), dealerIndex: -1, currentTurn: "" });
+  updateActionButtons(null);
+}
+
+function clearAuthToken() {
+  token = null;
+  tokenStatus.textContent = "none";
+  stopTokenMonitor();
+  tokenInvalidNotified = false;
+}
+
+function stopTokenMonitor() {
+  if (tokenMonitorId !== null) {
+    window.clearInterval(tokenMonitorId);
+    tokenMonitorId = null;
+  }
+}
+
+function handleTokenInvalidated() {
+  if (tokenInvalidNotified) return;
+  tokenInvalidNotified = true;
+  clearAuthToken();
+  resetRoomUi("logged out");
+  alert("Se ha iniciado sesion en otro dispositivo. Por favor, vuelve a iniciar sesion.");
+}
+
+function startTokenMonitor() {
+  stopTokenMonitor();
+  if (!token) return;
+  tokenMonitorId = window.setInterval(async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/auth/validate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        handleTokenInvalidated();
+      }
+    } catch {
+      // Ignore transient network errors
+    }
+  }, 15000);
+}
 
 function preloadCardImages() {
   const suits = ["O", "C", "E", "B"];
@@ -220,6 +296,58 @@ function renderState(state: any) {
   }
   renderSeats(state);
   renderPlayers(state);
+  updateActionButtons(state);
+}
+
+function updateActionButtons(state: any) {
+  if (!state || !currentSessionId) {
+    setActionButtonsEnabled(false, false, false, false, false, false);
+    return;
+  }
+
+  const entries = state.users instanceof Map
+    ? Array.from(state.users.values())
+    : Array.from(state.users.values());
+  const me = entries.find((player: any) => player.sessionId === currentSessionId);
+  const isMyTurn = Boolean(me) && state.currentTurn === currentSessionId;
+  const isActive = Boolean(me) && !me.isFolded && state.roundStarted;
+  const canAct = isMyTurn && isActive;
+  const currentBet = Number(state.currentBet ?? 0);
+  const myBet = Number(me?.currentBet ?? 0);
+  const myChips = Number(me?.chips ?? 0);
+
+  const canCheck = canAct && currentBet === myBet;
+  const canCall = canAct && currentBet > myBet && myChips > 0;
+  const canFold = canAct;
+  const canBet = canAct && currentBet === 0 && myChips > 0;
+  const canRaise = canAct && currentBet > 0 && myChips > 0;
+
+  const canStart = Boolean(currentSessionId) && !state.roundStarted;
+
+  setActionButtonsEnabled(
+    canStart,
+    canCheck,
+    canCall,
+    canFold,
+    canBet,
+    canRaise
+  );
+}
+
+function setActionButtonsEnabled(
+  canStart: boolean,
+  canCheck: boolean,
+  canCall: boolean,
+  canFold: boolean,
+  canBet: boolean,
+  canRaise: boolean
+) {
+  startGameButton.disabled = !canStart;
+  checkButton.disabled = !canCheck;
+  callButton.disabled = !canCall;
+  foldButton.disabled = !canFold;
+  betButton.disabled = !canBet;
+  raiseButton.disabled = !canRaise;
 }
 
 async function register() {
@@ -228,6 +356,8 @@ async function register() {
   const data = await request("/api/auth/register", { username, email, password });
   token = data.token;
   tokenStatus.textContent = token ? "set" : "none";
+  tokenInvalidNotified = false;
+  startTokenMonitor();
   log("Registered and token received.");
 }
 
@@ -237,10 +367,12 @@ async function login() {
   const data = await request("/api/auth/login", { email, password });
   token = data.token;
   tokenStatus.textContent = token ? "set" : "none";
+  tokenInvalidNotified = false;
+  startTokenMonitor();
   log("Logged in and token received.");
 }
 
-async function joinRoom() {
+async function joinRoom(forceReplace = false) {
   if (!token) {
     log("No token. Login or register first.");
     return;
@@ -252,11 +384,29 @@ async function joinRoom() {
   const client = new Client(WS_URL);
   (client as any).auth = { token };
 
-  room = await client.joinOrCreate("my_room", {
-    token,
-    auth: { token },
-    name: username
-  });
+  try {
+    room = await client.joinOrCreate("my_room", {
+      token,
+      auth: { token },
+      name: username,
+      forceReplace
+    });
+  } catch (err: any) {
+    const message = err?.message || String(err);
+    if (message.includes("SESSION_EXISTS")) {
+      const shouldReplace = window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?");
+      if (shouldReplace) {
+        await joinRoom(true);
+      }
+      return;
+    }
+    if (message.includes("INVALID_TOKEN")) {
+      handleTokenInvalidated();
+      return;
+    }
+    log(`Join error: ${message}`);
+    return;
+  }
 
   currentSessionId = room.sessionId;
   lastWinningHand = "-";
@@ -267,6 +417,16 @@ async function joinRoom() {
   preloadCardImages();
   roomStatus.textContent = room.id || "joined";
   log("Joined room.");
+
+  room.onLeave((code) => {
+    if (code === 4001) {
+      alert("Tu sesion fue reemplazada por otro ingreso.");
+      clearAuthToken();
+      resetRoomUi("replaced");
+      return;
+    }
+    resetRoomUi("left");
+  });
 
   room.onMessage("joined", (payload) => {
     log(`Joined payload: ${JSON.stringify(payload)}`);

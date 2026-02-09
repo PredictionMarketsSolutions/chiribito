@@ -19,6 +19,7 @@ declare global {
 interface JwtPayload {
   userId: number;
   username: string;
+  tokenVersion: number;
 }
 
 export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -43,11 +44,16 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
     const userRepository = AppDataSource.getRepository(User);
     const user = await userRepository.findOne({ 
       where: { id: decoded.userId },
-      select: ['id', 'username', 'email']
+      select: ['id', 'username', 'email', 'tokenVersion']
     });
     
     if (!user) {
       res.status(401).json({ error: 'User not found' });
+      return;
+    }
+
+    if ((user.tokenVersion ?? 0) !== (decoded.tokenVersion ?? 0)) {
+      res.status(401).json({ error: 'Token invalidated' });
       return;
     }
 

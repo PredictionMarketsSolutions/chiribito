@@ -53,6 +53,7 @@ const userController = new UserController();
 // Auth routes
 app.post('/api/auth/register', (req, res) => authController.register(req, res));
 app.post('/api/auth/login', (req, res) => authController.login(req, res));
+app.post('/api/auth/validate', (req, res) => authController.validateToken(req, res));
 
 // Protected routes
 app.get('/api/users/me', authenticateJWT, async (req, res, next) => {
