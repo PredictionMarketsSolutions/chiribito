@@ -53,8 +53,8 @@ export function proceedToNextPhase(room: GameRoom, helpers: GameHelpers) {
   room.currentPlayerIndex = getFirstActivePlayerIndex(room);
   
   if (room.currentPlayerIndex === -1) {
-    // Shouldn't happen, but just in case
-    helpers.endRound([]);
+    // No active players (all-in or folded) -> auto-advance
+    helpers.proceedToNextPhase();
     return;
   }
   
@@ -64,9 +64,43 @@ export function proceedToNextPhase(room: GameRoom, helpers: GameHelpers) {
 }
 
 export function determineWinners(room: GameRoom): string[] {
-  // This is a simplified version - you'll want to implement proper hand evaluation
-  // For now, just return players who haven't folded
-  return room.playersInHand.filter(id => !room.state.users.get(id)!.isFolded);
+  const rankValues: Record<string, number> = {
+    "8": 8,
+    "9": 9,
+    "10": 10,
+    "J": 11,
+    "Q": 12,
+    "K": 13,
+    "A": 14
+  };
+
+  const community = room.state.communityCards.toArray();
+  let bestRank = -1;
+  let winners: string[] = [];
+
+  room.playersInHand.forEach(id => {
+    const player = room.state.users.get(id);
+    if (!player || player.isFolded) return;
+
+    const cards = [...player.hand.toArray(), ...community];
+    const maxRank = cards.reduce((max, card) => {
+      const rank = card.startsWith("10") ? "10" : card[0];
+      const value = rankValues[rank] ?? 0;
+      return Math.max(max, value);
+    }, 0);
+
+    if (maxRank > bestRank) {
+      bestRank = maxRank;
+      winners = [id];
+      return;
+    }
+
+    if (maxRank === bestRank) {
+      winners.push(id);
+    }
+  });
+
+  return winners;
 }
 
 export function endRound(room: GameRoom, helpers: GameHelpers, winners: string[]) {

@@ -19,5 +19,7 @@ export function getActivePlayerIds(room: GameRoom) {
 }
 
 export function getFirstActivePlayerIndex(room: GameRoom) {
-  return room.playersInHand.findIndex(id => !room.state.users.get(id)!.isFolded);
+  return room.playersInHand.findIndex(id =>
+    !room.state.users.get(id)!.isFolded && !room.playersAllIn.has(id)
+  );
 }

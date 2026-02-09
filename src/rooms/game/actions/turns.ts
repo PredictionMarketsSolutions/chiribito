@@ -14,6 +14,11 @@ export function endTurn(room: GameRoom, helpers: GameHelpers) {
   
   const allActed = activePlayers.every(id => room.playersActedThisRound.has(id));
   
+  if (activePlayers.length === 0) {
+    helpers.proceedToNextPhase();
+    return;
+  }
+
   if (allActed && activePlayers.length > 0) {
     helpers.proceedToNextPhase();
     return;
@@ -25,7 +30,7 @@ export function endTurn(room: GameRoom, helpers: GameHelpers) {
     const nextPlayerId = room.playersInHand[room.currentPlayerIndex];
     const nextPlayer = room.state.users.get(nextPlayerId);
     
-    if (!nextPlayer || nextPlayer.isFolded) continue;
+    if (!nextPlayer || nextPlayer.isFolded || room.playersAllIn.has(nextPlayerId)) continue;
     
     setCurrentTurn(room, nextPlayerId);
     helpers.startTurnTimer();
