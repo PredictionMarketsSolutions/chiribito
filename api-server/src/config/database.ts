@@ -17,7 +17,11 @@ const dbConfig: DataSourceOptions = {
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
   entities: [User],
-  migrations: ["src/migrations/*.ts"],
+  migrations: [
+    process.env.NODE_ENV === 'production'
+      ? "dist/migrations/*.js"
+      : "src/migrations/*.ts"
+  ],
   subscribers: [],
   ssl: sslEnabled ? { rejectUnauthorized: false } : false,
 };
