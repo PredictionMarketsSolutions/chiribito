@@ -71,12 +71,12 @@ export class GameActions implements GameHelpers {
     nextPhase(this.room, this);
   }
 
-  determineWinners(): string[] {
+  determineWinners(): { winners: string[]; winningHand: string } {
     return determineWinnersImpl(this.room);
   }
 
-  endRound(winners: string[]) {
-    endRoundImpl(this.room, this, winners);
+  endRound(winners: string[], winningHand?: string) {
+    endRoundImpl(this.room, this, winners, winningHand);
   }
 
   startTurnTimer() {

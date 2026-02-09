@@ -45,7 +45,8 @@ export function proceedToNextPhase(room: GameRoom, helpers: GameHelpers) {
       
     case "river":
       // Showdown
-      helpers.endRound(helpers.determineWinners());
+      const result = helpers.determineWinners();
+      helpers.endRound(result.winners, result.winningHand);
       return;
   }
   
@@ -63,7 +64,7 @@ export function proceedToNextPhase(room: GameRoom, helpers: GameHelpers) {
   helpers.startTurnTimer();
 }
 
-export function determineWinners(room: GameRoom): string[] {
+export function determineWinners(room: GameRoom): { winners: string[]; winningHand: string } {
   const rankOrder: Record<string, number> = {
     "8": 1,
     "9": 2,
@@ -82,6 +83,7 @@ export function determineWinners(room: GameRoom): string[] {
   const communityCombos = getCommunityCombos(community);
   let winners: string[] = [];
   let bestScore: HandScore | null = null;
+  let bestName = "Sin ganador";
 
   room.playersInHand.forEach(id => {
     const player = room.state.users.get(id);
@@ -105,6 +107,7 @@ export function determineWinners(room: GameRoom): string[] {
 
     if (!bestScore || compareHands(playerBest, bestScore) > 0) {
       bestScore = playerBest;
+      bestName = getHandName(playerBest.category);
       winners = [id];
       return;
     }
@@ -114,7 +117,32 @@ export function determineWinners(room: GameRoom): string[] {
     }
   });
 
-  return winners;
+  return { winners, winningHand: bestName };
+}
+
+function getHandName(category: number) {
+  switch (category) {
+    case 9:
+      return "Perla";
+    case 8:
+      return "Escalera de color";
+    case 7:
+      return "Poker";
+    case 6:
+      return "Color";
+    case 5:
+      return "Full";
+    case 4:
+      return "Escalera";
+    case 3:
+      return "Trio";
+    case 2:
+      return "Doble pareja";
+    case 1:
+      return "Pareja";
+    default:
+      return "Carta alta";
+  }
 }
 
 function getCommunityCombos(community: string[]) {
@@ -272,12 +300,12 @@ function compareHands(a: { category: number; tiebreaker: number[] }, b: { catego
   return 0;
 }
 
-export function endRound(room: GameRoom, helpers: GameHelpers, winners: string[]) {
+export function endRound(room: GameRoom, helpers: GameHelpers, winners: string[], winningHand?: string) {
   if (room.turnTimeout) clearTimeout(room.turnTimeout);
   const winnerNames = winners
     .map(id => room.state.users.get(id)?.name ?? id)
     .join(", ");
-  console.log(`[ROUND] Ended. Winners: ${winnerNames || "none"}`);
+  console.log(`[ROUND] Ended. Winners: ${winnerNames || "none"} | Hand: ${winningHand ?? "n/a"}`);
   
   // Calculate and distribute winnings
   const winnersList = winners.map(id => ({
@@ -295,6 +323,7 @@ export function endRound(room: GameRoom, helpers: GameHelpers, winners: string[]
   broadcastRoundEnded(room, {
     winners: winnersList,
     communityCards: room.state.communityCards.toArray(),
+    winningHand: winningHand ?? "",
     playerHands: Object.fromEntries(
       room.playersInHand
         .filter(id => !room.state.users.get(id)!.isFolded)

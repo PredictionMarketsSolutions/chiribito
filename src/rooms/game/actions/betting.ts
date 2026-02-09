@@ -132,7 +132,7 @@ export function handleFold(room: GameRoom, helpers: GameHelpers, client: Client)
   
   // If only one player remains, they win
   if (room.playersInHand.length === 1) {
-    helpers.endRound([room.playersInHand[0]]);
+    helpers.endRound([room.playersInHand[0]], "Gana por fold");
     return;
   }
   

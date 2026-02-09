@@ -8,8 +8,8 @@ export interface GameHelpers {
   startBettingRound(): void;
   endTurn(): void;
   proceedToNextPhase(): void;
-  determineWinners(): string[];
-  endRound(winners: string[]): void;
+  determineWinners(): { winners: string[]; winningHand: string };
+  endRound(winners: string[], winningHand?: string): void;
   startTurnTimer(): void;
   handleFoldForTimeout(sessionId: string): void;
 }

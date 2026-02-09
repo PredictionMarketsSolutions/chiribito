@@ -101,7 +101,7 @@ export class MyRoom extends Room<MyRoomState> {
     
     // If only one player remains, they win
     if (this.playersInHand.length === 1 && this.state.roundStarted) {
-      this.actions.endRound([this.playersInHand[0]]);
+      this.actions.endRound([this.playersInHand[0]], "Gana por fold");
     }
   }
 

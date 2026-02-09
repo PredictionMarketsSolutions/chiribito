@@ -12,12 +12,14 @@ const potStatus = document.querySelector<HTMLSpanElement>("#pot-status")!;
 const betStatus = document.querySelector<HTMLSpanElement>("#bet-status")!;
 const communityStatus = document.querySelector<HTMLSpanElement>("#community-status")!;
 const handStatus = document.querySelector<HTMLSpanElement>("#hand-status")!;
+const winningHandStatus = document.querySelector<HTMLSpanElement>("#winning-hand")!;
+const winnersStatus = document.querySelector<HTMLSpanElement>("#winners-status")!;
 const communityCardsEl = document.querySelector<HTMLDivElement>("#community-cards")!;
 const handCardsEl = document.querySelector<HTMLDivElement>("#hand-cards")!;
 const potChip = document.querySelector<HTMLSpanElement>("#pot-chip")!;
 const phaseChip = document.querySelector<HTMLSpanElement>("#phase-chip")!;
 const turnChip = document.querySelector<HTMLSpanElement>("#turn-chip")!;
-const potStackEl = document.querySelector<HTMLDivElement>("#pot-stack")!;
+const winningHandChip = document.querySelector<HTMLSpanElement>("#winning-hand-chip")!;
 const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
 const playersList = document.querySelector<HTMLUListElement>("#players")!;
 const apiUrlEl = document.querySelector<HTMLSpanElement>("#api-url")!;
@@ -55,37 +57,72 @@ function getFormValues() {
 let token: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
+let lastWinningHand = "-";
+let lastWinners: string[] = [];
+
+function preloadCardImages() {
+  const suits = ["O", "C", "E", "B"];
+  const ranks = ["1", "8", "9", "10", "11", "12"];
+  const sources = ["/cards/back.svg"];
+
+  suits.forEach(suit => {
+    ranks.forEach(rank => {
+      sources.push(`/cards/${suit}_${rank}.jpg`);
+    });
+  });
+
+  sources.forEach(src => {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  });
+}
 
 function createCardElement(card: string | undefined) {
   const el = document.createElement("div");
   el.classList.add("card");
 
+  const img = document.createElement("img");
+  img.alt = card ? `Carta ${card}` : "Carta oculta";
+  img.decoding = "async";
+  img.loading = "eager";
+
   if (!card) {
-    el.classList.add("back");
-    el.innerHTML = "<span class=\"rank\">?</span><span class=\"suit\">?</span>";
+    img.src = "/cards/back.svg";
+    img.addEventListener("load", () => el.classList.add("has-image"));
+    img.addEventListener("error", () => {
+      el.classList.add("back");
+      el.innerHTML = "<span class=\"rank\">?</span><span class=\"suit\">?</span>";
+    });
+    el.appendChild(img);
     return el;
   }
 
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  const suitMap: Record<string, { symbol: string; color: string }> = {
-    O: { symbol: "◆", color: "red" },
-    C: { symbol: "♥", color: "red" },
-    E: { symbol: "♠", color: "black" },
-    B: { symbol: "♣", color: "black" }
-  };
+  img.src = `/cards/${suit}_${rank}.jpg`;
+  img.addEventListener("load", () => el.classList.add("has-image"));
+  img.addEventListener("error", () => {
+    const suitMap: Record<string, { symbol: string; color: string }> = {
+      O: { symbol: "◆", color: "red" },
+      C: { symbol: "♥", color: "red" },
+      E: { symbol: "♠", color: "black" },
+      B: { symbol: "♣", color: "black" }
+    };
 
-  const rankMap: Record<string, string> = {
-    "1": "1",
-    "10": "S",
-    "11": "C",
-    "12": "R"
-  };
+    const rankMap: Record<string, string> = {
+      "1": "1",
+      "10": "S",
+      "11": "C",
+      "12": "R"
+    };
 
-  const suitInfo = suitMap[suit] ?? { symbol: suit, color: "black" };
-  el.classList.add(suitInfo.color);
-  const displayRank = rankMap[rank] ?? rank;
-  el.innerHTML = `<span class="rank">${displayRank}</span><span class="suit">${suitInfo.symbol}</span>`;
+    const suitInfo = suitMap[suit] ?? { symbol: suit, color: "black" };
+    el.classList.add(suitInfo.color);
+    const displayRank = rankMap[rank] ?? rank;
+    el.innerHTML = `<span class="rank">${displayRank}</span><span class="suit">${suitInfo.symbol}</span>`;
+  });
+  el.appendChild(img);
   return el;
 }
 
@@ -100,36 +137,6 @@ function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
   }
 }
 
-function renderPotStack(potValue: number) {
-  const maxChips = 10;
-  const denominations = [100, 25, 10, 5, 1];
-  const palette: Record<number, string> = {
-    100: "black",
-    25: "green",
-    10: "blue",
-    5: "red",
-    1: "white"
-  };
-
-  let remaining = Math.max(0, potValue);
-  const chips: number[] = [];
-
-  denominations.forEach(value => {
-    while (remaining >= value && chips.length < maxChips) {
-      chips.push(value);
-      remaining -= value;
-    }
-  });
-
-  potStackEl.innerHTML = "";
-  chips.forEach((value, index) => {
-    const chip = document.createElement("div");
-    chip.classList.add("pot-chip", `chip-${palette[value] ?? "white"}`);
-    chip.style.transform = `translateY(${-index * 4}px)`;
-    chip.style.zIndex = String(10 + index);
-    potStackEl.appendChild(chip);
-  });
-}
 
 function renderSeats(state: any) {
   const entries = state?.users
@@ -148,7 +155,7 @@ function renderSeats(state: any) {
 
     if (!player) {
       seat.classList.remove("active", "you", "folded");
-      seat.classList.remove("dealer", "turn");
+      seat.classList.remove("dealer", "turn", "winner");
       nameEl.textContent = "Libre";
       metaEl.textContent = "";
       return;
@@ -160,6 +167,7 @@ function renderSeats(state: any) {
     seat.classList.toggle("folded", Boolean(player.isFolded));
     seat.classList.toggle("dealer", index === dealerIndex);
     seat.classList.toggle("turn", player.sessionId === currentTurn);
+    seat.classList.toggle("winner", lastWinners.includes(player.sessionId));
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
     metaEl.textContent = `Chips ${player.chips} | Bet ${player.currentBet}`;
   });
@@ -195,7 +203,9 @@ function renderState(state: any) {
   potChip.textContent = String(state.pot ?? 0);
   phaseChip.textContent = state.phase ?? "waiting";
   turnChip.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
-  renderPotStack(state.pot ?? 0);
+  winningHandStatus.textContent = lastWinningHand;
+  winningHandChip.textContent = lastWinningHand;
+  winnersStatus.textContent = lastWinners.join(", ") || "-";
   const community = state.communityCards ? Array.from(state.communityCards) : [];
   communityStatus.textContent = community.length ? community.join(" ") : "-";
   renderCardRow(communityCardsEl, community, 5);
@@ -249,6 +259,12 @@ async function joinRoom() {
   });
 
   currentSessionId = room.sessionId;
+  lastWinningHand = "-";
+  lastWinners = [];
+  winningHandStatus.textContent = lastWinningHand;
+  winningHandChip.textContent = lastWinningHand;
+  winnersStatus.textContent = "-";
+  preloadCardImages();
   roomStatus.textContent = room.id || "joined";
   log("Joined room.");
 
@@ -265,6 +281,8 @@ async function joinRoom() {
   });
 
   room.onMessage("blindsPosted", (payload) => {
+    lastWinners = [];
+    winnersStatus.textContent = "-";
     log(`Blinds posted: ${JSON.stringify(payload)}`);
   });
 
@@ -273,6 +291,15 @@ async function joinRoom() {
   });
 
   room.onMessage("roundEnded", (payload) => {
+    if (payload?.winningHand) {
+      lastWinningHand = payload.winningHand;
+      winningHandStatus.textContent = lastWinningHand;
+      winningHandChip.textContent = lastWinningHand;
+    }
+    if (Array.isArray(payload?.winners)) {
+      lastWinners = payload.winners.map((winner: any) => winner.playerId);
+      winnersStatus.textContent = lastWinners.join(", ") || "-";
+    }
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
 

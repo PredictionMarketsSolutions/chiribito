@@ -41,6 +41,7 @@ export function broadcastRoundEnded(
   payload: {
     winners: Array<{ playerId: string; amount: number }>;
     communityCards: string[];
+    winningHand: string;
     playerHands: Record<string, string[]>;
   }
 ) {
