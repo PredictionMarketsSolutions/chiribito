@@ -35,6 +35,7 @@ export function startNewHand(room: GameRoom, helpers: GameHelpers) {
 
   // Set dealer and blinds
   room.dealerIndex = (room.dealerIndex + 1) % players.length;
+  room.state.dealerIndex = room.dealerIndex;
   room.state.roundStarted = true;
   room.state.phase = "preflop";
 

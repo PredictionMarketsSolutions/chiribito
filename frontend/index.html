@@ -8,57 +8,171 @@
   </head>
   <body>
     <div id="app">
-      <div id="ui">
-        <h1>Casino Test Client</h1>
-        <div class="row">
-          <label>Username</label>
-          <input id="username" type="text" placeholder="test1" />
-        </div>
-        <div class="row">
-          <label>Email</label>
-          <input id="email" type="email" placeholder="test1@example.com" />
-        </div>
-        <div class="row">
-          <label>Password</label>
-          <input id="password" type="password" placeholder="123456" />
-        </div>
-        <div class="actions">
-          <button id="register">Register</button>
-          <button id="login">Login</button>
-          <button id="join">Join Table</button>
-        </div>
-        <div class="actions secondary">
-          <button id="start-game">Start Game</button>
-          <button id="check">Check</button>
-          <button id="call">Call</button>
-          <button id="fold">Fold</button>
-        </div>
-        <div class="row">
-          <label>Bet / Raise Amount</label>
-          <input id="bet-amount" type="number" min="1" value="20" />
-          <div class="actions">
-            <button id="bet">Bet</button>
-            <button id="raise">Raise</button>
+      <aside id="ui" class="panel">
+        <header class="panel-header">
+          <div>
+            <p class="panel-kicker">Casino Control</p>
+            <h1>Chiri Poker Table</h1>
+          </div>
+          <div class="panel-pill">Live</div>
+        </header>
+
+        <section class="panel-card">
+          <h2>Acceso</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Username</span>
+              <input id="username" type="text" placeholder="test1" />
+            </label>
+            <label class="field">
+              <span>Email</span>
+              <input id="email" type="email" placeholder="test1@example.com" />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="password" type="password" placeholder="123456" />
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="register">Register</button>
+            <button id="login">Login</button>
+            <button id="join" class="accent">Join Table</button>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <h2>Acciones</h2>
+          <div class="button-row">
+            <button id="start-game" class="accent">Start Game</button>
+            <button id="check">Check</button>
+            <button id="call">Call</button>
+            <button id="fold">Fold</button>
+          </div>
+          <div class="bet-row">
+            <label class="field">
+              <span>Bet / Raise</span>
+              <input id="bet-amount" type="number" min="1" value="20" />
+            </label>
+            <div class="button-row">
+              <button id="bet">Bet</button>
+              <button id="raise">Raise</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <h2>Estado</h2>
+          <div class="status-grid">
+            <div><span>API</span><strong id="api-url"></strong></div>
+            <div><span>WS</span><strong id="ws-url"></strong></div>
+            <div><span>Token</span><strong id="token-status">none</strong></div>
+            <div><span>Room</span><strong id="room-status">not joined</strong></div>
+            <div><span>Phase</span><strong id="phase-status">waiting</strong></div>
+            <div><span>Turn</span><strong id="turn-status">-</strong></div>
+            <div><span>Pot</span><strong id="pot-status">0</strong></div>
+            <div><span>Current Bet</span><strong id="bet-status">0</strong></div>
+            <div><span>Community</span><strong id="community-status">-</strong></div>
+            <div><span>Your hand</span><strong id="hand-status">-</strong></div>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <h2>Players</h2>
+          <ul id="players" class="players"></ul>
+        </section>
+
+        <section class="panel-card panel-log">
+          <h2>Activity</h2>
+          <pre id="log"></pre>
+        </section>
+      </aside>
+
+      <main id="table" class="table">
+        <div class="table-surface">
+          <div class="table-header">
+            <div>
+              <p class="table-kicker">Mesa Principal</p>
+              <div class="table-title">Comunidad</div>
+            </div>
+            <div class="table-badges">
+              <span class="badge">Pot <span id="pot-chip">0</span></span>
+              <span class="badge">Phase <span id="phase-chip">waiting</span></span>
+              <span class="badge">Turn <span id="turn-chip">-</span></span>
+            </div>
+          </div>
+          <div id="seats" class="seats">
+            <div class="seat" data-seat="0">
+              <div class="seat-badge">Seat 1</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+            <div class="seat" data-seat="1">
+              <div class="seat-badge">Seat 2</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+            <div class="seat" data-seat="2">
+              <div class="seat-badge">Seat 3</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+            <div class="seat" data-seat="3">
+              <div class="seat-badge">Seat 4</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+            <div class="seat" data-seat="4">
+              <div class="seat-badge">Seat 5</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+            <div class="seat" data-seat="5">
+              <div class="seat-badge">Seat 6</div>
+              <div class="seat-status">
+                <span class="seat-pill dealer">Dealer</span>
+                <span class="seat-pill turn">Turno</span>
+              </div>
+              <div class="seat-name">Libre</div>
+              <div class="seat-meta"></div>
+            </div>
+          </div>
+
+          <div class="table-zones">
+            <section class="table-zone">
+              <div class="zone-title">Cartas de la comunidad</div>
+              <div id="community-cards" class="card-row"></div>
+            </section>
+            <section class="table-zone">
+              <div class="zone-title">Tus cartas</div>
+              <div id="hand-cards" class="card-row"></div>
+            </section>
+          </div>
+
+          <div class="table-footer">
+            <div id="pot-stack" class="pot-stack"></div>
           </div>
         </div>
-        <div class="status">
-          <div><strong>API:</strong> <span id="api-url"></span></div>
-          <div><strong>WS:</strong> <span id="ws-url"></span></div>
-          <div><strong>Token:</strong> <span id="token-status">none</span></div>
-          <div><strong>Room:</strong> <span id="room-status">not joined</span></div>
-          <div><strong>Phase:</strong> <span id="phase-status">waiting</span></div>
-          <div><strong>Turn:</strong> <span id="turn-status">-</span></div>
-          <div><strong>Pot:</strong> <span id="pot-status">0</span></div>
-          <div><strong>Current Bet:</strong> <span id="bet-status">0</span></div>
-          <div><strong>Community:</strong> <span id="community-status">-</span></div>
-        </div>
-        <div class="row">
-          <label>Players</label>
-          <ul id="players"></ul>
-        </div>
-        <pre id="log"></pre>
-      </div>
-      <div id="canvas"></div>
+      </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

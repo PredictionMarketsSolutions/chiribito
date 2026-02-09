@@ -21,6 +21,7 @@ export class MyRoomState extends Schema {
   @type("number") pot: number = 0;
   @type("number") currentBet: number = 0;
   @type("string") currentTurn: string = "";
+  @type("number") dealerIndex: number = 0;
   @type("boolean") roundStarted: boolean = false;
   @type("string") phase: string = "waiting";  // waiting, preflop, flop, turn, river
   @type("string") lastRaiser: string = "";
@@ -31,8 +32,8 @@ export class MyRoomState extends Schema {
   }
 
   resetDeck() {
-    const suits = ["H", "D", "C", "S"];
-    const ranks = ["8", "9", "10", "J", "Q", "K", "A"];
+    const suits = ["O", "C", "E", "B"];
+    const ranks = ["1", "8", "9", "10", "11", "12"];
     this.deck.clear();
     for (const suit of suits) {
       for (const rank of ranks) {
