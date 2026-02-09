@@ -8,6 +8,9 @@
  */
 
 
+import 'dotenv/config';
+
+
 import { listen } from "@colyseus/tools";
 
 // Import arena config

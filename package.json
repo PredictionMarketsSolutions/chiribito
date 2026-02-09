@@ -8,6 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "tsx": "tsx watch src/index.ts",
+    "login-and-join": "tsx scripts/login-and-join.ts",
     "loadtest": "tsx loadtest/example.ts --room my_room --numClients 99",
     "build": "npm run build:game && npm run build:api",
     "build:game": "tsc",
@@ -35,7 +36,7 @@
     "@types/mocha": "^8.2.3",
     "@types/node": "^22.15.24",
     "copyfiles": "^2.4.1",
-    "mocha": "^9.0.2",
+    "mocha": "^11.7.5",
     "ts-node": "^10.9.2",
     "tsx": "^3.12.7",
     "typescript": "^5.8.3"
@@ -44,15 +45,20 @@
     "@colyseus/auth": "^0.16.0",
     "@colyseus/core": "^0.16.0",
     "@colyseus/monitor": "^0.16.0",
+    "@colyseus/redis-driver": "^0.16.0",
+    "@colyseus/redis-presence": "^0.16.0",
     "@colyseus/schema": "^3.0.37",
     "@colyseus/tools": "^0.16.0",
+    "@colyseus/ws-transport": "^0.16.5",
     "colyseus": "^0.16.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.24",
+    "colyseus.js": "^0.16.17",
+    "zod": "^3.24.2"
   },
   "workspaces": [
     "api-server"

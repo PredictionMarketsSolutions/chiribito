@@ -1,6 +1,7 @@
 import { Room, Client } from "colyseus";
 import { ArraySchema } from "@colyseus/schema";
 import { MyRoomState, Player } from "./schema/MyRoomState";
+import * as jwt from "jsonwebtoken";
 
 const TURN_TIMEOUT = 12000; // 12 seconds per turn
 const SMALL_BLIND = 10;
@@ -28,10 +29,39 @@ export class MyRoom extends Room<MyRoomState> {
     this.onMessage("raise", (client, amount: number) => this.handleRaise(client, amount));
   }
 
+  // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
+  async requestJoin(options: any, isNew?: boolean) {
+    const token = options?.token || options?.auth?.token ||
+      (options?.headers && typeof options.headers.authorization === 'string'
+        ? options.headers.authorization.split(' ')[1]
+        : undefined);
+
+    if (!token) {
+      console.warn("requestJoin: no token provided");
+      return false;
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("requestJoin: JWT_SECRET not set on server");
+      return false;
+    }
+
+    try {
+      const decoded = jwt.verify(token, secret) as any;
+      // Attach decoded payload to options so onJoin can use it
+      options.authUser = decoded;
+      return true;
+    } catch (err: any) {
+      console.warn("requestJoin: token verification failed", err && err.message ? err.message : err);
+      return false;
+    }
+  }
+
   onJoin(client: Client, options: any) {
     console.log(client.sessionId, "joined!");
     const player = new Player(client.sessionId);
-    player.name = options.name || `Player-${client.sessionId.slice(0, 4)}`;
+    player.name = options.name || options.authUser?.username || `Player-${client.sessionId.slice(0, 4)}`;
     player.chips = options.chips || 1000;
     this.state.users.set(client.sessionId, player);
 

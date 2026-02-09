@@ -1,4 +1,20 @@
-// Environment variables
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Load .env from api-server or from repo root
+const apiServerEnv = path.resolve(process.cwd(), '.env');
+const rootEnv = path.resolve(process.cwd(), '..', '.env');
+
+if (fs.existsSync(apiServerEnv)) {
+  dotenv.config({ path: apiServerEnv });
+} else if (fs.existsSync(rootEnv)) {
+  dotenv.config({ path: rootEnv });
+} else {
+  dotenv.config();
+}
+
+// Environment variables (defaults)
 const env: Record<string, string> = {
   PORT: '3000',
   JWT_SECRET: 'testPoker',
@@ -9,7 +25,7 @@ const env: Record<string, string> = {
   NODE_ENV: 'development'
 };
 
-// Set environment variables
+// Set environment variables only when not already provided
 Object.entries(env).forEach(([key, value]) => {
   if (!process.env[key]) {
     process.env[key] = value;

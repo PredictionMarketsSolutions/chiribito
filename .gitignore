@@ -1,1 +1,36 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables and secrets
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.idea/
+.vscode/
+
+# Keys and certificates
+*.pem
+*.key
+*.crt
+
+# Other sensitive files
+.envrc
+.secret
+secrets.json
+credentials.json

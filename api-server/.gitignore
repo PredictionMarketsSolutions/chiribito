@@ -29,3 +29,17 @@ npm-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Environment variants
+.env.*
+.env.local
+
+# Keys and certificates
+*.pem
+*.key
+*.crt
+
+# Secrets
+.secret
+secrets.json
+credentials.json

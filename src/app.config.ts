@@ -21,7 +21,24 @@ export default config({
         // presence: new RedisPresence(),
     },
 
-    initializeTransport: (options) => new WebSocketTransport(options),
+        initializeTransport: (options) => {
+                // Create transport and attach compatibility helpers that some @colyseus/core
+                // router code expects (either `expressApp` property or `getExpressApp()` method).
+                const transport = new WebSocketTransport(options as any);
+                // prefer existing property if present
+                try {
+                    // attach expressApp for @colyseus/tools compatibility
+                    (transport as any).expressApp = (options as any).app;
+                } catch (e) {
+                    // ignore
+                }
+                // attach getExpressApp for @colyseus/core router compatibility
+                if (typeof (transport as any).getExpressApp !== 'function') {
+                    (transport as any).getExpressApp = () => (options as any).app;
+                }
+
+                return transport;
+        },
 
     initializeGameServer: (gameServer) => {
         /**
