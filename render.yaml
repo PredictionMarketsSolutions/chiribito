@@ -61,5 +61,5 @@ services:
 
 databases:
   - name: chiri-postgres
-    databaseName: PokerBase
+    databaseName: pokerbase
     user: poker_user
