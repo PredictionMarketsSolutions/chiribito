@@ -3,13 +3,13 @@
 This repo contains:
 
 - **Colyseus game server** (port 2567)
-- **API server (Express + MySQL)** (port 3000)
+- **API server (Express + Postgres)** (port 3000)
 - **Pixi.js test frontend** (port 5173)
 
 ## Prerequisites
 
 - Node.js 18+ (for built-in `fetch`)
-- MySQL running locally
+- Postgres running locally
 
 ## Environment files
 
@@ -25,8 +25,8 @@ JWT_SECRET=your_secret_here
 ```
 PORT=3000
 DB_HOST=localhost
-DB_PORT=3306
-DB_USER=poker_user
+DB_PORT=5432
+DB_USER=postgres
 DB_PASSWORD=StrongPassw0rd!
 DB_NAME=PokerBase
 JWT_SECRET=your_secret_here
@@ -72,4 +72,4 @@ Open `http://localhost:5173` and use **Register/Login → Join Table**.
 
 - `EADDRINUSE`: another process is using the port. Stop it or change `PORT`.
 - `ECONNREFUSED`: server not running or wrong port.
-- MySQL access denied: verify `DB_USER/DB_PASSWORD` in `api-server/.env`.
+- Postgres access denied: verify `DB_USER/DB_PASSWORD` in `api-server/.env`.

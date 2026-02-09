@@ -19,9 +19,10 @@ const env: Record<string, string> = {
   PORT: '3000',
   JWT_SECRET: 'testPoker',
   DB_HOST: 'localhost',
-  DB_USER: 'root',
-  DB_PASSWORD: 'PokerBase',
+  DB_USER: 'postgres',
+  DB_PASSWORD: 'postgres',
   DB_NAME: 'PokerBase',
+  DB_PORT: '5432',
   NODE_ENV: 'development'
 };
 

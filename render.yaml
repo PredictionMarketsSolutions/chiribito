@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: chiri-api
+    env: node
+    rootDir: api-server
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:migrate
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: chiri-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: chiri-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: chiri-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: chiri-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: chiri-postgres
+          property: password
+      - key: DB_SSL
+        value: "true"
+
+  - type: web
+    name: chiri-colyseus
+    env: node
+    rootDir: .
+    buildCommand: npm install && npm run build:game
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: API_URL
+        value: https://YOUR_API_SERVICE.onrender.com
+
+  - type: static_site
+    name: chiri-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://YOUR_API_SERVICE.onrender.com
+      - key: VITE_WS_URL
+        value: wss://YOUR_COLYSEUS_SERVICE.onrender.com
+
+databases:
+  - name: chiri-postgres
+    databaseName: PokerBase
+    user: poker_user
