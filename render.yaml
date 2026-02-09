@@ -47,7 +47,7 @@ services:
       - key: API_URL
         value: https://YOUR_API_SERVICE.onrender.com
 
-  - type: static_site
+  - type: static
     name: chiri-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
