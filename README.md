@@ -1,29 +1,75 @@
-# Welcome to Colyseus!
+# Chiri Backend - Local Run Guide
 
-This project has been created using [⚔️ `create-colyseus-app`](https://github.com/colyseus/create-colyseus-app/) - an npm init template for kick starting a Colyseus project in TypeScript.
+This repo contains:
 
-[Documentation](http://docs.colyseus.io/)
+- **Colyseus game server** (port 2567)
+- **API server (Express + MySQL)** (port 3000)
+- **Pixi.js test frontend** (port 5173)
 
-## :crossed_swords: Usage
+## Prerequisites
+
+- Node.js 18+ (for built-in `fetch`)
+- MySQL running locally
+
+## Environment files
+
+### Root `.env` (Colyseus)
 
 ```
-npm start
+PORT=2567
+JWT_SECRET=your_secret_here
 ```
 
-## Structure
+### `api-server/.env` (API)
 
-- `index.ts`: main entry point, register an empty room handler and attach [`@colyseus/monitor`](https://github.com/colyseus/colyseus-monitor)
-- `src/rooms/MyRoom.ts`: an empty room handler for you to implement your logic
-- `src/rooms/schema/MyRoomState.ts`: an empty schema used on your room's state.
-- `loadtest/example.ts`: scriptable client for the loadtest tool (see `npm run loadtest`)
-- `package.json`:
-    - `scripts`:
-        - `npm start`: runs `ts-node-dev index.ts`
-        - `npm test`: runs mocha test suite
-        - `npm run loadtest`: runs the [`@colyseus/loadtest`](https://github.com/colyseus/colyseus-loadtest/) tool for testing the connection, using the `loadtest/example.ts` script.
-- `tsconfig.json`: TypeScript configuration file
+```
+PORT=3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=poker_user
+DB_PASSWORD=StrongPassw0rd!
+DB_NAME=PokerBase
+JWT_SECRET=your_secret_here
+NODE_ENV=development
+```
 
+## Start locally
 
-## License
+Open **three terminals**:
 
-MIT
+### 1) API server
+
+```
+cd C:\project-chiribito-test-backend\Chiri-backend\api-server
+npm run dev
+```
+
+### 2) Colyseus server
+
+```
+cd C:\project-chiribito-test-backend\Chiri-backend
+npm run dev
+```
+
+### 3) Frontend (Pixi test client)
+
+```
+cd C:\project-chiribito-test-backend\Chiri-backend\frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` and use **Register/Login → Join Table**.
+
+## Endpoints
+
+- API: `http://localhost:3000`
+- Colyseus: `ws://localhost:2567`
+- Playground: `http://localhost:2567/playground`
+- Monitor: `http://localhost:2567/colyseus`
+
+## Common issues
+
+- `EADDRINUSE`: another process is using the port. Stop it or change `PORT`.
+- `ECONNREFUSED`: server not running or wrong port.
+- MySQL access denied: verify `DB_USER/DB_PASSWORD` in `api-server/.env`.

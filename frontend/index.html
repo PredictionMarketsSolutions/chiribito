@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixi Colyseus Test Client</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="ui">
+        <h1>Casino Test Client</h1>
+        <div class="row">
+          <label>Username</label>
+          <input id="username" type="text" placeholder="test1" />
+        </div>
+        <div class="row">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="test1@example.com" />
+        </div>
+        <div class="row">
+          <label>Password</label>
+          <input id="password" type="password" placeholder="123456" />
+        </div>
+        <div class="actions">
+          <button id="register">Register</button>
+          <button id="login">Login</button>
+          <button id="join">Join Table</button>
+        </div>
+        <div class="actions secondary">
+          <button id="start-game">Start Game</button>
+          <button id="check">Check</button>
+          <button id="call">Call</button>
+          <button id="fold">Fold</button>
+        </div>
+        <div class="row">
+          <label>Bet / Raise Amount</label>
+          <input id="bet-amount" type="number" min="1" value="20" />
+          <div class="actions">
+            <button id="bet">Bet</button>
+            <button id="raise">Raise</button>
+          </div>
+        </div>
+        <div class="status">
+          <div><strong>API:</strong> <span id="api-url"></span></div>
+          <div><strong>WS:</strong> <span id="ws-url"></span></div>
+          <div><strong>Token:</strong> <span id="token-status">none</span></div>
+          <div><strong>Room:</strong> <span id="room-status">not joined</span></div>
+          <div><strong>Phase:</strong> <span id="phase-status">waiting</span></div>
+          <div><strong>Turn:</strong> <span id="turn-status">-</span></div>
+          <div><strong>Pot:</strong> <span id="pot-status">0</span></div>
+          <div><strong>Current Bet:</strong> <span id="bet-status">0</span></div>
+          <div><strong>Community:</strong> <span id="community-status">-</span></div>
+        </div>
+        <div class="row">
+          <label>Players</label>
+          <ul id="players"></ul>
+        </div>
+        <pre id="log"></pre>
+      </div>
+      <div id="canvas"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

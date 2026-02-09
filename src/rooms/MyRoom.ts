@@ -3,7 +3,7 @@ import { ArraySchema } from "@colyseus/schema";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import * as jwt from "jsonwebtoken";
 
-const TURN_TIMEOUT = 12000; // 12 seconds per turn
+const TURN_TIMEOUT = 120000000000; // Extra for testing
 const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
 
@@ -59,11 +59,12 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onJoin(client: Client, options: any) {
-    console.log(client.sessionId, "joined!");
     const player = new Player(client.sessionId);
     player.name = options.name || options.authUser?.username || `Player-${client.sessionId.slice(0, 4)}`;
     player.chips = options.chips || 1000;
     this.state.users.set(client.sessionId, player);
+
+    console.log(`[JOIN] ${player.name} (${client.sessionId})`);
 
     // Notify the player they joined
     client.send("joined", { 
@@ -85,8 +86,8 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onLeave(client: Client, consented: boolean) {
-    console.log(client.sessionId, "left!");
     const player = this.state.users.get(client.sessionId);
+    console.log(`[LEAVE] ${player?.name ?? "Unknown"} (${client.sessionId})`);
     if (player) {
       player.isFolded = true;
       // If it's their turn, end their turn
@@ -107,6 +108,8 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private handleStartGame(client: Client) {
+    const player = this.state.users.get(client.sessionId);
+    console.log(`[ACTION] ${player?.name ?? "Unknown"} startGame`);
     if (this.state.users.size < 2) {
       client.send("error", { message: "At least 2 players required to start" });
       return;
@@ -121,6 +124,7 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private startNewHand() {
+    console.log("[ROUND] Starting new hand");
     // Reset game state
     this.state.resetDeck();
     this.state.communityCards.clear();
@@ -164,12 +168,14 @@ export class MyRoom extends Room<MyRoomState> {
     
     // Post small blind
     const smallBlind = Math.min(SMALL_BLIND, smallBlindPlayer.chips);
+    console.log(`[BLIND] ${smallBlindPlayer.name} posts small blind ${smallBlind}`);
     smallBlindPlayer.chips -= smallBlind;
     smallBlindPlayer.currentBet = smallBlind;
     this.state.pot += smallBlind;
     
     // Post big blind
     const bigBlind = Math.min(BIG_BLIND, bigBlindPlayer.chips);
+    console.log(`[BLIND] ${bigBlindPlayer.name} posts big blind ${bigBlind}`);
     bigBlindPlayer.chips -= bigBlind;
     bigBlindPlayer.currentBet = bigBlind;
     this.state.pot += bigBlind;
@@ -192,6 +198,7 @@ export class MyRoom extends Room<MyRoomState> {
 
   private startBettingRound() {
     this.playersActedThisRound.clear();
+    console.log(`[ROUND] Betting round started (${this.state.phase}) | currentBet=${this.state.currentBet} pot=${this.state.pot}`);
     this.broadcast("bettingRoundStarted", {
       phase: this.state.phase,
       currentTurn: this.state.currentTurn,
@@ -205,6 +212,7 @@ export class MyRoom extends Room<MyRoomState> {
     
     const player = this.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
+    console.log(`[ACTION] ${player.name} bet ${amount}`);
     
     const minRaise = this.state.currentBet * 2;
     if (amount < this.state.currentBet) {
@@ -246,6 +254,7 @@ export class MyRoom extends Room<MyRoomState> {
     
     const player = this.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
+    console.log(`[ACTION] ${player.name} call`);
     
     const chipsToCall = this.state.currentBet - player.currentBet;
     if (chipsToCall <= 0) {
@@ -279,6 +288,7 @@ export class MyRoom extends Room<MyRoomState> {
     
     const player = this.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
+    console.log(`[ACTION] ${player.name} check`);
     
     if (player.currentBet < this.state.currentBet) {
       client.send("error", { message: "Cannot check, you need to call or fold" });
@@ -296,6 +306,8 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private handleRaise(client: Client, amount: number) {
+    const player = this.state.users.get(client.sessionId);
+    console.log(`[ACTION] ${player?.name ?? "Unknown"} raise ${amount}`);
     this.handleBet(client, this.state.currentBet + amount);
   }
 
@@ -304,6 +316,7 @@ export class MyRoom extends Room<MyRoomState> {
     
     const player = this.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
+    console.log(`[ACTION] ${player.name} fold`);
     
     player.isFolded = true;
     this.playersInHand = this.playersInHand.filter(id => id !== client.sessionId);
@@ -324,6 +337,8 @@ export class MyRoom extends Room<MyRoomState> {
 
   private endTurn() {
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
+    const current = this.state.users.get(this.state.currentTurn);
+    console.log(`[TURN] End turn for ${current?.name ?? this.state.currentTurn}`);
     
     // Check if betting round is complete
     const activePlayers = this.playersInHand
@@ -353,6 +368,7 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private proceedToNextPhase() {
+    console.log(`[ROUND] Proceeding to next phase from ${this.state.phase}`);
     // Reset player bets for new round
     this.state.users.forEach(player => {
       player.currentBet = 0;
@@ -413,6 +429,10 @@ export class MyRoom extends Room<MyRoomState> {
 
   private endRound(winners: string[]) {
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
+    const winnerNames = winners
+      .map(id => this.state.users.get(id)?.name ?? id)
+      .join(", ");
+    console.log(`[ROUND] Ended. Winners: ${winnerNames || "none"}`);
     
     // Calculate and distribute winnings
     const winnersList = winners.map(id => ({
