@@ -69,7 +69,7 @@ let lastWinningHand = "-";
 let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
-let pixiApp: PIXI.Application | null = null;
+let pixiApp: PixiModule.Application | null = null;
 let pixiLayer: HTMLDivElement | null = null;
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
@@ -100,6 +100,10 @@ function getUserEntries(state: RoomState): PlayerState[] {
   const users = state?.users;
   if (!users) return [];
   if (users instanceof Map) return Array.from(users.values());
+  const iterableUsers = users as unknown as { values?: () => Iterable<PlayerState> };
+  if (typeof iterableUsers.values === "function") {
+    return Array.from(iterableUsers.values());
+  }
   return Object.values(users);
 }
 
