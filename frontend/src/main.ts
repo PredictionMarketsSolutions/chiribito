@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
 
 const logEl = document.querySelector<HTMLPreElement>("#log")!;
+const authOverlay = document.querySelector<HTMLDivElement>("#auth-overlay")!;
 const tokenStatus = document.querySelector<HTMLSpanElement>("#token-status")!;
 const roomStatus = document.querySelector<HTMLSpanElement>("#room-status")!;
 const phaseStatus = document.querySelector<HTMLSpanElement>("#phase-status")!;
@@ -36,10 +37,15 @@ const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
 apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
 void initPixiLayer();
+setAuthOverlayVisible(true);
 
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
   logEl.textContent = `[${ts}] ${message}\n` + logEl.textContent;
+}
+
+function setAuthOverlayVisible(visible: boolean) {
+  authOverlay.classList.toggle("hidden", !visible);
 }
 
 async function request(path: string, body: unknown) {
@@ -292,6 +298,7 @@ function resetRoomUi(message?: string) {
   lastWinningHand = "-";
   lastWinners = [];
   revealedHands = null;
+  setAuthOverlayVisible(true);
   roomStatus.textContent = message || "not joined";
   phaseStatus.textContent = "waiting";
   turnStatus.textContent = "-";
@@ -684,6 +691,7 @@ async function joinRoom(forceReplace = false) {
 
   room = joinedRoom;
   currentSessionId = joinedRoom.sessionId;
+  setAuthOverlayVisible(false);
   lastWinningHand = "-";
   lastWinners = [];
   winningHandStatus.textContent = lastWinningHand;

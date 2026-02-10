@@ -29,6 +29,30 @@ body {
   color: var(--sand);
 }
 
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 12, 13, 0.78);
+  backdrop-filter: blur(6px);
+  z-index: 20;
+}
+
+.auth-overlay.hidden {
+  display: none;
+}
+
+.auth-card {
+  width: min(420px, 100%);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 20px;
+  box-shadow: var(--panel-shadow);
+  padding: 24px 22px 28px;
+}
+
 #app {
   display: grid;
   grid-template-columns: minmax(320px, 380px) 1fr;
