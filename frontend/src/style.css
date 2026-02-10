@@ -53,6 +53,34 @@ body {
   padding: 24px 22px 28px;
 }
 
+.auth-message {
+  min-height: 20px;
+  margin: 4px 0 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  background: rgba(14, 17, 20, 0.08);
+  color: rgba(14, 17, 20, 0.7);
+  display: none;
+}
+
+.auth-message.visible {
+  display: block;
+}
+
+.auth-message.success {
+  background: rgba(15, 77, 61, 0.15);
+  color: #0f4d3d;
+  border: 1px solid rgba(15, 77, 61, 0.3);
+}
+
+.auth-message.error {
+  background: rgba(176, 33, 48, 0.12);
+  color: #8f1f2b;
+  border: 1px solid rgba(176, 33, 48, 0.28);
+}
+
 #app {
   display: grid;
   grid-template-columns: minmax(320px, 380px) 1fr;

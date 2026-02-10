@@ -6,6 +6,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onre
 
 const logEl = document.querySelector<HTMLPreElement>("#log")!;
 const authOverlay = document.querySelector<HTMLDivElement>("#auth-overlay")!;
+const authMessage = document.querySelector<HTMLDivElement>("#auth-message")!;
 const tokenStatus = document.querySelector<HTMLSpanElement>("#token-status")!;
 const roomStatus = document.querySelector<HTMLSpanElement>("#room-status")!;
 const phaseStatus = document.querySelector<HTMLSpanElement>("#phase-status")!;
@@ -46,6 +47,39 @@ function log(message: string) {
 
 function setAuthOverlayVisible(visible: boolean) {
   authOverlay.classList.toggle("hidden", !visible);
+}
+
+function setAuthMessage(message: string, type: "success" | "error" | "info" = "info") {
+  authMessage.textContent = message;
+  authMessage.classList.toggle("visible", Boolean(message));
+  authMessage.classList.toggle("success", type === "success");
+  authMessage.classList.toggle("error", type === "error");
+}
+
+function mapAuthError(message: string, context: "login" | "register") {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("invalid credentials")) {
+    return "Correo o contrasena incorrectos.";
+  }
+  if (normalized.includes("email and password are required")) {
+    return "Correo y contrasena son obligatorios.";
+  }
+  if (normalized.includes("username, email, and password are required")) {
+    return "Usuario, correo y contrasena son obligatorios.";
+  }
+  if (normalized.includes("password must be at least 6")) {
+    return "La contrasena debe tener al menos 6 caracteres.";
+  }
+  if (normalized.includes("user with this email or username already exists")) {
+    return "Ese usuario o correo ya existe.";
+  }
+  if (normalized.includes("internal server error")) {
+    return "Error del servidor. Intenta de nuevo.";
+  }
+  if (context === "login") {
+    return "No pudimos iniciar sesion. Verifica tus datos.";
+  }
+  return "No pudimos registrar la cuenta. Verifica tus datos.";
 }
 
 async function request(path: string, body: unknown) {
@@ -299,6 +333,7 @@ function resetRoomUi(message?: string) {
   lastWinners = [];
   revealedHands = null;
   setAuthOverlayVisible(true);
+  setAuthMessage("", "info");
   roomStatus.textContent = message || "not joined";
   phaseStatus.textContent = "waiting";
   turnStatus.textContent = "-";
@@ -633,23 +668,27 @@ function setActionButtonsEnabled(
 async function register() {
   const { username, email, password } = getFormValues();
   log("Registering...");
+  setAuthMessage("Creando cuenta...", "info");
   const data = await request("/api/auth/register", { username, email, password });
   token = data.token;
   tokenStatus.textContent = token ? "set" : "none";
   tokenInvalidNotified = false;
   startTokenMonitor();
   log("Registered and token received.");
+  setAuthMessage("Registro correcto. Puedes unirte a la mesa.", "success");
 }
 
 async function login() {
   const { email, password } = getFormValues();
   log("Logging in...");
+  setAuthMessage("Verificando credenciales...", "info");
   const data = await request("/api/auth/login", { email, password });
   token = data.token;
   tokenStatus.textContent = token ? "set" : "none";
   tokenInvalidNotified = false;
   startTokenMonitor();
   log("Logged in and token received.");
+  setAuthMessage("Login correcto. Puedes unirte a la mesa.", "success");
 }
 
 async function joinRoom(forceReplace = false) {
@@ -763,11 +802,21 @@ async function joinRoom(forceReplace = false) {
 }
 
 (document.querySelector("#register") as HTMLButtonElement).addEventListener("click", () => {
-  register().catch((err) => log(`Register error: ${err.message || err}`));
+  register().catch((err) => {
+    const message = err?.message || String(err);
+    const mapped = mapAuthError(message, "register");
+    setAuthMessage(mapped, "error");
+    log(`Register error: ${message}`);
+  });
 });
 
 (document.querySelector("#login") as HTMLButtonElement).addEventListener("click", () => {
-  login().catch((err) => log(`Login error: ${err.message || err}`));
+  login().catch((err) => {
+    const message = err?.message || String(err);
+    const mapped = mapAuthError(message, "login");
+    setAuthMessage(mapped, "error");
+    log(`Login error: ${message}`);
+  });
 });
 
 (document.querySelector("#join") as HTMLButtonElement).addEventListener("click", () => {
