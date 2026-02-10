@@ -27,7 +27,6 @@
   "homepage": "https://github.com/colyseus/create-colyseus#readme",
   "devDependencies": {
     "@colyseus/loadtest": "^0.16.0",
-    "@colyseus/playground": "^0.16.0",
     "@colyseus/testing": "^0.16.0",
     "@types/cors": "^2.8.18",
     "@types/dotenv": "^6.1.1",
@@ -45,6 +44,7 @@
     "@colyseus/auth": "^0.16.0",
     "@colyseus/core": "^0.16.0",
     "@colyseus/monitor": "^0.16.0",
+    "@colyseus/playground": "^0.16.0",
     "@colyseus/redis-driver": "^0.16.0",
     "@colyseus/redis-presence": "^0.16.0",
     "@colyseus/schema": "^3.0.37",

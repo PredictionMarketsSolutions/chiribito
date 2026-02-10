@@ -3,6 +3,7 @@ import config from "@colyseus/tools";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
+import type { Request, Response } from "express";
 
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
@@ -53,7 +54,7 @@ export default config({
         /**
          * Bind your custom express routes here:
          */
-        app.get("/", (req, res) => {
+        app.get("/", (_req: Request, res: Response) => {
             res.send(`Instance ID => ${process.env.NODE_APP_INSTANCE ?? "NONE"}`);
         });
 
