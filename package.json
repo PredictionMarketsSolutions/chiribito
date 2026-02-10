@@ -49,13 +49,13 @@
     "@colyseus/ws-transport": "^0.16.5",
     "@types/express": "^4.17.22",
     "colyseus": "^0.16.0",
+    "colyseus.js": "^0.16.17",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.24",
-    "colyseus.js": "^0.16.17",
     "zod": "^3.24.2"
   },
   "workspaces": [
