@@ -187,7 +187,7 @@ function getCardTexture(card: string) {
 function createCardSprite(targetEl: HTMLElement) {
   if (!pixiLib) return null;
   const rect = targetEl.getBoundingClientRect();
-  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back.svg"));
+  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back_logo.png"));
   sprite.anchor.set(0.5);
   sprite.width = rect.width;
   sprite.height = rect.height;
@@ -357,7 +357,7 @@ function startTokenMonitor() {
 function preloadCardImages() {
   const suits = ["O", "C", "E", "B"];
   const ranks = ["1", "8", "9", "10", "11", "12"];
-  const sources = ["/cards/back.svg"];
+  const sources = ["/cards/back_logo.png"];
 
   suits.forEach(suit => {
     ranks.forEach(rank => {
@@ -382,7 +382,8 @@ function createCardElement(card: string | undefined) {
   img.loading = "eager";
 
   if (!card) {
-    img.src = "/cards/back.svg";
+    el.classList.add("card-back");
+    img.src = "/cards/back_logo.png";
     img.addEventListener("load", () => el.classList.add("has-image"));
     img.addEventListener("error", () => {
       el.classList.add("back");

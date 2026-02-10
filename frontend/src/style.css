@@ -517,6 +517,15 @@ button.accent {
   display: block;
 }
 
+.card.card-back {
+  background: radial-gradient(circle at 40% 20%, #2a3a32, #101915 60%);
+}
+
+.card.card-back img {
+  object-fit: contain;
+  padding: 10px;
+}
+
 .card.has-image .rank,
 .card.has-image .suit {
   display: none;
