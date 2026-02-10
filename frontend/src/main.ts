@@ -1,5 +1,5 @@
 import { Client, Room } from "colyseus.js";
-import * as PIXI from "pixi.js";
+import type * as PixiModule from "pixi.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
@@ -34,7 +34,7 @@ const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
 
 apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
-initPixiLayer();
+void initPixiLayer();
 
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
@@ -74,6 +74,7 @@ let pixiLayer: HTMLDivElement | null = null;
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
+let pixiLib: typeof PixiModule | null = null;
 
 type PlayerState = {
   sessionId: string;
@@ -102,15 +103,19 @@ function getUserEntries(state: RoomState): PlayerState[] {
   return Object.values(users);
 }
 
-function initPixiLayer() {
+async function initPixiLayer() {
   pixiTableSurface = document.querySelector<HTMLDivElement>(".table-surface");
   if (!pixiTableSurface) return;
+
+  if (!pixiLib) {
+    pixiLib = await import("pixi.js");
+  }
 
   pixiLayer = document.createElement("div");
   pixiLayer.id = "pixi-layer";
   pixiTableSurface.appendChild(pixiLayer);
 
-  pixiApp = new PIXI.Application({
+  pixiApp = new pixiLib.Application({
     width: pixiTableSurface.clientWidth,
     height: pixiTableSurface.clientHeight,
     backgroundAlpha: 0,
@@ -148,14 +153,16 @@ function getDeckPosition() {
 }
 
 function getCardTexture(card: string) {
+  if (!pixiLib) return null;
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  return PIXI.Texture.from(`/cards/${suit}_${rank}.jpg`);
+  return pixiLib.Texture.from(`/cards/${suit}_${rank}.jpg`);
 }
 
 function createCardSprite(targetEl: HTMLElement) {
+  if (!pixiLib) return null;
   const rect = targetEl.getBoundingClientRect();
-  const sprite = new PIXI.Sprite(PIXI.Texture.from("/cards/back.svg"));
+  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back.svg"));
   sprite.anchor.set(0.5);
   sprite.width = rect.width;
   sprite.height = rect.height;
@@ -163,7 +170,7 @@ function createCardSprite(targetEl: HTMLElement) {
 }
 
 function tweenSprite(
-  sprite: PIXI.Sprite,
+  sprite: PixiModule.Sprite,
   from: { x: number; y: number },
   to: { x: number; y: number },
   durationMs: number,
@@ -191,7 +198,7 @@ function tweenSprite(
   pixiApp.ticker.add(update);
 }
 
-function flipSprite(sprite: PIXI.Sprite, frontTexture: PIXI.Texture, durationMs = 280) {
+function flipSprite(sprite: PixiModule.Sprite, frontTexture: PixiModule.Texture, durationMs = 280) {
   if (!pixiApp) return;
   const half = durationMs / 2;
   const startAt = performance.now();
@@ -221,7 +228,7 @@ function animateCardDeals(
   previousCards: string[]
 ) {
   const app = pixiApp;
-  if (!app || !pixiLayer || !pixiTableSurface) return;
+  if (!app || !pixiLayer || !pixiTableSurface || !pixiLib) return;
   const cardEls = Array.from(containerEl.querySelectorAll<HTMLElement>(".card"));
   const deckPos = getDeckPosition();
 
@@ -233,6 +240,7 @@ function animateCardDeals(
 
     const target = getElementCenterInTable(targetEl);
     const sprite = createCardSprite(targetEl);
+    if (!sprite) return;
     sprite.x = deckPos.x;
     sprite.y = deckPos.y;
     sprite.rotation = -0.08;
@@ -240,7 +248,10 @@ function animateCardDeals(
 
     tweenSprite(sprite, deckPos, target, 420, index * 90, () => {
       sprite.rotation = 0;
-      flipSprite(sprite, getCardTexture(card));
+      const texture = getCardTexture(card);
+      if (texture) {
+        flipSprite(sprite, texture);
+      }
       window.setTimeout(() => {
         app.stage.removeChild(sprite);
         sprite.destroy();
