@@ -1,7 +1,7 @@
 import { Client, Room } from "colyseus.js";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:2567";
+const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://chiri-backend-colyseus.onrender.com";
 
 const logEl = document.querySelector<HTMLPreElement>("#log")!;
 const tokenStatus = document.querySelector<HTMLSpanElement>("#token-status")!;
