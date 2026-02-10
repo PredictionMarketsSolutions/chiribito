@@ -1,4 +1,4 @@
-import { Client } from "colyseus";
+import { Client } from "@colyseus/core";
 import type { GameRoom, GameHelpers } from "../types";
 import { getActivePlayerIds } from "../state/selectors";
 import { setCurrentTurn } from "../state/mutations";

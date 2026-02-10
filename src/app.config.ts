@@ -13,7 +13,7 @@ import type { Request, Response } from "express";
  */
 import { MyRoom } from "./rooms/MyRoom";
 import auth from "./config/auth";
-import { LobbyRoom } from "colyseus";
+import { LobbyRoom } from "@colyseus/core";
 
 export default config({
     options: {

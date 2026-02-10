@@ -1,4 +1,4 @@
-import { Client } from "colyseus";
+import { Client } from "@colyseus/core";
 import type { MyRoom } from "../MyRoom";
 import type { GameHelpers } from "./types";
 import {
