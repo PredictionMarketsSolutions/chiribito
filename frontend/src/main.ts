@@ -96,15 +96,29 @@ type RoomState = {
   communityCards?: string[];
 };
 
+function isPlayerState(value: unknown): value is PlayerState {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.sessionId === "string" && typeof record.name === "string";
+}
+
 function getUserEntries(state: RoomState): PlayerState[] {
   const users = state?.users;
   if (!users) return [];
   if (users instanceof Map) return Array.from(users.values());
   const iterableUsers = users as unknown as { values?: () => Iterable<PlayerState> };
   if (typeof iterableUsers.values === "function") {
-    return Array.from(iterableUsers.values());
+    return Array.from(iterableUsers.values()).filter(isPlayerState);
   }
-  return Object.values(users);
+  const forEachUsers = users as unknown as { forEach?: (cb: (value: PlayerState) => void) => void };
+  if (typeof forEachUsers.forEach === "function") {
+    const results: PlayerState[] = [];
+    forEachUsers.forEach((value) => {
+      if (isPlayerState(value)) results.push(value);
+    });
+    return results;
+  }
+  return Object.values(users).filter(isPlayerState);
 }
 
 async function initPixiLayer() {
@@ -449,7 +463,7 @@ function renderPlayers(state: RoomState) {
 
   const entries = getUserEntries(state);
 
-  entries.forEach((player: any) => {
+  entries.forEach((player) => {
     const li = document.createElement("li");
     const isYou = currentSessionId && player.sessionId === currentSessionId ? " (you)" : "";
     li.textContent = `${player.name}${isYou} | chips: ${player.chips} | bet: ${player.currentBet}${player.isFolded ? " | folded" : ""}`;
