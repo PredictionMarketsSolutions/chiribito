@@ -99,7 +99,13 @@ type RoomState = {
 function isPlayerState(value: unknown): value is PlayerState {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
-  return typeof record.sessionId === "string" && typeof record.name === "string";
+  return (
+    typeof record.sessionId === "string" &&
+    typeof record.name === "string" &&
+    typeof record.chips === "number" &&
+    typeof record.currentBet === "number" &&
+    typeof record.isFolded === "boolean"
+  );
 }
 
 function getUserEntries(state: RoomState): PlayerState[] {
@@ -425,7 +431,7 @@ function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
 
 
 function renderSeats(state: RoomState) {
-  const entries = getUserEntries(state);
+  const entries = getUserEntries(state).filter(isPlayerState);
   const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
   const currentTurn = state?.currentTurn ?? "";
 
@@ -461,7 +467,7 @@ function renderPlayers(state: RoomState) {
   playersList.innerHTML = "";
   if (!state || !state.users) return;
 
-  const entries = getUserEntries(state);
+  const entries = getUserEntries(state).filter(isPlayerState);
 
   entries.forEach((player) => {
     const li = document.createElement("li");
