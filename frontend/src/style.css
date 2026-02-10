@@ -572,6 +572,79 @@ button.accent {
   z-index: 3;
 }
 
+.mobile-seat-panel {
+  display: none;
+  width: min(520px, 100%);
+  background: rgba(6, 14, 12, 0.6);
+  border: 1px solid rgba(216, 181, 106, 0.3);
+  border-radius: 16px;
+  padding: 12px 14px 14px;
+}
+
+.mobile-seat-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(246, 241, 223, 0.75);
+  margin-bottom: 8px;
+}
+
+.mobile-seat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #f6f1df;
+}
+
+.mobile-seat-list li {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(10, 16, 14, 0.75);
+  border: 1px solid rgba(216, 181, 106, 0.25);
+  display: grid;
+  gap: 4px;
+  position: relative;
+}
+
+.mobile-seat-name {
+  font-size: 13px;
+}
+
+.mobile-seat-meta {
+  font-size: 11px;
+  color: rgba(246, 241, 223, 0.72);
+}
+
+.mobile-seat-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(216, 181, 106, 0.95);
+  color: #0e1114;
+}
+
+.mobile-seat-list li.is-you {
+  border-color: rgba(216, 181, 106, 0.85);
+  box-shadow: 0 0 0 1px rgba(216, 181, 106, 0.6);
+}
+
+.mobile-seat-list li.is-turn {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.mobile-seat-list li.is-folded {
+  opacity: 0.6;
+}
+
 
 @keyframes dealIn {
   from {
@@ -612,6 +685,18 @@ button.accent {
     grid-template-rows: minmax(0, 1fr) auto;
     height: 100vh;
     overflow: hidden;
+  }
+
+  .seats {
+    display: none;
+  }
+
+  .table-footer {
+    margin-top: 12px;
+  }
+
+  .mobile-seat-panel {
+    display: block;
   }
 
   #table {

@@ -23,6 +23,7 @@ const turnChip = document.querySelector<HTMLSpanElement>("#turn-chip")!;
 const winningHandChip = document.querySelector<HTMLSpanElement>("#winning-hand-chip")!;
 const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
 const playersList = document.querySelector<HTMLUListElement>("#players")!;
+const mobileSeatsList = document.querySelector<HTMLUListElement>("#mobile-seats")!;
 const apiUrlEl = document.querySelector<HTMLSpanElement>("#api-url")!;
 const wsUrlEl = document.querySelector<HTMLSpanElement>("#ws-url")!;
 const startGameButton = document.querySelector<HTMLButtonElement>("#start-game")!;
@@ -495,15 +496,40 @@ function renderSeats(state: RoomState) {
 
 function renderPlayers(state: RoomState) {
   playersList.innerHTML = "";
+  mobileSeatsList.innerHTML = "";
   if (!state || !state.users) return;
 
   const entries = getUserEntries(state).filter(isPlayerState);
+  const currentTurnId = state.currentTurn ?? "";
 
   entries.forEach((player) => {
     const li = document.createElement("li");
     const isYou = currentSessionId && player.sessionId === currentSessionId ? " (you)" : "";
     li.textContent = `${player.name}${isYou} | chips: ${player.chips} | bet: ${player.currentBet}${player.isFolded ? " | folded" : ""}`;
     playersList.appendChild(li);
+
+    const mobileItem = document.createElement("li");
+    mobileItem.classList.toggle("is-you", Boolean(isYou));
+    mobileItem.classList.toggle("is-folded", Boolean(player.isFolded));
+    mobileItem.classList.toggle("is-turn", player.sessionId === currentTurnId);
+    const nameEl = document.createElement("span");
+    nameEl.classList.add("mobile-seat-name");
+    nameEl.textContent = `${player.name}${isYou}`;
+
+    const metaEl = document.createElement("span");
+    metaEl.classList.add("mobile-seat-meta");
+    metaEl.textContent = `Apuesta ${player.currentBet} · Fichas ${player.chips}`;
+
+    mobileItem.appendChild(nameEl);
+    mobileItem.appendChild(metaEl);
+
+    if (player.sessionId === currentTurnId) {
+      const turnBadge = document.createElement("span");
+      turnBadge.classList.add("mobile-seat-badge");
+      turnBadge.textContent = "Turno";
+      mobileItem.appendChild(turnBadge);
+    }
+    mobileSeatsList.appendChild(mobileItem);
   });
 }
 
