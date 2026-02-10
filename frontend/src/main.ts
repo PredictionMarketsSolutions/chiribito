@@ -1,4 +1,5 @@
 import { Client, Room } from "colyseus.js";
+import { Application, Sprite, Texture } from "pixi.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
@@ -33,6 +34,7 @@ const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
 
 apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
+initPixiLayer();
 
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
@@ -67,6 +69,11 @@ let lastWinningHand = "-";
 let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
+let pixiApp: Application | null = null;
+let pixiLayer: HTMLDivElement | null = null;
+let pixiTableSurface: HTMLDivElement | null = null;
+let previousCommunityCards: string[] = [];
+let previousHandCards: string[] = [];
 
 type PlayerState = {
   sessionId: string;
@@ -93,6 +100,152 @@ function getUserEntries(state: RoomState): PlayerState[] {
   if (!users) return [];
   if (users instanceof Map) return Array.from(users.values());
   return Object.values(users);
+}
+
+function initPixiLayer() {
+  pixiTableSurface = document.querySelector<HTMLDivElement>(".table-surface");
+  if (!pixiTableSurface) return;
+
+  pixiLayer = document.createElement("div");
+  pixiLayer.id = "pixi-layer";
+  pixiTableSurface.appendChild(pixiLayer);
+
+  pixiApp = new Application({
+    width: pixiTableSurface.clientWidth,
+    height: pixiTableSurface.clientHeight,
+    backgroundAlpha: 0,
+    antialias: true
+  });
+
+  const canvas = (pixiApp as unknown as { view?: HTMLCanvasElement; canvas?: HTMLCanvasElement }).view
+    ?? (pixiApp as unknown as { canvas?: HTMLCanvasElement }).canvas;
+  if (canvas) {
+    pixiLayer.appendChild(canvas);
+  }
+
+  window.addEventListener("resize", () => {
+    if (!pixiApp || !pixiTableSurface) return;
+    pixiApp.renderer.resize(pixiTableSurface.clientWidth, pixiTableSurface.clientHeight);
+  });
+}
+
+function getElementCenterInTable(element: HTMLElement) {
+  if (!pixiTableSurface) return { x: 0, y: 0 };
+  const tableRect = pixiTableSurface.getBoundingClientRect();
+  const rect = element.getBoundingClientRect();
+  return {
+    x: rect.left - tableRect.left + rect.width / 2,
+    y: rect.top - tableRect.top + rect.height / 2
+  };
+}
+
+function getDeckPosition() {
+  if (!pixiTableSurface) return { x: 0, y: 0 };
+  return {
+    x: pixiTableSurface.clientWidth / 2,
+    y: 80
+  };
+}
+
+function getCardTexture(card: string) {
+  const suit = card.slice(-1);
+  const rank = card.slice(0, -1);
+  return Texture.from(`/cards/${suit}_${rank}.jpg`);
+}
+
+function createCardSprite(targetEl: HTMLElement) {
+  const rect = targetEl.getBoundingClientRect();
+  const sprite = new Sprite(Texture.from("/cards/back.svg"));
+  sprite.anchor.set(0.5);
+  sprite.width = rect.width;
+  sprite.height = rect.height;
+  return sprite;
+}
+
+function tweenSprite(
+  sprite: Sprite,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  durationMs: number,
+  delayMs: number,
+  onComplete?: () => void
+) {
+  if (!pixiApp) return;
+  const startAt = performance.now() + delayMs;
+  const endAt = startAt + durationMs;
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  const update = () => {
+    const now = performance.now();
+    if (now < startAt) return;
+    const t = Math.min((now - startAt) / durationMs, 1);
+    const eased = easeOut(t);
+    sprite.x = from.x + (to.x - from.x) * eased;
+    sprite.y = from.y + (to.y - from.y) * eased;
+    if (t >= 1) {
+      pixiApp?.ticker.remove(update);
+      onComplete?.();
+    }
+  };
+
+  pixiApp.ticker.add(update);
+}
+
+function flipSprite(sprite: Sprite, frontTexture: Texture, durationMs = 280) {
+  if (!pixiApp) return;
+  const half = durationMs / 2;
+  const startAt = performance.now();
+  const update = () => {
+    const now = performance.now();
+    const elapsed = now - startAt;
+    if (elapsed <= half) {
+      const t = Math.min(elapsed / half, 1);
+      sprite.scale.x = 1 - t;
+    } else {
+      if (sprite.texture !== frontTexture) {
+        sprite.texture = frontTexture;
+      }
+      const t = Math.min((elapsed - half) / half, 1);
+      sprite.scale.x = t;
+      if (t >= 1) {
+        pixiApp?.ticker.remove(update);
+      }
+    }
+  };
+  pixiApp.ticker.add(update);
+}
+
+function animateCardDeals(
+  containerEl: HTMLElement,
+  cards: string[],
+  previousCards: string[]
+) {
+  if (!pixiApp || !pixiLayer || !pixiTableSurface) return;
+  const cardEls = Array.from(containerEl.querySelectorAll<HTMLElement>(".card"));
+  const deckPos = getDeckPosition();
+
+  cards.forEach((card, index) => {
+    if (!card) return;
+    if (previousCards[index] === card) return;
+    const targetEl = cardEls[index];
+    if (!targetEl) return;
+
+    const target = getElementCenterInTable(targetEl);
+    const sprite = createCardSprite(targetEl);
+    sprite.x = deckPos.x;
+    sprite.y = deckPos.y;
+    sprite.rotation = -0.08;
+    pixiApp.stage.addChild(sprite);
+
+    tweenSprite(sprite, deckPos, target, 420, index * 90, () => {
+      sprite.rotation = 0;
+      flipSprite(sprite, getCardTexture(card));
+      window.setTimeout(() => {
+        pixiApp?.stage.removeChild(sprite);
+        sprite.destroy();
+      }, 420);
+    });
+  });
 }
 
 function resetRoomUi(message?: string) {
@@ -306,14 +459,19 @@ function renderState(state: RoomState) {
   const community = state.communityCards ? Array.from(state.communityCards) : [];
   communityStatus.textContent = community.length ? community.join(" ") : "-";
   renderCardRow(communityCardsEl, community, 5);
+  animateCardDeals(communityCardsEl, community, previousCommunityCards);
+  previousCommunityCards = [...community];
   if (currentSessionId) {
     const me = entries.find((player: any) => player.sessionId === currentSessionId);
     const hand = me?.hand ? Array.from(me.hand) : [];
     handStatus.textContent = hand.length ? hand.join(" ") : "-";
     renderCardRow(handCardsEl, hand, 2);
+    animateCardDeals(handCardsEl, hand, previousHandCards);
+    previousHandCards = [...hand];
   } else {
     handStatus.textContent = "-";
     renderCardRow(handCardsEl, [], 2);
+    previousHandCards = [];
   }
   renderSeats(state);
   renderPlayers(state);
