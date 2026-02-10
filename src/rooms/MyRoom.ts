@@ -2,6 +2,7 @@ import { Room, Client } from "@colyseus/core";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import * as jwt from "jsonwebtoken";
 import { GameActions } from "./game/GameActions";
+import { setCurrentPlayerIndexBeforeNextActive } from "./game/state/mutations";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
@@ -169,15 +170,21 @@ export class MyRoom extends Room<MyRoomState> {
     const player = this.state.users.get(client.sessionId);
     console.log(`[LEAVE] ${player?.name ?? "Unknown"} (${client.sessionId})`);
     if (player) {
+      const wasCurrentTurn = this.state.currentTurn === client.sessionId;
+      const foldIndex = this.playersInHand.indexOf(client.sessionId);
       player.isFolded = true;
-      // If it's their turn, end their turn
-      if (this.state.currentTurn === client.sessionId) {
-        this.actions.endTurn();
-      }
       // Remove from active players
       const playerIndex = this.playersInHand.indexOf(client.sessionId);
       if (playerIndex > -1) {
         this.playersInHand.splice(playerIndex, 1);
+      }
+
+      if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
+        setCurrentPlayerIndexBeforeNextActive(this, foldIndex);
+      }
+
+      if (wasCurrentTurn) {
+        this.actions.endTurn();
       }
     }
     

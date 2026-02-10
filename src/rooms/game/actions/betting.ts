@@ -1,7 +1,7 @@
 import { Client } from "@colyseus/core";
 import type { GameRoom, GameHelpers } from "../types";
 import { getPlayerName } from "../state/selectors";
-import { addToPot, removeFromHand } from "../state/mutations";
+import { addToPot, removeFromHand, setCurrentPlayerIndexBeforeNextActive } from "../state/mutations";
 import { broadcastPlayerAction } from "../state/broadcast";
 
 export function handleBet(room: GameRoom, helpers: GameHelpers, client: Client, amount: number) {
@@ -122,8 +122,13 @@ export function handleFold(room: GameRoom, helpers: GameHelpers, client: Client)
   if (!player || player.isFolded) return;
   console.log(`[ACTION] ${getPlayerName(room, client.sessionId)} fold`);
   
+  const foldIndex = room.playersInHand.indexOf(client.sessionId);
   player.isFolded = true;
   removeFromHand(room, client.sessionId);
+
+  if (room.playersInHand.length > 0 && foldIndex !== -1) {
+    setCurrentPlayerIndexBeforeNextActive(room, foldIndex);
+  }
   
   broadcastPlayerAction(room, {
     playerId: player.sessionId,

@@ -33,3 +33,30 @@ export function setCurrentBet(room: GameRoom, amount: number) {
 export function setCurrentTurn(room: GameRoom, sessionId: string) {
   room.state.currentTurn = sessionId;
 }
+
+export function setCurrentPlayerIndexBeforeNextActive(room: GameRoom, fromIndex: number) {
+  const totalPlayers = room.playersInHand.length;
+  if (totalPlayers === 0) return;
+
+  let candidateIndex = fromIndex - 1;
+  if (candidateIndex < 0) {
+    candidateIndex = totalPlayers - 1;
+  }
+
+  let safety = totalPlayers;
+  while (safety > 0) {
+    const candidateId = room.playersInHand[candidateIndex];
+    const candidate = room.state.users.get(candidateId);
+    if (candidate && !candidate.isFolded && !room.playersAllIn.has(candidateId)) {
+      room.currentPlayerIndex = candidateIndex;
+      return;
+    }
+    candidateIndex -= 1;
+    if (candidateIndex < 0) {
+      candidateIndex = totalPlayers - 1;
+    }
+    safety -= 1;
+  }
+
+  room.currentPlayerIndex = candidateIndex;
+}

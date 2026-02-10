@@ -75,6 +75,7 @@ let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
 let pixiLib: typeof PixiModule | null = null;
+let revealedHands: Record<string, string[]> | null = null;
 
 type PlayerState = {
   sessionId: string;
@@ -289,6 +290,7 @@ function resetRoomUi(message?: string) {
   currentSessionId = null;
   lastWinningHand = "-";
   lastWinners = [];
+  revealedHands = null;
   roomStatus.textContent = message || "not joined";
   phaseStatus.textContent = "waiting";
   turnStatus.textContent = "-";
@@ -439,6 +441,7 @@ function renderSeats(state: RoomState) {
   seats.forEach((seat, index) => {
     const nameEl = seat.querySelector<HTMLDivElement>(".seat-name");
     const metaEl = seat.querySelector<HTMLDivElement>(".seat-meta");
+    let handEl = seat.querySelector<HTMLDivElement>(".seat-hand");
     const player = entries[index];
 
     if (!nameEl || !metaEl) return;
@@ -448,6 +451,9 @@ function renderSeats(state: RoomState) {
       seat.classList.remove("dealer", "turn", "winner");
       nameEl.textContent = "Libre";
       metaEl.textContent = "";
+      if (handEl) {
+        handEl.innerHTML = "";
+      }
       return;
     }
 
@@ -460,6 +466,21 @@ function renderSeats(state: RoomState) {
     seat.classList.toggle("winner", lastWinners.includes(player.sessionId));
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
     metaEl.textContent = `Chips ${player.chips} | Bet ${player.currentBet}`;
+
+    if (!handEl) {
+      handEl = document.createElement("div");
+      handEl.classList.add("seat-hand");
+      seat.appendChild(handEl);
+    }
+    handEl.innerHTML = "";
+    const cards = revealedHands?.[player.sessionId] ?? [];
+    if (cards.length) {
+      for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
+        const cardEl = createCardElement(cards[i]);
+        cardEl.classList.add("mini");
+        handEl.appendChild(cardEl);
+      }
+    }
   });
 }
 
@@ -656,6 +677,7 @@ async function joinRoom(forceReplace = false) {
 
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
+    revealedHands = null;
   });
 
   joinedRoom.onMessage("blindsPosted", (payload) => {
@@ -677,6 +699,9 @@ async function joinRoom(forceReplace = false) {
     if (Array.isArray(payload?.winners)) {
       lastWinners = payload.winners.map((winner: any) => winner.playerId);
       winnersStatus.textContent = lastWinners.join(", ") || "-";
+    }
+    if (payload?.playerHands && typeof payload.playerHands === "object") {
+      revealedHands = payload.playerHands as Record<string, string[]>;
     }
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
