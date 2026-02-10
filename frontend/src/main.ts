@@ -1,7 +1,7 @@
 import { Client, Room } from "colyseus.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://chiri-backend-colyseus.onrender.com";
+const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
 
 const logEl = document.querySelector<HTMLPreElement>("#log")!;
 const tokenStatus = document.querySelector<HTMLSpanElement>("#token-status")!;
@@ -67,6 +67,33 @@ let lastWinningHand = "-";
 let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
+
+type PlayerState = {
+  sessionId: string;
+  name: string;
+  chips: number;
+  currentBet: number;
+  isFolded: boolean;
+  hand?: string[];
+};
+
+type RoomState = {
+  users?: Map<string, PlayerState> | Record<string, PlayerState>;
+  dealerIndex?: number;
+  currentTurn?: string;
+  phase?: string;
+  pot?: number;
+  currentBet?: number;
+  roundStarted?: boolean;
+  communityCards?: string[];
+};
+
+function getUserEntries(state: RoomState): PlayerState[] {
+  const users = state?.users;
+  if (!users) return [];
+  if (users instanceof Map) return Array.from(users.values());
+  return Object.values(users);
+}
 
 function resetRoomUi(message?: string) {
   room = null;
@@ -214,10 +241,8 @@ function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
 }
 
 
-function renderSeats(state: any) {
-  const entries = state?.users
-    ? Array.from(state.users.values())
-    : [];
+function renderSeats(state: RoomState) {
+  const entries = getUserEntries(state);
   const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
   const currentTurn = state?.currentTurn ?? "";
 
@@ -249,13 +274,11 @@ function renderSeats(state: any) {
   });
 }
 
-function renderPlayers(state: any) {
+function renderPlayers(state: RoomState) {
   playersList.innerHTML = "";
   if (!state || !state.users) return;
 
-  const entries = state.users instanceof Map
-    ? Array.from(state.users.values())
-    : Array.from(state.users.values());
+  const entries = getUserEntries(state);
 
   entries.forEach((player: any) => {
     const li = document.createElement("li");
@@ -265,12 +288,10 @@ function renderPlayers(state: any) {
   });
 }
 
-function renderState(state: any) {
+function renderState(state: RoomState) {
   if (!state) return;
   phaseStatus.textContent = state.phase ?? "-";
-  const entries = state.users instanceof Map
-    ? Array.from(state.users.values())
-    : Array.from(state.users.values());
+  const entries = getUserEntries(state);
   const currentTurnId = state.currentTurn ?? "";
   const turnPlayer = entries.find((player: any) => player.sessionId === currentTurnId);
   turnStatus.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
@@ -299,18 +320,16 @@ function renderState(state: any) {
   updateActionButtons(state);
 }
 
-function updateActionButtons(state: any) {
+function updateActionButtons(state: RoomState | null) {
   if (!state || !currentSessionId) {
     setActionButtonsEnabled(false, false, false, false, false, false);
     return;
   }
 
-  const entries = state.users instanceof Map
-    ? Array.from(state.users.values())
-    : Array.from(state.users.values());
+  const entries = getUserEntries(state);
   const me = entries.find((player: any) => player.sessionId === currentSessionId);
   const isMyTurn = Boolean(me) && state.currentTurn === currentSessionId;
-  const isActive = Boolean(me) && !me.isFolded && state.roundStarted;
+  const isActive = Boolean(me) && !me?.isFolded && Boolean(state.roundStarted);
   const canAct = isMyTurn && isActive;
   const currentBet = Number(state.currentBet ?? 0);
   const myBet = Number(me?.currentBet ?? 0);
@@ -384,8 +403,9 @@ async function joinRoom(forceReplace = false) {
   const client = new Client(WS_URL);
   (client as any).auth = { token };
 
+  let joinedRoom: Room;
   try {
-    room = await client.joinOrCreate("my_room", {
+    joinedRoom = await client.joinOrCreate("my_room", {
       token,
       auth: { token },
       name: username,
@@ -408,17 +428,21 @@ async function joinRoom(forceReplace = false) {
     return;
   }
 
-  currentSessionId = room.sessionId;
+  room = joinedRoom;
+  currentSessionId = joinedRoom.sessionId;
   lastWinningHand = "-";
   lastWinners = [];
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
   winnersStatus.textContent = "-";
   preloadCardImages();
-  roomStatus.textContent = room.id || "joined";
+  const roomId = (joinedRoom as { id?: string; roomId?: string }).id
+    ?? (joinedRoom as { roomId?: string }).roomId
+    ?? "joined";
+  roomStatus.textContent = roomId;
   log("Joined room.");
 
-  room.onLeave((code) => {
+  joinedRoom.onLeave((code) => {
     if (code === 4001) {
       alert("Tu sesion fue reemplazada por otro ingreso.");
       clearAuthToken();
@@ -428,25 +452,25 @@ async function joinRoom(forceReplace = false) {
     resetRoomUi("left");
   });
 
-  room.onMessage("joined", (payload) => {
+  joinedRoom.onMessage("joined", (payload) => {
     log(`Joined payload: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("playerJoined", (payload) => {
+  joinedRoom.onMessage("playerJoined", (payload) => {
     log(`Player joined: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("bettingRoundStarted", (payload) => {
+  joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("blindsPosted", (payload) => {
+  joinedRoom.onMessage("blindsPosted", (payload) => {
     lastWinners = [];
     winnersStatus.textContent = "-";
     log(`Blinds posted: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("playerAction", (payload) => {
+  joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
   });
 
