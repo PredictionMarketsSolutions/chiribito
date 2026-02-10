@@ -431,6 +431,14 @@ function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
   }
 }
 
+function cardsEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 
 function renderSeats(state: RoomState) {
   const entries = getUserEntries(state).filter(isPlayerState);
@@ -515,16 +523,20 @@ function renderState(state: RoomState) {
   winnersStatus.textContent = lastWinners.join(", ") || "-";
   const community = state.communityCards ? Array.from(state.communityCards) : [];
   communityStatus.textContent = community.length ? community.join(" ") : "-";
-  renderCardRow(communityCardsEl, community, 5);
-  animateCardDeals(communityCardsEl, community, previousCommunityCards);
-  previousCommunityCards = [...community];
+  if (!cardsEqual(community, previousCommunityCards)) {
+    renderCardRow(communityCardsEl, community, 5);
+    animateCardDeals(communityCardsEl, community, previousCommunityCards);
+    previousCommunityCards = [...community];
+  }
   if (currentSessionId) {
     const me = entries.find((player: any) => player.sessionId === currentSessionId);
     const hand = me?.hand ? Array.from(me.hand) : [];
     handStatus.textContent = hand.length ? hand.join(" ") : "-";
-    renderCardRow(handCardsEl, hand, 2);
-    animateCardDeals(handCardsEl, hand, previousHandCards);
-    previousHandCards = [...hand];
+    if (!cardsEqual(hand, previousHandCards)) {
+      renderCardRow(handCardsEl, hand, 2);
+      animateCardDeals(handCardsEl, hand, previousHandCards);
+      previousHandCards = [...hand];
+    }
   } else {
     handStatus.textContent = "-";
     renderCardRow(handCardsEl, [], 2);
