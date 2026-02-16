@@ -33,7 +33,7 @@ export class MyRoomState extends Schema {
 
   resetDeck() {
     const suits = ["O", "C", "E", "B"];
-    const ranks = ["1", "8", "9", "10", "11", "12"];
+    const ranks = ["1", "7", "8", "9", "10", "11", "12"];
     this.deck.clear();
     for (const suit of suits) {
       for (const rank of ranks) {
