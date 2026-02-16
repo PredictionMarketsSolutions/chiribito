@@ -376,10 +376,10 @@ function stopTurnTimer() {
   turnTimerChip.textContent = "-";
 }
 
-function startTurnTimer(turnId: string, timeoutMs = TURN_TIMEOUT_MS) {
+function startTurnTimer(turnId: string, timeoutMs = TURN_TIMEOUT_MS, deadlineMs?: number) {
   lastTurnId = turnId;
   lastTurnTimeoutMs = timeoutMs;
-  turnDeadlineMs = Date.now() + timeoutMs;
+  turnDeadlineMs = typeof deadlineMs === "number" ? deadlineMs : Date.now() + timeoutMs;
 
   const tick = () => {
     if (!turnDeadlineMs) return;
@@ -845,10 +845,10 @@ async function joinRoom(forceReplace = false) {
 
     const clientNow = Date.now();
     const offsetMs = serverTime - clientNow;
-    turnDeadlineMs = startedAt - offsetMs + timeoutMs;
+    const deadlineMs = startedAt - offsetMs + timeoutMs;
     lastTurnId = turnId;
     lastTurnTimeoutMs = timeoutMs;
-    startTurnTimer(turnId, timeoutMs);
+    startTurnTimer(turnId, timeoutMs, deadlineMs);
   });
 
   room.onMessage("roundEnded", (payload) => {
