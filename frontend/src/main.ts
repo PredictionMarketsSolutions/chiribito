@@ -948,3 +948,8 @@ function getBetAmount() {
   }
   active.send("raise", amount);
 });
+
+(document.querySelector("#toggle-panel") as HTMLButtonElement).addEventListener("click", () => {
+  const app = document.querySelector("#app");
+  app?.classList.toggle("panel-collapsed");
+});

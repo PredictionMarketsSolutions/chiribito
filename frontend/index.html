@@ -46,30 +46,10 @@
         <header class="panel-header">
           <div>
             <p class="panel-kicker">Casino Control</p>
-            <h1>Chiribito Table</h1>
+            <h1>Chiribito</h1>
           </div>
-          <div class="panel-pill">Live</div>
+          <button id="toggle-panel" class="panel-toggle" aria-label="Toggle panel">◀</button>
         </header>
-
-        <section class="panel-card panel-actions">
-          <h2>Acciones</h2>
-          <div class="button-row">
-            <button id="start-game" class="accent">Start Game</button>
-            <button id="check">Check</button>
-            <button id="call">Call</button>
-            <button id="fold">Fold</button>
-          </div>
-          <div class="bet-row">
-            <label class="field">
-              <span>Bet / Raise</span>
-              <input id="bet-amount" type="number" min="1" value="20" />
-            </label>
-            <div class="button-row">
-              <button id="bet">Bet</button>
-              <button id="raise">Raise</button>
-            </div>
-          </div>
-        </section>
 
         <section class="panel-card panel-status">
           <h2>Estado</h2>
@@ -187,6 +167,20 @@
               <div class="mobile-seat-title">Jugadores en la mesa</div>
               <ul id="mobile-seats" class="mobile-seat-list"></ul>
             </section>
+          </div>
+
+          <div class="game-actions">
+            <button id="start-game" class="game-btn accent">Start Game</button>
+            <div class="action-group">
+              <button id="check" class="game-btn">Check</button>
+              <button id="call" class="game-btn">Call</button>
+              <button id="fold" class="game-btn">Fold</button>
+            </div>
+            <div class="bet-group">
+              <input id="bet-amount" type="number" min="1" value="20" class="bet-input" placeholder="Amount" />
+              <button id="bet" class="game-btn">Bet</button>
+              <button id="raise" class="game-btn">Raise</button>
+            </div>
           </div>
         </div>
       </main>
