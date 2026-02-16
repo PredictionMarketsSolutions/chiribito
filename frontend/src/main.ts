@@ -819,6 +819,10 @@ async function joinRoom(forceReplace = false) {
     log(`Player joined: ${JSON.stringify(payload)}`);
   });
 
+  joinedRoom.onMessage("playerLeft", (payload) => {
+    log(`Player left: ${JSON.stringify(payload)}`);
+  });
+
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;

@@ -78,6 +78,9 @@ export class MyRoom extends Room<MyRoomState> {
       if (wasCurrentTurn) {
         this.engine.endTurn();
       }
+
+      // Remove player from the room completely
+      this.state.users.delete(client.sessionId);
     }
 
     if (this.playersInHand.length === 1 && this.state.roundStarted) {
@@ -93,6 +96,11 @@ export class MyRoom extends Room<MyRoomState> {
       this.pendingUsers.delete(userId);
       this.sessionUsers.delete(client.sessionId);
     }
+
+    // Notify other players
+    this.broadcast("playerLeft", {
+      id: client.sessionId
+    });
   }
 
   onCreate(options: any) {
