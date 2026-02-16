@@ -1,6 +1,6 @@
 import { Client } from "@colyseus/core";
 import type { MyRoom } from "../MyRoom";
-import { BIG_BLIND, SMALL_BLIND, TURN_TIMEOUT } from "./constants";
+import { TURN_TIMEOUT } from "./constants";
 
 export class GameEngine {
   constructor(private room: MyRoom) {}
@@ -182,42 +182,13 @@ export class GameEngine {
     this.room.state.roundStarted = true;
     this.room.state.phase = "preflop";
 
-    this.postBlinds();
+    this.room.currentPlayerIndex = this.getNextActiveIndexFrom(this.room.dealerIndex);
+    if (this.room.currentPlayerIndex === -1) {
+      this.room.state.roundStarted = false;
+      return;
+    }
+    this.room.state.currentTurn = this.room.playersInHand[this.room.currentPlayerIndex];
     this.startBettingRound();
-  }
-
-  postBlinds() {
-    const players = this.room.playersInHand.map(id => this.room.state.users.get(id)!);
-    const smallBlindPos = (this.room.dealerIndex + 1) % players.length;
-    const bigBlindPos = (this.room.dealerIndex + 2) % players.length;
-
-    const smallBlindPlayer = players[smallBlindPos];
-    const bigBlindPlayer = players[bigBlindPos];
-
-    const smallBlind = Math.min(SMALL_BLIND, smallBlindPlayer.chips);
-    console.log(`[BLIND] ${smallBlindPlayer.name} posts small blind ${smallBlind}`);
-    smallBlindPlayer.chips -= smallBlind;
-    smallBlindPlayer.currentBet = smallBlind;
-    this.addToPot(smallBlind);
-
-    const bigBlind = Math.min(BIG_BLIND, bigBlindPlayer.chips);
-    console.log(`[BLIND] ${bigBlindPlayer.name} posts big blind ${bigBlind}`);
-    bigBlindPlayer.chips -= bigBlind;
-    bigBlindPlayer.currentBet = bigBlind;
-    this.addToPot(bigBlind);
-
-    this.room.state.currentBet = bigBlind;
-
-    this.room.currentPlayerIndex = (bigBlindPos + 1) % players.length;
-    this.room.state.currentTurn = players[this.room.currentPlayerIndex].sessionId;
-
-    this.broadcastBlindsPosted({
-      smallBlind: { playerId: smallBlindPlayer.sessionId, amount: smallBlind },
-      bigBlind: { playerId: bigBlindPlayer.sessionId, amount: bigBlind },
-      currentBet: this.room.state.currentBet,
-      pot: this.room.state.pot
-    });
-
     this.startTurnTimer();
   }
 
@@ -236,34 +207,15 @@ export class GameEngine {
     console.log(`[ROUND] Proceeding to next phase from ${this.room.state.phase}`);
     this.resetBetsForRound();
 
-    switch (this.room.state.phase) {
-      case "preflop":
-        this.room.state.phase = "flop";
-        this.room.state.communityCards.push(
-          this.room.state.dealCard(),
-          this.room.state.dealCard(),
-          this.room.state.dealCard()
-        );
-        break;
-
-      case "flop":
-        this.room.state.phase = "turn";
-        this.room.state.communityCards.push(this.room.state.dealCard());
-        break;
-
-      case "turn":
-        this.room.state.phase = "river";
-        this.room.state.communityCards.push(this.room.state.dealCard());
-        break;
-
-      case "river": {
-        const result = this.determineWinners();
-        this.endRound(result.winners, result.winningHand);
-        return;
-      }
+    if (this.room.state.phase !== "preflop" && this.room.state.communityCards.length >= 5) {
+      const result = this.determineWinners();
+      this.endRound(result.winners, result.winningHand);
+      return;
     }
 
-    this.room.currentPlayerIndex = this.getFirstActivePlayerIndex();
+    this.dealNextCommunityCard();
+
+    this.room.currentPlayerIndex = this.getNextActiveIndexFrom(this.room.dealerIndex);
 
     if (this.room.currentPlayerIndex === -1) {
       this.proceedToNextPhase();
@@ -459,10 +411,29 @@ export class GameEngine {
       .filter(id => !this.room.playersAllIn.has(id));
   }
 
-  private getFirstActivePlayerIndex() {
-    return this.room.playersInHand.findIndex(id =>
-      !this.room.state.users.get(id)!.isFolded && !this.room.playersAllIn.has(id)
-    );
+  private getNextActiveIndexFrom(startIndex: number) {
+    const totalPlayers = this.room.playersInHand.length;
+    if (totalPlayers === 0) return -1;
+
+    let candidateIndex = startIndex;
+    for (let i = 0; i < totalPlayers; i += 1) {
+      candidateIndex = (candidateIndex + 1) % totalPlayers;
+      const candidateId = this.room.playersInHand[candidateIndex];
+      const candidate = this.room.state.users.get(candidateId);
+      if (candidate && !candidate.isFolded && !this.room.playersAllIn.has(candidateId)) {
+        return candidateIndex;
+      }
+    }
+
+    return -1;
+  }
+
+  private dealNextCommunityCard() {
+    const nextCard = this.room.state.dealCard();
+    if (!nextCard) return;
+    this.room.state.communityCards.push(nextCard);
+    const cardNumber = this.room.state.communityCards.length;
+    this.room.state.phase = `card${cardNumber}`;
   }
 
   private resetForNewHand() {
@@ -489,15 +460,6 @@ export class GameEngine {
 
   private addToPot(amount: number) {
     this.room.state.pot += amount;
-  }
-
-  private broadcastBlindsPosted(payload: {
-    smallBlind: { playerId: string; amount: number };
-    bigBlind: { playerId: string; amount: number };
-    currentBet: number;
-    pot: number;
-  }) {
-    this.room.broadcast("blindsPosted", payload);
   }
 
   private broadcastBettingRoundStarted(payload: {

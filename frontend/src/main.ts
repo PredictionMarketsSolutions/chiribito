@@ -824,12 +824,6 @@ async function joinRoom(forceReplace = false) {
     revealedHands = null;
   });
 
-  joinedRoom.onMessage("blindsPosted", (payload) => {
-    lastWinners = [];
-    winnersStatus.textContent = "-";
-    log(`Blinds posted: ${JSON.stringify(payload)}`);
-  });
-
   joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
   });
