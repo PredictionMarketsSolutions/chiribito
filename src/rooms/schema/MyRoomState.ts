@@ -7,6 +7,7 @@ export class Player extends Schema {
   @type("number") chips: number = 1000;
   @type("number") currentBet: number = 0;
   @type("boolean") isFolded: boolean = false;
+  @type("number") seatIndex: number = -1;
 
   constructor(sessionId: string) {
     super();

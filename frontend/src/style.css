@@ -335,6 +335,10 @@ button.accent {
   text-transform: uppercase;
 }
 
+.badge.timer span {
+  font-variant-numeric: tabular-nums;
+}
+
 .seats {
   position: absolute;
   inset: 10px;

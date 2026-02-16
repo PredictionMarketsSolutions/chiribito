@@ -1,8 +1,7 @@
 import { Room, Client } from "@colyseus/core";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import * as jwt from "jsonwebtoken";
-import { GameActions } from "./game/GameActions";
-import { setCurrentPlayerIndexBeforeNextActive } from "./game/state/mutations";
+import { GameEngine } from "./game/GameEngine";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
@@ -14,23 +13,100 @@ export class MyRoom extends Room<MyRoomState> {
   public playersInHand: string[] = [];
   public playersActedThisRound: Set<string> = new Set();
   public playersAllIn: Set<string> = new Set();
-  private actions!: GameActions;
+  private engine!: GameEngine;
   private activeUsers: Map<number, string> = new Map();
   private sessionUsers: Map<string, number> = new Map();
   private pendingUsers: Set<number> = new Set();
+  private reconnectionTimeoutSeconds = 60;
+
+  private getNextAvailableSeat(): number {
+    const occupied = new Set<number>();
+    this.state.users.forEach((player) => {
+      if (player.seatIndex >= 0) occupied.add(player.seatIndex);
+    });
+
+    for (let i = 0; i < this.maxClients; i += 1) {
+      if (!occupied.has(i)) return i;
+    }
+    return -1;
+  }
+
+  private replaceSession(oldSessionId: string, newClient: Client) {
+    const existingPlayer = this.state.users.get(oldSessionId);
+    if (!existingPlayer) return;
+
+    existingPlayer.sessionId = newClient.sessionId;
+    this.state.users.delete(oldSessionId);
+    this.state.users.set(newClient.sessionId, existingPlayer);
+
+    this.playersInHand = this.playersInHand.map(id => id === oldSessionId ? newClient.sessionId : id);
+    if (this.state.currentTurn === oldSessionId) {
+      this.state.currentTurn = newClient.sessionId;
+    }
+
+    const userId = this.sessionUsers.get(oldSessionId);
+    if (userId) {
+      this.activeUsers.set(userId, newClient.sessionId);
+      this.sessionUsers.delete(oldSessionId);
+      this.sessionUsers.set(newClient.sessionId, userId);
+      this.pendingUsers.delete(userId);
+    }
+
+    newClient.send("reconnected", {
+      id: newClient.sessionId,
+      name: existingPlayer.name,
+      chips: existingPlayer.chips
+    });
+  }
+
+  private handleLeaveCleanup(client: Client) {
+    const player = this.state.users.get(client.sessionId);
+    console.log(`[LEAVE] ${player?.name ?? "Unknown"} (${client.sessionId})`);
+    if (player) {
+      const wasCurrentTurn = this.state.currentTurn === client.sessionId;
+      const foldIndex = this.playersInHand.indexOf(client.sessionId);
+      player.isFolded = true;
+      const playerIndex = this.playersInHand.indexOf(client.sessionId);
+      if (playerIndex > -1) {
+        this.playersInHand.splice(playerIndex, 1);
+      }
+
+      if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
+        this.engine.setCurrentPlayerIndexBeforeNextActive(foldIndex);
+      }
+
+      if (wasCurrentTurn) {
+        this.engine.endTurn();
+      }
+    }
+
+    if (this.playersInHand.length === 1 && this.state.roundStarted) {
+      this.engine.endRound([this.playersInHand[0]], "Gana por fold");
+    }
+
+    const userId = this.sessionUsers.get(client.sessionId);
+    if (userId) {
+      const currentSessionId = this.activeUsers.get(userId);
+      if (currentSessionId === client.sessionId) {
+        this.activeUsers.delete(userId);
+      }
+      this.pendingUsers.delete(userId);
+      this.sessionUsers.delete(client.sessionId);
+    }
+  }
 
   onCreate(options: any) {
     this.setState(new MyRoomState());
     this.autoDispose = false;
-    this.actions = new GameActions(this);
+    this.engine = new GameEngine(this);
 
     // Game messages
-    this.onMessage("startGame", (client) => this.actions.handleStartGame(client));
-    this.onMessage("bet", (client, amount: number) => this.actions.handleBet(client, amount));
-    this.onMessage("call", (client) => this.actions.handleCall(client));
-    this.onMessage("check", (client) => this.actions.handleCheck(client));
-    this.onMessage("fold", (client) => this.actions.handleFold(client));
-    this.onMessage("raise", (client, amount: number) => this.actions.handleRaise(client, amount));
+    this.onMessage("startGame", (client) => this.engine.handleStartGame(client));
+    this.onMessage("bet", (client, amount: number) => this.engine.handleBet(client, amount));
+    this.onMessage("call", (client) => this.engine.handleCall(client));
+    this.onMessage("check", (client) => this.engine.handleCheck(client));
+    this.onMessage("fold", (client) => this.engine.handleFold(client));
+    this.onMessage("raise", (client, amount: number) => this.engine.handleRaise(client, amount));
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
@@ -83,15 +159,34 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private async validateTokenRemote(token: string): Promise<void> {
-    const response = await fetch(`${API_URL}/api/auth/validate`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const maxAttempts = 2;
+    const timeoutMs = 3000;
 
-    if (!response.ok) {
-      throw new Error("INVALID_TOKEN");
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/validate`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error("INVALID_TOKEN");
+        }
+        return;
+      } catch (err) {
+        if (attempt >= maxAttempts) {
+          throw err instanceof Error ? err : new Error("AUTH_UNAVAILABLE");
+        }
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -101,9 +196,14 @@ export class MyRoom extends Room<MyRoomState> {
       ? options.replaceSessionId
       : "";
 
+    const previousSeatIndex = replaceSessionId
+      ? this.state.users.get(replaceSessionId)?.seatIndex ?? -1
+      : -1;
+
     const player = new Player(client.sessionId);
     player.name = options.name || options.authUser?.username || `Player-${client.sessionId.slice(0, 4)}`;
     player.chips = options.chips || 1000;
+    player.seatIndex = previousSeatIndex >= 0 ? previousSeatIndex : this.getNextAvailableSeat();
 
     if (replaceSessionId) {
       const previousClient = this.clients.find(c => c.sessionId === replaceSessionId);
@@ -166,42 +266,20 @@ export class MyRoom extends Room<MyRoomState> {
     }, { except: client });
   }
 
-  onLeave(client: Client, consented: boolean) {
-    const player = this.state.users.get(client.sessionId);
-    console.log(`[LEAVE] ${player?.name ?? "Unknown"} (${client.sessionId})`);
-    if (player) {
-      const wasCurrentTurn = this.state.currentTurn === client.sessionId;
-      const foldIndex = this.playersInHand.indexOf(client.sessionId);
-      player.isFolded = true;
-      // Remove from active players
-      const playerIndex = this.playersInHand.indexOf(client.sessionId);
-      if (playerIndex > -1) {
-        this.playersInHand.splice(playerIndex, 1);
-      }
-
-      if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
-        setCurrentPlayerIndexBeforeNextActive(this, foldIndex);
-      }
-
-      if (wasCurrentTurn) {
-        this.actions.endTurn();
-      }
-    }
-    
-    // If only one player remains, they win
-    if (this.playersInHand.length === 1 && this.state.roundStarted) {
-      this.actions.endRound([this.playersInHand[0]], "Gana por fold");
-    }
-
+  async onLeave(client: Client, consented: boolean) {
     const userId = this.sessionUsers.get(client.sessionId);
-    if (userId) {
-      const currentSessionId = this.activeUsers.get(userId);
-      if (currentSessionId === client.sessionId) {
-        this.activeUsers.delete(userId);
+
+    if (!consented && userId) {
+      try {
+        const reconnected = await this.allowReconnection(client, this.reconnectionTimeoutSeconds);
+        this.replaceSession(client.sessionId, reconnected);
+        return;
+      } catch {
+        // Reconnection failed or timed out. Continue cleanup.
       }
-      this.pendingUsers.delete(userId);
-      this.sessionUsers.delete(client.sessionId);
     }
+
+    this.handleLeaveCleanup(client);
   }
 
   onDispose() {

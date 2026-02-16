@@ -22,6 +22,7 @@ const handCardsEl = document.querySelector<HTMLDivElement>("#hand-cards")!;
 const potChip = document.querySelector<HTMLSpanElement>("#pot-chip")!;
 const phaseChip = document.querySelector<HTMLSpanElement>("#phase-chip")!;
 const turnChip = document.querySelector<HTMLSpanElement>("#turn-chip")!;
+const turnTimerChip = document.querySelector<HTMLSpanElement>("#turn-timer")!;
 const winningHandChip = document.querySelector<HTMLSpanElement>("#winning-hand-chip")!;
 const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
 const playersList = document.querySelector<HTMLUListElement>("#players")!;
@@ -117,6 +118,12 @@ let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
 let pixiLib: typeof PixiModule | null = null;
 let revealedHands: Record<string, string[]> | null = null;
+let turnTimerId: number | null = null;
+let turnDeadlineMs: number | null = null;
+let lastTurnId: string | null = null;
+let lastTurnTimeoutMs: number | null = null;
+
+const TURN_TIMEOUT_MS = 30000;
 
 type PlayerState = {
   sessionId: string;
@@ -124,6 +131,7 @@ type PlayerState = {
   chips: number;
   currentBet: number;
   isFolded: boolean;
+  seatIndex: number;
   hand?: string[];
 };
 
@@ -146,7 +154,8 @@ function isPlayerState(value: unknown): value is PlayerState {
     typeof record.name === "string" &&
     typeof record.chips === "number" &&
     typeof record.currentBet === "number" &&
-    typeof record.isFolded === "boolean"
+    typeof record.isFolded === "boolean" &&
+    typeof record.seatIndex === "number"
   );
 }
 
@@ -337,6 +346,7 @@ function resetRoomUi(message?: string) {
   roomStatus.textContent = message || "not joined";
   phaseStatus.textContent = "waiting";
   turnStatus.textContent = "-";
+  stopTurnTimer();
   potStatus.textContent = "0";
   betStatus.textContent = "0";
   communityStatus.textContent = "-";
@@ -346,12 +356,57 @@ function resetRoomUi(message?: string) {
   potChip.textContent = "0";
   phaseChip.textContent = "waiting";
   turnChip.textContent = "-";
+  turnTimerChip.textContent = "-";
   winningHandChip.textContent = "-";
   renderCardRow(communityCardsEl, [], 5);
   renderCardRow(handCardsEl, [], 2);
   playersList.innerHTML = "";
   renderSeats({ users: new Map(), dealerIndex: -1, currentTurn: "" });
   updateActionButtons(null);
+}
+
+function stopTurnTimer() {
+  if (turnTimerId !== null) {
+    window.clearInterval(turnTimerId);
+    turnTimerId = null;
+  }
+  turnDeadlineMs = null;
+  lastTurnId = null;
+  lastTurnTimeoutMs = null;
+  turnTimerChip.textContent = "-";
+}
+
+function startTurnTimer(turnId: string, timeoutMs = TURN_TIMEOUT_MS) {
+  lastTurnId = turnId;
+  lastTurnTimeoutMs = timeoutMs;
+  turnDeadlineMs = Date.now() + timeoutMs;
+
+  const tick = () => {
+    if (!turnDeadlineMs) return;
+    const remainingMs = turnDeadlineMs - Date.now();
+    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    turnTimerChip.textContent = `${remainingSeconds}s`;
+  };
+
+  if (turnTimerId !== null) {
+    window.clearInterval(turnTimerId);
+  }
+  tick();
+  turnTimerId = window.setInterval(tick, 250);
+}
+
+function updateTurnTimer(state: RoomState) {
+  const turnId = state.currentTurn ?? "";
+  const roundActive = Boolean(state.roundStarted);
+
+  if (!roundActive || !turnId) {
+    stopTurnTimer();
+    return;
+  }
+
+  if (turnId !== lastTurnId || turnDeadlineMs === null) {
+    startTurnTimer(turnId, lastTurnTimeoutMs ?? TURN_TIMEOUT_MS);
+  }
 }
 
 function clearAuthToken() {
@@ -399,7 +454,7 @@ function startTokenMonitor() {
 
 function preloadCardImages() {
   const suits = ["O", "C", "E", "B"];
-  const ranks = ["1", "8", "9", "10", "11", "12"];
+  const ranks = ["1", "7", "8", "9", "10", "11", "12"];
   const sources = ["/cards/back_logo.png"];
 
   suits.forEach(suit => {
@@ -544,6 +599,8 @@ function renderPlayers(state: RoomState) {
   const entries = getUserEntries(state).filter(isPlayerState);
   const currentTurnId = state.currentTurn ?? "";
 
+  entries.sort((a, b) => a.seatIndex - b.seatIndex);
+
   entries.forEach((player) => {
     const li = document.createElement("li");
     const isYou = currentSessionId && player.sessionId === currentSessionId ? " (you)" : "";
@@ -578,15 +635,16 @@ function renderPlayers(state: RoomState) {
 function renderState(state: RoomState) {
   if (!state) return;
   phaseStatus.textContent = state.phase ?? "-";
-  const entries = getUserEntries(state);
+  const entries = getUserEntries(state).filter(isPlayerState);
   const currentTurnId = state.currentTurn ?? "";
-  const turnPlayer = entries.find((player: any) => player.sessionId === currentTurnId);
+  const turnPlayer = entries.find((player) => player.sessionId === currentTurnId);
   turnStatus.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
   potStatus.textContent = String(state.pot ?? 0);
   betStatus.textContent = String(state.currentBet ?? 0);
   potChip.textContent = String(state.pot ?? 0);
   phaseChip.textContent = state.phase ?? "waiting";
   turnChip.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
+  updateTurnTimer(state);
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
   winnersStatus.textContent = lastWinners.join(", ") || "-";
@@ -622,8 +680,8 @@ function updateActionButtons(state: RoomState | null) {
     return;
   }
 
-  const entries = getUserEntries(state);
-  const me = entries.find((player: any) => player.sessionId === currentSessionId);
+  const entries = getUserEntries(state).filter(isPlayerState);
+  const me = entries.find((player) => player.sessionId === currentSessionId);
   const isMyTurn = Boolean(me) && state.currentTurn === currentSessionId;
   const isActive = Boolean(me) && !me?.isFolded && Boolean(state.roundStarted);
   const canAct = isMyTurn && isActive;
@@ -774,6 +832,23 @@ async function joinRoom(forceReplace = false) {
 
   joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
+  });
+
+  joinedRoom.onMessage("turnTimer", (payload) => {
+    if (!payload || typeof payload !== "object") return;
+    const record = payload as Record<string, unknown>;
+    const turnId = typeof record.currentTurn === "string" ? record.currentTurn : "";
+    const startedAt = typeof record.startedAt === "number" ? record.startedAt : null;
+    const timeoutMs = typeof record.timeoutMs === "number" ? record.timeoutMs : TURN_TIMEOUT_MS;
+    const serverTime = typeof record.serverTime === "number" ? record.serverTime : null;
+    if (!turnId || startedAt === null || serverTime === null) return;
+
+    const clientNow = Date.now();
+    const offsetMs = serverTime - clientNow;
+    turnDeadlineMs = startedAt - offsetMs + timeoutMs;
+    lastTurnId = turnId;
+    lastTurnTimeoutMs = timeoutMs;
+    startTurnTimer(turnId, timeoutMs);
   });
 
   room.onMessage("roundEnded", (payload) => {
