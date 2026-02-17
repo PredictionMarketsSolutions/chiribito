@@ -19,6 +19,12 @@ export class MyRoom extends Room<MyRoomState> {
   private pendingUsers: Set<number> = new Set();
   private reconnectionTimeoutSeconds = 60;
 
+  // Heartbeat & connection monitoring
+  private clientHeartbeats: Map<string, number> = new Map();
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private readonly HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
+  private readonly HEARTBEAT_TIMEOUT_MS = 90000; // 90 seconds (3 missed heartbeats)
+
   private getNextAvailableSeat(): number {
     const occupied = new Set<number>();
     this.state.users.forEach((player) => {
@@ -29,6 +35,51 @@ export class MyRoom extends Room<MyRoomState> {
       if (!occupied.has(i)) return i;
     }
     return -1;
+  }
+
+  /**
+   * Start monitoring client heartbeats to detect dead connections
+   * Sends periodic heartbeat requests to all clients
+   */
+  private startHeartbeatMonitor() {
+    this.heartbeatInterval = setInterval(() => {
+      const now = Date.now();
+      const deadClients: string[] = [];
+
+      // Check for unresponsive clients
+      this.clients.forEach(client => {
+        const lastHeartbeat = this.clientHeartbeats.get(client.sessionId) ?? Date.now();
+        const timeSinceLastHeartbeat = now - lastHeartbeat;
+
+        if (timeSinceLastHeartbeat > this.HEARTBEAT_TIMEOUT_MS) {
+          console.warn(`[HEARTBEAT] Client ${client.sessionId} is unresponsive (${timeSinceLastHeartbeat}ms without heartbeat)`);
+          deadClients.push(client.sessionId);
+        }
+      });
+
+      // Force disconnect dead clients
+      deadClients.forEach(sessionId => {
+        const client = this.clients.find(c => c.sessionId === sessionId);
+        if (client) {
+          console.log(`[HEARTBEAT] Forcing disconnect for unresponsive client ${sessionId}`);
+          client.close(4000, "Heartbeat timeout");
+        }
+      });
+
+      // Send heartbeat request to all healthy clients
+      this.broadcast("heartbeat");
+    }, this.HEARTBEAT_INTERVAL_MS);
+  }
+
+  /**
+   * Stop heartbeat monitoring when room is disposed
+   */
+  private stopHeartbeatMonitor() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    this.clientHeartbeats.clear();
   }
 
   private replaceSession(oldSessionId: string, newClient: Client) {
@@ -115,6 +166,15 @@ export class MyRoom extends Room<MyRoomState> {
     this.onMessage("check", (client) => this.engine.handleCheck(client));
     this.onMessage("fold", (client) => this.engine.handleFold(client));
     this.onMessage("raise", (client, amount: number) => this.engine.handleRaise(client, amount));
+
+    // Heartbeat message to detect dead connections
+    this.onMessage("heartbeat", (client) => {
+      this.clientHeartbeats.set(client.sessionId, Date.now());
+      client.send("heartbeat_ack");
+    });
+
+    // Start heartbeat monitoring
+    this.startHeartbeatMonitor();
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
@@ -166,34 +226,60 @@ export class MyRoom extends Room<MyRoomState> {
     return options.authUser;
   }
 
+  /**
+   * Validate token with API server using exponential backoff
+   * This ensures token is still valid and user still exists
+   */
   private async validateTokenRemote(token: string): Promise<void> {
-    const maxAttempts = 2;
-    const timeoutMs = 3000;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const maxAttempts = 3;
+    const initialDelayMs = 500;
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const controller = new AbortController();
+      // Increased timeout: 8 seconds for slower networks
+      const timeoutMs = 8000;
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(`${API_URL}/api/auth/validate`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
           },
           signal: controller.signal
         });
 
         if (!response.ok) {
-          throw new Error("INVALID_TOKEN");
+          if (response.status === 401 || response.status === 403) {
+            throw new Error("INVALID_TOKEN");
+          }
+          throw new Error(`HTTP ${response.status}`);
         }
+        
+        // Token valid
         return;
       } catch (err) {
-        if (attempt >= maxAttempts) {
+        clearTimeout(timeoutId);
+        
+        const isLastAttempt = attempt >= maxAttempts;
+        const isAuthError = err instanceof Error && err.message === "INVALID_TOKEN";
+        
+        // Don't retry auth errors - fail immediately
+        if (isAuthError) {
+          throw err;
+        }
+        
+        // For network errors, use exponential backoff
+        if (isLastAttempt) {
+          console.error(`[AUTH] Token validation failed after ${maxAttempts} attempts:`, err);
           throw err instanceof Error ? err : new Error("AUTH_UNAVAILABLE");
         }
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } finally {
-        clearTimeout(timeoutId);
+        
+        // Exponential backoff: 500ms, 1s, 2s
+        const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
+        console.warn(`[AUTH] Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
   }
@@ -293,6 +379,8 @@ export class MyRoom extends Room<MyRoomState> {
   onDispose() {
     console.log("room", this.roomId, "disposing...");
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
+    // Stop heartbeat monitoring
+    this.stopHeartbeatMonitor();
   }
 
 }

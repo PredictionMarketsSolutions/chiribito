@@ -23,7 +23,9 @@ const dbConfig: DataSourceOptions = {
       : "src/migrations/*.ts"
   ],
   subscribers: [],
-  ssl: sslEnabled ? { rejectUnauthorized: false } : false,
+  ssl: sslEnabled ? { 
+    rejectUnauthorized: process.env.NODE_ENV === 'production' 
+  } : false,
 };
 
 export const AppDataSource = new DataSource(dbConfig);

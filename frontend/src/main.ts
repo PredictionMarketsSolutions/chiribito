@@ -98,9 +98,19 @@ async function request(path: string, body: unknown) {
 }
 
 function getFormValues() {
-  const username = (document.querySelector("#username") as HTMLInputElement).value.trim() || "test1";
-  const email = (document.querySelector("#email") as HTMLInputElement).value.trim() || "test1@example.com";
-  const password = (document.querySelector("#password") as HTMLInputElement).value || "123456";
+  const username = (document.querySelector("#username") as HTMLInputElement).value.trim();
+  const email = (document.querySelector("#email") as HTMLInputElement).value.trim();
+  const password = (document.querySelector("#password") as HTMLInputElement).value;
+  
+  if (!username || !email || !password) {
+    const missing = [
+      !username ? "username" : "",
+      !email ? "email" : "",
+      !password ? "password" : ""
+    ].filter(Boolean).join(", ");
+    throw new Error(`Missing required fields: ${missing}`);
+  }
+  
   return { username, email, password };
 }
 
@@ -113,6 +123,15 @@ let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: PixiModule.Application | null = null;
 let pixiLayer: HTMLDivElement | null = null;
+
+// Connection monitoring
+let connectionState: "disconnected" | "connecting" | "connected" = "disconnected";
+let reconnectAttempts = 0;
+let heartbeatTimeoutId: number | null = null;
+let clientHeartbeatId: number | null = null;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const HEARTBEAT_INTERVAL_MS = 25000; // 25 seconds (matches server 30s)
+const HEARTBEAT_TIMEOUT_MS = 10000; // 10 seconds to receive ack
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
@@ -749,22 +768,93 @@ async function login() {
   setAuthMessage("Login correcto. Puedes unirte a la mesa.", "success");
 }
 
+/**
+ * Start sending heartbeat to server to keep connection alive
+ */
+function startClientHeartbeat() {
+  stopClientHeartbeat();
+  
+  clientHeartbeatId = window.setInterval(() => {
+    if (room) {
+      room.send("heartbeat");
+      
+      // Wait for ack with timeout
+      heartbeatTimeoutId = window.setTimeout(() => {
+        console.warn("Heartbeat timeout - server not responding");
+        if (room) {
+          room.leave();
+        }
+      }, HEARTBEAT_TIMEOUT_MS);
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+}
+
+/**
+ * Stop sending heartbeat
+ */
+function stopClientHeartbeat() {
+  if (clientHeartbeatId !== null) {
+    clearInterval(clientHeartbeatId);
+    clientHeartbeatId = null;
+  }
+  if (heartbeatTimeoutId !== null) {
+    clearTimeout(heartbeatTimeoutId);
+    heartbeatTimeoutId = null;
+  }
+}
+
+/**
+ * Update connection state and log
+ */
+function setConnectionState(state: "disconnected" | "connecting" | "connected") {
+  connectionState = state;
+  const stateEmojis = {
+    disconnected: "⚫",
+    connecting: "🟡",
+    connected: "🟢"
+  };
+  log(`[${stateEmojis[state]}] Connection: ${state}`);
+}
+
+/**
+ * Reconnect with exponential backoff
+ */
+async function attemptReconnect() {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    log("❌ Max reconnection attempts reached. Please refresh and login again.");
+    clearAuthToken();
+    return;
+  }
+
+  reconnectAttempts++;
+  const baseDelayMs = 1000;
+  const delayMs = baseDelayMs * Math.pow(2, reconnectAttempts - 1);
+  
+  log(`🔄 Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms...`);
+  
+  await new Promise(resolve => setTimeout(resolve, delayMs));
+  
+  if (token && connectionState === "disconnected") {
+    await joinRoom(true);
+  }
+}
+
 async function joinRoom(forceReplace = false) {
   if (!token) {
     log("No token. Login or register first.");
+    setConnectionState("disconnected");
     return;
   }
 
   const { username } = getFormValues();
+  setConnectionState("connecting");
   log("Connecting to Colyseus...");
 
   const client = new Client(WS_URL);
-  (client as any).auth = { token };
-
+  
   let joinedRoom: Room;
   try {
     joinedRoom = await client.joinOrCreate("my_room", {
-      token,
       auth: { token },
       name: username,
       forceReplace
@@ -775,20 +865,26 @@ async function joinRoom(forceReplace = false) {
       const shouldReplace = window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?");
       if (shouldReplace) {
         await joinRoom(true);
+      } else {
+        setConnectionState("disconnected");
       }
       return;
     }
     if (message.includes("INVALID_TOKEN")) {
+      setConnectionState("disconnected");
       handleTokenInvalidated();
       return;
     }
     log(`Join error: ${message}`);
+    setConnectionState("disconnected");
     return;
   }
 
   room = joinedRoom;
   currentSessionId = joinedRoom.sessionId;
   setAuthOverlayVisible(false);
+  setConnectionState("connected");
+  reconnectAttempts = 0;
   lastWinningHand = "-";
   lastWinners = [];
   winningHandStatus.textContent = lastWinningHand;
@@ -799,16 +895,26 @@ async function joinRoom(forceReplace = false) {
     ?? (joinedRoom as { roomId?: string }).roomId
     ?? "joined";
   roomStatus.textContent = roomId;
-  log("Joined room.");
+  log("Joined room successfully.");
+  
+  // Start client-side heartbeat to monitor connection
+  startClientHeartbeat();
 
   joinedRoom.onLeave((code) => {
+    stopClientHeartbeat();
+    
     if (code === 4001) {
       alert("Tu sesion fue reemplazada por otro ingreso.");
       clearAuthToken();
       resetRoomUi("replaced");
+      setConnectionState("disconnected");
       return;
     }
-    resetRoomUi("left");
+    
+    // Unexpected disconnect - attempt to reconnect
+    log(`Disconnected from room (code: ${code}). Attempting to reconnect...`);
+    setConnectionState("disconnected");
+    attemptReconnect();
   });
 
   joinedRoom.onMessage("joined", (payload) => {
@@ -821,6 +927,17 @@ async function joinRoom(forceReplace = false) {
 
   joinedRoom.onMessage("playerLeft", (payload) => {
     log(`Player left: ${JSON.stringify(payload)}`);
+  });
+
+  joinedRoom.onMessage("heartbeat_ack", () => {
+    // Reset heartbeat timeout when ACK is received
+    if (heartbeatTimeoutId !== null) {
+      clearTimeout(heartbeatTimeoutId);
+      heartbeatTimeoutId = null;
+    }
+    if (connectionState !== "connected") {
+      setConnectionState("connected");
+    }
   });
 
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {

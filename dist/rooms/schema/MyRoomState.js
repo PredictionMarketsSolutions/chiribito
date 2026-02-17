@@ -16,6 +16,7 @@ class Player extends schema_1.Schema {
         this.chips = 1000;
         this.currentBet = 0;
         this.isFolded = false;
+        this.seatIndex = -1;
         this.sessionId = sessionId;
     }
 }
@@ -38,6 +39,9 @@ __decorate([
 __decorate([
     (0, schema_1.type)("boolean")
 ], Player.prototype, "isFolded", void 0);
+__decorate([
+    (0, schema_1.type)("number")
+], Player.prototype, "seatIndex", void 0);
 class MyRoomState extends schema_1.Schema {
     constructor() {
         super();
@@ -47,14 +51,15 @@ class MyRoomState extends schema_1.Schema {
         this.pot = 0;
         this.currentBet = 0;
         this.currentTurn = "";
+        this.dealerIndex = 0;
         this.roundStarted = false;
         this.phase = "waiting"; // waiting, preflop, flop, turn, river
         this.lastRaiser = "";
         this.resetDeck();
     }
     resetDeck() {
-        const suits = ["H", "D", "C", "S"];
-        const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+        const suits = ["O", "C", "E", "B"];
+        const ranks = ["1", "7", "8", "9", "10", "11", "12"];
         this.deck.clear();
         for (const suit of suits) {
             for (const rank of ranks) {
@@ -90,6 +95,9 @@ __decorate([
 __decorate([
     (0, schema_1.type)("string")
 ], MyRoomState.prototype, "currentTurn", void 0);
+__decorate([
+    (0, schema_1.type)("number")
+], MyRoomState.prototype, "dealerIndex", void 0);
 __decorate([
     (0, schema_1.type)("boolean")
 ], MyRoomState.prototype, "roundStarted", void 0);

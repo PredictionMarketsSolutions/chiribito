@@ -1,29 +1,50 @@
 import { auth } from "@colyseus/auth";
+import * as bcrypt from "bcryptjs";
 
 const fakeDb: any[] = [];
+const BCRYPT_ROUNDS = process.env.NODE_ENV === "production" ? 12 : 10;
 
+// Find user by email (for login)
 auth.settings.onFindUserByEmail = async (email) => {
-  const userFound = fakeDb.find((user) => user.email === email);;
+  const userFound = fakeDb.find((user) => user.email === email);
 
-  console.log("onFindUserByEmail", userFound);
+  // Log without exposing password
+  if (process.env.NODE_ENV === "development") {
+    console.log("onFindUserByEmail:", userFound ? `found ${userFound.email}` : "not found");
+  }
 
-  // return a copy of the user object
-  return userFound && JSON.parse(JSON.stringify(userFound));
+  // Return user object without the password hash
+  if (!userFound) return null;
+  const { passwordHash, ...userWithoutPassword } = userFound;
+  return userWithoutPassword;
 };
 
+// Register with email and password
 auth.settings.onRegisterWithEmailAndPassword = async (email, password) => {
-  const user = { email, password, name: email.split("@")[0], errorServerIsStringButClientIsInt: "this should not crash the client", someAdditionalData: true, };
+  // Hash the password with bcrypt
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  
+  const user = { 
+    email, 
+    passwordHash,
+    name: email.split("@")[0],
+    createdAt: new Date().toISOString(),
+  };
 
-  // keep a copy of the user object
+  // Store the user object
   fakeDb.push(JSON.parse(JSON.stringify(user)));
-
-  return user;
+  
+  // Return without password
+  const { passwordHash: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
 };
 
+// Register anonymously
 auth.settings.onRegisterAnonymously = async (options) => {
   return {
-    anonymousId: Math.round(Math.random() * 1000),
+    anonymousId: Math.round(Math.random() * 1000000),
     anonymous: true,
+    createdAt: new Date().toISOString(),
     ...options
   };
 };

@@ -16,30 +16,43 @@ Optional:
 
 ## Environment files
 
-### Root `.env` (Colyseus)
+### Root `.env` (Colyseus) - SECURITY CRITICAL
 
-```
+```env
 PORT=2567
-JWT_SECRET=your_secret_here
+JWT_SECRET=use-a-strong-random-secret-here-min-32-chars
+NODE_ENV=development
+MONITOR_PASSWORD=your-secure-monitor-password
 ```
 
-### `api-server/.env` (API)
+⚠️ **Security Notes:**
+- `JWT_SECRET` must be at least 32 random characters in production
+- `MONITOR_PASSWORD` protects `/colyseus` and `/playground` admin routes
+- Never commit `.env` with real secrets
 
-```
+### `api-server/.env` (API) - SECURITY CRITICAL
+
+```env
 PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=StrongPassw0rd!
-DB_NAME=PokerBase
+DB_USERNAME=postgres
+DB_PASSWORD=use-a-strong-password
+DB_DATABASE=PokerBase
 DB_SSL=false
-JWT_SECRET=your_secret_here
+JWT_SECRET=use-a-strong-random-secret-here-min-32-chars
 NODE_ENV=development
 ```
 
+⚠️ **Security Notes:**
+- `DB_PASSWORD` must be strong in production
+- `JWT_SECRET` must match root `.env` value
+- Set `DB_SSL=true` and use proper certificates in production
+- Set `NODE_ENV=production` for production deployments
+
 ### `frontend/.env` (Frontend)
 
-```
+```env
 VITE_API_URL=http://localhost:3000
 VITE_WS_URL=ws://localhost:2567
 ```

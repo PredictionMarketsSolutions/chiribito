@@ -9,42 +9,72 @@ const monitor_1 = require("@colyseus/monitor");
 const playground_1 = require("@colyseus/playground");
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
-/**
- * Import your Room files
- */
 const MyRoom_1 = require("./rooms/MyRoom");
 const auth_1 = __importDefault(require("./config/auth"));
-const colyseus_1 = require("colyseus");
+const core_1 = require("@colyseus/core");
 exports.default = (0, tools_1.default)({
     options: {
     // devMode: true,
     // driver: new RedisDriver(),
     // presence: new RedisPresence(),
     },
-    initializeTransport: (options) => new ws_transport_1.WebSocketTransport(options),
+    initializeTransport: (options) => {
+        // Create transport and attach compatibility helpers that some @colyseus/core
+        // router code expects (either `expressApp` property or `getExpressApp()` method).
+        const transport = new ws_transport_1.WebSocketTransport(options);
+        // prefer existing property if present
+        try {
+            // attach expressApp for @colyseus/tools compatibility
+            transport.expressApp = options.app;
+        }
+        catch (e) {
+            // ignore
+        }
+        // attach getExpressApp for @colyseus/core router compatibility
+        if (typeof transport.getExpressApp !== 'function') {
+            transport.getExpressApp = () => options.app;
+        }
+        return transport;
+    },
     initializeGameServer: (gameServer) => {
         /**
          * Define your room handlers:
          */
         gameServer.define('my_room', MyRoom_1.MyRoom);
-        gameServer.define('lobby', colyseus_1.LobbyRoom);
+        gameServer.define('lobby', core_1.LobbyRoom);
     },
     initializeExpress: (app) => {
         /**
          * Bind your custom express routes here:
          */
-        app.get("/", (req, res) => {
-            var _a;
-            res.send(`Instance ID => ${(_a = process.env.NODE_APP_INSTANCE) !== null && _a !== void 0 ? _a : "NONE"}`);
+        app.get("/", (_req, res) => {
+            res.send("Server running");
         });
+        // Middleware to protect /colyseus and /playground routes
+        const protectRoute = (req, res, next) => {
+            const password = process.env.MONITOR_PASSWORD;
+            if (!password) {
+                console.warn("⚠️ MONITOR_PASSWORD not set - /colyseus and /playground are publicly accessible");
+                return next();
+            }
+            const authHeader = req.headers["authorization"];
+            if (!authHeader) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            const token = authHeader.replace("Bearer ", "");
+            if (token !== password) {
+                return res.status(403).json({ error: "Forbidden" });
+            }
+            next();
+        };
         /**
-         * Bind @colyseus/monitor
-         * It is recommended to protect this route with a password.
-         * Read more: https://docs.colyseus.io/tools/monitor/
+         * Bind @colyseus/monitor (PROTECTED)
+         * Requires MONITOR_PASSWORD environment variable
+         * Usage: Authorization: Bearer <password>
          */
-        app.use("/colyseus", (0, monitor_1.monitor)());
-        // Bind "playground"
-        app.use("/playground", (0, playground_1.playground)());
+        app.use("/colyseus", protectRoute, (0, monitor_1.monitor)());
+        // Bind "playground" (PROTECTED)
+        app.use("/playground", protectRoute, (0, playground_1.playground)());
         // Bind auth routes
         app.use(auth_1.default.prefix, auth_1.default.routes());
     },

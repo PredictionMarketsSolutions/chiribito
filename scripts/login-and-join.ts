@@ -3,9 +3,19 @@ import { Client } from "colyseus.js";
 const API_URL = process.env.API_URL || "http://localhost:3000";
 const WS_URL = process.env.WS_URL || "ws://localhost:2567";
 
-const USERNAME = process.env.TEST_USERNAME || "test1";
-const EMAIL = process.env.TEST_EMAIL || "test1@example.com";
-const PASSWORD = process.env.TEST_PASSWORD || "123456";
+// Require credentials from environment variables
+const USERNAME = process.env.TEST_USERNAME;
+const EMAIL = process.env.TEST_EMAIL;
+const PASSWORD = process.env.TEST_PASSWORD;
+
+if (!USERNAME || !EMAIL || !PASSWORD) {
+  console.error("❌ Error: Missing required environment variables:");
+  if (!USERNAME) console.error("   - TEST_USERNAME");
+  if (!EMAIL) console.error("   - TEST_EMAIL");
+  if (!PASSWORD) console.error("   - TEST_PASSWORD");
+  console.error("\nUsage: TEST_USERNAME=user TEST_EMAIL=user@test.com TEST_PASSWORD=secret npx tsx scripts/login-and-join.ts");
+  process.exit(1);
+}
 
 async function registerOrLogin(): Promise<string> {
   const registerRes = await fetch(`${API_URL}/api/auth/register`, {
