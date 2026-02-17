@@ -21,7 +21,11 @@ interface AuthResponse {
     email: string;
   };
   token: string;
+  refreshToken: string;
 }
+
+// In-memory store for refresh tokens (in production, use Redis or database)
+const refreshTokenStore = new Map<string, { userId: number; expiresAt: number }>();
 
 export class AuthController {
   private userRepository = AppDataSource.getRepository(User);
@@ -38,10 +42,37 @@ export class AuthController {
       const token = jwt.sign(
         { userId: user.id, username: user.username, tokenVersion: user.tokenVersion ?? 0 },
         jwtSecret,
-        { expiresIn: '1h' } // Simplified to fixed expiration for now
+        { expiresIn: '1h' }
       );
       
       return token;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('JWT Sign Error:', error.message);
+        throw new Error('Failed to generate authentication token');
+      }
+      throw new Error('An unknown error occurred during token generation');
+    }
+  }
+
+  private generateRefreshToken(user: User): string {
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET is not defined in environment variables');
+      }
+
+      const refreshToken = jwt.sign(
+        { userId: user.id, type: 'refresh' },
+        jwtSecret,
+        { expiresIn: '7d' } // Refresh tokens last 7 days
+      );
+
+      // Store refresh token with expiration
+      const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+      refreshTokenStore.set(refreshToken, { userId: user.id, expiresAt });
+
+      return refreshToken;
     } catch (error) {
       if (error instanceof Error) {
         console.error('JWT Sign Error:', error.message);
@@ -90,12 +121,14 @@ export class AuthController {
 
       await this.userRepository.save(user);
 
-      // Generate JWT
+      // Generate JWT and refresh token
       const token = this.generateAuthToken(user);
+      const refreshToken = this.generateRefreshToken(user);
 
       res.status(201).json({ 
         user: { id: user.id, username: user.username, email: user.email },
-        token 
+        token,
+        refreshToken
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -137,12 +170,14 @@ export class AuthController {
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
       await this.userRepository.save(user);
 
-      // Generate JWT
+      // Generate JWT and refresh token
       const token = this.generateAuthToken(user);
+      const refreshToken = this.generateRefreshToken(user);
 
       res.json({ 
         user: { id: user.id, username: user.username, email: user.email },
-        token 
+        token,
+        refreshToken
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -226,6 +261,77 @@ export class AuthController {
         console.error('An unknown error occurred during token validation');
       }
       res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  }
+
+  async refreshToken(
+    req: Request,
+    res: Response<{ token: string; refreshToken: string } | { error: string }>
+  ): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        res.status(400).json({ error: 'Refresh token is required' });
+        return;
+      }
+
+      // Verify refresh token exists in store
+      const storedToken = refreshTokenStore.get(refreshToken);
+      if (!storedToken) {
+        res.status(401).json({ error: 'Invalid refresh token' });
+        return;
+      }
+
+      // Check if expired
+      if (Date.now() > storedToken.expiresAt) {
+        refreshTokenStore.delete(refreshToken);
+        res.status(401).json({ error: 'Refresh token expired' });
+        return;
+      }
+
+      // Verify JWT signature
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        res.status(500).json({ error: 'JWT_SECRET is not defined in environment variables' });
+        return;
+      }
+
+      try {
+        const decoded = jwt.verify(refreshToken, jwtSecret) as { userId: number; type: string };
+        
+        if (decoded.type !== 'refresh') {
+          res.status(401).json({ error: 'Invalid token type' });
+          return;
+        }
+
+        // Get user
+        const user = await this.userRepository.findOne({ where: { id: decoded.userId } });
+        if (!user) {
+          refreshTokenStore.delete(refreshToken);
+          res.status(401).json({ error: 'User not found' });
+          return;
+        }
+
+        // Generate new access token and refresh token
+        const newToken = this.generateAuthToken(user);
+        
+        // Revoke old refresh token and generate new one
+        refreshTokenStore.delete(refreshToken);
+        const newRefreshToken = this.generateRefreshToken(user);
+
+        res.json({ token: newToken, refreshToken: newRefreshToken });
+      } catch (jwtError) {
+        refreshTokenStore.delete(refreshToken);
+        res.status(401).json({ error: 'Invalid refresh token signature' });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Refresh token error:', error.message);
+      } else {
+        console.error('An unknown error occurred during token refresh');
+      }
+      res.status(500).json({ error: 'Internal server error' });
     }
   }
 }

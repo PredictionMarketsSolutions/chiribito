@@ -139,6 +139,7 @@ function getFormValues() {
 }
 
 let token: string | null = null;
+let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
 let lastWinningHand = "-";
@@ -470,9 +471,11 @@ function updateTurnTimer(state: RoomState) {
 
 function clearAuthToken() {
   token = null;
+  refreshToken = null;
   tokenStatus.textContent = "none";
   stopTokenMonitor();
   tokenInvalidNotified = false;
+  localStorage.removeItem('refreshToken');
 }
 
 function stopTokenMonitor() {
@@ -493,22 +496,36 @@ function handleTokenInvalidated() {
 function startTokenMonitor() {
   stopTokenMonitor();
   if (!token) return;
+  
+  // Check and refresh token every 50 minutes (10 min before expiry)
   tokenMonitorId = window.setInterval(async () => {
-    if (!token) return;
+    if (!token || !refreshToken) return;
     try {
-      const response = await fetch(`${API_URL}/api/auth/validate`, {
+      // Try to refresh token
+      const response = await fetch(`${API_URL}/api/auth/refresh`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ refreshToken })
       });
-      if (!response.ok) {
+      
+      if (response.ok) {
+        const data = await response.json();
+        token = data.token;
+        refreshToken = data.refreshToken;
+        tokenStatus.textContent = "refreshed";
+        localStorage.setItem('refreshToken', refreshToken);
+        log("Token refreshed successfully");
+      } else {
+        // Refresh failed, user needs to login again
         handleTokenInvalidated();
       }
-    } catch {
-      // Ignore transient network errors
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      // Don't invalidate on network errors, try again next interval
     }
-  }, 15000);
+  }, 50 * 60 * 1000); // 50 minutes
 }
 
 function preloadCardImages() {
@@ -824,6 +841,10 @@ async function register() {
   setAuthMessage("Creando cuenta...", "info");
   const data = await request("/api/auth/register", { username, email, password });
   token = data.token;
+  refreshToken = data.refreshToken;
+  if (refreshToken) {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
   tokenStatus.textContent = token ? "set" : "none";
   tokenInvalidNotified = false;
   startTokenMonitor();
@@ -837,6 +858,10 @@ async function login() {
   setAuthMessage("Verificando credenciales...", "info");
   const data = await request("/api/auth/login", { email, password });
   token = data.token;
+  refreshToken = data.refreshToken;
+  if (refreshToken) {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
   tokenStatus.textContent = token ? "set" : "none";
   tokenInvalidNotified = false;
   startTokenMonitor();

@@ -36,28 +36,90 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET must be set in production');
 }
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/AuthController';
 import { UserController } from './controllers/UserController';
 import { authenticateJWT } from './middleware/auth';
+import { registerValidator, loginValidator } from './middlewares/validators';
+import { validateRequest } from './middlewares/validateRequest';
 
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS whitelist by environment
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.ALLOWED_ORIGINS?.split(',') || [])
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Simple in-memory rate limiter
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimit(maxAttempts: number, windowMs: number) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const record = rateLimitStore.get(ip);
+
+    if (!record || now > record.resetAt) {
+      rateLimitStore.set(ip, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+
+    if (record.count >= maxAttempts) {
+      const retryAfter = Math.ceil((record.resetAt - now) / 1000);
+      res.setHeader('Retry-After', retryAfter);
+      return res.status(429).json({ 
+        error: 'Too many attempts. Please try again later.',
+        retryAfter 
+      });
+    }
+
+    record.count++;
+    next();
+  };
+}
+
+// Cleanup rate limit store every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (now > value.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 600000);
 
 // Initialize controllers
 const authController = new AuthController();
 const userController = new UserController();
 
-// Auth routes
-app.post('/api/auth/register', (req, res) => authController.register(req, res));
-app.post('/api/auth/login', (req, res) => authController.login(req, res));
-app.post('/api/auth/validate', (req, res) => authController.validateToken(req, res));
+// Auth routes with rate limiting and validation
+const authRateLimit = rateLimit(5, 60000); // 5 attempts per minute
+
+app.post('/api/auth/register', authRateLimit, registerValidator, validateRequest, (req: Request, res: Response) => authController.register(req, res));
+app.post('/api/auth/login', authRateLimit, loginValidator, validateRequest, (req: Request, res: Response) => authController.login(req, res));
+app.post('/api/auth/validate', (req: Request, res: Response) => authController.validateToken(req, res));
+app.post('/api/auth/refresh', (req: Request, res: Response) => authController.refreshToken(req, res));
 
 // Protected routes
 app.get('/api/users/me', authenticateJWT, async (req, res, next) => {
