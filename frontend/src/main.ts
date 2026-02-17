@@ -36,10 +36,34 @@ const foldButton = document.querySelector<HTMLButtonElement>("#fold")!;
 const betButton = document.querySelector<HTMLButtonElement>("#bet")!;
 const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
 
+const connectionIndicator = document.querySelector<HTMLDivElement>("#connection-indicator")!;
+const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
+const qualityStatus = document.querySelector<HTMLSpanElement>("#quality-status")!;
+const bufferStatus = document.querySelector<HTMLSpanElement>("#buffer-status")!;
+
 apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
 void initPixiLayer();
 setAuthOverlayVisible(true);
+
+// Mobile background handling
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    // App went to background - pause heartbeat to save battery
+    log("🔇 App backgrounded, heartbeat paused");
+    stopClientHeartbeat();
+  } else {
+    // App came back to foreground - check connection
+    log("🔊 App resumed from background");
+    if (connectionState === "disconnected" && token) {
+      log("Attempting to reconnect...");
+      attemptReconnect();
+    } else if (connectionState === "connected" && room) {
+      log("Resuming heartbeat...");
+      startClientHeartbeat();
+    }
+  }
+});
 
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
@@ -132,6 +156,21 @@ let clientHeartbeatId: number | null = null;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const HEARTBEAT_INTERVAL_MS = 25000; // 25 seconds (matches server 30s)
 const HEARTBEAT_TIMEOUT_MS = 10000; // 10 seconds to receive ack
+
+// Connection metrics (RTT tracking)
+let lastHeartbeatSendTime = 0;
+const rttSamples: number[] = [];
+let averageRtt = 0;
+let connectionQuality: "excellent" | "good" | "degraded" | "poor" = "excellent";
+
+// Action buffering for offline resilience
+interface BufferedAction {
+  action: string;
+  data: any;
+  timestamp: number;
+}
+const actionBuffer: BufferedAction[] = [];
+const ACTION_BUFFER_MAX_SIZE = 50;
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
@@ -770,22 +809,26 @@ async function login() {
 
 /**
  * Start sending heartbeat to server to keep connection alive
+ * Also tracks RTT (Round-Trip Time) for connection quality monitoring
  */
 function startClientHeartbeat() {
   stopClientHeartbeat();
   
   clientHeartbeatId = window.setInterval(() => {
-    if (room) {
-      room.send("heartbeat");
-      
-      // Wait for ack with timeout
-      heartbeatTimeoutId = window.setTimeout(() => {
-        console.warn("Heartbeat timeout - server not responding");
-        if (room) {
-          room.leave();
-        }
-      }, HEARTBEAT_TIMEOUT_MS);
-    }
+    if (!room) return;
+    
+    // Record when heartbeat is sent for RTT calculation
+    lastHeartbeatSendTime = Date.now();
+    // Send heartbeat with client timestamp for server to measure RTT
+    room.send("heartbeat", lastHeartbeatSendTime);
+    
+    // Wait for ack with timeout
+    heartbeatTimeoutId = window.setTimeout(() => {
+      log("[HEARTBEAT] No ACK received, server not responding");
+      if (room) {
+        room.leave();
+      }
+    }, HEARTBEAT_TIMEOUT_MS);
   }, HEARTBEAT_INTERVAL_MS);
 }
 
@@ -814,6 +857,127 @@ function setConnectionState(state: "disconnected" | "connecting" | "connected") 
     connected: "🟢"
   };
   log(`[${stateEmojis[state]}] Connection: ${state}`);
+  updateConnectionIndicator();
+}
+
+/**
+ * Record RTT (Round-Trip Time) and update connection quality metrics
+ */
+function recordRtt(rttMs: number) {
+  rttSamples.push(rttMs);
+  if (rttSamples.length > 20) rttSamples.shift(); // Keep last 20 samples
+  
+  averageRtt = rttSamples.reduce((a, b) => a + b, 0) / rttSamples.length;
+  
+  // Classify connection quality based on RTT
+  if (averageRtt < 100) {
+    connectionQuality = "excellent";
+  } else if (averageRtt < 300) {
+    connectionQuality = "good";
+  } else if (averageRtt < 1000) {
+    connectionQuality = "degraded";
+  } else {
+    connectionQuality = "poor";
+  }
+  
+  // Update UI
+  rttStatus.textContent = `${averageRtt.toFixed(0)}ms`;
+  qualityStatus.textContent = connectionQuality.toUpperCase();
+  
+  // Color code quality
+  qualityStatus.style.color = 
+    connectionQuality === "excellent" ? "var(--felt-main)" :
+    connectionQuality === "good" ? "var(--felt-light)" :
+    connectionQuality === "degraded" ? "var(--gold)" :
+    "#ff4444";
+  
+  if (connectionQuality !== "excellent" && rttSamples.length % 5 === 0) {
+    log(`⚠️ Connection degraded: ${averageRtt.toFixed(0)}ms RTT (${connectionQuality})`);
+  }
+}
+
+/**
+ * Queue an action to be sent when connection is available
+ * Applies rate limiting to prevent spam
+ */
+function queueAction(action: string, data: any) {
+  // Rate limiting check
+  if (!requireCooldown(action)) {
+    return;
+  }
+  
+  if (connectionState !== "connected" || !room) {
+    const buffered: BufferedAction = { action, data, timestamp: Date.now() };
+    if (actionBuffer.length >= ACTION_BUFFER_MAX_SIZE) {
+      actionBuffer.shift(); // Drop oldest if buffer full
+    }
+    actionBuffer.push(buffered);
+    log(`⏱️ ${action} buffered (${actionBuffer.length}/${ACTION_BUFFER_MAX_SIZE})`);
+    bufferStatus.textContent = `${actionBuffer.length}`;
+    bufferStatus.style.color = actionBuffer.length > 10 ? "var(--gold)" : "var(--gray-400)";
+    return;
+  }
+  
+  // Send immediately if connected
+  room.send(action, data);
+  bufferStatus.textContent = "0";
+  bufferStatus.style.color = "var(--gray-400)";
+}
+
+/**
+ * Update visual connection indicator based on current state and quality
+ */
+function updateConnectionIndicator() {
+  if (connectionState === "connected") {
+    connectionIndicator.style.backgroundColor = "var(--felt-main)";
+    connectionIndicator.title = `Connected (${averageRtt.toFixed(0)}ms, ${connectionQuality})`;
+  } else if (connectionState === "connecting") {
+    connectionIndicator.style.backgroundColor = "var(--gold)";
+    connectionIndicator.title = `Connecting (attempt ${reconnectAttempts}/10)`;
+  } else {
+    connectionIndicator.style.backgroundColor = "#ff4444";
+    connectionIndicator.title = "Disconnected";
+  }
+}
+
+/**
+ * Rate limiting to prevent action spam attacks
+ */
+const actionCooldowns = new Map<string, number>();
+const ACTION_COOLDOWN_MS = 200; // 200ms between actions of same type
+
+function requireCooldown(action: string): boolean {
+  const now = Date.now();
+  const lastTime = actionCooldowns.get(action) ?? 0;
+  
+  if (now - lastTime < ACTION_COOLDOWN_MS) {
+    log(`⏱️ ${action} on cooldown (${(ACTION_COOLDOWN_MS - (now - lastTime)).toFixed(0)}ms)`);
+    return false;
+  }
+  
+  actionCooldowns.set(action, now);
+  return true;
+}
+
+/**
+ * Replay buffered actions on reconnection
+ */
+function replayBufferedActions() {
+  if (actionBuffer.length === 0 || !room) return;
+  
+  log(`↻ Replaying ${actionBuffer.length} buffered actions...`);
+  const actions = [...actionBuffer];
+  actionBuffer.length = 0;
+  
+  // Send with small delays to avoid overwhelming server
+  actions.forEach((action, index) => {
+    setTimeout(() => {
+      if (room && connectionState === "connected") {
+        room.send(action.action, action.data);
+        log(`  ✓ Replayed: ${action.action}`);
+      }
+    }, index * 50); // 50ms between replayed actions
+  });
 }
 
 /**
@@ -930,6 +1094,12 @@ async function joinRoom(forceReplace = false) {
   });
 
   joinedRoom.onMessage("heartbeat_ack", () => {
+    // Record RTT for connection quality monitoring
+    if (lastHeartbeatSendTime > 0) {
+      const rttMs = Date.now() - lastHeartbeatSendTime;
+      recordRtt(rttMs);
+    }
+    
     // Reset heartbeat timeout when ACK is received
     if (heartbeatTimeoutId !== null) {
       clearTimeout(heartbeatTimeoutId);
@@ -937,6 +1107,10 @@ async function joinRoom(forceReplace = false) {
     }
     if (connectionState !== "connected") {
       setConnectionState("connected");
+      // Replay any buffered actions on reconnection
+      if (actionBuffer.length > 0) {
+        replayBufferedActions();
+      }
     }
   });
 
@@ -1022,23 +1196,19 @@ function requireRoom(): Room | null {
 }
 
 (document.querySelector("#start-game") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
-  active?.send("startGame");
+  queueAction("startGame", undefined);
 });
 
 (document.querySelector("#check") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
-  active?.send("check");
+  queueAction("check", undefined);
 });
 
 (document.querySelector("#call") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
-  active?.send("call");
+  queueAction("call", undefined);
 });
 
 (document.querySelector("#fold") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
-  active?.send("fold");
+  queueAction("fold", undefined);
 });
 
 function getBetAmount() {
@@ -1047,23 +1217,21 @@ function getBetAmount() {
 }
 
 (document.querySelector("#bet") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
   const amount = getBetAmount();
-  if (!active || amount <= 0) {
+  if (amount <= 0) {
     log("Invalid bet amount.");
     return;
   }
-  active.send("bet", amount);
+  queueAction("bet", amount);
 });
 
 (document.querySelector("#raise") as HTMLButtonElement).addEventListener("click", () => {
-  const active = requireRoom();
   const amount = getBetAmount();
-  if (!active || amount <= 0) {
+  if (amount <= 0) {
     log("Invalid raise amount.");
     return;
   }
-  active.send("raise", amount);
+  queueAction("raise", amount);
 });
 
 (document.querySelector("#toggle-panel") as HTMLButtonElement).addEventListener("click", () => {

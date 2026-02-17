@@ -41,6 +41,51 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Connection Indicator */
+.connection-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #666666;
+  margin-right: 8px;
+  animation: pulse-subtle 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(102, 102, 102, 0.5);
+}
+
+.connection-dot[style*="background-color: rgb(13, 95, 74)"],
+.connection-dot[style*="background-color: #0d5f4a"] {
+  background-color: var(--felt-main) !important;
+  box-shadow: 0 0 12px rgba(13, 95, 74, 0.8);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.connection-dot[style*="background-color: rgb(244, 196, 48)"],
+.connection-dot[style*="background-color: #f4c430"] {
+  background-color: var(--gold) !important;
+  box-shadow: 0 0 12px rgba(244, 196, 48, 0.8);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-dot[style*="background-color: rgb(255, 68, 68)"],
+.connection-dot[style*="background-color: #ff4444"] {
+  background-color: #ff4444 !important;
+  box-shadow: 0 0 12px rgba(255, 68, 68, 0.8);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-subtle {
+  0% { opacity: 0.7; }
+  50% { opacity: 0.4; }
+  100% { opacity: 0.7; }
+}
+
 * {
   margin: 0;
   padding: 0;

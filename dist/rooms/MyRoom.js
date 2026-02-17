@@ -67,6 +67,12 @@ class MyRoom extends core_1.Room {
         this.heartbeatInterval = null;
         this.HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
         this.HEARTBEAT_TIMEOUT_MS = 90000; // 90 seconds (3 missed heartbeats)
+        // Connection analytics per client
+        this.connectionStats = new Map();
+        this.analyticsInterval = null;
+        // Rate limiting per client to prevent spam attacks
+        this.actionCooldowns = new Map();
+        this.ACTION_COOLDOWN_MS = 200; // 200ms between actions
     }
     getNextAvailableSeat() {
         const occupied = new Set();
@@ -119,6 +125,67 @@ class MyRoom extends core_1.Room {
             this.heartbeatInterval = null;
         }
         this.clientHeartbeats.clear();
+    }
+    /**
+     * Check if client action is under rate limit
+     * Returns true if action is allowed, false if rate limited
+     */
+    isActionAllowed(sessionId, actionType) {
+        var _a;
+        const now = Date.now();
+        if (!this.actionCooldowns.has(sessionId)) {
+            this.actionCooldowns.set(sessionId, new Map());
+        }
+        const cooldowns = this.actionCooldowns.get(sessionId);
+        const lastTime = (_a = cooldowns.get(actionType)) !== null && _a !== void 0 ? _a : 0;
+        if (now - lastTime < this.ACTION_COOLDOWN_MS) {
+            console.warn(`[RATE_LIMIT] Client ${sessionId} rate limited on ${actionType}`);
+            return false;
+        }
+        cooldowns.set(actionType, now);
+        return true;
+    }
+    /**
+     * Start analytics reporting for connection quality monitoring
+     * Logs health statistics every 60 seconds
+     */
+    startAnalytics() {
+        this.analyticsInterval = setInterval(() => {
+            if (this.connectionStats.size === 0)
+                return;
+            const stats = Array.from(this.connectionStats.values());
+            const avgLatency = stats.length > 0
+                ? stats.reduce((sum, s) => sum + s.averageLatency, 0) / stats.length
+                : 0;
+            const maxLatency = Math.max(...stats.map(s => s.lastLatency || 0));
+            const minLatency = Math.min(...stats.map(s => s.lastLatency || Infinity));
+            console.log(`[ANALYTICS] Room: ${this.roomId} | Players: ${stats.length} | ` +
+                `Avg RTT: ${avgLatency.toFixed(0)}ms | Min: ${minLatency === Infinity ? 0 : minLatency}ms | Max: ${maxLatency}ms`);
+        }, 60000);
+    }
+    /**
+     * Log analytics summary when room is disposed
+     */
+    logAnalyticsSummary() {
+        if (this.connectionStats.size === 0) {
+            console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}: No connection data`);
+            return;
+        }
+        const stats = Array.from(this.connectionStats.entries());
+        const avgLatency = stats.length > 0
+            ? stats.reduce((sum, [_, s]) => sum + s.averageLatency, 0) / stats.length
+            : 0;
+        console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}:`);
+        console.log(`  Total connections: ${stats.length}`);
+        console.log(`  Average RTT: ${avgLatency.toFixed(0)}ms`);
+        console.log(`  Total joins: ${stats.reduce((sum, [_, s]) => sum + s.joins, 0)}`);
+        console.log(`  Total rejoins: ${stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)}`);
+        // Log per-client stats
+        stats.forEach(([sessionId, s]) => {
+            var _a;
+            const playerName = ((_a = this.state.users.get(sessionId)) === null || _a === void 0 ? void 0 : _a.name) || "Unknown";
+            console.log(`    ${playerName}: ${s.averageLatency.toFixed(0)}ms avg, ${s.joins} joins, ${s.rejoins} rejoins`);
+        });
     }
     replaceSession(oldSessionId, newClient) {
         const existingPlayer = this.state.users.get(oldSessionId);
@@ -186,20 +253,61 @@ class MyRoom extends core_1.Room {
         this.setState(new MyRoomState_1.MyRoomState());
         this.autoDispose = false;
         this.engine = new GameEngine_1.GameEngine(this);
-        // Game messages
-        this.onMessage("startGame", (client) => this.engine.handleStartGame(client));
-        this.onMessage("bet", (client, amount) => this.engine.handleBet(client, amount));
-        this.onMessage("call", (client) => this.engine.handleCall(client));
-        this.onMessage("check", (client) => this.engine.handleCheck(client));
-        this.onMessage("fold", (client) => this.engine.handleFold(client));
-        this.onMessage("raise", (client, amount) => this.engine.handleRaise(client, amount));
-        // Heartbeat message to detect dead connections
-        this.onMessage("heartbeat", (client) => {
+        // Game messages with rate limiting
+        this.onMessage("startGame", (client) => {
+            if (!this.isActionAllowed(client.sessionId, "startGame"))
+                return;
+            this.engine.handleStartGame(client);
+        });
+        this.onMessage("bet", (client, amount) => {
+            if (!this.isActionAllowed(client.sessionId, "bet"))
+                return;
+            this.engine.handleBet(client, amount);
+        });
+        this.onMessage("call", (client) => {
+            if (!this.isActionAllowed(client.sessionId, "call"))
+                return;
+            this.engine.handleCall(client);
+        });
+        this.onMessage("check", (client) => {
+            if (!this.isActionAllowed(client.sessionId, "check"))
+                return;
+            this.engine.handleCheck(client);
+        });
+        this.onMessage("fold", (client) => {
+            if (!this.isActionAllowed(client.sessionId, "fold"))
+                return;
+            this.engine.handleFold(client);
+        });
+        this.onMessage("raise", (client, amount) => {
+            if (!this.isActionAllowed(client.sessionId, "raise"))
+                return;
+            this.engine.handleRaise(client, amount);
+        });
+        // Heartbeat message to detect dead connections & track latency
+        this.onMessage("heartbeat", (client, clientTimestampMs) => {
             this.clientHeartbeats.set(client.sessionId, Date.now());
+            // Calculate and track latency if client sent timestamp
+            if (clientTimestampMs && typeof clientTimestampMs === 'number') {
+                const now = Date.now();
+                const latency = now - clientTimestampMs;
+                // Update analytics
+                let stats = this.connectionStats.get(client.sessionId);
+                if (!stats) {
+                    stats = { joins: 0, rejoins: 0, heartbeatsMissed: 0, latencyMs: [], lastLatency: 0, averageLatency: 0 };
+                }
+                stats.latencyMs.push(latency);
+                if (stats.latencyMs.length > 30)
+                    stats.latencyMs.shift(); // Keep last 30
+                stats.lastLatency = latency;
+                stats.averageLatency = stats.latencyMs.reduce((a, b) => a + b, 0) / stats.latencyMs.length;
+                this.connectionStats.set(client.sessionId, stats);
+            }
             client.send("heartbeat_ack");
         });
         // Start heartbeat monitoring
         this.startHeartbeatMonitor();
+        this.startAnalytics();
     }
     // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
     requestJoin(options, isNew) {
@@ -387,6 +495,11 @@ class MyRoom extends core_1.Room {
             clearTimeout(this.turnTimeout);
         // Stop heartbeat monitoring
         this.stopHeartbeatMonitor();
+        // Stop analytics reporting
+        if (this.analyticsInterval)
+            clearInterval(this.analyticsInterval);
+        // Log final analytics summary
+        this.logAnalyticsSummary();
     }
 }
 exports.MyRoom = MyRoom;
