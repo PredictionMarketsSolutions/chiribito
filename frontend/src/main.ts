@@ -601,19 +601,45 @@ function renderSeats(state: RoomState) {
   const entries = getUserEntries(state).filter(isPlayerState);
   const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
   const currentTurn = state?.currentTurn ?? "";
+  const totalSeats = 6;
+  const targetFrontIndex = 3;
+
+  const playersBySeat: Array<PlayerState | undefined> = Array(totalSeats).fill(undefined);
+  entries.forEach((player) => {
+    if (Number.isFinite(player.seatIndex) && player.seatIndex >= 0 && player.seatIndex < totalSeats) {
+      playersBySeat[player.seatIndex] = player;
+    }
+  });
+
+  let seatShift = 0;
+  const myPlayer = entries.find((player) => player.sessionId === currentSessionId);
+  if (myPlayer && Number.isFinite(myPlayer.seatIndex)) {
+    seatShift = (targetFrontIndex - myPlayer.seatIndex + totalSeats) % totalSeats;
+  }
+
+  const visualSeats: Array<PlayerState | undefined> = Array(totalSeats).fill(undefined);
+  const visualSeatNumbers: number[] = Array(totalSeats).fill(0);
+  for (let logicalIndex = 0; logicalIndex < totalSeats; logicalIndex += 1) {
+    const visualIndex = (logicalIndex + seatShift) % totalSeats;
+    visualSeats[visualIndex] = playersBySeat[logicalIndex];
+    visualSeatNumbers[visualIndex] = logicalIndex;
+  }
 
   const seats = Array.from(seatsEl.querySelectorAll<HTMLDivElement>(".seat"));
   seats.forEach((seat, index) => {
     const nameEl = seat.querySelector<HTMLDivElement>(".seat-name");
     const metaEl = seat.querySelector<HTMLDivElement>(".seat-meta");
+    const badgeEl = seat.querySelector<HTMLDivElement>(".seat-badge");
     let handEl = seat.querySelector<HTMLDivElement>(".seat-hand");
-    const player = entries[index];
+    const player = visualSeats[index];
+    const logicalSeatIndex = visualSeatNumbers[index];
 
     if (!nameEl || !metaEl) return;
 
     if (!player) {
       seat.classList.remove("active", "you", "folded");
       seat.classList.remove("dealer", "turn", "winner");
+      if (badgeEl) badgeEl.textContent = `Seat ${logicalSeatIndex + 1}`;
       nameEl.textContent = "Libre";
       metaEl.textContent = "";
       if (handEl) {
@@ -626,9 +652,10 @@ function renderSeats(state: RoomState) {
     seat.classList.toggle("active", true);
     seat.classList.toggle("you", Boolean(isYou));
     seat.classList.toggle("folded", Boolean(player.isFolded));
-    seat.classList.toggle("dealer", index === dealerIndex);
+    seat.classList.toggle("dealer", player.seatIndex === dealerIndex);
     seat.classList.toggle("turn", player.sessionId === currentTurn);
     seat.classList.toggle("winner", lastWinners.includes(player.sessionId));
+    if (badgeEl) badgeEl.textContent = `Seat ${player.seatIndex + 1}`;
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
 
     metaEl.innerHTML = "";

@@ -434,7 +434,7 @@ button.accent:hover:not(:disabled) {
     inset 0 -30px 60px rgba(0, 0, 0, 0.35),
     0 30px 80px rgba(0, 0, 0, 0.45);
   border: 10px solid var(--wood-mid);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table-surface::before {
@@ -548,12 +548,12 @@ button.accent:hover:not(:disabled) {
   transform: translate(-50%, -50%);
 }
 
-.seat[data-seat="0"] { top: 6%; left: 50%; }
-.seat[data-seat="1"] { top: 18%; left: 82%; }
-.seat[data-seat="2"] { top: 76%; left: 82%; }
-.seat[data-seat="3"] { top: 90%; left: 50%; }
-.seat[data-seat="4"] { top: 76%; left: 18%; }
-.seat[data-seat="5"] { top: 18%; left: 18%; }
+.seat[data-seat="0"] { top: -4%; left: 50%; }
+.seat[data-seat="1"] { top: 10%; left: 94%; }
+.seat[data-seat="2"] { top: 90%; left: 94%; }
+.seat[data-seat="3"] { top: 104%; left: 50%; }
+.seat[data-seat="4"] { top: 90%; left: 6%; }
+.seat[data-seat="5"] { top: 10%; left: 6%; }
 
 .seat-badge {
   font-size: 10px;
