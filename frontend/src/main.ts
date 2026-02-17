@@ -35,6 +35,7 @@ const callButton = document.querySelector<HTMLButtonElement>("#call")!;
 const foldButton = document.querySelector<HTMLButtonElement>("#fold")!;
 const betButton = document.querySelector<HTMLButtonElement>("#bet")!;
 const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
+const gameActionsEl = document.querySelector<HTMLDivElement>(".game-actions")!;
 
 const connectionIndicator = document.querySelector<HTMLDivElement>("#connection-indicator")!;
 const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
@@ -181,6 +182,8 @@ let turnDeadlineMs: number | null = null;
 let lastTurnId: string | null = null;
 let lastTurnTimeoutMs: number | null = null;
 
+let seatPositionRaf = 0;
+
 const TURN_TIMEOUT_MS = 30000;
 
 type PlayerState = {
@@ -264,6 +267,7 @@ async function initPixiLayer() {
   window.addEventListener("resize", () => {
     if (!pixiApp || !pixiTableSurface) return;
     pixiApp.renderer.resize(pixiTableSurface.clientWidth, pixiTableSurface.clientHeight);
+    scheduleActionPanelPosition();
   });
 }
 
@@ -683,6 +687,8 @@ function renderSeats(state: RoomState) {
       }
     }
   });
+
+  scheduleActionPanelPosition();
 }
 
 function renderPlayers(state: RoomState) {
@@ -766,6 +772,34 @@ function renderState(state: RoomState) {
   renderSeats(state);
   renderPlayers(state);
   updateActionButtons(state);
+}
+
+function scheduleActionPanelPosition() {
+  if (seatPositionRaf) {
+    cancelAnimationFrame(seatPositionRaf);
+  }
+  seatPositionRaf = requestAnimationFrame(() => {
+    seatPositionRaf = 0;
+    positionActionPanel();
+  });
+}
+
+function positionActionPanel() {
+  if (!pixiTableSurface || !gameActionsEl) return;
+
+  const seat = pixiTableSurface.querySelector<HTMLDivElement>(".seat.you")
+    ?? pixiTableSurface.querySelector<HTMLDivElement>(".seat[data-seat=\"3\"]");
+
+  if (!seat) return;
+
+  const tableRect = pixiTableSurface.getBoundingClientRect();
+  const seatRect = seat.getBoundingClientRect();
+  const centerX = seatRect.left + seatRect.width / 2 - tableRect.left;
+  const top = seatRect.bottom - tableRect.top + 12;
+
+  gameActionsEl.style.left = `${centerX}px`;
+  gameActionsEl.style.top = `${top}px`;
+  gameActionsEl.style.transform = "translate(-50%, 0)";
 }
 
 function updateActionButtons(state: RoomState | null) {

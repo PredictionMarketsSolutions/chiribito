@@ -743,8 +743,8 @@ button.accent:hover:not(:disabled) {
 
 /* Game Actions */
 .game-actions {
-  position: fixed;
-  bottom: 30px;
+  position: absolute;
+  top: calc(100% + 18px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -954,6 +954,7 @@ button.accent:hover:not(:disabled) {
   }
   
   .game-actions {
+    position: fixed;
     min-width: auto;
     width: calc(100% - 40px);
     left: 20px;
