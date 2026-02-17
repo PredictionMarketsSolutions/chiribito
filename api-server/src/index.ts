@@ -17,7 +17,6 @@ if (fs.existsSync(apiServerEnv)) {
 // Environment variables (defaults)
 const env: Record<string, string> = {
   PORT: '3000',
-  JWT_SECRET: 'testPoker',
   DB_HOST: 'localhost',
   DB_USER: 'postgres',
   DB_PASSWORD: 'postgres',
@@ -32,6 +31,10 @@ Object.entries(env).forEach(([key, value]) => {
     process.env[key] = value;
   }
 });
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET must be set in production');
+}
 import express from 'express';
 import cors from 'cors';
 import { AppDataSource } from './config/database';

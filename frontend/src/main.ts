@@ -630,7 +630,16 @@ function renderSeats(state: RoomState) {
     seat.classList.toggle("turn", player.sessionId === currentTurn);
     seat.classList.toggle("winner", lastWinners.includes(player.sessionId));
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
-    metaEl.textContent = `Chips ${player.chips} | Bet ${player.currentBet}`;
+
+    metaEl.innerHTML = "";
+    const chipsEl = document.createElement("span");
+    chipsEl.classList.add("seat-chip");
+    chipsEl.textContent = `Fichas ${player.chips}`;
+    const betEl = document.createElement("span");
+    betEl.classList.add("seat-bet");
+    betEl.textContent = `Apuesta ${player.currentBet}`;
+    metaEl.appendChild(chipsEl);
+    metaEl.appendChild(betEl);
 
     if (!handEl) {
       handEl = document.createElement("div");
