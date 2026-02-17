@@ -743,14 +743,17 @@ button.accent:hover:not(:disabled) {
 
 /* Game Actions */
 .game-actions {
-  position: absolute;
-  top: calc(100% + 18px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  top: auto;
+  transform: none;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 20px 24px;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
   background: rgba(5, 8, 16, 0.98);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(244, 196, 48, 0.4);
@@ -758,7 +761,7 @@ button.accent:hover:not(:disabled) {
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
   z-index: 50;
   width: auto;
-  max-width: 90vw;
+  max-width: calc(100vw - 48px);
 }
 
 .action-group,
@@ -954,14 +957,13 @@ button.accent:hover:not(:disabled) {
   }
   
   .game-actions {
-    position: fixed;
-    min-width: auto;
+    flex-direction: column;
+    align-items: stretch;
     width: calc(100% - 40px);
     left: 20px;
     right: 20px;
     bottom: 20px;
-    transform: none;
-    padding: 16px 20px;
+    padding: 16px 18px;
   }
   
   .card {
