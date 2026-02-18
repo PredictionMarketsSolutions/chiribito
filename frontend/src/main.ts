@@ -164,6 +164,12 @@ function setAuthMessage(message: string, type: "success" | "error" | "info" = "i
 
 function mapAuthError(message: string, context: "login" | "register") {
   const normalized = message.toLowerCase();
+  if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
+    return "No se pudo conectar al servidor. Verifica la conexion.";
+  }
+  if (normalized.includes("missing required fields")) {
+    return "Completa todos los campos requeridos.";
+  }
   if (normalized.includes("invalid credentials")) {
     return "Correo o contrasena incorrectos.";
   }
@@ -189,17 +195,42 @@ function mapAuthError(message: string, context: "login" | "register") {
 }
 
 async function request(path: string, body: unknown) {
-  const response = await fetch(`${API_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
 
-  const text = await response.text();
-  if (!response.ok) {
-    throw new Error(text || response.statusText);
+    const text = await response.text();
+    let maybeJson: unknown = null;
+    if (text) {
+      try {
+        maybeJson = JSON.parse(text);
+      } catch (err) {
+        maybeJson = null;
+      }
+    }
+
+    if (!response.ok) {
+      if (maybeJson && typeof maybeJson === "object") {
+        const record = maybeJson as Record<string, unknown>;
+        const apiError = typeof record.error === "string" ? record.error : undefined;
+        const apiMessage = typeof record.message === "string" ? record.message : undefined;
+        throw new Error(apiError || apiMessage || response.statusText);
+      }
+      throw new Error(text || response.statusText);
+    }
+
+    if (!text) return {};
+    if (maybeJson && typeof maybeJson === "object") return maybeJson;
+    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("Respuesta invalida del servidor.");
+    }
+    throw error;
   }
-  return JSON.parse(text);
 }
 
 function getFormValues() {
@@ -217,6 +248,21 @@ function getFormValues() {
   }
   
   return { username, email, password };
+}
+
+function getLoginValues() {
+  const email = (document.querySelector("#email") as HTMLInputElement).value.trim();
+  const password = (document.querySelector("#password") as HTMLInputElement).value;
+
+  if (!email || !password) {
+    const missing = [
+      !email ? "email" : "",
+      !password ? "password" : ""
+    ].filter(Boolean).join(", ");
+    throw new Error(`Missing required fields: ${missing}`);
+  }
+
+  return { email, password };
 }
 
 let token: string | null = null;
@@ -1052,7 +1098,7 @@ async function register() {
 }
 
 async function login() {
-  const { email, password } = getFormValues();
+  const { email, password } = getLoginValues();
   log("Logging in...");
   setAuthMessage("Verificando credenciales...", "info");
   const data = await request("/api/auth/login", { email, password });
