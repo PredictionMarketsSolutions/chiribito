@@ -1,5 +1,4 @@
 import { Client, Room } from "colyseus.js";
-import type * as PixiModule from "pixi.js";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
@@ -286,7 +285,7 @@ let lastWinningHand = "-";
 let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
-let pixiApp: PixiModule.Application | null = null;
+let pixiApp: any = null;
 let pixiLayer: HTMLDivElement | null = null;
 let audioContext: AudioContext | null = null;
 let audioUnlocked = false;
@@ -318,7 +317,7 @@ const ACTION_BUFFER_MAX_SIZE = 50;
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
-let pixiLib: typeof PixiModule | null = null;
+let pixiLib: any = null;
 let revealedHands: Record<string, string[]> | null = null;
 let turnTimerId: number | null = null;
 let turnDeadlineMs: number | null = null;
@@ -544,7 +543,7 @@ function createCardSprite(targetEl: HTMLElement) {
 }
 
 function tweenSprite(
-  sprite: PixiModule.Sprite,
+  sprite: any,
   from: { x: number; y: number },
   to: { x: number; y: number },
   durationMs: number,
@@ -572,7 +571,7 @@ function tweenSprite(
   pixiApp.ticker.add(update);
 }
 
-function flipSprite(sprite: PixiModule.Sprite, frontTexture: PixiModule.Texture, durationMs = 280) {
+function flipSprite(sprite: any, frontTexture: any, durationMs = 280) {
   if (!pixiApp) return;
   const half = durationMs / 2;
   const startAt = performance.now();
