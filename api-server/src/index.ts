@@ -52,7 +52,7 @@ const PORT = process.env.PORT || 3000;
 
 // CORS whitelist by environment
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGINS?.split(',') || [])
+  ? (process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || ['https://chiri-frontend.onrender.com'])
   : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
 
 logger.info(`CORS allowed origins: ${JSON.stringify(allowedOrigins)}`);
@@ -62,7 +62,7 @@ logger.info(`ALLOWED_ORIGINS env: ${process.env.ALLOWED_ORIGINS}`);
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     logger.info(`CORS check - Origin: ${origin}, Allowed: ${JSON.stringify(allowedOrigins)}`);
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (like mobile apps or curl) or matching origins
     if (!origin || allowedOrigins.includes(origin)) {
       logger.info(`CORS allowing origin: ${origin}`);
       callback(null, true);
