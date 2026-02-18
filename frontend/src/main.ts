@@ -846,8 +846,6 @@ function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
   for (let i = 0; i < slots; i += 1) {
     const card = cards[i];
     const cardEl = createCardElement(card);
-    cardEl.classList.add("deal");
-    cardEl.style.animationDelay = `${i * 0.08}s`;
     el.appendChild(cardEl);
   }
 }
@@ -1008,12 +1006,6 @@ function renderState(state: RoomState) {
   potChip.textContent = String(potValue);
   phaseChip.textContent = state.phase ?? "waiting";
   turnChip.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
-  if (previousPotValue !== null && potValue !== previousPotValue) {
-    triggerAnimation(potChip, "pot-amount-update");
-  }
-  if (previousCurrentBetValue !== null && currentBetValue !== previousCurrentBetValue) {
-    triggerAnimation(betStatus, "chip-animation");
-  }
   previousPotValue = potValue;
   previousCurrentBetValue = currentBetValue;
   updateTurnTimer(state);
@@ -1497,9 +1489,6 @@ async function joinRoom(forceReplace = false) {
       lastWinners = payload.winners.map((winner: any) => winner.playerId);
       winnersStatus.textContent = lastWinners.join(", ") || "-";
       const winnersKey = lastWinners.join("|");
-      if (lastWinners.length > 0 && winnersKey !== previousWinnersKey) {
-        triggerAnimation(potChip, "chip-collect-animation");
-      }
       previousWinnersKey = winnersKey;
       if (currentSessionId && lastWinners.includes(currentSessionId)) {
         playEffect("win");
