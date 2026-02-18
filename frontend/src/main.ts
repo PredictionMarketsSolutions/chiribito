@@ -41,11 +41,14 @@ const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
 const qualityStatus = document.querySelector<HTMLSpanElement>("#quality-status")!;
 const bufferStatus = document.querySelector<HTMLSpanElement>("#buffer-status")!;
 
-apiUrlEl.textContent = API_URL;
-wsUrlEl.textContent = WS_URL;
-void initPixiLayer();
-setAuthOverlayVisible(true);
-renderHandHistory();
+// Initialize after functions are defined
+document.addEventListener("DOMContentLoaded", () => {
+  apiUrlEl.textContent = API_URL;
+  wsUrlEl.textContent = WS_URL;
+  void initPixiLayer();
+  setAuthOverlayVisible(true);
+  renderHandHistory();
+});
 
 window.addEventListener("error", (event) => {
   const message = event.error?.message || event.message || "Unknown client error";
