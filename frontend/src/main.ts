@@ -48,6 +48,19 @@ void initPixiLayer();
 setAuthOverlayVisible(true);
 renderHandHistory();
 
+window.addEventListener("error", (event) => {
+  const message = event.error?.message || event.message || "Unknown client error";
+  setAuthMessage(`Error: ${message}`, "error");
+  log(`Client error: ${message}`);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason as { message?: string } | string | undefined;
+  const message = typeof reason === "string" ? reason : reason?.message || "Unhandled rejection";
+  setAuthMessage(`Error: ${message}`, "error");
+  log(`Unhandled rejection: ${message}`);
+});
+
 document.addEventListener(
   "pointerdown",
   () => {
