@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { Client } from 'pg';
+import logger from '../config/logger';
 
 // Load .env from api-server or from repo root
 const apiServerEnv = path.resolve(process.cwd(), '.env');
@@ -37,21 +38,21 @@ async function main() {
       ssl: sslEnabled ? { rejectUnauthorized: false } : undefined
     });
     await client.connect();
-    console.log(`Connected to Postgres as ${rootUser}@${host}:${port}`);
+    logger.info(`Connected to Postgres`, { user: rootUser, host, port });
 
     const exists = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
     if (exists.rowCount === 0) {
       await client.query(`CREATE DATABASE "${dbName}";`);
-      console.log(`Database ${dbName} created`);
+      logger.info(`Database created`, { dbName });
     } else {
-      console.log(`Database ${dbName} already exists`);
+      logger.info(`Database already exists`, { dbName });
     }
 
     await client.end();
-    console.log('Database initialization complete.');
+    logger.info('Database initialization complete.');
     process.exit(0);
   } catch (err: any) {
-    console.error('Failed to initialize database', err.message || err);
+    logger.error('Failed to initialize database', { error: err.message || String(err) });
     process.exit(1);
   }
 }

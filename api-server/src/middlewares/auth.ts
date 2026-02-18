@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import logger from '../config/logger';
 
 export interface AuthRequest extends Request {
   user?: { userId: number; username: string; email: string };
@@ -44,7 +45,7 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
     };
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error', { error: String(error) });
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 };

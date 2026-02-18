@@ -1,5 +1,6 @@
 import { auth } from "@colyseus/auth";
 import * as bcrypt from "bcryptjs";
+import logger from "./logger";
 
 const fakeDb: any[] = [];
 const BCRYPT_ROUNDS = process.env.NODE_ENV === "production" ? 12 : 10;
@@ -10,7 +11,7 @@ auth.settings.onFindUserByEmail = async (email) => {
 
   // Log without exposing password
   if (process.env.NODE_ENV === "development") {
-    console.log("onFindUserByEmail:", userFound ? `found ${userFound.email}` : "not found");
+    logger.debug("Finding user by email", { email, found: !!userFound });
   }
 
   // Return user object without the password hash

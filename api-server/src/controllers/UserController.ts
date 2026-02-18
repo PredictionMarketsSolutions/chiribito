@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import logger from '../config/logger';
 
 export class UserController {
   private userRepository = AppDataSource.getRepository(User);
@@ -23,9 +24,9 @@ export class UserController {
       res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Error deleting user:', error.message);
+        logger.error('Error deleting user', { message: error.message });
       } else {
-        console.error('An unknown error occurred while deleting user');
+        logger.error('An unknown error occurred while deleting user');
       }
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -48,9 +49,9 @@ export class UserController {
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Profile error:', error.message);
+        logger.error('Profile error', { message: error.message });
       } else {
-        console.error('An unknown error occurred while fetching profile');
+        logger.error('An unknown error occurred while fetching profile');
       }
       res.status(500).json({ error: 'Internal server error' });
     }

@@ -2,6 +2,8 @@ import { Room, Client } from "@colyseus/core";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import * as jwt from "jsonwebtoken";
 import { GameEngine } from "./game/GameEngine";
+import logger from "../config/logger";
+import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/constants";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
@@ -22,8 +24,8 @@ export class MyRoom extends Room<MyRoomState> {
   // Heartbeat & connection monitoring
   private clientHeartbeats: Map<string, number> = new Map();
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private readonly HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
-  private readonly HEARTBEAT_TIMEOUT_MS = 90000; // 90 seconds (3 missed heartbeats)
+  private readonly HEARTBEAT_INTERVAL_MS = HEARTBEAT_INTERVAL;
+  private readonly HEARTBEAT_TIMEOUT_MS = HEARTBEAT_TIMEOUT;
 
   // Connection analytics per client
   private connectionStats = new Map<string, {
@@ -38,7 +40,7 @@ export class MyRoom extends Room<MyRoomState> {
 
   // Rate limiting per client to prevent spam attacks
   private actionCooldowns = new Map<string, Map<string, number>>();
-  private readonly ACTION_COOLDOWN_MS = 200; // 200ms between actions
+  private readonly ACTION_COOLDOWN_MS = ACTION_COOLDOWN;
 
   private getNextAvailableSeat(): number {
     const occupied = new Set<number>();
@@ -67,7 +69,10 @@ export class MyRoom extends Room<MyRoomState> {
         const timeSinceLastHeartbeat = now - lastHeartbeat;
 
         if (timeSinceLastHeartbeat > this.HEARTBEAT_TIMEOUT_MS) {
-          console.warn(`[HEARTBEAT] Client ${client.sessionId} is unresponsive (${timeSinceLastHeartbeat}ms without heartbeat)`);
+          logger.warn(`Client ${client.sessionId} is unresponsive`, {
+            timeSinceLastHeartbeat: `${timeSinceLastHeartbeat}ms`,
+            roomId: this.roomId
+          });
           deadClients.push(client.sessionId);
         }
       });
@@ -76,13 +81,13 @@ export class MyRoom extends Room<MyRoomState> {
       deadClients.forEach(sessionId => {
         const client = this.clients.find(c => c.sessionId === sessionId);
         if (client) {
-          console.log(`[HEARTBEAT] Forcing disconnect for unresponsive client ${sessionId}`);
+          logger.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
           client.close(4000, "Heartbeat timeout");
         }
       });
 
-      // Send heartbeat request to all healthy clients
-      this.broadcast("heartbeat");
+      // Colyseus WebSocket already has built-in ping/pong mechanism
+      // No need to broadcast heartbeat - it wastes bandwidth
     }, this.HEARTBEAT_INTERVAL_MS);
   }
 
@@ -112,7 +117,7 @@ export class MyRoom extends Room<MyRoomState> {
     const lastTime = cooldowns.get(actionType) ?? 0;
     
     if (now - lastTime < this.ACTION_COOLDOWN_MS) {
-      console.warn(`[RATE_LIMIT] Client ${sessionId} rate limited on ${actionType}`);
+      logger.warn(`Client rate limited`, { sessionId, actionType, roomId: this.roomId });
       return false;
     }
     
@@ -135,8 +140,13 @@ export class MyRoom extends Room<MyRoomState> {
       const maxLatency = Math.max(...stats.map(s => s.lastLatency || 0));
       const minLatency = Math.min(...stats.map(s => s.lastLatency || Infinity));
       
-      console.log(`[ANALYTICS] Room: ${this.roomId} | Players: ${stats.length} | ` +
-                  `Avg RTT: ${avgLatency.toFixed(0)}ms | Min: ${minLatency === Infinity ? 0 : minLatency}ms | Max: ${maxLatency}ms`);
+      logger.info(`Analytics report`, {
+        roomId: this.roomId,
+        players: stats.length,
+        avgRTT: `${avgLatency.toFixed(0)}ms`,
+        minRTT: `${minLatency === Infinity ? 0 : minLatency}ms`,
+        maxRTT: `${maxLatency}ms`
+      });
     }, 60000);
   }
 
@@ -145,7 +155,7 @@ export class MyRoom extends Room<MyRoomState> {
    */
   private logAnalyticsSummary() {
     if (this.connectionStats.size === 0) {
-      console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}: No connection data`);
+      logger.info(`Analytics summary - no connection data`, { roomId: this.roomId });
       return;
     }
     
@@ -154,16 +164,22 @@ export class MyRoom extends Room<MyRoomState> {
       ? stats.reduce((sum, [_, s]) => sum + s.averageLatency, 0) / stats.length
       : 0;
     
-    console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}:`);
-    console.log(`  Total connections: ${stats.length}`);
-    console.log(`  Average RTT: ${avgLatency.toFixed(0)}ms`);
-    console.log(`  Total joins: ${stats.reduce((sum, [_, s]) => sum + s.joins, 0)}`);
-    console.log(`  Total rejoins: ${stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)}`);
+    logger.info(`Analytics summary`, {
+      roomId: this.roomId,
+      totalConnections: stats.length,
+      avgRTT: `${avgLatency.toFixed(0)}ms`,
+      totalJoins: stats.reduce((sum, [_, s]) => sum + s.joins, 0),
+      totalRejoins: stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)
+    });
     
     // Log per-client stats
     stats.forEach(([sessionId, s]) => {
       const playerName = this.state.users.get(sessionId)?.name || "Unknown";
-      console.log(`    ${playerName}: ${s.averageLatency.toFixed(0)}ms avg, ${s.joins} joins, ${s.rejoins} rejoins`);
+      logger.debug(`Player stats: ${playerName}`, {
+        avgRTT: `${s.averageLatency.toFixed(0)}ms`,
+        joins: s.joins,
+        rejoins: s.rejoins
+      });
     });
   }
 
@@ -197,9 +213,16 @@ export class MyRoom extends Room<MyRoomState> {
 
   private handleLeaveCleanup(client: Client) {
     const player = this.state.users.get(client.sessionId);
-    console.log(`[LEAVE] ${player?.name ?? "Unknown"} (${client.sessionId})`);
+    const wasCurrentTurn = this.state.currentTurn === client.sessionId;
+    
+    logger.info(`Player leaving`, {
+      name: player?.name ?? "Unknown",
+      sessionId: client.sessionId,
+      wasCurrentTurn,
+      roomId: this.roomId
+    });
+    
     if (player) {
-      const wasCurrentTurn = this.state.currentTurn === client.sessionId;
       const foldIndex = this.playersInHand.indexOf(client.sessionId);
       player.isFolded = true;
       const playerIndex = this.playersInHand.indexOf(client.sessionId);
@@ -207,11 +230,24 @@ export class MyRoom extends Room<MyRoomState> {
         this.playersInHand.splice(playerIndex, 1);
       }
 
+      // Broadcast player disconnection to all clients
+      this.broadcast("playerDisconnected", {
+        playerId: client.sessionId,
+        playerName: player.name,
+        wasCurrentTurn,
+        timestamp: Date.now()
+      });
+
       if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
         this.engine.setCurrentPlayerIndexBeforeNextActive(foldIndex);
       }
 
       if (wasCurrentTurn) {
+        logger.info(`Ending turn for disconnected player`, {
+          player: player.name,
+          sessionId: client.sessionId,
+          roomId: this.roomId
+        });
         this.engine.endTurn();
       }
 
@@ -302,7 +338,7 @@ export class MyRoom extends Room<MyRoomState> {
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
   async requestJoin(options: any, isNew?: boolean) {
     if (!options?.authUser) {
-      console.warn("requestJoin: no authUser provided");
+      logger.warn("Request join without authUser", { roomId: this.roomId });
       return false;
     }
     return true;
@@ -320,7 +356,7 @@ export class MyRoom extends Room<MyRoomState> {
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      console.error("onAuth: JWT_SECRET not set on server");
+      logger.error("JWT_SECRET not set on server", { roomId: this.roomId });
       throw new Error("SERVER_CONFIG");
     }
 
@@ -394,13 +430,13 @@ export class MyRoom extends Room<MyRoomState> {
         
         // For network errors, use exponential backoff
         if (isLastAttempt) {
-          console.error(`[AUTH] Token validation failed after ${maxAttempts} attempts:`, err);
+          logger.error(`Token validation failed after ${maxAttempts} attempts`, { error: String(err), roomId: this.roomId });
           throw err instanceof Error ? err : new Error("AUTH_UNAVAILABLE");
         }
         
         // Exponential backoff: 500ms, 1s, 2s
         const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
-        console.warn(`[AUTH] Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms...`);
+        logger.warn(`Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms`, { roomId: this.roomId });
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
@@ -461,7 +497,11 @@ export class MyRoom extends Room<MyRoomState> {
       this.pendingUsers.delete(userId);
     }
 
-    console.log(`[JOIN] ${player.name} (${client.sessionId})`);
+    logger.info(`Player joined`, {
+      name: player.name,
+      sessionId: client.sessionId,
+      roomId: this.roomId
+    });
 
     // Notify the player they joined
     client.send("joined", { 
@@ -499,7 +539,7 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onDispose() {
-    console.log("room", this.roomId, "disposing...");
+    logger.info(`Room disposing`, { roomId: this.roomId });
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
     // Stop heartbeat monitoring
     this.stopHeartbeatMonitor();

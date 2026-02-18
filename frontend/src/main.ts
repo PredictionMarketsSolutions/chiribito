@@ -26,6 +26,7 @@ const turnTimerChip = document.querySelector<HTMLSpanElement>("#turn-timer")!;
 const winningHandChip = document.querySelector<HTMLSpanElement>("#winning-hand-chip")!;
 const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
 const playersList = document.querySelector<HTMLUListElement>("#players")!;
+const handHistoryList = document.querySelector<HTMLUListElement>("#hand-history")!;
 const mobileSeatsList = document.querySelector<HTMLUListElement>("#mobile-seats")!;
 const apiUrlEl = document.querySelector<HTMLSpanElement>("#api-url")!;
 const wsUrlEl = document.querySelector<HTMLSpanElement>("#ws-url")!;
@@ -45,6 +46,17 @@ apiUrlEl.textContent = API_URL;
 wsUrlEl.textContent = WS_URL;
 void initPixiLayer();
 setAuthOverlayVisible(true);
+renderHandHistory();
+
+document.addEventListener(
+  "pointerdown",
+  () => {
+    if (!audioUnlocked) {
+      initAudio();
+    }
+  },
+  { once: true }
+);
 
 // Mobile background handling
 document.addEventListener("visibilitychange", () => {
@@ -68,6 +80,75 @@ document.addEventListener("visibilitychange", () => {
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
   logEl.textContent = `[${ts}] ${message}\n` + logEl.textContent;
+}
+
+type SoundEffect = "bet" | "call" | "raise" | "check" | "fold" | "allIn" | "win";
+
+const soundProfiles: Record<SoundEffect, {
+  frequency: number;
+  durationMs: number;
+  type: OscillatorType;
+  volume: number;
+}> = {
+  bet: { frequency: 440, durationMs: 120, type: "sine", volume: 0.08 },
+  call: { frequency: 520, durationMs: 120, type: "triangle", volume: 0.08 },
+  raise: { frequency: 620, durationMs: 160, type: "triangle", volume: 0.1 },
+  check: { frequency: 360, durationMs: 90, type: "sine", volume: 0.06 },
+  fold: { frequency: 220, durationMs: 140, type: "sawtooth", volume: 0.08 },
+  allIn: { frequency: 740, durationMs: 220, type: "square", volume: 0.1 },
+  win: { frequency: 880, durationMs: 260, type: "triangle", volume: 0.12 }
+};
+
+function initAudio() {
+  if (!audioEnabled) return;
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+  if (audioContext.state === "suspended") {
+    void audioContext.resume();
+  }
+  audioUnlocked = true;
+}
+
+function playEffect(effect: SoundEffect) {
+  if (!audioEnabled || !audioContext || audioContext.state !== "running") return;
+  const profile = soundProfiles[effect];
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  osc.type = profile.type;
+  osc.frequency.value = profile.frequency;
+  gain.gain.value = profile.volume;
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  const now = audioContext.currentTime;
+  osc.start(now);
+  osc.stop(now + profile.durationMs / 1000);
+}
+
+function playActionSound(action: string) {
+  if (!action) return;
+  switch (action) {
+    case "bet":
+      playEffect("bet");
+      break;
+    case "call":
+      playEffect("call");
+      break;
+    case "raise":
+      playEffect("raise");
+      break;
+    case "check":
+      playEffect("check");
+      break;
+    case "fold":
+      playEffect("fold");
+      break;
+    case "allIn":
+      playEffect("allIn");
+      break;
+    default:
+      break;
+  }
 }
 
 function setAuthOverlayVisible(visible: boolean) {
@@ -148,6 +229,9 @@ let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: PixiModule.Application | null = null;
 let pixiLayer: HTMLDivElement | null = null;
+let audioContext: AudioContext | null = null;
+let audioUnlocked = false;
+let audioEnabled = true;
 
 // Connection monitoring
 let connectionState: "disconnected" | "connecting" | "connected" = "disconnected";
@@ -181,6 +265,13 @@ let turnTimerId: number | null = null;
 let turnDeadlineMs: number | null = null;
 let lastTurnId: string | null = null;
 let lastTurnTimeoutMs: number | null = null;
+let previousPotValue: number | null = null;
+let previousCurrentBetValue: number | null = null;
+let previousWinnersKey = "";
+const handHistory: HandHistoryEntry[] = [];
+const MAX_HAND_HISTORY = 20;
+let handHistoryCounter = 0;
+const latestPlayerNames = new Map<string, string>();
 
 
 const TURN_TIMEOUT_MS = 30000;
@@ -206,6 +297,21 @@ type RoomState = {
   communityCards?: string[];
 };
 
+type HandHistoryWinner = {
+  playerId: string;
+  amount?: number;
+};
+
+type HandHistoryEntry = {
+  id: number;
+  timestamp: number;
+  winners: HandHistoryWinner[];
+  winningHand: string;
+  communityCards: string[];
+  pot: number;
+  yourHand?: string[];
+};
+
 function isPlayerState(value: unknown): value is PlayerState {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
@@ -217,6 +323,80 @@ function isPlayerState(value: unknown): value is PlayerState {
     typeof record.isFolded === "boolean" &&
     typeof record.seatIndex === "number"
   );
+}
+
+function triggerAnimation(element: HTMLElement, className: string) {
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+}
+
+function formatWinnerLabel(winner: HandHistoryWinner) {
+  const name = latestPlayerNames.get(winner.playerId) ?? winner.playerId;
+  if (typeof winner.amount === "number") {
+    return `${name} (+${winner.amount})`;
+  }
+  return name;
+}
+
+function renderHandHistory() {
+  handHistoryList.innerHTML = "";
+  if (handHistory.length === 0) {
+    const emptyEl = document.createElement("li");
+    emptyEl.classList.add("history-empty");
+    emptyEl.textContent = "No hands yet.";
+    handHistoryList.appendChild(emptyEl);
+    return;
+  }
+
+  handHistory.forEach((entry) => {
+    const itemEl = document.createElement("li");
+    itemEl.classList.add("history-item");
+
+    const headerEl = document.createElement("div");
+    headerEl.classList.add("history-header");
+
+    const timeEl = document.createElement("span");
+    timeEl.classList.add("history-time");
+    timeEl.textContent = new Date(entry.timestamp).toLocaleTimeString();
+
+    const winnersEl = document.createElement("span");
+    winnersEl.classList.add("history-winners");
+    winnersEl.textContent = entry.winners.length
+      ? `Winners: ${entry.winners.map(formatWinnerLabel).join(", ")}`
+      : "Winners: -";
+
+    const potEl = document.createElement("span");
+    potEl.classList.add("history-pot");
+    potEl.textContent = `Pot: ${entry.pot}`;
+
+    headerEl.appendChild(timeEl);
+    headerEl.appendChild(winnersEl);
+    headerEl.appendChild(potEl);
+
+    const bodyEl = document.createElement("div");
+    bodyEl.classList.add("history-body");
+
+    const handEl = document.createElement("div");
+    handEl.textContent = `Winning hand: ${entry.winningHand || "-"}`;
+    bodyEl.appendChild(handEl);
+
+    const communityEl = document.createElement("div");
+    communityEl.textContent = entry.communityCards.length
+      ? `Community: ${entry.communityCards.join(" ")}`
+      : "Community: -";
+    bodyEl.appendChild(communityEl);
+
+    if (entry.yourHand && entry.yourHand.length) {
+      const yourHandEl = document.createElement("div");
+      yourHandEl.textContent = `Your hand: ${entry.yourHand.join(" ")}`;
+      bodyEl.appendChild(yourHandEl);
+    }
+
+    itemEl.appendChild(headerEl);
+    itemEl.appendChild(bodyEl);
+    handHistoryList.appendChild(itemEl);
+  });
 }
 
 function getUserEntries(state: RoomState): PlayerState[] {
@@ -401,6 +581,11 @@ function resetRoomUi(message?: string) {
   lastWinningHand = "-";
   lastWinners = [];
   revealedHands = null;
+  previousPotValue = null;
+  previousCurrentBetValue = null;
+  previousWinnersKey = "";
+  handHistory.length = 0;
+  renderHandHistory();
   setAuthOverlayVisible(true);
   setAuthMessage("", "info");
   roomStatus.textContent = message || "not joined";
@@ -748,14 +933,28 @@ function renderState(state: RoomState) {
   if (!state) return;
   phaseStatus.textContent = state.phase ?? "-";
   const entries = getUserEntries(state).filter(isPlayerState);
+  latestPlayerNames.clear();
+  entries.forEach((player) => {
+    latestPlayerNames.set(player.sessionId, player.name);
+  });
   const currentTurnId = state.currentTurn ?? "";
   const turnPlayer = entries.find((player) => player.sessionId === currentTurnId);
   turnStatus.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
-  potStatus.textContent = String(state.pot ?? 0);
-  betStatus.textContent = String(state.currentBet ?? 0);
-  potChip.textContent = String(state.pot ?? 0);
+  const potValue = Number(state.pot ?? 0);
+  const currentBetValue = Number(state.currentBet ?? 0);
+  potStatus.textContent = String(potValue);
+  betStatus.textContent = String(currentBetValue);
+  potChip.textContent = String(potValue);
   phaseChip.textContent = state.phase ?? "waiting";
   turnChip.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
+  if (previousPotValue !== null && potValue !== previousPotValue) {
+    triggerAnimation(potChip, "pot-amount-update");
+  }
+  if (previousCurrentBetValue !== null && currentBetValue !== previousCurrentBetValue) {
+    triggerAnimation(betStatus, "chip-animation");
+  }
+  previousPotValue = potValue;
+  previousCurrentBetValue = currentBetValue;
   updateTurnTimer(state);
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
@@ -1116,6 +1315,8 @@ async function joinRoom(forceReplace = false) {
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
   winnersStatus.textContent = "-";
+  handHistory.length = 0;
+  renderHandHistory();
   preloadCardImages();
   const roomId = (joinedRoom as { id?: string; roomId?: string }).id
     ?? (joinedRoom as { roomId?: string }).roomId
@@ -1155,6 +1356,11 @@ async function joinRoom(forceReplace = false) {
     log(`Player left: ${JSON.stringify(payload)}`);
   });
 
+  joinedRoom.onMessage("playerDisconnected", (payload: any) => {
+    console.log("Player disconnected", payload);
+    showNotification(`${payload.playerName} se ha desconectado${payload.wasCurrentTurn ? ' (era su turno)' : ''}`, 'warning');
+  });
+
   joinedRoom.onMessage("heartbeat_ack", () => {
     // Record RTT for connection quality monitoring
     if (lastHeartbeatSendTime > 0) {
@@ -1183,6 +1389,9 @@ async function joinRoom(forceReplace = false) {
 
   joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
+    if (payload?.action && typeof payload.action === "string") {
+      playActionSound(payload.action);
+    }
   });
 
   joinedRoom.onMessage("turnTimer", (payload) => {
@@ -1203,6 +1412,21 @@ async function joinRoom(forceReplace = false) {
   });
 
   room.onMessage("roundEnded", (payload) => {
+    const winnersPayload = Array.isArray(payload?.winners) ? payload.winners : [];
+    const winnersForHistory: HandHistoryWinner[] = winnersPayload
+      .filter((winner: any) => winner && typeof winner.playerId === "string")
+      .map((winner: any) => ({
+        playerId: winner.playerId,
+        amount: typeof winner.amount === "number" ? winner.amount : undefined
+      }));
+    const potValue = Number(potStatus.textContent ?? 0);
+    const communityCards = Array.isArray(payload?.communityCards)
+      ? payload.communityCards
+      : [];
+    const yourHand = currentSessionId && payload?.playerHands?.[currentSessionId]
+      ? payload.playerHands[currentSessionId]
+      : undefined;
+
     if (payload?.winningHand) {
       lastWinningHand = payload.winningHand;
       winningHandStatus.textContent = lastWinningHand;
@@ -1211,10 +1435,32 @@ async function joinRoom(forceReplace = false) {
     if (Array.isArray(payload?.winners)) {
       lastWinners = payload.winners.map((winner: any) => winner.playerId);
       winnersStatus.textContent = lastWinners.join(", ") || "-";
+      const winnersKey = lastWinners.join("|");
+      if (lastWinners.length > 0 && winnersKey !== previousWinnersKey) {
+        triggerAnimation(potChip, "chip-collect-animation");
+      }
+      previousWinnersKey = winnersKey;
+      if (currentSessionId && lastWinners.includes(currentSessionId)) {
+        playEffect("win");
+      }
     }
     if (payload?.playerHands && typeof payload.playerHands === "object") {
       revealedHands = payload.playerHands as Record<string, string[]>;
     }
+    const historyEntry: HandHistoryEntry = {
+      id: ++handHistoryCounter,
+      timestamp: Date.now(),
+      winners: winnersForHistory,
+      winningHand: payload?.winningHand ?? "-",
+      communityCards,
+      pot: potValue,
+      yourHand
+    };
+    handHistory.unshift(historyEntry);
+    if (handHistory.length > MAX_HAND_HISTORY) {
+      handHistory.length = MAX_HAND_HISTORY;
+    }
+    renderHandHistory();
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
 

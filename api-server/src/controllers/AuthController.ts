@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import logger from '../config/logger';
 
 interface RegisterRequest {
   username: string;
@@ -27,6 +28,9 @@ interface AuthResponse {
 // In-memory store for refresh tokens (in production, use Redis or database)
 const refreshTokenStore = new Map<string, { userId: number; expiresAt: number }>();
 
+// In-memory store for password reset tokens (in production, use Redis or database)
+const resetTokenStore = new Map<string, { userId: number; expiresAt: number; used: boolean }>();
+
 export class AuthController {
   private userRepository = AppDataSource.getRepository(User);
 
@@ -48,7 +52,7 @@ export class AuthController {
       return token;
     } catch (error) {
       if (error instanceof Error) {
-        console.error('JWT Sign Error:', error.message);
+        logger.error('JWT Sign Error (Auth Token)', { message: error.message });
         throw new Error('Failed to generate authentication token');
       }
       throw new Error('An unknown error occurred during token generation');
@@ -75,7 +79,7 @@ export class AuthController {
       return refreshToken;
     } catch (error) {
       if (error instanceof Error) {
-        console.error('JWT Sign Error:', error.message);
+        logger.error('JWT Sign Error (Refresh Token)', { message: error.message });
         throw new Error('Failed to generate authentication token');
       }
       throw new Error('An unknown error occurred during token generation');
@@ -132,9 +136,9 @@ export class AuthController {
       });
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Registration error:', error.message);
+        logger.error('Registration error', { message: error.message });
       } else {
-        console.error('An unknown error occurred during registration');
+        logger.error('An unknown error occurred during registration');
       }
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -181,9 +185,9 @@ export class AuthController {
       });
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Login error:', error.message);
+        logger.error('Login error', { message: error.message });
       } else {
-        console.error('An unknown error occurred during login');
+        logger.error('An unknown error occurred during login');
       }
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -215,9 +219,9 @@ export class AuthController {
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Profile error:', error.message);
+        logger.error('Profile error', { message: error.message });
       } else {
-        console.error('An unknown error occurred while fetching profile');
+        logger.error('An unknown error occurred while fetching profile');
       }
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -256,9 +260,9 @@ export class AuthController {
       res.json({ user: { id: user.id, username: user.username, email: user.email } });
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Validate token error:', error.message);
+        logger.error('Validate token error', { message: error.message });
       } else {
-        console.error('An unknown error occurred during token validation');
+        logger.error('An unknown error occurred during token validation');
       }
       res.status(401).json({ error: 'Invalid or expired token' });
     }
@@ -327,9 +331,129 @@ export class AuthController {
       }
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Refresh token error:', error.message);
+        logger.error('Refresh token error', { message: error.message });
       } else {
-        console.error('An unknown error occurred during token refresh');
+        logger.error('An unknown error occurred during token refresh');
+      }
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async forgotPassword(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email is required' });
+        return;
+      }
+
+      // Find user by email
+      const user = await this.userRepository.findOne({ where: { email } });
+      
+      // Always return success to avoid email enumeration attacks
+      if (!user) {
+        res.json({ message: 'If the email exists, a password reset link has been sent' });
+        return;
+      }
+
+      // Generate reset token (6-digit code for simplicity)
+      const resetToken = Math.random().toString().slice(2, 8);
+      const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+      // Store reset token
+      resetTokenStore.set(resetToken, { userId: user.id, expiresAt, used: false });
+
+      // In production, send this via email
+      // For now, log it (in dev) or return it (for testing)
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('Password reset token generated', { email, resetToken });
+        res.json({ 
+          message: 'Password reset token generated',
+          resetToken // Only in development!
+        });
+      } else {
+        // TODO: Send email with resetToken
+        logger.info('Password reset requested', { email, userId: user.id });
+        res.json({ message: 'If the email exists, a password reset link has been sent' });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error('Forgot password error', { message: error.message });
+      } else {
+        logger.error('An unknown error occurred during forgot password');
+      }
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  async resetPassword(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { resetToken, newPassword } = req.body;
+
+      if (!resetToken || !newPassword) {
+        res.status(400).json({ error: 'Reset token and new password are required' });
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        return;
+      }
+
+      // Verify reset token
+      const tokenData = resetTokenStore.get(resetToken);
+      if (!tokenData) {
+        res.status(400).json({ error: 'Invalid or expired reset token' });
+        return;
+      }
+
+      if (tokenData.used) {
+        res.status(400).json({ error: 'Reset token has already been used' });
+        return;
+      }
+
+      if (Date.now() > tokenData.expiresAt) {
+        resetTokenStore.delete(resetToken);
+        res.status(400).json({ error: 'Reset token has expired' });
+        return;
+      }
+
+      // Get user and update password
+      const user = await this.userRepository.findOne({ where: { id: tokenData.userId } });
+      if (!user) {
+        resetTokenStore.delete(resetToken);
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Update password
+      await user.setPassword(newPassword);
+      
+      // Invalidate all existing sessions by incrementing tokenVersion
+      user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+      await this.userRepository.save(user);
+
+      // Mark token as used
+      tokenData.used = true;
+      
+      // Clean up after 1 hour
+      setTimeout(() => resetTokenStore.delete(resetToken), 60 * 60 * 1000);
+
+      logger.info('Password reset successful', { userId: user.id, email: user.email });
+
+      res.json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error('Reset password error', { message: error.message });
+      } else {
+        logger.error('An unknown error occurred during password reset');
       }
       res.status(500).json({ error: 'Internal server error' });
     }

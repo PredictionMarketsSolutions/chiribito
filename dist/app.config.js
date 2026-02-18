@@ -7,6 +7,7 @@ const tools_1 = __importDefault(require("@colyseus/tools"));
 const ws_transport_1 = require("@colyseus/ws-transport");
 const monitor_1 = require("@colyseus/monitor");
 const playground_1 = require("@colyseus/playground");
+const logger_1 = __importDefault(require("./config/logger"));
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
 const MyRoom_1 = require("./rooms/MyRoom");
@@ -54,7 +55,7 @@ exports.default = (0, tools_1.default)({
         const protectRoute = (req, res, next) => {
             const password = process.env.MONITOR_PASSWORD;
             if (!password) {
-                console.warn("⚠️ MONITOR_PASSWORD not set - /colyseus and /playground are publicly accessible");
+                logger_1.default.warn("MONITOR_PASSWORD not set - /colyseus and /playground are publicly accessible");
                 return next();
             }
             const authHeader = req.headers["authorization"];
@@ -81,6 +82,45 @@ exports.default = (0, tools_1.default)({
     beforeListen: () => {
         /**
          * Before before gameServer.listen() is called.
+         * Validate critical environment variables
          */
+        const isProduction = process.env.NODE_ENV === 'production';
+        const requiredVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
+        const productionOnlyVars = ['MONITOR_PASSWORD', 'ALLOWED_ORIGINS'];
+        const missing = [];
+        // Check required vars in all environments
+        requiredVars.forEach(varName => {
+            if (!process.env[varName]) {
+                missing.push(varName);
+            }
+        });
+        // Check production-only vars
+        if (isProduction) {
+            productionOnlyVars.forEach(varName => {
+                if (!process.env[varName]) {
+                    missing.push(varName);
+                }
+            });
+        }
+        // Fail startup if critical vars missing
+        if (missing.length > 0) {
+            logger_1.default.error("CRITICAL: Missing required environment variables", { missing });
+            logger_1.default.error("Set the following variables before starting the server:");
+            missing.forEach(varName => logger_1.default.error(`  - ${varName}`));
+            if (isProduction) {
+                process.exit(1);
+            }
+            else {
+                logger_1.default.warn("Development mode: continuing with missing variables (may cause errors)");
+            }
+        }
+        // Warn about MONITOR_PASSWORD in development
+        if (!isProduction && !process.env.MONITOR_PASSWORD) {
+            logger_1.default.warn("MONITOR_PASSWORD not set - development mode allows unprotected monitor access");
+        }
+        logger_1.default.info("Environment validation passed", {
+            NODE_ENV: process.env.NODE_ENV,
+            varsChecked: requiredVars.length + (isProduction ? productionOnlyVars.length : 0)
+        });
     }
 });

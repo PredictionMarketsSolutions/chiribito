@@ -44,6 +44,7 @@ import { UserController } from './controllers/UserController';
 import { authenticateJWT } from './middleware/auth';
 import { registerValidator, loginValidator } from './middlewares/validators';
 import { validateRequest } from './middlewares/validateRequest';
+import logger from './config/logger';
 
 // Initialize Express app
 const app = express();
@@ -120,6 +121,8 @@ app.post('/api/auth/register', authRateLimit, registerValidator, validateRequest
 app.post('/api/auth/login', authRateLimit, loginValidator, validateRequest, (req: Request, res: Response) => authController.login(req, res));
 app.post('/api/auth/validate', (req: Request, res: Response) => authController.validateToken(req, res));
 app.post('/api/auth/refresh', (req: Request, res: Response) => authController.refreshToken(req, res));
+app.post('/api/auth/forgot-password', (req: Request, res: Response) => authController.forgotPassword(req, res));
+app.post('/api/auth/reset-password', (req: Request, res: Response) => authController.resetPassword(req, res));
 
 // Protected routes
 app.get('/api/users/me', authenticateJWT, async (req, res, next) => {
@@ -145,7 +148,7 @@ app.get('/health', (_, res) => {
 
 // Error handling middleware
 app.use((err: any, _: any, res: any, __: any) => {
-  console.error(err.stack);
+  logger.error('Error handling middleware', { stack: err.stack });
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
@@ -153,13 +156,13 @@ app.use((err: any, _: any, res: any, __: any) => {
 const startServer = async () => {
   try {
     await AppDataSource.initialize();
-    console.log('Database connected successfully');
+    logger.info('Database connected successfully');
     
     app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      logger.info(`Server is running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('Failed to connect to the database', error);
+    logger.error('Failed to connect to the database', { error: String(error) });
     process.exit(1);
   }
 };

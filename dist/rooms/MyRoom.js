@@ -41,12 +41,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MyRoom = void 0;
 const core_1 = require("@colyseus/core");
 const MyRoomState_1 = require("./schema/MyRoomState");
 const jwt = __importStar(require("jsonwebtoken"));
 const GameEngine_1 = require("./game/GameEngine");
+const logger_1 = __importDefault(require("../config/logger"));
+const constants_1 = require("./game/constants");
 const API_URL = process.env.API_URL || "http://localhost:3000";
 class MyRoom extends core_1.Room {
     constructor() {
@@ -65,14 +70,14 @@ class MyRoom extends core_1.Room {
         // Heartbeat & connection monitoring
         this.clientHeartbeats = new Map();
         this.heartbeatInterval = null;
-        this.HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
-        this.HEARTBEAT_TIMEOUT_MS = 90000; // 90 seconds (3 missed heartbeats)
+        this.HEARTBEAT_INTERVAL_MS = constants_1.HEARTBEAT_INTERVAL;
+        this.HEARTBEAT_TIMEOUT_MS = constants_1.HEARTBEAT_TIMEOUT;
         // Connection analytics per client
         this.connectionStats = new Map();
         this.analyticsInterval = null;
         // Rate limiting per client to prevent spam attacks
         this.actionCooldowns = new Map();
-        this.ACTION_COOLDOWN_MS = 200; // 200ms between actions
+        this.ACTION_COOLDOWN_MS = constants_1.ACTION_COOLDOWN;
     }
     getNextAvailableSeat() {
         const occupied = new Set();
@@ -100,7 +105,10 @@ class MyRoom extends core_1.Room {
                 const lastHeartbeat = (_a = this.clientHeartbeats.get(client.sessionId)) !== null && _a !== void 0 ? _a : Date.now();
                 const timeSinceLastHeartbeat = now - lastHeartbeat;
                 if (timeSinceLastHeartbeat > this.HEARTBEAT_TIMEOUT_MS) {
-                    console.warn(`[HEARTBEAT] Client ${client.sessionId} is unresponsive (${timeSinceLastHeartbeat}ms without heartbeat)`);
+                    logger_1.default.warn(`Client ${client.sessionId} is unresponsive`, {
+                        timeSinceLastHeartbeat: `${timeSinceLastHeartbeat}ms`,
+                        roomId: this.roomId
+                    });
                     deadClients.push(client.sessionId);
                 }
             });
@@ -108,12 +116,12 @@ class MyRoom extends core_1.Room {
             deadClients.forEach(sessionId => {
                 const client = this.clients.find(c => c.sessionId === sessionId);
                 if (client) {
-                    console.log(`[HEARTBEAT] Forcing disconnect for unresponsive client ${sessionId}`);
+                    logger_1.default.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
                     client.close(4000, "Heartbeat timeout");
                 }
             });
-            // Send heartbeat request to all healthy clients
-            this.broadcast("heartbeat");
+            // Colyseus WebSocket already has built-in ping/pong mechanism
+            // No need to broadcast heartbeat - it wastes bandwidth
         }, this.HEARTBEAT_INTERVAL_MS);
     }
     /**
@@ -139,7 +147,7 @@ class MyRoom extends core_1.Room {
         const cooldowns = this.actionCooldowns.get(sessionId);
         const lastTime = (_a = cooldowns.get(actionType)) !== null && _a !== void 0 ? _a : 0;
         if (now - lastTime < this.ACTION_COOLDOWN_MS) {
-            console.warn(`[RATE_LIMIT] Client ${sessionId} rate limited on ${actionType}`);
+            logger_1.default.warn(`Client rate limited`, { sessionId, actionType, roomId: this.roomId });
             return false;
         }
         cooldowns.set(actionType, now);
@@ -159,8 +167,13 @@ class MyRoom extends core_1.Room {
                 : 0;
             const maxLatency = Math.max(...stats.map(s => s.lastLatency || 0));
             const minLatency = Math.min(...stats.map(s => s.lastLatency || Infinity));
-            console.log(`[ANALYTICS] Room: ${this.roomId} | Players: ${stats.length} | ` +
-                `Avg RTT: ${avgLatency.toFixed(0)}ms | Min: ${minLatency === Infinity ? 0 : minLatency}ms | Max: ${maxLatency}ms`);
+            logger_1.default.info(`Analytics report`, {
+                roomId: this.roomId,
+                players: stats.length,
+                avgRTT: `${avgLatency.toFixed(0)}ms`,
+                minRTT: `${minLatency === Infinity ? 0 : minLatency}ms`,
+                maxRTT: `${maxLatency}ms`
+            });
         }, 60000);
     }
     /**
@@ -168,23 +181,29 @@ class MyRoom extends core_1.Room {
      */
     logAnalyticsSummary() {
         if (this.connectionStats.size === 0) {
-            console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}: No connection data`);
+            logger_1.default.info(`Analytics summary - no connection data`, { roomId: this.roomId });
             return;
         }
         const stats = Array.from(this.connectionStats.entries());
         const avgLatency = stats.length > 0
             ? stats.reduce((sum, [_, s]) => sum + s.averageLatency, 0) / stats.length
             : 0;
-        console.log(`[ANALYTICS SUMMARY] Room ${this.roomId}:`);
-        console.log(`  Total connections: ${stats.length}`);
-        console.log(`  Average RTT: ${avgLatency.toFixed(0)}ms`);
-        console.log(`  Total joins: ${stats.reduce((sum, [_, s]) => sum + s.joins, 0)}`);
-        console.log(`  Total rejoins: ${stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)}`);
+        logger_1.default.info(`Analytics summary`, {
+            roomId: this.roomId,
+            totalConnections: stats.length,
+            avgRTT: `${avgLatency.toFixed(0)}ms`,
+            totalJoins: stats.reduce((sum, [_, s]) => sum + s.joins, 0),
+            totalRejoins: stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)
+        });
         // Log per-client stats
         stats.forEach(([sessionId, s]) => {
             var _a;
             const playerName = ((_a = this.state.users.get(sessionId)) === null || _a === void 0 ? void 0 : _a.name) || "Unknown";
-            console.log(`    ${playerName}: ${s.averageLatency.toFixed(0)}ms avg, ${s.joins} joins, ${s.rejoins} rejoins`);
+            logger_1.default.debug(`Player stats: ${playerName}`, {
+                avgRTT: `${s.averageLatency.toFixed(0)}ms`,
+                joins: s.joins,
+                rejoins: s.rejoins
+            });
         });
     }
     replaceSession(oldSessionId, newClient) {
@@ -214,19 +233,36 @@ class MyRoom extends core_1.Room {
     handleLeaveCleanup(client) {
         var _a;
         const player = this.state.users.get(client.sessionId);
-        console.log(`[LEAVE] ${(_a = player === null || player === void 0 ? void 0 : player.name) !== null && _a !== void 0 ? _a : "Unknown"} (${client.sessionId})`);
+        const wasCurrentTurn = this.state.currentTurn === client.sessionId;
+        logger_1.default.info(`Player leaving`, {
+            name: (_a = player === null || player === void 0 ? void 0 : player.name) !== null && _a !== void 0 ? _a : "Unknown",
+            sessionId: client.sessionId,
+            wasCurrentTurn,
+            roomId: this.roomId
+        });
         if (player) {
-            const wasCurrentTurn = this.state.currentTurn === client.sessionId;
             const foldIndex = this.playersInHand.indexOf(client.sessionId);
             player.isFolded = true;
             const playerIndex = this.playersInHand.indexOf(client.sessionId);
             if (playerIndex > -1) {
                 this.playersInHand.splice(playerIndex, 1);
             }
+            // Broadcast player disconnection to all clients
+            this.broadcast("playerDisconnected", {
+                playerId: client.sessionId,
+                playerName: player.name,
+                wasCurrentTurn,
+                timestamp: Date.now()
+            });
             if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
                 this.engine.setCurrentPlayerIndexBeforeNextActive(foldIndex);
             }
             if (wasCurrentTurn) {
+                logger_1.default.info(`Ending turn for disconnected player`, {
+                    player: player.name,
+                    sessionId: client.sessionId,
+                    roomId: this.roomId
+                });
                 this.engine.endTurn();
             }
             // Remove player from the room completely
@@ -313,7 +349,7 @@ class MyRoom extends core_1.Room {
     requestJoin(options, isNew) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!(options === null || options === void 0 ? void 0 : options.authUser)) {
-                console.warn("requestJoin: no authUser provided");
+                logger_1.default.warn("Request join without authUser", { roomId: this.roomId });
                 return false;
             }
             return true;
@@ -331,7 +367,7 @@ class MyRoom extends core_1.Room {
             }
             const secret = process.env.JWT_SECRET;
             if (!secret) {
-                console.error("onAuth: JWT_SECRET not set on server");
+                logger_1.default.error("JWT_SECRET not set on server", { roomId: this.roomId });
                 throw new Error("SERVER_CONFIG");
             }
             const decoded = jwt.verify(token, secret);
@@ -394,12 +430,12 @@ class MyRoom extends core_1.Room {
                     }
                     // For network errors, use exponential backoff
                     if (isLastAttempt) {
-                        console.error(`[AUTH] Token validation failed after ${maxAttempts} attempts:`, err);
+                        logger_1.default.error(`Token validation failed after ${maxAttempts} attempts`, { error: String(err), roomId: this.roomId });
                         throw err instanceof Error ? err : new Error("AUTH_UNAVAILABLE");
                     }
                     // Exponential backoff: 500ms, 1s, 2s
                     const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
-                    console.warn(`[AUTH] Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms...`);
+                    logger_1.default.warn(`Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms`, { roomId: this.roomId });
                     yield new Promise(resolve => setTimeout(resolve, delayMs));
                 }
             }
@@ -455,7 +491,11 @@ class MyRoom extends core_1.Room {
             this.sessionUsers.set(client.sessionId, userId);
             this.pendingUsers.delete(userId);
         }
-        console.log(`[JOIN] ${player.name} (${client.sessionId})`);
+        logger_1.default.info(`Player joined`, {
+            name: player.name,
+            sessionId: client.sessionId,
+            roomId: this.roomId
+        });
         // Notify the player they joined
         client.send("joined", {
             name: player.name,
@@ -490,7 +530,7 @@ class MyRoom extends core_1.Room {
         });
     }
     onDispose() {
-        console.log("room", this.roomId, "disposing...");
+        logger_1.default.info(`Room disposing`, { roomId: this.roomId });
         if (this.turnTimeout)
             clearTimeout(this.turnTimeout);
         // Stop heartbeat monitoring

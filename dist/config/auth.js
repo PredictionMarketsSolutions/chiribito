@@ -52,9 +52,13 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const auth_1 = require("@colyseus/auth");
 const bcrypt = __importStar(require("bcryptjs"));
+const logger_1 = __importDefault(require("./logger"));
 const fakeDb = [];
 const BCRYPT_ROUNDS = process.env.NODE_ENV === "production" ? 12 : 10;
 // Find user by email (for login)
@@ -62,7 +66,7 @@ auth_1.auth.settings.onFindUserByEmail = (email) => __awaiter(void 0, void 0, vo
     const userFound = fakeDb.find((user) => user.email === email);
     // Log without exposing password
     if (process.env.NODE_ENV === "development") {
-        console.log("onFindUserByEmail:", userFound ? `found ${userFound.email}` : "not found");
+        logger_1.default.debug("Finding user by email", { email, found: !!userFound });
     }
     // Return user object without the password hash
     if (!userFound)

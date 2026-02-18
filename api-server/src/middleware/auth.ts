@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import logger from '../config/logger';
 
 // Extend Express Request type to include user information
 declare global {
@@ -66,7 +67,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error', { error: String(error) });
     
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: 'Invalid token' });
@@ -80,7 +81,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
     
     // Handle other types of errors
     if (error instanceof Error) {
-      console.error('Authentication failed:', error.message);
+      logger.error('Authentication failed', { message: error.message });
     }
     
     res.status(500).json({ error: 'Authentication failed' });

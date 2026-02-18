@@ -1,12 +1,17 @@
 import { Client } from "@colyseus/core";
 import type { MyRoom } from "../MyRoom";
 import { TURN_TIMEOUT } from "./constants";
+import logger from "../../config/logger";
 
 export class GameEngine {
   constructor(private room: MyRoom) {}
 
   handleStartGame(client: Client) {
-    console.log(`[ACTION] ${this.getPlayerName(client.sessionId)} startGame`);
+    logger.info(`Player starting game`, {
+      player: this.getPlayerName(client.sessionId),
+      sessionId: client.sessionId,
+      roomId: this.room.roomId
+    });
     if (this.room.state.users.size < 2) {
       client.send("error", { message: "At least 2 players required to start" });
       return;
@@ -25,7 +30,11 @@ export class GameEngine {
 
     const player = this.room.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
-    console.log(`[ACTION] ${this.getPlayerName(client.sessionId)} bet ${amount}`);
+    logger.info(`Player bet`, {
+      player: this.getPlayerName(client.sessionId),
+      amount,
+      roomId: this.room.roomId
+    });
 
     const prevCurrentBet = this.room.state.currentBet;
     const minRaise = prevCurrentBet * 2;
@@ -73,7 +82,10 @@ export class GameEngine {
 
     const player = this.room.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
-    console.log(`[ACTION] ${this.getPlayerName(client.sessionId)} call`);
+    logger.info(`Player call`, {
+      player: this.getPlayerName(client.sessionId),
+      roomId: this.room.roomId
+    });
 
     const chipsToCall = this.room.state.currentBet - player.currentBet;
     if (chipsToCall <= 0) {
@@ -107,7 +119,10 @@ export class GameEngine {
 
     const player = this.room.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
-    console.log(`[ACTION] ${this.getPlayerName(client.sessionId)} check`);
+    logger.info(`Player check`, {
+      player: this.getPlayerName(client.sessionId),
+      roomId: this.room.roomId
+    });
 
     if (player.currentBet < this.room.state.currentBet) {
       client.send("error", { message: `${player.name}: cannot check, you need to call or fold` });
@@ -126,7 +141,11 @@ export class GameEngine {
 
   handleRaise(client: Client, amount: number) {
     const player = this.room.state.users.get(client.sessionId);
-    console.log(`[ACTION] ${player?.name ?? "Unknown"} raise ${amount}`);
+    logger.info(`Player raise`, {
+      player: player?.name ?? "Unknown",
+      amount,
+      roomId: this.room.roomId
+    });
     this.handleBet(client, this.room.state.currentBet + amount);
   }
 
@@ -135,7 +154,10 @@ export class GameEngine {
 
     const player = this.room.state.users.get(client.sessionId);
     if (!player || player.isFolded) return;
-    console.log(`[ACTION] ${this.getPlayerName(client.sessionId)} fold`);
+    logger.info(`Player fold`, {
+      player: this.getPlayerName(client.sessionId),
+      roomId: this.room.roomId
+    });
 
     const foldIndex = this.room.playersInHand.indexOf(client.sessionId);
     player.isFolded = true;
@@ -165,7 +187,7 @@ export class GameEngine {
   }
 
   startNewHand() {
-    console.log("[ROUND] Starting new hand");
+    logger.info(`Starting new hand`, { roomId: this.room.roomId });
     this.resetForNewHand();
 
     const players = this.getPlayersWithChips();
@@ -194,7 +216,12 @@ export class GameEngine {
 
   startBettingRound() {
     this.room.playersActedThisRound.clear();
-    console.log(`[ROUND] Betting round started (${this.room.state.phase}) | currentBet=${this.room.state.currentBet} pot=${this.room.state.pot}`);
+    logger.info(`Betting round started`, {
+      phase: this.room.state.phase,
+      currentBet: this.room.state.currentBet,
+      pot: this.room.state.pot,
+      roomId: this.room.roomId
+    });
     this.broadcastBettingRoundStarted({
       phase: this.room.state.phase,
       currentTurn: this.room.state.currentTurn,
@@ -204,7 +231,10 @@ export class GameEngine {
   }
 
   proceedToNextPhase() {
-    console.log(`[ROUND] Proceeding to next phase from ${this.room.state.phase}`);
+    logger.info(`Proceeding to next phase`, {
+      currentPhase: this.room.state.phase,
+      roomId: this.room.roomId
+    });
     this.resetBetsForRound();
 
     if (this.room.state.phase !== "preflop" && this.room.state.communityCards.length >= 5) {
@@ -289,7 +319,11 @@ export class GameEngine {
     const winnerNames = winners
       .map(id => this.room.state.users.get(id)?.name ?? id)
       .join(", ");
-    console.log(`[ROUND] Ended. Winners: ${winnerNames || "none"} | Hand: ${winningHand ?? "n/a"}`);
+    logger.info(`Round ended`, {
+      winners: winnerNames || "none",
+      winningHand: winningHand ?? "n/a",
+      roomId: this.room.roomId
+    });
 
     const winnersList = winners.map(id => ({
       playerId: id,
@@ -324,7 +358,10 @@ export class GameEngine {
   endTurn() {
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
     const current = this.room.state.users.get(this.room.state.currentTurn);
-    console.log(`[TURN] End turn for ${current?.name ?? this.room.state.currentTurn}`);
+    logger.info(`Turn ended`, {
+      player: current?.name ?? this.room.state.currentTurn,
+      roomId: this.room.roomId
+    });
 
     const activePlayers = this.getActivePlayerIds();
     const allActed = activePlayers.every(id => this.room.playersActedThisRound.has(id));
