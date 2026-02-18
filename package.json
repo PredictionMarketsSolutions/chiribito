@@ -37,7 +37,8 @@
     "mocha": "^11.3.0",
     "ts-node": "^10.9.2",
     "tsx": "^3.12.7",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^5.4.11"
   },
   "dependencies": {
     "@colyseus/auth": "^0.16.0",
