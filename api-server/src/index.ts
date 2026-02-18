@@ -55,12 +55,19 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
   ? (process.env.ALLOWED_ORIGINS?.split(',') || [])
   : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
 
+logger.info(`CORS allowed origins: ${JSON.stringify(allowedOrigins)}`);
+logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
+logger.info(`ALLOWED_ORIGINS env: ${process.env.ALLOWED_ORIGINS}`);
+
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    logger.info(`CORS check - Origin: ${origin}, Allowed: ${JSON.stringify(allowedOrigins)}`);
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin || allowedOrigins.includes(origin)) {
+      logger.info(`CORS allowing origin: ${origin}`);
       callback(null, true);
     } else {
+      logger.error(`CORS rejecting origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
