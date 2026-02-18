@@ -603,37 +603,8 @@ function animateCardDeals(
   cards: string[],
   previousCards: string[]
 ) {
-  const app = pixiApp;
-  if (!app || !pixiLayer || !pixiTableSurface || !pixiLib) return;
-  const cardEls = Array.from(containerEl.querySelectorAll<HTMLElement>(".card"));
-  const deckPos = getDeckPosition();
-
-  cards.forEach((card, index) => {
-    if (!card) return;
-    if (previousCards[index] === card) return;
-    const targetEl = cardEls[index];
-    if (!targetEl) return;
-
-    const target = getElementCenterInTable(targetEl);
-    const sprite = createCardSprite(targetEl);
-    if (!sprite) return;
-    sprite.x = deckPos.x;
-    sprite.y = deckPos.y;
-    sprite.rotation = -0.08;
-    app.stage.addChild(sprite);
-
-    tweenSprite(sprite, deckPos, target, 420, index * 90, () => {
-      sprite.rotation = 0;
-      const texture = getCardTexture(card);
-      if (texture) {
-        flipSprite(sprite, texture);
-      }
-      window.setTimeout(() => {
-        app.stage.removeChild(sprite);
-        sprite.destroy();
-      }, 420);
-    });
-  });
+  // Animation disabled - just show cards immediately
+  return;
 }
 
 function resetRoomUi(message?: string) {
