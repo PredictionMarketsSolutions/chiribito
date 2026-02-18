@@ -32,6 +32,8 @@ services:
           property: password
       - key: DB_SSL
         value: "true"
+      - key: ALLOWED_ORIGINS
+        value: https://chiri-frontend.onrender.com
 
   - type: web
     name: chiri-colyseus
