@@ -301,6 +301,10 @@ export class MyRoom extends Room<MyRoomState> {
       if (!this.isActionAllowed(client.sessionId, "fold")) return;
       this.engine.handleFold(client);
     });
+    this.onMessage("allIn", (client) => {
+      if (!this.isActionAllowed(client.sessionId, "allIn")) return;
+      this.engine.handleAllIn(client);
+    });
     this.onMessage("raise", (client, amount: number) => {
       if (!this.isActionAllowed(client.sessionId, "raise")) return;
       this.engine.handleRaise(client, amount);

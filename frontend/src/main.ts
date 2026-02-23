@@ -33,8 +33,9 @@ const startGameButton = document.querySelector<HTMLButtonElement>("#start-game")
 const checkButton = document.querySelector<HTMLButtonElement>("#check")!;
 const callButton = document.querySelector<HTMLButtonElement>("#call")!;
 const foldButton = document.querySelector<HTMLButtonElement>("#fold")!;
+const allInButton = document.querySelector<HTMLButtonElement>("#all-in")!;
 const betButton = document.querySelector<HTMLButtonElement>("#bet")!;
-const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!;
+const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!
 
 const connectionIndicator = document.querySelector<HTMLDivElement>("#connection-indicator")!;
 const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
@@ -1069,7 +1070,7 @@ function renderState(state: RoomState) {
 function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) {
   // If all-in or no state, disable all buttons
   if (isAllIn || !state || !currentSessionId) {
-    setActionButtonsEnabled(false, false, false, false, false, false);
+    setActionButtonsEnabled(false, false, false, false, false, false, false);
     callButton.textContent = "Call";
     return;
   }
@@ -1095,6 +1096,7 @@ function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) 
   }
   
   const canFold = canAct;
+  const canAllIn = canAct && myChips > 0;
   const canBet = canAct && currentBet === 0 && myChips > 0;
   const canRaise = canAct && currentBet > 0 && myChips > 0;
 
@@ -1105,6 +1107,7 @@ function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) 
     canCheck,
     canCall,
     canFold,
+    canAllIn,
     canBet,
     canRaise
   );
@@ -1115,6 +1118,7 @@ function setActionButtonsEnabled(
   canCheck: boolean,
   canCall: boolean,
   canFold: boolean,
+  canAllIn: boolean,
   canBet: boolean,
   canRaise: boolean
 ) {
@@ -1122,6 +1126,7 @@ function setActionButtonsEnabled(
   checkButton.disabled = !canCheck;
   callButton.disabled = !canCall;
   foldButton.disabled = !canFold;
+  allInButton.disabled = !canAllIn;
   betButton.disabled = !canBet;
   raiseButton.disabled = !canRaise;
 }
@@ -1606,6 +1611,10 @@ function requireRoom(): Room | null {
 
 (document.querySelector("#fold") as HTMLButtonElement).addEventListener("click", () => {
   queueAction("fold", undefined);
+});
+
+(document.querySelector("#all-in") as HTMLButtonElement).addEventListener("click", () => {
+  queueAction("allIn", undefined);
 });
 
 function getBetAmount() {

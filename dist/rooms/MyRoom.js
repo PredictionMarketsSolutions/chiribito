@@ -315,6 +315,11 @@ class MyRoom extends core_1.Room {
                 return;
             this.engine.handleFold(client);
         });
+        this.onMessage("allIn", (client) => {
+            if (!this.isActionAllowed(client.sessionId, "allIn"))
+                return;
+            this.engine.handleAllIn(client);
+        });
         this.onMessage("raise", (client, amount) => {
             if (!this.isActionAllowed(client.sessionId, "raise"))
                 return;

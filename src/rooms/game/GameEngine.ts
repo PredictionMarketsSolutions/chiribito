@@ -139,6 +139,21 @@ export class GameEngine {
     this.endTurn();
   }
 
+  handleAllIn(client: Client) {
+    if (client.sessionId !== this.room.state.currentTurn) return;
+
+    const player = this.room.state.users.get(client.sessionId);
+    if (!player || player.isFolded) return;
+    logger.info(`Player all-in`, {
+      player: this.getPlayerName(client.sessionId),
+      roomId: this.room.roomId
+    });
+
+    // All-in with all remaining chips
+    const allInAmount = this.room.state.currentBet + player.chips;
+    this.handleBet(client, allInAmount);
+  }
+
   handleRaise(client: Client, amount: number) {
     const player = this.room.state.users.get(client.sessionId);
     logger.info(`Player raise`, {

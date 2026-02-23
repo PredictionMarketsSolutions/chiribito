@@ -84,6 +84,10 @@ exports.default = (0, tools_1.default)({
          * Before before gameServer.listen() is called.
          * Validate critical environment variables
          */
+        if (process.env.DISABLE_ENV_VALIDATION === "true") {
+            logger_1.default.warn("Environment validation disabled via DISABLE_ENV_VALIDATION");
+            return;
+        }
         const isProduction = process.env.NODE_ENV === 'production';
         const requiredVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
         const productionOnlyVars = ['MONITOR_PASSWORD', 'ALLOWED_ORIGINS'];
