@@ -40,6 +40,7 @@ const connectionIndicator = document.querySelector<HTMLDivElement>("#connection-
 const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
 const qualityStatus = document.querySelector<HTMLSpanElement>("#quality-status")!;
 const bufferStatus = document.querySelector<HTMLSpanElement>("#buffer-status")!;
+const yourTurnIndicator = document.querySelector<HTMLDivElement>("#your-turn-indicator")!;;
 
 // Initialize after functions are defined
 document.addEventListener("DOMContentLoaded", () => {
@@ -970,6 +971,14 @@ function renderState(state: RoomState) {
   const currentTurnId = state.currentTurn ?? "";
   const turnPlayer = entries.find((player) => player.sessionId === currentTurnId);
   turnStatus.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
+  
+  // Show/hide "ES TU TURNO" indicator
+  if (currentSessionId && currentTurnId === currentSessionId) {
+    yourTurnIndicator.classList.remove("hidden");
+  } else {
+    yourTurnIndicator.classList.add("hidden");
+  }
+  
   const potValue = Number(state.pot ?? 0);
   const currentBetValue = Number(state.currentBet ?? 0);
   potStatus.textContent = String(potValue);

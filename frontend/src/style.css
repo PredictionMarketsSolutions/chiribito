@@ -188,6 +188,40 @@ body {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+  position: relative;
+}
+
+/* Your Turn Indicator */
+.your-turn-indicator {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  padding: 16px 28px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+  z-index: 200;
+  animation: pulse-turn 1s ease-in-out infinite;
+  text-transform: uppercase;
+}
+
+.your-turn-indicator.hidden {
+  display: none;
+}
+
+@keyframes pulse-turn {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
 }
 
 /* Panel Sidebar */
