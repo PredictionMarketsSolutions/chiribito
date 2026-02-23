@@ -332,6 +332,7 @@ let previousCurrentBetValue: number | null = null;
 let previousWinnersKey = "";
 let allInAnimationTimeoutId: number | null = null;
 let allInCardIndex = 0;
+let allInRevealStarted = false;
 const handHistory: HandHistoryEntry[] = [];
 const MAX_HAND_HISTORY = 20;
 let handHistoryCounter = 0;
@@ -1026,13 +1027,26 @@ function renderState(state: RoomState) {
   updateActionButtons(state, allPlayersAllIn);
   
   if (allPlayersAllIn && community.length > 0) {
-    // Trigger slow card reveal (one every 2 seconds)
-    revealAllInCards(community);
+    // Trigger slow card reveal ONLY ONCE when entering all-in
+    if (!allInRevealStarted) {
+      allInRevealStarted = true;
+      revealAllInCards(community);
+    }
     previousCommunityCards = [...community];
-  } else if (!cardsEqual(community, previousCommunityCards)) {
-    renderCardRow(communityCardsEl, community, 5);
-    animateCardDeals(communityCardsEl, community, previousCommunityCards);
-    previousCommunityCards = [...community];
+  } else {
+    // Reset all-in flag when no longer all-in
+    if (allInRevealStarted) {
+      allInRevealStarted = false;
+      if (allInAnimationTimeoutId !== null) {
+        window.clearTimeout(allInAnimationTimeoutId);
+        allInAnimationTimeoutId = null;
+      }
+    }
+    if (!cardsEqual(community, previousCommunityCards)) {
+      renderCardRow(communityCardsEl, community, 5);
+      animateCardDeals(communityCardsEl, community, previousCommunityCards);
+      previousCommunityCards = [...community];
+    }
   }
   if (currentSessionId) {
     const me = entries.find((player: any) => player.sessionId === currentSessionId);
