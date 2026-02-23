@@ -1021,6 +1021,7 @@ function renderState(state: RoomState) {
 function updateActionButtons(state: RoomState | null) {
   if (!state || !currentSessionId) {
     setActionButtonsEnabled(false, false, false, false, false, false);
+    callButton.textContent = "Call";
     return;
   }
 
@@ -1035,6 +1036,15 @@ function updateActionButtons(state: RoomState | null) {
 
   const canCheck = canAct && currentBet === myBet;
   const canCall = canAct && currentBet > myBet && myChips > 0;
+  const callAmount = currentBet - myBet;
+  
+  // Update call button text with amount
+  if (canCall) {
+    callButton.textContent = `Call ($${callAmount})`;
+  } else {
+    callButton.textContent = "Call";
+  }
+  
   const canFold = canAct;
   const canBet = canAct && currentBet === 0 && myChips > 0;
   const canRaise = canAct && currentBet > 0 && myChips > 0;
