@@ -1022,6 +1022,9 @@ function renderState(state: RoomState) {
   const activePlayers = entries.filter((p: any) => !p.isFolded && p.chips !== undefined);
   const allPlayersAllIn = activePlayers.length > 1 && activePlayers.every((p: any) => Number(p.chips ?? 0) === 0);
   
+  // Disable buttons when all-in (BEFORE rendering)
+  updateActionButtons(state, allPlayersAllIn);
+  
   if (allPlayersAllIn && community.length > 0) {
     // Trigger slow card reveal (one every 2 seconds)
     revealAllInCards(community);
@@ -1047,11 +1050,11 @@ function renderState(state: RoomState) {
   }
   renderSeats(state);
   renderPlayers(state);
-  updateActionButtons(state);
 }
 
-function updateActionButtons(state: RoomState | null) {
-  if (!state || !currentSessionId) {
+function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) {
+  // If all-in or no state, disable all buttons
+  if (isAllIn || !state || !currentSessionId) {
     setActionButtonsEnabled(false, false, false, false, false, false);
     callButton.textContent = "Call";
     return;
