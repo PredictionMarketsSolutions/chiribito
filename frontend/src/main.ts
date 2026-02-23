@@ -330,6 +330,8 @@ let lastTurnTimeoutMs: number | null = null;
 let previousPotValue: number | null = null;
 let previousCurrentBetValue: number | null = null;
 let previousWinnersKey = "";
+let allInAnimationTimeoutId: number | null = null;
+let allInCardIndex = 0;
 const handHistory: HandHistoryEntry[] = [];
 const MAX_HAND_HISTORY = 20;
 let handHistoryCounter = 0;
@@ -606,6 +608,27 @@ function animateCardDeals(
 ) {
   // Animation disabled - just show cards immediately
   return;
+}
+
+function revealAllInCards(cards: string[]) {
+  // Clear any existing animation
+  if (allInAnimationTimeoutId !== null) {
+    window.clearTimeout(allInAnimationTimeoutId);
+  }
+  allInCardIndex = 0;
+  
+  // Show cards one by one, every 2 seconds
+  const revealNext = () => {
+    if (allInCardIndex < cards.length) {
+      // Show cards up to current index
+      const cardsToShow = cards.slice(0, allInCardIndex + 1);
+      renderCardRow(communityCardsEl, cardsToShow, 5);
+      allInCardIndex++;
+      allInAnimationTimeoutId = window.setTimeout(revealNext, 2000);
+    }
+  };
+  
+  revealNext();
 }
 
 function resetRoomUi(message?: string) {
@@ -994,7 +1017,16 @@ function renderState(state: RoomState) {
   winnersStatus.textContent = lastWinners.join(", ") || "-";
   const community = state.communityCards ? Array.from(state.communityCards) : [];
   communityStatus.textContent = community.length ? community.join(" ") : "-";
-  if (!cardsEqual(community, previousCommunityCards)) {
+  
+  // Check if all active players are all-in (0 chips and not folded)
+  const activePlayers = entries.filter((p: any) => !p.isFolded && p.chips !== undefined);
+  const allPlayersAllIn = activePlayers.length > 1 && activePlayers.every((p: any) => Number(p.chips ?? 0) === 0);
+  
+  if (allPlayersAllIn && community.length > 0) {
+    // Trigger slow card reveal (one every 2 seconds)
+    revealAllInCards(community);
+    previousCommunityCards = [...community];
+  } else if (!cardsEqual(community, previousCommunityCards)) {
     renderCardRow(communityCardsEl, community, 5);
     animateCardDeals(communityCardsEl, community, previousCommunityCards);
     previousCommunityCards = [...community];
