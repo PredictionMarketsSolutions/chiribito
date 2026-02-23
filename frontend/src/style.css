@@ -832,6 +832,17 @@ button.accent:hover:not(:disabled) {
   border-color: var(--gold);
 }
 
+.game-btn.alert {
+  background: #c41e3a;
+  border-color: #8b0000;
+  color: var(--white);
+}
+
+.game-btn.alert:hover:not(:disabled) {
+  background: #e63946;
+  border-color: #f1faee;
+}
+
 .bet-input {
   width: 110px;
   padding: 10px 12px;
