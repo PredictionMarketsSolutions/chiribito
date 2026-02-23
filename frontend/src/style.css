@@ -224,6 +224,17 @@ body {
   }
 }
 
+@keyframes pulse-winner {
+  0%, 100% {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.6), 0 8px 32px rgba(244, 196, 48, 0.3);
+  }
+  50% {
+    border-color: var(--gold-dark);
+    box-shadow: 0 0 0 6px rgba(244, 196, 48, 0.8), 0 8px 32px rgba(244, 196, 48, 0.5);
+  }
+}
+
 /* Panel Sidebar */
 .panel {
   padding: 24px 20px;
@@ -662,8 +673,28 @@ button.accent:hover:not(:disabled) {
 }
 
 .seat.winner {
-  border-color: #7dd3fc;
-  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.35);
+  animation: pulse-winner 1.2s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(244, 196, 48, 0.15) 0%, rgba(209, 166, 38, 0.1) 100%);
+}
+
+.seat.winner .seat-badge {
+  background: var(--gold);
+  color: var(--bg-darker);
+  font-weight: 700;
+}
+
+.seat-winning-hand {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--bg-darker);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(244, 196, 48, 0.4);
 }
 
 /* Card Zones */

@@ -908,12 +908,13 @@ function renderSeats(state: RoomState) {
     }
 
     const isYou = currentSessionId && player.sessionId === currentSessionId;
+    const isWinner = lastWinners.includes(player.sessionId);
     seat.classList.toggle("active", true);
     seat.classList.toggle("you", Boolean(isYou));
     seat.classList.toggle("folded", Boolean(player.isFolded));
     seat.classList.toggle("dealer", player.seatIndex === dealerIndex);
     seat.classList.toggle("turn", player.sessionId === currentTurn);
-    seat.classList.toggle("winner", lastWinners.includes(player.sessionId));
+    seat.classList.toggle("winner", isWinner);
     if (badgeEl) badgeEl.textContent = `Seat ${player.seatIndex + 1}`;
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
 
@@ -926,6 +927,14 @@ function renderSeats(state: RoomState) {
     betEl.textContent = `Apuesta ${player.currentBet}`;
     metaEl.appendChild(chipsEl);
     metaEl.appendChild(betEl);
+    
+    // Show winning hand if player is winner
+    if (isWinner && lastWinningHand !== "-") {
+      const winningHandEl = document.createElement("div");
+      winningHandEl.classList.add("seat-winning-hand");
+      winningHandEl.textContent = lastWinningHand;
+      metaEl.appendChild(winningHandEl);
+    }
 
     if (!handEl) {
       handEl = document.createElement("div");
