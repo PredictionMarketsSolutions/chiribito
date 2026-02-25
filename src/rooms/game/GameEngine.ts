@@ -252,12 +252,17 @@ export class GameEngine {
     });
     this.resetBetsForRound();
 
-    // Check if all active players are all-in, if so auto-play to showdown
-    const activePlayers = this.getActivePlayerIds();
+    // Check if all non-folded players are all-in - if so, auto-play to showdown
     const nonFoldedPlayers = this.getPlayersInHandNonFolded();
-    const allRemainingAllIn = nonFoldedPlayers.every(id => this.room.playersAllIn.has(id));
+    const allRemainingAllIn = nonFoldedPlayers.length > 1 && 
+                              nonFoldedPlayers.every(id => this.room.playersAllIn.has(id));
 
-    if (allRemainingAllIn && nonFoldedPlayers.length > 1 && this.room.state.phase === "preflop") {
+    if (allRemainingAllIn) {
+      logger.info(`All remaining players all-in, auto-playing to showdown`, {
+        phase: this.room.state.phase,
+        communityCards: this.room.state.communityCards.length,
+        roomId: this.room.roomId
+      });
       // Auto-play from preflop to showdown (deal all remaining community cards)
       while (this.room.state.communityCards.length < 5) {
         this.dealNextCommunityCard();
