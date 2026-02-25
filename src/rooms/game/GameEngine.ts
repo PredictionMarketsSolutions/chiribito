@@ -252,6 +252,21 @@ export class GameEngine {
     });
     this.resetBetsForRound();
 
+    // Check if all active players are all-in, if so auto-play to showdown
+    const activePlayers = this.getActivePlayerIds();
+    const nonFoldedPlayers = this.getPlayersInHandNonFolded();
+    const allRemainingAllIn = nonFoldedPlayers.every(id => this.room.playersAllIn.has(id));
+
+    if (allRemainingAllIn && nonFoldedPlayers.length > 1 && this.room.state.phase === "preflop") {
+      // Auto-play from preflop to showdown (deal all remaining community cards)
+      while (this.room.state.communityCards.length < 5) {
+        this.dealNextCommunityCard();
+      }
+      const result = this.determineWinners();
+      this.endRound(result.winners, result.winningHand);
+      return;
+    }
+
     if (this.room.state.phase !== "preflop" && this.room.state.communityCards.length >= 5) {
       const result = this.determineWinners();
       this.endRound(result.winners, result.winningHand);
@@ -455,6 +470,13 @@ export class GameEngine {
 
   private getPlayersWithChips() {
     return Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+  }
+
+  private getPlayersInHandNonFolded() {
+    return this.room.playersInHand.filter(id => {
+      const player = this.room.state.users.get(id);
+      return player && !player.isFolded;
+    });
   }
 
   private getActivePlayerIds() {
