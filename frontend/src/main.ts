@@ -1498,11 +1498,6 @@ async function joinRoom(forceReplace = false) {
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;
-    allInRevealStarted = false;
-    if (allInAnimationTimeoutId !== null) {
-      window.clearTimeout(allInAnimationTimeoutId);
-      allInAnimationTimeoutId = null;
-    }
   });
 
   joinedRoom.onMessage("playerAction", (payload) => {
@@ -1544,6 +1539,7 @@ async function joinRoom(forceReplace = false) {
     const yourHand = currentSessionId && payload?.playerHands?.[currentSessionId]
       ? payload.playerHands[currentSessionId]
       : undefined;
+    const isAllInShowdown = Boolean(payload?.isAllInShowdown);
 
     if (payload?.winningHand) {
       lastWinningHand = payload.winningHand;
@@ -1563,8 +1559,8 @@ async function joinRoom(forceReplace = false) {
       revealedHands = payload.playerHands as Record<string, string[]>;
     }
     
-    // Auto-play animation if all 5 community cards appear at once (all-in showdown)
-    if (communityCards.length === 5 && previousCommunityCards.length < 5) {
+    // If all players went all-in, animate card reveal
+    if (isAllInShowdown && communityCards.length === 5) {
       previousCommunityCards = [];
       revealAllInCards(communityCards);
     } else {

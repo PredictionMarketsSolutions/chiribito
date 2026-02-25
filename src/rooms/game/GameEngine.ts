@@ -263,7 +263,7 @@ export class GameEngine {
         this.dealNextCommunityCard();
       }
       const result = this.determineWinners();
-      this.endRound(result.winners, result.winningHand);
+      this.endRound(result.winners, result.winningHand, true);
       return;
     }
 
@@ -344,7 +344,7 @@ export class GameEngine {
     return { winners, winningHand: bestName };
   }
 
-  endRound(winners: string[], winningHand?: string) {
+  endRound(winners: string[], winningHand?: string, isAllInShowdown: boolean = false) {
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
     const winnerNames = winners
       .map(id => this.room.state.users.get(id)?.name ?? id)
@@ -352,6 +352,7 @@ export class GameEngine {
     logger.info(`Round ended`, {
       winners: winnerNames || "none",
       winningHand: winningHand ?? "n/a",
+      isAllInShowdown,
       roomId: this.room.roomId
     });
 
@@ -369,6 +370,7 @@ export class GameEngine {
       winners: winnersList,
       communityCards: this.room.state.communityCards.toArray(),
       winningHand: winningHand ?? "",
+      isAllInShowdown,
       playerHands: Object.fromEntries(
         this.room.playersInHand
           .filter(id => !this.room.state.users.get(id)!.isFolded)
@@ -558,6 +560,7 @@ export class GameEngine {
     winners: Array<{ playerId: string; amount: number }>;
     communityCards: string[];
     winningHand: string;
+    isAllInShowdown: boolean;
     playerHands: Record<string, string[]>;
   }) {
     this.room.broadcast("roundEnded", payload);
