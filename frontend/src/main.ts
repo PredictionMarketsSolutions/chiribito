@@ -334,6 +334,10 @@ let previousWinnersKey = "";
 let allInAnimationTimeoutId: number | null = null;
 let allInCardIndex = 0;
 let allInRevealStarted = false;
+let allInRevealInProgress = false;
+let pendingWinners: string[] | null = null;
+let pendingWinningHand: string | null = null;
+let lastRoomState: RoomState | null = null;
 const handHistory: HandHistoryEntry[] = [];
 const MAX_HAND_HISTORY = 20;
 let handHistoryCounter = 0;
@@ -612,12 +616,14 @@ function animateCardDeals(
   return;
 }
 
-function revealAllInCards(cards: string[]) {
+function revealAllInCards(cards: string[], onComplete?: () => void) {
   // Clear any existing animation
   if (allInAnimationTimeoutId !== null) {
     window.clearTimeout(allInAnimationTimeoutId);
   }
   allInCardIndex = 0;
+  allInRevealStarted = true;
+  allInRevealInProgress = true;
   
   // Show cards one by one, every 2 seconds
   const revealNext = () => {
@@ -627,6 +633,14 @@ function revealAllInCards(cards: string[]) {
       renderCardRow(communityCardsEl, cardsToShow, 5);
       allInCardIndex++;
       allInAnimationTimeoutId = window.setTimeout(revealNext, 2000);
+      return;
+    }
+
+    allInRevealStarted = false;
+    allInRevealInProgress = false;
+    allInAnimationTimeoutId = null;
+    if (onComplete) {
+      onComplete();
     }
   };
   
@@ -643,6 +657,9 @@ function resetRoomUi(message?: string) {
   previousCurrentBetValue = null;
   previousWinnersKey = "";
   allInRevealStarted = false;
+  allInRevealInProgress = false;
+  pendingWinners = null;
+  pendingWinningHand = null;
   if (allInAnimationTimeoutId !== null) {
     window.clearTimeout(allInAnimationTimeoutId);
     allInAnimationTimeoutId = null;
@@ -1043,22 +1060,7 @@ function renderState(state: RoomState) {
   // Disable buttons when all-in (BEFORE rendering)
   updateActionButtons(state, allPlayersAllIn);
   
-  if (allPlayersAllIn && community.length > 0) {
-    // Trigger slow card reveal ONLY ONCE when entering all-in
-    if (!allInRevealStarted) {
-      allInRevealStarted = true;
-      revealAllInCards(community);
-    }
-    previousCommunityCards = [...community];
-  } else {
-    // Reset all-in flag when no longer all-in
-    if (allInRevealStarted) {
-      allInRevealStarted = false;
-      if (allInAnimationTimeoutId !== null) {
-        window.clearTimeout(allInAnimationTimeoutId);
-        allInAnimationTimeoutId = null;
-      }
-    }
+  if (!allInRevealInProgress) {
     if (!cardsEqual(community, previousCommunityCards)) {
       renderCardRow(communityCardsEl, community, 5);
       animateCardDeals(communityCardsEl, community, previousCommunityCards);
@@ -1541,30 +1543,55 @@ async function joinRoom(forceReplace = false) {
       : undefined;
     const isAllInShowdown = Boolean(payload?.isAllInShowdown);
 
-    if (payload?.winningHand) {
-      lastWinningHand = payload.winningHand;
-      winningHandStatus.textContent = lastWinningHand;
-      winningHandChip.textContent = lastWinningHand;
+    if (isAllInShowdown) {
+      log("Showdown: all-in (auto reveal)");
     }
-    if (Array.isArray(payload?.winners)) {
-      lastWinners = payload.winners.map((winner: any) => winner.playerId);
-      winnersStatus.textContent = lastWinners.join(", ") || "-";
-      const winnersKey = lastWinners.join("|");
-      previousWinnersKey = winnersKey;
-      if (currentSessionId && lastWinners.includes(currentSessionId)) {
-        playEffect("win");
-      }
-    }
+    
     if (payload?.playerHands && typeof payload.playerHands === "object") {
       revealedHands = payload.playerHands as Record<string, string[]>;
     }
     
-    // If all players went all-in, animate card reveal
+    // If all players went all-in, animate card reveal and show winners after completion
     if (isAllInShowdown && communityCards.length === 5) {
+      // Store winners/winning hand to show after animation completes
+      pendingWinners = payload?.winners?.map((w: any) => w.playerId) || [];
+      pendingWinningHand = payload?.winningHand ?? "";
+      
       previousCommunityCards = [];
-      revealAllInCards(communityCards);
+      revealAllInCards(communityCards, () => {
+        // After cards are done animating, show winners
+        if (pendingWinners && pendingWinners.length > 0) {
+          lastWinners = pendingWinners;
+          lastWinningHand = pendingWinningHand;
+          winnersStatus.textContent = lastWinners.join(", ") || "-";
+          winningHandStatus.textContent = lastWinningHand;
+          winningHandChip.textContent = lastWinningHand;
+          
+          if (currentSessionId && lastWinners.includes(currentSessionId)) {
+            playEffect("win");
+          }
+        }
+        // Clear pending
+        pendingWinners = null;
+        pendingWinningHand = null;
+      });
     } else {
       previousCommunityCards = [...communityCards];
+      
+      if (payload?.winningHand) {
+        lastWinningHand = payload.winningHand;
+        winningHandStatus.textContent = lastWinningHand;
+        winningHandChip.textContent = lastWinningHand;
+      }
+      if (Array.isArray(payload?.winners)) {
+        lastWinners = payload.winners.map((winner: any) => winner.playerId);
+        winnersStatus.textContent = lastWinners.join(", ") || "-";
+        const winnersKey = lastWinners.join("|");
+        previousWinnersKey = winnersKey;
+        if (currentSessionId && lastWinners.includes(currentSessionId)) {
+          playEffect("win");
+        }
+      }
     }
     
     const historyEntry: HandHistoryEntry = {
@@ -1589,6 +1616,7 @@ async function joinRoom(forceReplace = false) {
   });
 
   room.onStateChange((state) => {
+    lastRoomState = state;
     renderState(state);
   });
 }
