@@ -58,6 +58,11 @@ export class GameEngine {
     player.currentBet += chipsToCall;
     this.addToPot(chipsToCall);
 
+    const isAllIn = player.chips === 0;
+    if (isAllIn) {
+      this.room.playersAllIn.add(player.sessionId);
+    }
+
     const isRaise = amount > prevCurrentBet;
     if (isRaise) {
       this.room.state.currentBet = amount;
@@ -69,7 +74,7 @@ export class GameEngine {
 
     this.broadcastPlayerAction({
       playerId: player.sessionId,
-      action: isRaise ? "raise" : "bet",
+      action: isAllIn ? "allIn" : (isRaise ? "raise" : "bet"),
       amount,
       pot: this.room.state.pot
     });
@@ -107,7 +112,7 @@ export class GameEngine {
       pot: this.room.state.pot
     });
 
-    if (actualCall < chipsToCall) {
+    if (actualCall < chipsToCall || player.chips === 0) {
       this.room.playersAllIn.add(player.sessionId);
     }
 
