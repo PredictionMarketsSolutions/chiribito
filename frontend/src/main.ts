@@ -642,6 +642,11 @@ function resetRoomUi(message?: string) {
   previousPotValue = null;
   previousCurrentBetValue = null;
   previousWinnersKey = "";
+  allInRevealStarted = false;
+  if (allInAnimationTimeoutId !== null) {
+    window.clearTimeout(allInAnimationTimeoutId);
+    allInAnimationTimeoutId = null;
+  }
   handHistory.length = 0;
   renderHandHistory();
   setAuthOverlayVisible(true);
@@ -1493,6 +1498,11 @@ async function joinRoom(forceReplace = false) {
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;
+    allInRevealStarted = false;
+    if (allInAnimationTimeoutId !== null) {
+      window.clearTimeout(allInAnimationTimeoutId);
+      allInAnimationTimeoutId = null;
+    }
   });
 
   joinedRoom.onMessage("playerAction", (payload) => {
@@ -1552,6 +1562,15 @@ async function joinRoom(forceReplace = false) {
     if (payload?.playerHands && typeof payload.playerHands === "object") {
       revealedHands = payload.playerHands as Record<string, string[]>;
     }
+    
+    // Auto-play animation if all 5 community cards appear at once (all-in showdown)
+    if (communityCards.length === 5 && previousCommunityCards.length < 5) {
+      previousCommunityCards = [];
+      revealAllInCards(communityCards);
+    } else {
+      previousCommunityCards = [...communityCards];
+    }
+    
     const historyEntry: HandHistoryEntry = {
       id: ++handHistoryCounter,
       timestamp: Date.now(),
