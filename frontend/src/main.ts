@@ -758,7 +758,9 @@ function startTokenMonitor() {
         token = data.token;
         refreshToken = data.refreshToken;
         tokenStatus.textContent = "refreshed";
-        localStorage.setItem('refreshToken', refreshToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
         log("Token refreshed successfully");
       } else {
         // Refresh failed, user needs to login again
@@ -1464,7 +1466,7 @@ async function joinRoom(forceReplace = false) {
 
   joinedRoom.onMessage("playerDisconnected", (payload: any) => {
     console.log("Player disconnected", payload);
-    showNotification(`${payload.playerName} se ha desconectado${payload.wasCurrentTurn ? ' (era su turno)' : ''}`, 'warning');
+    log(`${payload.playerName} se ha desconectado${payload.wasCurrentTurn ? ' (era su turno)' : ''}`);
   });
 
   joinedRoom.onMessage("heartbeat_ack", () => {
