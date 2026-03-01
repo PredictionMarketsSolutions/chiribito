@@ -140,6 +140,11 @@ class MyRoom extends core_1.Room {
      */
     isActionAllowed(sessionId, actionType) {
         var _a;
+        // Block all actions if round is not active
+        if (!this.state.roundStarted) {
+            logger_1.default.warn(`Action blocked - round not active`, { sessionId, actionType, roomId: this.roomId });
+            return false;
+        }
         const now = Date.now();
         if (!this.actionCooldowns.has(sessionId)) {
             this.actionCooldowns.set(sessionId, new Map());

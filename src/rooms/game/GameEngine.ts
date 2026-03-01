@@ -356,6 +356,10 @@ export class GameEngine {
 
   endRound(winners: string[], winningHand?: string, isAllInShowdown: boolean = false) {
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
+    
+    // CRITICAL: Block all player actions during showdown
+    this.room.state.roundStarted = false;
+    
     const winnerNames = winners
       .map(id => this.room.state.users.get(id)?.name ?? id)
       .join(", ");
