@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import { RefreshToken } from '../models/RefreshToken';
+import { ResetToken } from '../models/ResetToken';
+import { emailService } from '../services/EmailService';
 import logger from '../config/logger';
 
 interface RegisterRequest {
@@ -25,14 +29,10 @@ interface AuthResponse {
   refreshToken: string;
 }
 
-// In-memory store for refresh tokens (in production, use Redis or database)
-const refreshTokenStore = new Map<string, { userId: number; expiresAt: number }>();
-
-// In-memory store for password reset tokens (in production, use Redis or database)
-const resetTokenStore = new Map<string, { userId: number; expiresAt: number; used: boolean }>();
-
 export class AuthController {
   private userRepository = AppDataSource.getRepository(User);
+  private refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
+  private resetTokenRepository = AppDataSource.getRepository(ResetToken);
 
   private generateAuthToken(user: User): string {
     try {
@@ -67,14 +67,10 @@ export class AuthController {
       }
 
       const refreshToken = jwt.sign(
-        { userId: user.id, type: 'refresh' },
+        { userId: user.id, type: 'refresh', tokenId: uuidv4() },
         jwtSecret,
-        { expiresIn: '7d' } // Refresh tokens last 7 days
+        { expiresIn: '7d' }
       );
-
-      // Store refresh token with expiration
-      const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-      refreshTokenStore.set(refreshToken, { userId: user.id, expiresAt });
 
       return refreshToken;
     } catch (error) {
@@ -86,6 +82,18 @@ export class AuthController {
     }
   }
 
+  private getClientIp(req: Request): string {
+    return (
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
+      (req.connection.remoteAddress) ||
+      'unknown'
+    );
+  }
+
+  private getUserAgent(req: Request): string {
+    return req.get('user-agent') || 'unknown';
+  }
+
   async register(
     req: Request<{}, {}, RegisterRequest>,
     res: Response<AuthResponse | { error: string }>
@@ -93,7 +101,6 @@ export class AuthController {
     try {
       const { username, email, password } = req.body;
 
-      // Input validation
       if (!username || !email || !password) {
         res.status(400).json({ error: 'Username, email, and password are required' });
         return;
@@ -104,19 +111,21 @@ export class AuthController {
         return;
       }
       
-      // Check if user exists
       const existingUser = await this.userRepository.findOne({ 
         where: [{ email }, { username }] 
       });
       
       if (existingUser) {
-        res.status(400).json({ 
-          error: 'User with this email or username already exists' 
+        // Return success to avoid email enumeration
+        res.status(201).json({ 
+          user: { id: 0, username: '', email: '' },
+          token: 'dummy',
+          refreshToken: 'dummy'
         });
+        logger.info('Registration attempt with existing user', { email, username });
         return;
       }
 
-      // Create new user
       const user = new User();
       user.username = username;
       user.email = email;
@@ -125,15 +134,30 @@ export class AuthController {
 
       await this.userRepository.save(user);
 
-      // Generate JWT and refresh token
+      // Send welcome email (non-blocking)
+      emailService.sendWelcomeEmail(email, username).catch(err => {
+        logger.error('Failed to send welcome email', { email, error: String(err) });
+      });
+
       const token = this.generateAuthToken(user);
-      const refreshToken = this.generateRefreshToken(user);
+      const refreshTokenStr = this.generateRefreshToken(user);
+
+      // Store refresh token in database
+      const refreshToken = new RefreshToken();
+      refreshToken.userId = user.id;
+      refreshToken.token = refreshTokenStr;
+      refreshToken.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      refreshToken.ipAddress = this.getClientIp(req);
+      refreshToken.userAgent = this.getUserAgent(req);
+      await this.refreshTokenRepository.save(refreshToken);
 
       res.status(201).json({ 
         user: { id: user.id, username: user.username, email: user.email },
         token,
-        refreshToken
+        refreshToken: refreshTokenStr
       });
+
+      logger.info('User registered successfully', { userId: user.id, email, username });
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Registration error', { message: error.message });
@@ -151,20 +175,17 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Input validation
       if (!email || !password) {
         res.status(400).json({ error: 'Email and password are required' });
         return;
       }
 
-      // Find user
       const user = await this.userRepository.findOne({ where: { email } });
       if (!user) {
         res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
 
-      // Verify password
       const isValidPassword = await user.validatePassword(password);
       if (!isValidPassword) {
         res.status(401).json({ error: 'Invalid credentials' });
@@ -174,15 +195,25 @@ export class AuthController {
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
       await this.userRepository.save(user);
 
-      // Generate JWT and refresh token
       const token = this.generateAuthToken(user);
-      const refreshToken = this.generateRefreshToken(user);
+      const refreshTokenStr = this.generateRefreshToken(user);
+
+      // Store refresh token in database
+      const refreshToken = new RefreshToken();
+      refreshToken.userId = user.id;
+      refreshToken.token = refreshTokenStr;
+      refreshToken.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      refreshToken.ipAddress = this.getClientIp(req);
+      refreshToken.userAgent = this.getUserAgent(req);
+      await this.refreshTokenRepository.save(refreshToken);
 
       res.json({ 
         user: { id: user.id, username: user.username, email: user.email },
         token,
-        refreshToken
+        refreshToken: refreshTokenStr
       });
+
+      logger.info('User logged in successfully', { userId: user.id, email });
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Login error', { message: error.message });
@@ -280,16 +311,19 @@ export class AuthController {
         return;
       }
 
-      // Verify refresh token exists in store
-      const storedToken = refreshTokenStore.get(refreshToken);
+      // Verify refresh token exists and is not revoked
+      const storedToken = await this.refreshTokenRepository.findOne({
+        where: { token: refreshToken, revoked: false }
+      });
+
       if (!storedToken) {
         res.status(401).json({ error: 'Invalid refresh token' });
         return;
       }
 
       // Check if expired
-      if (Date.now() > storedToken.expiresAt) {
-        refreshTokenStore.delete(refreshToken);
+      if (new Date() > storedToken.expiresAt) {
+        await this.refreshTokenRepository.remove(storedToken);
         res.status(401).json({ error: 'Refresh token expired' });
         return;
       }
@@ -309,24 +343,32 @@ export class AuthController {
           return;
         }
 
-        // Get user
         const user = await this.userRepository.findOne({ where: { id: decoded.userId } });
         if (!user) {
-          refreshTokenStore.delete(refreshToken);
+          await this.refreshTokenRepository.remove(storedToken);
           res.status(401).json({ error: 'User not found' });
           return;
         }
 
         // Generate new access token and refresh token
         const newToken = this.generateAuthToken(user);
-        
-        // Revoke old refresh token and generate new one
-        refreshTokenStore.delete(refreshToken);
-        const newRefreshToken = this.generateRefreshToken(user);
+        const newRefreshTokenStr = this.generateRefreshToken(user);
 
-        res.json({ token: newToken, refreshToken: newRefreshToken });
+        // Revoke old refresh token and save new one
+        storedToken.revoked = true;
+        await this.refreshTokenRepository.save(storedToken);
+
+        const newRefreshToken = new RefreshToken();
+        newRefreshToken.userId = user.id;
+        newRefreshToken.token = newRefreshTokenStr;
+        newRefreshToken.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        newRefreshToken.ipAddress = this.getClientIp(req);
+        newRefreshToken.userAgent = this.getUserAgent(req);
+        await this.refreshTokenRepository.save(newRefreshToken);
+
+        res.json({ token: newToken, refreshToken: newRefreshTokenStr });
+        logger.info('Token refreshed successfully', { userId: user.id });
       } catch (jwtError) {
-        refreshTokenStore.delete(refreshToken);
         res.status(401).json({ error: 'Invalid refresh token signature' });
       }
     } catch (error) {
@@ -351,7 +393,6 @@ export class AuthController {
         return;
       }
 
-      // Find user by email
       const user = await this.userRepository.findOne({ where: { email } });
       
       // Always return success to avoid email enumeration attacks
@@ -360,25 +401,31 @@ export class AuthController {
         return;
       }
 
-      // Generate reset token (6-digit code for simplicity)
-      const resetToken = Math.random().toString().slice(2, 8);
-      const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes
+      // Generate reset token (UUID)
+      const resetTokenStr = uuidv4();
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
-      // Store reset token
-      resetTokenStore.set(resetToken, { userId: user.id, expiresAt, used: false });
+      // Store reset token in database
+      const resetToken = new ResetToken();
+      resetToken.userId = user.id;
+      resetToken.token = resetTokenStr;
+      resetToken.expiresAt = expiresAt;
+      resetToken.ipAddress = this.getClientIp(req);
+      resetToken.userAgent = this.getUserAgent(req);
+      await this.resetTokenRepository.save(resetToken);
 
-      // In production, send this via email
-      // For now, log it (in dev) or return it (for testing)
-      if (process.env.NODE_ENV === 'development') {
-        logger.info('Password reset token generated', { email, resetToken });
-        res.json({ 
-          message: 'Password reset token generated',
-          resetToken // Only in development!
-        });
+      // Build reset link
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetTokenStr}`;
+
+      // Send email with reset link
+      const emailSent = await emailService.sendPasswordResetEmail(email, resetTokenStr, resetLink);
+
+      res.json({ message: 'If the email exists, a password reset link has been sent' });
+
+      if (emailSent) {
+        logger.info('Password reset email sent', { userId: user.id, email });
       } else {
-        // TODO: Send email with resetToken
-        logger.info('Password reset requested', { email, userId: user.id });
-        res.json({ message: 'If the email exists, a password reset link has been sent' });
+        logger.warn('Password reset email failed to send', { userId: user.id, email });
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -408,7 +455,11 @@ export class AuthController {
       }
 
       // Verify reset token
-      const tokenData = resetTokenStore.get(resetToken);
+      const tokenData = await this.resetTokenRepository.findOne({
+        where: { token: resetToken },
+        relations: ['user']
+      });
+
       if (!tokenData) {
         res.status(400).json({ error: 'Invalid or expired reset token' });
         return;
@@ -419,16 +470,15 @@ export class AuthController {
         return;
       }
 
-      if (Date.now() > tokenData.expiresAt) {
-        resetTokenStore.delete(resetToken);
+      if (new Date() > tokenData.expiresAt) {
+        await this.resetTokenRepository.remove(tokenData);
         res.status(400).json({ error: 'Reset token has expired' });
         return;
       }
 
-      // Get user and update password
-      const user = await this.userRepository.findOne({ where: { id: tokenData.userId } });
+      const user = tokenData.user;
       if (!user) {
-        resetTokenStore.delete(resetToken);
+        await this.resetTokenRepository.remove(tokenData);
         res.status(404).json({ error: 'User not found' });
         return;
       }
@@ -436,18 +486,22 @@ export class AuthController {
       // Update password
       await user.setPassword(newPassword);
       
-      // Invalidate all existing sessions by incrementing tokenVersion
+      // Invalidate all existing sessions
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
       await this.userRepository.save(user);
 
-      // Mark token as used
+      // Revoke all refresh tokens
+      await this.refreshTokenRepository.update(
+        { userId: user.id },
+        { revoked: true }
+      );
+
+      // Mark reset token as used
       tokenData.used = true;
-      
-      // Clean up after 1 hour
-      setTimeout(() => resetTokenStore.delete(resetToken), 60 * 60 * 1000);
+      tokenData.usedAt = new Date();
+      await this.resetTokenRepository.save(tokenData);
 
       logger.info('Password reset successful', { userId: user.id, email: user.email });
-
       res.json({ message: 'Password has been reset successfully' });
     } catch (error) {
       if (error instanceof Error) {

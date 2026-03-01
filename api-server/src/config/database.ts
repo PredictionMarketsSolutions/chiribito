@@ -1,5 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { User } from '../models/User';
+import { RefreshToken } from '../models/RefreshToken';
+import { ResetToken } from '../models/ResetToken';
 import 'dotenv/config';
 
 const sslEnabled = process.env.DB_SSL === 'true';
@@ -16,7 +18,7 @@ const dbConfig: DataSourceOptions = {
   // Avoid auto-creating tables when they already exist
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
-  entities: [User],
+  entities: [User, RefreshToken, ResetToken],
   migrations: [
     process.env.NODE_ENV === 'production'
       ? "dist/migrations/*.js"
