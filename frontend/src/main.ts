@@ -1562,7 +1562,7 @@ async function joinRoom(forceReplace = false) {
         // After cards are done animating, show winners
         if (pendingWinners && pendingWinners.length > 0) {
           lastWinners = pendingWinners;
-          lastWinningHand = pendingWinningHand;
+          lastWinningHand = pendingWinningHand ?? "";
           winnersStatus.textContent = lastWinners.join(", ") || "-";
           winningHandStatus.textContent = lastWinningHand;
           winningHandChip.textContent = lastWinningHand;
