@@ -1383,11 +1383,18 @@ function updateConnectionIndicator() {
 
 /**
  * Rate limiting to prevent action spam attacks
+ * Only applies to rapid-fire betting actions, not game setup actions
  */
 const actionCooldowns = new Map<string, number>();
 const ACTION_COOLDOWN_MS = 200; // 200ms between actions of same type
+const RAPID_FIRE_ACTIONS = new Set(['bet', 'raise', 'call', 'fold', 'check']); // Only these get cooldown
 
 function requireCooldown(action: string): boolean {
+  // Game setup actions bypass cooldown (server-side validation is sufficient)
+  if (!RAPID_FIRE_ACTIONS.has(action)) {
+    return true;
+  }
+  
   const now = Date.now();
   const lastTime = actionCooldowns.get(action) ?? 0;
   

@@ -111,8 +111,11 @@ export class MyRoom extends Room<MyRoomState> {
    * Returns true if action is allowed, false if rate limited
    */
   private isActionAllowed(sessionId: string, actionType: string): boolean {
-    // Block all actions if round is not active
-    if (!this.state.roundStarted) {
+    // Game setup actions (startGame, rejoin) can be used outside active round
+    const gameSetupActions = new Set(['startGame', 'rejoin']);
+    
+    // Block game actions if round is not active
+    if (!this.state.roundStarted && !gameSetupActions.has(actionType)) {
       logger.warn(`Action blocked - round not active`, { sessionId, actionType, roomId: this.roomId });
       return false;
     }
