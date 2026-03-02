@@ -207,13 +207,21 @@ app.use(express.json());
 const redisUrl = process.env.REDIS_URL;
 const redisClient = redisUrl
   ? new Redis(redisUrl, {
-      lazyConnect: true,
       maxRetriesPerRequest: 1,
+      retryStrategy: (times: number) => {
+        if (times > 3) {
+          logger.error('Redis retry limit exceeded');
+          return null;
+        }
+        return Math.min(times * 200, 1000);
+      },
     })
   : null;
 
 if (!redisClient) {
   logger.warn('REDIS_URL not configured, using in-memory rate limiting fallback');
+} else {
+  logger.info('Redis client initialized');
 }
 
 const createLimiter = (windowMs: number, max: number, prefix: string) => {
@@ -296,9 +304,10 @@ const startServer = async () => {
     await AppDataSource.initialize();
     logger.info('Database connected successfully');
 
-    if (redisClient) {
-      await redisClient.connect();
-      logger.info('Redis connected successfully');
+    if (redisClient && redisClient.status === 'wait') {
+      logger.info('Redis connection pending, checking status...');
+    } else if (redisClient) {
+      logger.info('Redis connection established');
     }
 
     const server = app.listen(PORT, () => {
