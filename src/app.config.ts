@@ -4,6 +4,9 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
 import type { Request, Response } from "express";
+import session from "express-session";
+import { RedisStore } from "connect-redis";
+import { createClient } from "redis";
 import logger from "./config/logger";
 
 // import { RedisDriver } from "@colyseus/redis-driver";
@@ -56,6 +59,42 @@ export default config({
         app.get("/", (_req: Request, res: Response) => {
             res.send("Server running");
         });
+
+        // Configure Redis session store for monitor
+        let sessionStore: any = undefined;
+        const redisUrl = process.env.REDIS_URL;
+        
+        if (redisUrl) {
+            try {
+                const redisClient = createClient({ url: redisUrl });
+                redisClient.connect().catch((err) => {
+                    logger.error('Failed to connect Redis client for sessions', { error: err });
+                });
+                
+                sessionStore = new RedisStore({
+                    client: redisClient,
+                    prefix: (process.env.REDIS_PREFIX || 'chiri') + ':session:',
+                });
+                logger.info('Redis session store configured for monitor');
+            } catch (error) {
+                logger.error('Failed to configure Redis session store', { error });
+            }
+        } else {
+            logger.warn('REDIS_URL not configured, monitor will use MemoryStore (not production-ready)');
+        }
+
+        // Configure express-session
+        app.use(session({
+            store: sessionStore,
+            secret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure: process.env.NODE_ENV === 'production',
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            },
+        }));
 
         // Middleware to protect /colyseus and /playground routes
         const protectRoute = (req: Request, res: Response, next: Function) => {

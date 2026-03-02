@@ -7,6 +7,9 @@ const tools_1 = __importDefault(require("@colyseus/tools"));
 const ws_transport_1 = require("@colyseus/ws-transport");
 const monitor_1 = require("@colyseus/monitor");
 const playground_1 = require("@colyseus/playground");
+const express_session_1 = __importDefault(require("express-session"));
+const connect_redis_1 = require("connect-redis");
+const redis_1 = require("redis");
 const logger_1 = __importDefault(require("./config/logger"));
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
@@ -51,6 +54,40 @@ exports.default = (0, tools_1.default)({
         app.get("/", (_req, res) => {
             res.send("Server running");
         });
+        // Configure Redis session store for monitor
+        let sessionStore = undefined;
+        const redisUrl = process.env.REDIS_URL;
+        if (redisUrl) {
+            try {
+                const redisClient = (0, redis_1.createClient)({ url: redisUrl });
+                redisClient.connect().catch((err) => {
+                    logger_1.default.error('Failed to connect Redis client for sessions', { error: err });
+                });
+                sessionStore = new connect_redis_1.RedisStore({
+                    client: redisClient,
+                    prefix: (process.env.REDIS_PREFIX || 'chiri') + ':session:',
+                });
+                logger_1.default.info('Redis session store configured for monitor');
+            }
+            catch (error) {
+                logger_1.default.error('Failed to configure Redis session store', { error });
+            }
+        }
+        else {
+            logger_1.default.warn('REDIS_URL not configured, monitor will use MemoryStore (not production-ready)');
+        }
+        // Configure express-session
+        app.use((0, express_session_1.default)({
+            store: sessionStore,
+            secret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure: process.env.NODE_ENV === 'production',
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            },
+        }));
         // Middleware to protect /colyseus and /playground routes
         const protectRoute = (req, res, next) => {
             const password = process.env.MONITOR_PASSWORD;
