@@ -78,6 +78,12 @@ class MyRoom extends core_1.Room {
         // Rate limiting per client to prevent spam attacks
         this.actionCooldowns = new Map();
         this.ACTION_COOLDOWN_MS = constants_1.ACTION_COOLDOWN;
+        // Seat reservations for players who busted out (0 chips)
+        // Map<seatIndex, { sessionId: string; expiresAt: number }>
+        this.rebuySeatReservations = new Map();
+        this.REBUY_TIMEOUT_MS = 120000; // 120 seconds
+        this.REBUY_AMOUNT = 1000;
+        this.reservationCleanupInterval = null;
     }
     getNextAvailableSeat() {
         const occupied = new Set();
@@ -90,6 +96,100 @@ class MyRoom extends core_1.Room {
                 return i;
         }
         return -1;
+    }
+    /**
+     * Reserve a seat for a player who busted out (0 chips)
+     * Allows 120s for rebuy decision
+     */
+    reserveSeat(sessionId, seatIndex) {
+        this.rebuySeatReservations.set(seatIndex, {
+            sessionId,
+            expiresAt: Date.now() + this.REBUY_TIMEOUT_MS
+        });
+        // Notify client of reservation
+        const client = this.clients.find(c => c.sessionId === sessionId);
+        if (client) {
+            client.send("seatReserved", {
+                seatIndex,
+                expiresIn: this.REBUY_TIMEOUT_MS
+            });
+        }
+        logger_1.default.info(`Seat reserved for rebuy`, {
+            sessionId,
+            seatIndex,
+            roomId: this.roomId,
+            expiresIn: `${this.REBUY_TIMEOUT_MS}ms`
+        });
+    }
+    /**
+     * Clean up expired seat reservations
+     */
+    cleanupExpiredReservations() {
+        const now = Date.now();
+        const expired = [];
+        this.rebuySeatReservations.forEach((reservation, seatIndex) => {
+            if (now >= reservation.expiresAt) {
+                expired.push(seatIndex);
+                // Notify client that reservation expired
+                const client = this.clients.find(c => c.sessionId === reservation.sessionId);
+                if (client) {
+                    client.send("reservationExpired", {
+                        seatIndex,
+                        reason: "120 second timeout"
+                    });
+                }
+                logger_1.default.info(`Seat reservation expired`, {
+                    sessionId: reservation.sessionId,
+                    seatIndex,
+                    roomId: this.roomId
+                });
+            }
+        });
+        expired.forEach(seatIndex => this.rebuySeatReservations.delete(seatIndex));
+    }
+    /**
+     * Process a rebuy request from a player
+     */
+    handleRebuy(client) {
+        const player = this.state.users.get(client.sessionId);
+        if (!player) {
+            client.send("error", { message: "Player not found" });
+            return false;
+        }
+        if (player.chips > 0) {
+            client.send("error", { message: "You still have chips, no rebuy needed" });
+            return false;
+        }
+        if (player.seatIndex < 0) {
+            client.send("error", { message: "You are not seated" });
+            return false;
+        }
+        const reservation = this.rebuySeatReservations.get(player.seatIndex);
+        if (!reservation || reservation.sessionId !== client.sessionId) {
+            client.send("error", { message: "Seat reservation not found or expired" });
+            return false;
+        }
+        // Remove reservation and rebuy
+        this.rebuySeatReservations.delete(player.seatIndex);
+        player.chips = this.REBUY_AMOUNT;
+        player.isFolded = false;
+        client.send("rebuySuccess", {
+            chips: this.REBUY_AMOUNT,
+            seatIndex: player.seatIndex
+        });
+        this.broadcast("playerRebuyed", {
+            playerId: client.sessionId,
+            playerName: player.name,
+            newChips: this.REBUY_AMOUNT,
+            seatIndex: player.seatIndex
+        });
+        logger_1.default.info(`Player rebuyed`, {
+            player: player.name,
+            sessionId: client.sessionId,
+            newChips: this.REBUY_AMOUNT,
+            roomId: this.roomId
+        });
+        return true;
     }
     /**
      * Start monitoring client heartbeats to detect dead connections
@@ -140,8 +240,10 @@ class MyRoom extends core_1.Room {
      */
     isActionAllowed(sessionId, actionType) {
         var _a;
-        // Block all actions if round is not active
-        if (!this.state.roundStarted) {
+        // Game setup actions (startGame, rejoin) can be used outside active round
+        const gameSetupActions = new Set(['startGame', 'rejoin']);
+        // Block game actions if round is not active
+        if (!this.state.roundStarted && !gameSetupActions.has(actionType)) {
             logger_1.default.warn(`Action blocked - round not active`, { sessionId, actionType, roomId: this.roomId });
             return false;
         }
@@ -351,9 +453,17 @@ class MyRoom extends core_1.Room {
             }
             client.send("heartbeat_ack");
         });
-        // Start heartbeat monitoring
+        // Rebuy message handler
+        this.onMessage("rebuy", (client) => {
+            this.handleRebuy(client);
+        });
+        // Start heartbeat monitoring and cleanup
         this.startHeartbeatMonitor();
         this.startAnalytics();
+        // Start periodic cleanup of expired seat reservations
+        this.reservationCleanupInterval = setInterval(() => {
+            this.cleanupExpiredReservations();
+        }, 5000); // Check every 5 seconds
     }
     // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
     requestJoin(options, isNew) {
@@ -548,6 +658,9 @@ class MyRoom extends core_1.Room {
         // Stop analytics reporting
         if (this.analyticsInterval)
             clearInterval(this.analyticsInterval);
+        // Stop reservation cleanup
+        if (this.reservationCleanupInterval)
+            clearInterval(this.reservationCleanupInterval);
         // Log final analytics summary
         this.logAnalyticsSummary();
     }

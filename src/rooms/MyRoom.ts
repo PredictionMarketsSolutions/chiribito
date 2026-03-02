@@ -46,6 +46,13 @@ export class MyRoom extends Room<MyRoomState> {
   private actionCooldowns = new Map<string, Map<string, number>>();
   private readonly ACTION_COOLDOWN_MS = ACTION_COOLDOWN;
 
+  // Seat reservations for players who busted out (0 chips)
+  // Map<seatIndex, { sessionId: string; expiresAt: number }>
+  private rebuySeatReservations = new Map<number, { sessionId: string; expiresAt: number }>();
+  private readonly REBUY_TIMEOUT_MS = 120000; // 120 seconds
+  private readonly REBUY_AMOUNT = 1000;
+  private reservationCleanupInterval: NodeJS.Timeout | null = null;
+
   private getNextAvailableSeat(): number {
     const occupied = new Set<number>();
     this.state.users.forEach((player) => {
@@ -56,6 +63,117 @@ export class MyRoom extends Room<MyRoomState> {
       if (!occupied.has(i)) return i;
     }
     return -1;
+  }
+
+  /**
+   * Reserve a seat for a player who busted out (0 chips)
+   * Allows 120s for rebuy decision
+   */
+  private reserveSeat(sessionId: string, seatIndex: number) {
+    this.rebuySeatReservations.set(seatIndex, {
+      sessionId,
+      expiresAt: Date.now() + this.REBUY_TIMEOUT_MS
+    });
+
+    // Notify client of reservation
+    const client = this.clients.find(c => c.sessionId === sessionId);
+    if (client) {
+      client.send("seatReserved", {
+        seatIndex,
+        expiresIn: this.REBUY_TIMEOUT_MS
+      });
+    }
+
+    logger.info(`Seat reserved for rebuy`, {
+      sessionId,
+      seatIndex,
+      roomId: this.roomId,
+      expiresIn: `${this.REBUY_TIMEOUT_MS}ms`
+    });
+  }
+
+  /**
+   * Clean up expired seat reservations
+   */
+  private cleanupExpiredReservations() {
+    const now = Date.now();
+    const expired: number[] = [];
+
+    this.rebuySeatReservations.forEach((reservation, seatIndex) => {
+      if (now >= reservation.expiresAt) {
+        expired.push(seatIndex);
+
+        // Notify client that reservation expired
+        const client = this.clients.find(c => c.sessionId === reservation.sessionId);
+        if (client) {
+          client.send("reservationExpired", {
+            seatIndex,
+            reason: "120 second timeout"
+          });
+        }
+
+        logger.info(`Seat reservation expired`, {
+          sessionId: reservation.sessionId,
+          seatIndex,
+          roomId: this.roomId
+        });
+      }
+    });
+
+    expired.forEach(seatIndex => this.rebuySeatReservations.delete(seatIndex));
+  }
+
+  /**
+   * Process a rebuy request from a player
+   */
+  private handleRebuy(client: Client): boolean {
+    const player = this.state.users.get(client.sessionId);
+    if (!player) {
+      client.send("error", { message: "Player not found" });
+      return false;
+    }
+
+    if (player.chips > 0) {
+      client.send("error", { message: "You still have chips, no rebuy needed" });
+      return false;
+    }
+
+    if (player.seatIndex < 0) {
+      client.send("error", { message: "You are not seated" });
+      return false;
+    }
+
+    const reservation = this.rebuySeatReservations.get(player.seatIndex);
+    if (!reservation || reservation.sessionId !== client.sessionId) {
+      client.send("error", { message: "Seat reservation not found or expired" });
+      return false;
+    }
+
+    // Remove reservation and rebuy
+    this.rebuySeatReservations.delete(player.seatIndex);
+    player.chips = this.REBUY_AMOUNT;
+    player.isFolded = false;
+
+    client.send("rebuySuccess", {
+      chips: this.REBUY_AMOUNT,
+      seatIndex: player.seatIndex
+    });
+
+    this.broadcast("playerRebuyed", {
+      playerId: client.sessionId,
+      playerName: player.name,
+      newChips: this.REBUY_AMOUNT,
+      seatIndex: player.seatIndex
+    });
+
+    logger.info(`Player rebuyed`, {
+      player: player.name,
+      sessionId: client.sessionId,
+      newChips: this.REBUY_AMOUNT,
+      roomId: this.roomId
+    });
+
+    return true;
   }
 
   /**
@@ -347,9 +465,19 @@ export class MyRoom extends Room<MyRoomState> {
       client.send("heartbeat_ack");
     });
 
-    // Start heartbeat monitoring
+    // Rebuy message handler
+    this.onMessage("rebuy", (client) => {
+      this.handleRebuy(client);
+    });
+
+    // Start heartbeat monitoring and cleanup
     this.startHeartbeatMonitor();
     this.startAnalytics();
+    
+    // Start periodic cleanup of expired seat reservations
+    this.reservationCleanupInterval = setInterval(() => {
+      this.cleanupExpiredReservations();
+    }, 5000); // Check every 5 seconds
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
@@ -562,6 +690,8 @@ export class MyRoom extends Room<MyRoomState> {
     this.stopHeartbeatMonitor();
     // Stop analytics reporting
     if (this.analyticsInterval) clearInterval(this.analyticsInterval);
+    // Stop reservation cleanup
+    if (this.reservationCleanupInterval) clearInterval(this.reservationCleanupInterval);
     // Log final analytics summary
     this.logAnalyticsSummary();
   }

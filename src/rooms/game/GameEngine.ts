@@ -470,6 +470,55 @@ export class GameEngine {
       if (player) player.chips += winner.amount;
     });
 
+    // Check for players with 0 chips and remove them from the round
+    const playersWithoutChips: string[] = [];
+    this.room.state.users.forEach((player, sessionId) => {
+      if (player.chips === 0 && player.seatIndex >= 0) {
+        playersWithoutChips.push(sessionId);
+      }
+    });
+
+    // Reserve seats and remove players with 0 chips
+    playersWithoutChips.forEach(sessionId => {
+      const player = this.room.state.users.get(sessionId);
+      if (player && player.seatIndex >= 0) {
+        // Call private method through room's public interface
+        (this.room as any).reserveSeat(sessionId, player.seatIndex);
+        
+        // Remove player from active game
+        player.isFolded = true;
+        const playerIndex = this.room.playersInHand.indexOf(sessionId);
+        if (playerIndex >= 0) {
+          this.room.playersInHand.splice(playerIndex, 1);
+        }
+
+        // Notify client of busted out status
+        const client = this.room.clients.find(c => c.sessionId === sessionId);
+        if (client) {
+          client.send("bustedOut", {
+            seatIndex: player.seatIndex,
+            message: "¡Te has quedado sin fichas!",
+            rebuyCost: 1000,
+            timeoutSeconds: 120
+          });
+        }
+
+        logger.info(`Player busted out - seat reserved for rebuy`, {
+          player: player.name,
+          sessionId,
+          seatIndex: player.seatIndex,
+          roomId: this.room.roomId
+        });
+
+        // Broadcast to all clients
+        this.room.broadcast("playerBustedOut", {
+          playerId: sessionId,
+          playerName: player.name,
+          seatIndex: player.seatIndex
+        });
+      }
+    });
+
     this.broadcastRoundEnded({
       winners: winnersList,
       communityCards: this.room.state.communityCards.toArray(),
