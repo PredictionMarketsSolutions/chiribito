@@ -8,7 +8,7 @@ export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId!: number;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
