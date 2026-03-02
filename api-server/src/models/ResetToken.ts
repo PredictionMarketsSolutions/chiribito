@@ -18,21 +18,21 @@ export class ResetToken {
   @Column({ type: 'text' })
   token!: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt!: Date;
 
   @Column({ default: false })
   used!: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'used_at', type: 'timestamp', nullable: true })
   usedAt?: Date;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @Column({ type: 'varchar', length: 45, nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', length: 45, nullable: true })
   ipAddress?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent?: string;
 }

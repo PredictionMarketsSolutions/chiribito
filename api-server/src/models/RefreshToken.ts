@@ -18,7 +18,7 @@ export class RefreshToken {
   @Column({ type: 'text' })
   token!: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt!: Date;
 
   @Column({ default: false })
@@ -27,9 +27,9 @@ export class RefreshToken {
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @Column({ type: 'varchar', length: 45, nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', length: 45, nullable: true })
   ipAddress?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent?: string;
 }
