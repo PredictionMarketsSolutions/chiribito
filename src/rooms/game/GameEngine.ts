@@ -4,6 +4,8 @@ import { TURN_TIMEOUT } from "./constants";
 import logger from "../../config/logger";
 
 export class GameEngine {
+  private handContributions = new Map<string, number>();
+
   constructor(private room: MyRoom) {}
 
   handleStartGame(client: Client) {
@@ -38,34 +40,50 @@ export class GameEngine {
 
     const prevCurrentBet = this.room.state.currentBet;
     const minRaise = prevCurrentBet * 2;
-    if (amount < this.room.state.currentBet) {
+
+    const opponents = this.room.playersInHand
+      .filter(id => id !== player.sessionId)
+      .map(id => this.room.state.users.get(id))
+      .filter((op): op is NonNullable<typeof op> => Boolean(op && !op.isFolded));
+
+    const maxCallableBet = opponents.length > 0
+      ? Math.max(...opponents.map(op => op.currentBet + op.chips))
+      : Infinity;
+
+    const targetAmount = Math.min(amount, maxCallableBet);
+     
+    // Can't bet less than current bet
+    if (targetAmount < this.room.state.currentBet) {
       client.send("error", { message: `${player.name}: bet must be at least ${this.room.state.currentBet}` });
       return;
     }
 
-    if (amount > prevCurrentBet && amount < minRaise) {
+    // Calculate how much chips the player needs to put in
+    const chipsToCall = targetAmount - player.currentBet;
+    
+    // If player doesn't have enough chips, they go all-in with what they have
+    const actualChipsToAdd = Math.min(chipsToCall, player.chips);
+    const actualFinalBet = player.currentBet + actualChipsToAdd;
+    const isAllIn = actualChipsToAdd === player.chips && player.chips > 0;
+    
+    // Validate raise amount (but allow all-in even if smaller than min raise)
+    const isRaise = actualFinalBet > prevCurrentBet;
+    if (isRaise && !isAllIn && actualFinalBet < minRaise) {
       client.send("error", { message: `${player.name}: raise must be at least ${minRaise} (current bet ${prevCurrentBet})` });
       return;
     }
 
-    const chipsToCall = amount - player.currentBet;
-    if (chipsToCall > player.chips) {
-      client.send("error", { message: `${player.name}: not enough chips` });
-      return;
-    }
+    // Process the bet
+    player.chips -= actualChipsToAdd;
+    player.currentBet += actualChipsToAdd;
+    this.addToPot(actualChipsToAdd, player.sessionId);
 
-    player.chips -= chipsToCall;
-    player.currentBet += chipsToCall;
-    this.addToPot(chipsToCall);
-
-    const isAllIn = player.chips === 0;
     if (isAllIn) {
       this.room.playersAllIn.add(player.sessionId);
     }
 
-    const isRaise = amount > prevCurrentBet;
     if (isRaise) {
-      this.room.state.currentBet = amount;
+      this.room.state.currentBet = actualFinalBet;
       this.room.state.lastRaiser = player.sessionId;
       this.room.playersActedThisRound.clear();
     }
@@ -75,7 +93,7 @@ export class GameEngine {
     this.broadcastPlayerAction({
       playerId: player.sessionId,
       action: isAllIn ? "allIn" : (isRaise ? "raise" : "bet"),
-      amount,
+      amount: actualChipsToAdd,
       pot: this.room.state.pot
     });
 
@@ -101,7 +119,7 @@ export class GameEngine {
     const actualCall = Math.min(chipsToCall, player.chips);
     player.chips -= actualCall;
     player.currentBet += actualCall;
-    this.addToPot(actualCall);
+    this.addToPot(actualCall, player.sessionId);
 
     this.room.playersActedThisRound.add(player.sessionId);
 
@@ -298,6 +316,10 @@ export class GameEngine {
   }
 
   determineWinners(): { winners: string[]; winningHand: string } {
+    return this.determineWinnersForEligible(this.getPlayersInHandNonFolded());
+  }
+
+  private determineWinnersForEligible(eligibleIds: string[]): { winners: string[]; winningHand: string } {
     const rankOrder: Record<string, number> = {
       "7": 0,
       "8": 1,
@@ -319,7 +341,7 @@ export class GameEngine {
     let bestScore: HandScore | null = null;
     let bestName = "Sin ganador";
 
-    this.room.playersInHand.forEach(id => {
+    eligibleIds.forEach(id => {
       const player = this.room.state.users.get(id);
       if (!player || player.isFolded) return;
       const hole = player.hand.toArray();
@@ -354,6 +376,66 @@ export class GameEngine {
     return { winners, winningHand: bestName };
   }
 
+  private calculateSidePotPayouts() {
+    const payouts = new Map<string, number>();
+    const contributions = Array.from(this.handContributions.entries())
+      .filter(([, amount]) => amount > 0);
+
+    if (contributions.length === 0) {
+      return { payouts, winningHand: "" };
+    }
+
+    const levels = Array.from(new Set(contributions.map(([, amount]) => amount))).sort((a, b) => a - b);
+    let previousLevel = 0;
+    let primaryWinningHand = "";
+
+    levels.forEach((level) => {
+      const participants = contributions
+        .filter(([, amount]) => amount >= level)
+        .map(([playerId]) => playerId);
+
+      if (participants.length === 0) {
+        previousLevel = level;
+        return;
+      }
+
+      const sidePotAmount = (level - previousLevel) * participants.length;
+      if (sidePotAmount <= 0) {
+        previousLevel = level;
+        return;
+      }
+
+      const eligible = participants.filter((playerId) => {
+        const player = this.room.state.users.get(playerId);
+        return Boolean(player && !player.isFolded);
+      });
+
+      if (eligible.length === 0) {
+        previousLevel = level;
+        return;
+      }
+
+      const result = this.determineWinnersForEligible(eligible);
+      if (!primaryWinningHand && result.winningHand) {
+        primaryWinningHand = result.winningHand;
+      }
+
+      const orderedWinners = this.room.playersInHand.filter(id => result.winners.includes(id));
+      const splitBase = Math.floor(sidePotAmount / orderedWinners.length);
+      let remainder = sidePotAmount % orderedWinners.length;
+
+      orderedWinners.forEach((winnerId) => {
+        const bonus = remainder > 0 ? 1 : 0;
+        payouts.set(winnerId, (payouts.get(winnerId) ?? 0) + splitBase + bonus);
+        if (remainder > 0) remainder -= 1;
+      });
+
+      previousLevel = level;
+    });
+
+    return { payouts, winningHand: primaryWinningHand };
+  }
+
   endRound(winners: string[], winningHand?: string, isAllInShowdown: boolean = false) {
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
     
@@ -370,10 +452,18 @@ export class GameEngine {
       roomId: this.room.roomId
     });
 
-    const winnersList = winners.map(id => ({
-      playerId: id,
-      amount: Math.floor(this.room.state.pot / winners.length)
-    }));
+    const sidePotResult = this.calculateSidePotPayouts();
+
+    let winnersList = Array.from(sidePotResult.payouts.entries())
+      .filter(([, amount]) => amount > 0)
+      .map(([playerId, amount]) => ({ playerId, amount }));
+
+    if (winnersList.length === 0 && winners.length > 0) {
+      winnersList = winners.map(id => ({
+        playerId: id,
+        amount: Math.floor(this.room.state.pot / winners.length)
+      }));
+    }
 
     winnersList.forEach(winner => {
       const player = this.room.state.users.get(winner.playerId);
@@ -383,7 +473,7 @@ export class GameEngine {
     this.broadcastRoundEnded({
       winners: winnersList,
       communityCards: this.room.state.communityCards.toArray(),
-      winningHand: winningHand ?? "",
+      winningHand: winningHand ?? sidePotResult.winningHand ?? "",
       isAllInShowdown,
       playerHands: Object.fromEntries(
         this.room.playersInHand
@@ -535,6 +625,7 @@ export class GameEngine {
     this.room.playersInHand = [];
     this.room.playersActedThisRound.clear();
     this.room.playersAllIn.clear();
+    this.handContributions.clear();
   }
 
   private resetBetsForRound() {
@@ -548,8 +639,11 @@ export class GameEngine {
     this.room.playersInHand = this.room.playersInHand.filter(id => id !== sessionId);
   }
 
-  private addToPot(amount: number) {
+  private addToPot(amount: number, playerId?: string) {
     this.room.state.pot += amount;
+    if (playerId) {
+      this.handContributions.set(playerId, (this.handContributions.get(playerId) ?? 0) + amount);
+    }
   }
 
   private broadcastBettingRoundStarted(payload: {

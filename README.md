@@ -180,6 +180,38 @@ VITE v5.x.x  ready in xxx ms
 
 ## 🧪 Testing
 
+### Pro Betting & Side-Pot Tests
+
+Run from project root:
+
+```bash
+cd C:\project-chiribito-test-backend\Chiri-backend
+```
+
+Available scripts:
+
+```bash
+# Deterministic side-pot scenarios
+npm run test:sidepot
+
+# Betting sizing rules (all-in, min-raise, effective cap)
+npm run test:betting-rules
+
+# Randomized side-pot invariant testing (2000 iterations)
+npm run test:sidepot:fuzz
+
+# Full bundle (all of the above)
+npm run test:game-pro
+```
+
+PowerShell stress run example:
+
+```powershell
+for ($i=1; $i -le 10; $i++) { npm run test:sidepot:fuzz }
+```
+
+Expected: all commands end with `Exit Code: 0` and report `PASS` or `ALL PASS`.
+
 ### Manual Testing - Quick Start
 
 1. **Open** `http://localhost:5173` in browser
@@ -405,5 +437,6 @@ See [SECURITY.md](SECURITY.md) for complete security documentation.
 - Memory per client: ~50KB
 - Typical RTT (local): 10-50ms
 
-#   0 2 / 1 8 / 2 0 2 6   1 1 : 2 9 : 2 3  
+#   0 2 / 1 8 / 2 0 2 6   1 1 : 2 9 : 2 3 
+ 
  

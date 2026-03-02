@@ -1,8 +1,32 @@
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import bodyParser from 'body-parser';
+import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import Redis from 'ioredis';
+import { AppDataSource } from './config/database';
+import { AuthController } from './controllers/AuthController';
+import { UserController } from './controllers/UserController';
+import { authenticateJWT } from './middleware/auth';
+import { registerValidator, loginValidator } from './middlewares/validators';
+import { validateRequest } from './middlewares/validateRequest';
+import logger from './config/logger';
 
-// Load .env from api-server or from repo root
+// Type augmentation for Express Request
+declare global {
+  namespace Express {
+    interface Request {
+      id?: string;
+    }
+  }
+}
+
 const apiServerEnv = path.resolve(process.cwd(), '.env');
 const rootEnv = path.resolve(process.cwd(), '..', '.env');
 
@@ -14,7 +38,6 @@ if (fs.existsSync(apiServerEnv)) {
   dotenv.config();
 }
 
-// Environment variables (defaults)
 const env: Record<string, string> = {
   PORT: '3000',
   DB_HOST: 'localhost',
@@ -22,10 +45,9 @@ const env: Record<string, string> = {
   DB_PASSWORD: 'postgres',
   DB_NAME: 'PokerBase',
   DB_PORT: '5432',
-  NODE_ENV: 'development'
+  NODE_ENV: 'development',
 };
 
-// Set environment variables only when not already provided
 Object.entries(env).forEach(([key, value]) => {
   if (!process.env[key]) {
     process.env[key] = value;
@@ -35,24 +57,129 @@ Object.entries(env).forEach(([key, value]) => {
 if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET must be set in production');
 }
-import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
-import { AppDataSource } from './config/database';
-import { AuthController } from './controllers/AuthController';
-import { UserController } from './controllers/UserController';
-import { authenticateJWT } from './middleware/auth';
-import { registerValidator, loginValidator } from './middlewares/validators';
-import { validateRequest } from './middlewares/validateRequest';
-import logger from './config/logger';
 
-// Initialize Express app
+if (!process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+  throw new Error('REDIS_URL must be set in production');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS whitelist by environment
+app.set('trust proxy', 1);
+
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+}));
+
+// Body parser with size limits
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
+// HTTP request logging
+app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms'));
+
+// Request sanitization middleware
+app.use((req: Request, _: Response, next: NextFunction) => {
+  if (req.body && typeof req.body === 'object') {
+    try {
+      const sanitize = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(sanitize);
+        } else if (obj !== null && typeof obj === 'object') {
+          const sanitized: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            sanitized[key] = sanitize(value);
+          }
+          return sanitized;
+        } else if (typeof obj === 'string') {
+          return obj
+            .replace(/[<>]/g, '')
+            .replace(/javascript:/gi, '')
+            .replace(/onerror=/gi, '')
+            .replace(/onclick=/gi, '');
+        }
+        return obj;
+      };
+      req.body = sanitize(req.body);
+    } catch (error) {
+      logger.warn('Sanitization error', { error: String(error) });
+    }
+  }
+  next();
+});
+
+// Additional security headers middleware
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-JSON-Response-Time');
+  next();
+});
+
+// Request ID tracking for logging
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  req.id = req.headers['x-request-id'] as string || `${Date.now()}-${Math.random()}`;
+  logger.debug('Incoming request', {
+    requestId: req.id,
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+  });
+  next();
+});
+
+// Detect and log potential attack patterns
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const suspiciousPatterns = [
+    /<script/i,
+    /union.*select/i,
+    /drop.*table/i,
+    /insert.*into/i,
+    /delete.*from/i,
+  ];
+
+  const queryString = JSON.stringify(req.query);
+  const bodyString = JSON.stringify(req.body);
+  const fullInput = `${req.path}${queryString}${bodyString}`;
+
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(fullInput)) {
+      logger.warn('Suspicious request pattern detected', {
+        requestId: req.id,
+        path: req.path,
+        pattern: pattern.source,
+        ip: req.ip,
+      });
+      break;
+    }
+  }
+
+  next();
+});
+
+
+// CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || ['https://chiri-frontend.onrender.com'])
+  ? (process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()) || ['https://chiri-frontend.onrender.com'])
   : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
 
 logger.info(`CORS allowed origins: ${JSON.stringify(allowedOrigins)}`);
@@ -62,7 +189,6 @@ logger.info(`ALLOWED_ORIGINS env: ${process.env.ALLOWED_ORIGINS}`);
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     logger.info(`CORS check - Origin: ${origin}, Allowed: ${JSON.stringify(allowedOrigins)}`);
-    // Allow requests with no origin (like mobile apps or curl) or matching origins
     if (!origin || allowedOrigins.includes(origin)) {
       logger.info(`CORS allowing origin: ${origin}`);
       callback(null, true);
@@ -72,66 +198,56 @@ const corsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
-// Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Simple in-memory rate limiter
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const redisUrl = process.env.REDIS_URL;
+const redisClient = redisUrl
+  ? new Redis(redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+    })
+  : null;
 
-function rateLimit(maxAttempts: number, windowMs: number) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    const now = Date.now();
-    const record = rateLimitStore.get(ip);
-
-    if (!record || now > record.resetAt) {
-      rateLimitStore.set(ip, { count: 1, resetAt: now + windowMs });
-      return next();
-    }
-
-    if (record.count >= maxAttempts) {
-      const retryAfter = Math.ceil((record.resetAt - now) / 1000);
-      res.setHeader('Retry-After', retryAfter);
-      return res.status(429).json({ 
-        error: 'Too many attempts. Please try again later.',
-        retryAfter 
-      });
-    }
-
-    record.count++;
-    next();
-  };
+if (!redisClient) {
+  logger.warn('REDIS_URL not configured, using in-memory rate limiting fallback');
 }
 
-// Cleanup rate limit store every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitStore.entries()) {
-    if (now > value.resetAt) {
-      rateLimitStore.delete(key);
-    }
-  }
-}, 600000);
+const createLimiter = (windowMs: number, max: number, prefix: string) => {
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests. Please try again later.' },
+    store: redisClient
+      ? new RedisStore({
+          prefix,
+          sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as Promise<any>,
+        })
+      : undefined,
+  });
+};
 
-// Initialize controllers
 const authController = new AuthController();
 const userController = new UserController();
 
-// Auth routes with rate limiting and validation
-const authRateLimit = rateLimit(5, 60000); // 5 attempts per minute
+const registerRateLimit = createLimiter(15 * 60 * 1000, 5, 'rl:register:');
+const loginRateLimit = createLimiter(15 * 60 * 1000, 10, 'rl:login:');
+const forgotPasswordRateLimit = createLimiter(15 * 60 * 1000, 5, 'rl:forgot-password:');
+const refreshRateLimit = createLimiter(15 * 60 * 1000, 30, 'rl:refresh:');
+const resetPasswordRateLimit = createLimiter(15 * 60 * 1000, 10, 'rl:reset-password:');
 
-app.post('/api/auth/register', authRateLimit, registerValidator, validateRequest, (req: Request, res: Response) => authController.register(req, res));
-app.post('/api/auth/login', authRateLimit, loginValidator, validateRequest, (req: Request, res: Response) => authController.login(req, res));
+app.post('/api/auth/register', registerRateLimit, registerValidator, validateRequest, (req: Request, res: Response) => authController.register(req, res));
+app.post('/api/auth/login', loginRateLimit, loginValidator, validateRequest, (req: Request, res: Response) => authController.login(req, res));
 app.post('/api/auth/validate', (req: Request, res: Response) => authController.validateToken(req, res));
-app.post('/api/auth/refresh', (req: Request, res: Response) => authController.refreshToken(req, res));
-app.post('/api/auth/forgot-password', (req: Request, res: Response) => authController.forgotPassword(req, res));
-app.post('/api/auth/reset-password', (req: Request, res: Response) => authController.resetPassword(req, res));
+app.post('/api/auth/refresh', refreshRateLimit, (req: Request, res: Response) => authController.refreshToken(req, res));
+app.post('/api/auth/forgot-password', forgotPasswordRateLimit, (req: Request, res: Response) => authController.forgotPassword(req, res));
+app.post('/api/auth/reset-password', resetPasswordRateLimit, (req: Request, res: Response) => authController.resetPassword(req, res));
 
-// Protected routes
 app.get('/api/users/me', authenticateJWT, async (req, res, next) => {
   try {
     await userController.getProfile(req, res);
@@ -148,28 +264,97 @@ app.delete('/api/users/me', authenticateJWT, async (req, res, next) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
-app.use((err: any, _: any, res: any, __: any) => {
-  logger.error('Error handling middleware', { stack: err.stack });
-  res.status(500).json({ error: 'Something went wrong!' });
+app.use((err: Error & { statusCode?: number; status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+  const statusCode = err.statusCode || err.status || 500;
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  logger.error('Error handling middleware', {
+    message: err.message,
+    statusCode,
+    stack: isDevelopment ? err.stack : undefined,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Sanitize error message
+  let errorMessage = 'Something went wrong!';
+  if (isDevelopment) {
+    errorMessage = err.message || errorMessage;
+  }
+
+  res.status(statusCode).json({
+    error: errorMessage,
+    ...(isDevelopment && { details: err.message, stack: err.stack }),
+  });
 });
 
-// Initialize database connection and start server
 const startServer = async () => {
   try {
     await AppDataSource.initialize();
     logger.info('Database connected successfully');
-    
-    app.listen(PORT, () => {
+
+    if (redisClient) {
+      await redisClient.connect();
+      logger.info('Redis connected successfully');
+    }
+
+    const server = app.listen(PORT, () => {
       logger.info(`Server is running on http://localhost:${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV}`);
+    });
+
+    // Graceful shutdown handling
+    const gracefulShutdown = async (signal: string) => {
+      logger.info(`Received ${signal}, starting graceful shutdown...`);
+
+      server.close(async () => {
+        logger.info('HTTP server closed');
+
+        try {
+          if (redisClient) {
+            await redisClient.quit();
+            logger.info('Redis connection closed');
+          }
+
+          if (AppDataSource.isInitialized) {
+            await AppDataSource.destroy();
+            logger.info('Database connection closed');
+          }
+
+          logger.info('Graceful shutdown completed');
+          process.exit(0);
+        } catch (error) {
+          logger.error('Error during graceful shutdown', { error: String(error) });
+          process.exit(1);
+        }
+      });
+
+      // Force shutdown after 10 seconds
+      setTimeout(() => {
+        logger.error('Forced shutdown after timeout');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (error: Error) => {
+      logger.error('Uncaught exception', { message: error.message, stack: error.stack });
+      process.exit(1);
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason: unknown) => {
+      logger.error('Unhandled rejection', { reason: String(reason) });
+      process.exit(1);
     });
   } catch (error) {
-    logger.error('Failed to connect to the database', { error: String(error) });
+    logger.error('Failed to start server dependencies', { error: String(error) });
     process.exit(1);
   }
 };

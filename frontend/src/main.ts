@@ -1,5 +1,16 @@
 import { Client, Room } from "colyseus.js";
 
+// Security modules
+import { 
+  initFrontendSecurity, 
+  SecureStorage, 
+  ApiClient, 
+  validateEmail,
+  validatePassword,
+  validateUsername,
+  stateGuard 
+} from "./security";
+
 const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
 const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
 
@@ -1151,36 +1162,90 @@ function setActionButtonsEnabled(
 
 async function register() {
   const { username, email, password } = getFormValues();
-  log("Registering...");
-  setAuthMessage("Creando cuenta...", "info");
-  const data = await request("/api/auth/register", { username, email, password });
-  token = data.token;
-  refreshToken = data.refreshToken;
-  if (refreshToken) {
-    localStorage.setItem('refreshToken', refreshToken);
+  
+  // Validate inputs before submitting
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
+    setAuthMessage(emailValidation.error!, "error");
+    return;
   }
-  tokenStatus.textContent = token ? "set" : "none";
-  tokenInvalidNotified = false;
-  startTokenMonitor();
-  log("Registered and token received.");
-  setAuthMessage("Registro correcto. Puedes unirte a la mesa.", "success");
+  
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    setAuthMessage(passwordValidation.error!, "error");
+    return;
+  }
+  
+  const usernameValidation = validateUsername(username);
+  if (!usernameValidation.valid) {
+    setAuthMessage(usernameValidation.error!, "error");
+    return;
+  }
+  
+  log("Registering with secure client...");
+  setAuthMessage("Creando cuenta...", "info");
+  
+  try {
+    const data = await request("/api/auth/register", { username, email, password });
+    token = data.token;
+    refreshToken = data.refreshToken;
+    if (refreshToken) {
+      SecureStorage.saveRefreshToken(refreshToken);
+    }
+    if (token) {
+      SecureStorage.saveAccessToken(token);
+    }
+    tokenStatus.textContent = token ? "set" : "none";
+    tokenInvalidNotified = false;
+    startTokenMonitor();
+    log("Registered and token received.");
+    setAuthMessage("Registro correcto. Puedes unirte a la mesa.", "success");
+  } catch (error) {
+    const message = mapAuthError(error instanceof Error ? error.message : String(error), "register");
+    setAuthMessage(message, "error");
+    log(`Registration error: ${message}`);
+  }
 }
 
 async function login() {
   const { email, password } = getLoginValues();
-  log("Logging in...");
-  setAuthMessage("Verificando credenciales...", "info");
-  const data = await request("/api/auth/login", { email, password });
-  token = data.token;
-  refreshToken = data.refreshToken;
-  if (refreshToken) {
-    localStorage.setItem('refreshToken', refreshToken);
+  
+  // Validate inputs before submitting
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.valid) {
+    setAuthMessage(emailValidation.error!, "error");
+    return;
   }
-  tokenStatus.textContent = token ? "set" : "none";
-  tokenInvalidNotified = false;
-  startTokenMonitor();
-  log("Logged in and token received.");
-  setAuthMessage("Login correcto. Puedes unirte a la mesa.", "success");
+  
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    setAuthMessage(passwordValidation.error!, "error");
+    return;
+  }
+  
+  log("Logging in with secure client...");
+  setAuthMessage("Verificando credenciales...", "info");
+  
+  try {
+    const data = await request("/api/auth/login", { email, password });
+    token = data.token;
+    refreshToken = data.refreshToken;
+    if (refreshToken) {
+      SecureStorage.saveRefreshToken(refreshToken);
+    }
+    if (token) {
+      SecureStorage.saveAccessToken(token);
+    }
+    tokenStatus.textContent = token ? "set" : "none";
+    tokenInvalidNotified = false;
+    startTokenMonitor();
+    log("Logged in and token received.");
+    setAuthMessage("Login correcto. Puedes unirte a la mesa.", "success");
+  } catch (error) {
+    const message = mapAuthError(error instanceof Error ? error.message : String(error), "login");
+    setAuthMessage(message, "error");
+    log(`Login error: ${message}`);
+  }
 }
 
 /**
