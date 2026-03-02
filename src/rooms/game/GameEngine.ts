@@ -14,8 +14,17 @@ export class GameEngine {
       sessionId: client.sessionId,
       roomId: this.room.roomId
     });
-    if (this.room.state.users.size < 2) {
-      client.send("error", { message: "At least 2 players required to start" });
+    
+    // Count only players with chips > 0 (exclude busted out players)
+    const activePlayers = Array.from(this.room.state.users.values())
+      .filter(p => p.chips > 0);
+    
+    if (activePlayers.length < 2) {
+      const count = activePlayers.length;
+      const message = count === 1 
+        ? "Necesitas al menos 1 jugador más para empezar" 
+        : "Necesitas al menos 2 jugadores para empezar";
+      client.send("error", { message });
       return;
     }
 

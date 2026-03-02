@@ -1129,7 +1129,9 @@ function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) 
   const canBet = canAct && currentBet === 0 && myChips > 0;
   const canRaise = canAct && currentBet > 0 && myChips > 0;
 
-  const canStart = Boolean(currentSessionId) && !state.roundStarted;
+  // Count active players (chips > 0)
+  const activePlayers = entries.filter((p: any) => Number(p.chips ?? 0) > 0).length;
+  const canStart = Boolean(currentSessionId) && !state.roundStarted && activePlayers >= 2;
 
   setActionButtonsEnabled(
     canStart,
@@ -1429,87 +1431,6 @@ function replayBufferedActions() {
 }
 
 /**
- * Show rebuy dialog when player has 0 chips
- */
-let rebuyDialog: HTMLDivElement | null = null;
-let rebuyTimeoutMs = 0;
-let rebuyCountdownInterval: NodeJS.Timeout | null = null;
-
-function showRebuyDialog(cost: number, timeoutSeconds: number) {
-  rebuyTimeoutMs = timeoutSeconds * 1000;
-  
-  // Remove existing dialog if any
-  hideRebuyDialog();
-  
-  // Create dialog
-  rebuyDialog = document.createElement("div");
-  rebuyDialog.className = "rebuy-dialog-overlay";
-  rebuyDialog.innerHTML = `
-    <div class="rebuy-dialog">
-      <div class="rebuy-icon">🪦</div>
-      <h2>¡Te has quedado sin fichas!</h2>
-      <p>¿Quieres re-comprar <strong>${cost} fichas</strong>?</p>
-      <div class="rebuy-timer">
-        <p>Tienen <span id="rebuy-countdown">${timeoutSeconds}</span>s para decidir</p>
-      </div>
-      <div class="rebuy-buttons">
-        <button id="rebuy-accept" class="btn btn-primary">✓ Aceptar Re-compra</button>
-        <button id="rebuy-decline" class="btn btn-secondary">✗ Declinar</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(rebuyDialog);
-  
-  // Start countdown
-  const countdownEl = document.getElementById("rebuy-countdown")!;
-  let remaining = timeoutSeconds;
-  
-  rebuyCountdownInterval = setInterval(() => {
-    remaining--;
-    countdownEl.textContent = String(remaining);
-    
-    if (remaining <= 0) {
-      clearInterval(rebuyCountdownInterval!);
-      rebuyCountdownInterval = null;
-      hideRebuyDialog();
-    }
-  }, 1000);
-  
-  // Accept button
-  document.getElementById("rebuy-accept")!.addEventListener("click", () => {
-    hideRebuyDialog();
-    if (room) {
-      room.send("rebuy", undefined);
-      log("✅ Enviando solicitud de re-compra...");
-    }
-  });
-  
-  // Decline button
-  document.getElementById("rebuy-decline")!.addEventListener("click", () => {
-    hideRebuyDialog();
-    log("❌ Re-compra declinada");
-  });
-  
-  log(`💰 Dialog de re-compra mostrado (${timeoutSeconds}s)`);
-}
-
-/**
- * Hide rebuy dialog
- */
-function hideRebuyDialog() {
-  if (rebuyCountdownInterval) {
-    clearInterval(rebuyCountdownInterval);
-    rebuyCountdownInterval = null;
-  }
-  
-  if (rebuyDialog) {
-    rebuyDialog.remove();
-    rebuyDialog = null;
-  }
-}
-
-/**
  * Reconnect with exponential backoff
  */
 async function attemptReconnect() {
@@ -1770,7 +1691,7 @@ async function joinRoom(forceReplace = false) {
 
   // Rebuy system messages
   room.onMessage("bustedOut", (payload: any) => {
-    log(`🪦 You busted out! Chips: 0`);
+    log(`🪦 Te han desplumado! Chips: 0`);
     showRebuyDialog(payload.rebuyCost, payload.timeoutSeconds);
   });
 
