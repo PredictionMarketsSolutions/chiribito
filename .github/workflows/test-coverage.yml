@@ -1,0 +1,73 @@
+name: Test and Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run TypeScript type check
+      run: npx tsc --noEmit
+
+    - name: Run tests with coverage
+      run: npm run test:jest -- --coverage
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+        verbose: true
+
+    - name: Check coverage thresholds (GameEngine)
+      run: npx jest --coverage --testPathPattern="GameEngine" --coverageThreshold='{"global":{"branches":80,"functions":85,"lines":85,"statements":85}}'
+      continue-on-error: true
+
+    - name: Comment PR with coverage
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+          const total = coverage.total;
+          
+          const comment = `## Test Coverage Report
+          
+          | Metric | Coverage |
+          |--------|----------|
+          | Lines | ${total.lines.pct}% |
+          | Statements | ${total.statements.pct}% |
+          | Functions | ${total.functions.pct}% |
+          | Branches | ${total.branches.pct}% |
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
