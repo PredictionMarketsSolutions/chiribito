@@ -13,7 +13,7 @@ jest.mock('../../config/logger');
 describe('authenticateJWT Middleware', () => {
   let req: Partial<Request>;
   let res: Partial<Response>;
-  let next: NextFunction;
+  let next: jest.Mock;
   let mockUserRepository: any;
 
   beforeEach(() => {
@@ -27,12 +27,12 @@ describe('authenticateJWT Middleware', () => {
 
     // Setup response object with chainable methods
     res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
-    };
+      status: jest.fn().mockReturnThis() as any,
+      json: jest.fn().mockReturnThis() as any
+    } as any;
 
     // Setup next function
-    next = jest.fn();
+    next = jest.fn() as jest.Mock;
 
     // Setup environment
     process.env.JWT_SECRET = 'test-secret-key-min-32-chars-long!!';
