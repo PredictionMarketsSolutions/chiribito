@@ -1,4 +1,4 @@
-/// <reference types="jest" />
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { authenticateJWT } from '../../middleware/auth';
