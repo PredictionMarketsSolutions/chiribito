@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { authenticateJWT } from '../middleware/auth';
 import { body } from 'express-validator';
-import { validateRequest } from '../middlewares/validateRequest';
+import { validateRequest } from '../middleware/validateRequest';
 
 const router = Router();
 const authController = new AuthController();

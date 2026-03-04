@@ -232,7 +232,183 @@ npm test
 
 ---
 
-## 📝 Estructura Recomendada para Nuevos Tests
+## 🎭 Manual Mocks (Referencia para Próximos Tests)
+
+### Estructura de Directorios para Mocks
+
+```
+api-server/
+├── src/
+│   ├── config/
+│   │   ├── __mocks__/
+│   │   │   ├── database.ts      # Mock de AppDataSource
+│   │   │   └── logger.ts        # Mock de logger
+│   │   ├── database.ts
+│   │   └── logger.ts
+│   ├── services/
+│   │   ├── __mocks__/
+│   │   │   └── EmailService.ts  # Mock de servicio de email
+│   │   └── EmailService.ts
+│   └── __tests__/
+│       ├── middleware/
+│       │   └── auth.test.ts
+│       └── controllers/
+│           └── UserController.test.ts
+├── jest.config.js
+└── tsconfig.test.json
+```
+
+### Tipos de Mocks en Jest
+
+#### 1. **Inline Mocks (Lo que usamos actualmente en auth.test.ts)**
+```typescript
+// ✅ ACTUAL - Mocking dentro del test
+jest.mock('../../config/database');
+jest.mock('../../config/logger');
+
+describe('authenticateJWT', () => {
+  beforeEach(() => {
+    mockUserRepository = {
+      findOne: jest.fn()
+    };
+    (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockUserRepository);
+  });
+});
+```
+
+**Ventajas:** Simple para casos pequeños  
+**Desventajas:** Código duplicado si muchos tests lo necesitan
+
+#### 2. **Manual Mocks en __mocks__/ (Para próximos tests)**
+Créa cuando el mock es complejo o needed en múltiples tests.
+
+**Ejemplo para database:**
+```typescript
+// src/config/__mocks__/database.ts
+import { jest } from '@jest/globals';
+
+export const AppDataSource = {
+  getRepository: jest.fn().mockReturnValue({
+    findOne: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn(),
+    delete: jest.fn(),
+    update: jest.fn()
+  }),
+  initialize: jest.fn().mockResolvedValue(undefined),
+  isInitialized: true,
+  destroy: jest.fn().mockResolvedValue(undefined)
+};
+```
+
+**En el test:**
+```typescript
+// src/__tests__/middleware/auth.test.ts
+jest.mock('../../config/database');  // Automáticamente usa __mocks__/database.ts
+import { AppDataSource } from '../../config/database';
+
+describe('authenticateJWT', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('should work', () => {
+    AppDataSource.getRepository.mockReturnValue({
+      findOne: jest.fn().mockResolvedValue({ id: 1 })
+    });
+  });
+});
+```
+
+#### 3. **jest.createMockFromModule() (Para mocks avanzados)**
+Extiende automocks con comportamiento personalizado:
+
+```typescript
+// src/services/__mocks__/EmailService.ts
+import { jest } from '@jest/globals';
+
+const EmailService = jest.createMockFromModule<typeof import('../EmailService')>('../EmailService');
+
+let emailsSent: any[] = [];
+
+export const mockEmailService = {
+  sendEmail: jest.fn(async (to: string, subject: string) => {
+    emailsSent.push({ to, subject });
+    return { success: true, messageId: 'mock-123' };
+  }),
+  getEmailsSent: () => emailsSent,
+  resetEmails: () => { emailsSent = []; }
+};
+
+// Override el módulo
+Object.assign(EmailService, mockEmailService);
+
+module.exports = EmailService;
+```
+
+**En test:**
+```typescript
+jest.mock('../../services/EmailService');
+import { mockEmailService } from '../../services/__mocks__/EmailService';
+
+describe('UserController', () => {
+  beforeEach(() => {
+    mockEmailService.resetEmails();
+  });
+
+  it('should send welcome email', async () => {
+    // Act
+    await userController.register(req, res);
+
+    // Assert
+    expect(mockEmailService.getEmailsSent()).toEqual([
+      expect.objectContaining({ to: 'user@example.com' })
+    ]);
+  });
+});
+```
+
+#### 4. **jest.requireActual() (Híbrido: Mock + Real)**
+Para mockear SOLO ciertas funciones, no todo el módulo:
+
+```typescript
+// src/config/__mocks__/logger.ts
+import { jest } from '@jest/globals';
+
+// Obtener la implementación real
+const actualLogger = jest.requireActual<typeof import('../logger')>('../logger');
+
+// Extender con mocks
+export default {
+  ...actualLogger,  // Mantener comportamiento real
+  error: jest.fn(), // Override solo lo que necesitas
+  info: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn()
+};
+```
+
+### Reglas Importantes para Mocks
+
+| Regla | Aplica? | Razón |
+|-------|---------|-------|
+| `jest.mock()` debe ser en el mismo scope que import | ✅ SÍ | Jest hoista los mocks, pero deben estar en el mismo archivo |
+| Puedo mockear módulos de Node (fs, path) | ✅ SÍ, con `jest.mock('fs')` | Node modules NO se mockean automáticamente |
+| Puedo mockear módulos locales sin `jest.mock()` | ❌ NO | Siempre requiere `jest.mock('./moduleName')` explícito |
+| __mocks__/ debe ser adjacent a node_modules | ✅ SÍ para scoped packages<br>❌ NO para locales | Para `@scope/package`, crear `__mocks__/@scope/package.js` |
+| jest.mock() se ejecuta antes que imports | ✅ SÍ (CommonJS) | Es hoisted automáticamente |
+| jest.mock() se ejecuta antes que imports | ❌ NO (ES Modules) | ESM loader ejecuta imports primero |
+
+### Checklist para Próximos Tests
+
+- [ ] ¿Es un mock simple? → Usar inline como en auth.test.ts
+- [ ] ¿Se repite en varios tests? → Crear en `__mocks__/`
+- [ ] ¿Necesito mock + comportamiento real? → Usar `jest.requireActual()`
+- [ ] ¿Necesito setupo_complejo? → Crear función helper en `__mocks__/`
+- [ ] ¿Es módulo de Node? → Agregar `jest.mock('moduleName')` explícitamente
+- [ ] ¿Es módulo scoped? → Crear `__mocks__/@scope/package/`
+
+---
 
 ```typescript
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';

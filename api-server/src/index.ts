@@ -14,8 +14,8 @@ import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/AuthController';
 import { UserController } from './controllers/UserController';
 import { authenticateJWT } from './middleware/auth';
-import { registerValidator, loginValidator } from './middlewares/validators';
-import { validateRequest } from './middlewares/validateRequest';
+import { registerValidator, loginValidator } from './middleware/validators';
+import { validateRequest } from './middleware/validateRequest';
 import logger from './config/logger';
 
 // Type augmentation for Express Request

@@ -63,7 +63,7 @@ async function main() {
       name: USERNAME
     });
 
-    console.log(`Joined room: ${room.id}`);
+    console.log(`Joined room: ${room.roomId}`);
     room.onMessage("joined", (payload) => {
       console.log("Server joined payload:", payload);
     });
