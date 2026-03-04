@@ -9,6 +9,15 @@ import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/c
 import { gameAuditLog } from "../security/game-audit";
 import { gameActionRateLimiter } from "../security/game-action-rate-limit";
 
+// Room managers
+import {
+  SessionManager,
+  ConnectionMonitor,
+  SeatManager,
+  RateLimiterService,
+  AnalyticsService
+} from "./managers";
+
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 export class MyRoom extends Room<MyRoomState> {
@@ -20,49 +29,21 @@ export class MyRoom extends Room<MyRoomState> {
   public playersActedThisRound: Set<string> = new Set();
   public playersAllIn: Set<string> = new Set();
   private engine!: GameEngine;
-  private activeUsers: Map<number, string> = new Map();
-  private sessionUsers: Map<string, number> = new Map();
-  private pendingUsers: Set<number> = new Set();
   private reconnectionTimeoutSeconds = 60;
 
-  // Heartbeat & connection monitoring
-  private clientHeartbeats: Map<string, number> = new Map();
-  private heartbeatInterval: NodeJS.Timeout | null = null;
-  private readonly HEARTBEAT_INTERVAL_MS = HEARTBEAT_INTERVAL;
-  private readonly HEARTBEAT_TIMEOUT_MS = HEARTBEAT_TIMEOUT;
+  // Managers
+  private sessionManager!: SessionManager;
+  private connectionMonitor!: ConnectionMonitor;
+  private seatManager!: SeatManager;
+  private rateLimiter!: RateLimiterService;
+  private analytics!: AnalyticsService;
 
-  // Connection analytics per client
-  private connectionStats = new Map<string, {
-    joins: number;
-    rejoins: number;
-    heartbeatsMissed: number;
-    latencyMs: number[];
-    lastLatency: number;
-    averageLatency: number;
-  }>();
-  private analyticsInterval: NodeJS.Timeout | null = null;
-
-  // Rate limiting per client to prevent spam attacks
-  private actionCooldowns = new Map<string, Map<string, number>>();
-  private readonly ACTION_COOLDOWN_MS = ACTION_COOLDOWN;
-
-  // Seat reservations for players who busted out (0 chips)
-  // Map<seatIndex, { sessionId: string; expiresAt: number }>
-  private rebuySeatReservations = new Map<number, { sessionId: string; expiresAt: number }>();
+  // Rebuy constants
   private readonly REBUY_TIMEOUT_MS = 120000; // 120 seconds
   private readonly REBUY_AMOUNT = 1000;
-  private reservationCleanupInterval: NodeJS.Timeout | null = null;
 
   private getNextAvailableSeat(): number {
-    const occupied = new Set<number>();
-    this.state.users.forEach((player) => {
-      if (player.seatIndex >= 0) occupied.add(player.seatIndex);
-    });
-
-    for (let i = 0; i < this.maxClients; i += 1) {
-      if (!occupied.has(i)) return i;
-    }
-    return -1;
+    return this.seatManager.getNextAvailableSeat() ?? -1;
   }
 
   /**
@@ -70,10 +51,7 @@ export class MyRoom extends Room<MyRoomState> {
    * Allows 120s for rebuy decision
    */
   private reserveSeat(sessionId: string, seatIndex: number) {
-    this.rebuySeatReservations.set(seatIndex, {
-      sessionId,
-      expiresAt: Date.now() + this.REBUY_TIMEOUT_MS
-    });
+    this.seatManager.reserveSeatForRebuy(seatIndex, this.sessionManager.getUserId(sessionId) ?? 0);
 
     // Notify client of reservation
     const client = this.clients.find(c => c.sessionId === sessionId);
@@ -93,34 +71,10 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   /**
-   * Clean up expired seat reservations
+   * Clean up expired seat reservations (no longer needed - handled by SeatManager)
    */
   private cleanupExpiredReservations() {
-    const now = Date.now();
-    const expired: number[] = [];
-
-    this.rebuySeatReservations.forEach((reservation, seatIndex) => {
-      if (now >= reservation.expiresAt) {
-        expired.push(seatIndex);
-
-        // Notify client that reservation expired
-        const client = this.clients.find(c => c.sessionId === reservation.sessionId);
-        if (client) {
-          client.send("reservationExpired", {
-            seatIndex,
-            reason: "120 second timeout"
-          });
-        }
-
-        logger.info(`Seat reservation expired`, {
-          sessionId: reservation.sessionId,
-          seatIndex,
-          roomId: this.roomId
-        });
-      }
-    });
-
-    expired.forEach(seatIndex => this.rebuySeatReservations.delete(seatIndex));
+    // SeatManager handles this automatically
   }
 
   /**
@@ -143,14 +97,16 @@ export class MyRoom extends Room<MyRoomState> {
       return false;
     }
 
-    const reservation = this.rebuySeatReservations.get(player.seatIndex);
-    if (!reservation || reservation.sessionId !== client.sessionId) {
+    const reservation = this.seatManager.getReservation(player.seatIndex);
+    const userId = this.sessionManager.getUserId(client.sessionId);
+    
+    if (!reservation || !userId || reservation.userId !== userId) {
       client.send("error", { message: "Seat reservation not found or expired" });
       return false;
     }
 
     // Remove reservation and rebuy
-    this.rebuySeatReservations.delete(player.seatIndex);
+    this.seatManager.clearReservation(player.seatIndex);
     player.chips = this.REBUY_AMOUNT;
     player.isFolded = false;
 
@@ -177,54 +133,6 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   /**
-   * Start monitoring client heartbeats to detect dead connections
-   * Sends periodic heartbeat requests to all clients
-   */
-  private startHeartbeatMonitor() {
-    this.heartbeatInterval = setInterval(() => {
-      const now = Date.now();
-      const deadClients: string[] = [];
-
-      // Check for unresponsive clients
-      this.clients.forEach(client => {
-        const lastHeartbeat = this.clientHeartbeats.get(client.sessionId) ?? Date.now();
-        const timeSinceLastHeartbeat = now - lastHeartbeat;
-
-        if (timeSinceLastHeartbeat > this.HEARTBEAT_TIMEOUT_MS) {
-          logger.warn(`Client ${client.sessionId} is unresponsive`, {
-            timeSinceLastHeartbeat: `${timeSinceLastHeartbeat}ms`,
-            roomId: this.roomId
-          });
-          deadClients.push(client.sessionId);
-        }
-      });
-
-      // Force disconnect dead clients
-      deadClients.forEach(sessionId => {
-        const client = this.clients.find(c => c.sessionId === sessionId);
-        if (client) {
-          logger.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
-          client.close(4000, "Heartbeat timeout");
-        }
-      });
-
-      // Colyseus WebSocket already has built-in ping/pong mechanism
-      // No need to broadcast heartbeat - it wastes bandwidth
-    }, this.HEARTBEAT_INTERVAL_MS);
-  }
-
-  /**
-   * Stop heartbeat monitoring when room is disposed
-   */
-  private stopHeartbeatMonitor() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-    this.clientHeartbeats.clear();
-  }
-
-  /**
    * Check if client action is under rate limit
    * Returns true if action is allowed, false if rate limited
    */
@@ -238,80 +146,13 @@ export class MyRoom extends Room<MyRoomState> {
       return false;
     }
 
-    const now = Date.now();
-    
-    if (!this.actionCooldowns.has(sessionId)) {
-      this.actionCooldowns.set(sessionId, new Map());
-    }
-    
-    const cooldowns = this.actionCooldowns.get(sessionId)!;
-    const lastTime = cooldowns.get(actionType) ?? 0;
-    
-    if (now - lastTime < this.ACTION_COOLDOWN_MS) {
+    if (!this.rateLimiter.isActionAllowed(sessionId, actionType)) {
       logger.warn(`Client rate limited`, { sessionId, actionType, roomId: this.roomId });
       return false;
     }
     
-    cooldowns.set(actionType, now);
+    this.rateLimiter.recordAction(sessionId, actionType);
     return true;
-  }
-
-  /**
-   * Start analytics reporting for connection quality monitoring
-   * Logs health statistics every 60 seconds
-   */
-  private startAnalytics() {
-    this.analyticsInterval = setInterval(() => {
-      if (this.connectionStats.size === 0) return;
-      
-      const stats = Array.from(this.connectionStats.values());
-      const avgLatency = stats.length > 0 
-        ? stats.reduce((sum, s) => sum + s.averageLatency, 0) / stats.length 
-        : 0;
-      const maxLatency = Math.max(...stats.map(s => s.lastLatency || 0));
-      const minLatency = Math.min(...stats.map(s => s.lastLatency || Infinity));
-      
-      logger.info(`Analytics report`, {
-        roomId: this.roomId,
-        players: stats.length,
-        avgRTT: `${avgLatency.toFixed(0)}ms`,
-        minRTT: `${minLatency === Infinity ? 0 : minLatency}ms`,
-        maxRTT: `${maxLatency}ms`
-      });
-    }, 60000);
-  }
-
-  /**
-   * Log analytics summary when room is disposed
-   */
-  private logAnalyticsSummary() {
-    if (this.connectionStats.size === 0) {
-      logger.info(`Analytics summary - no connection data`, { roomId: this.roomId });
-      return;
-    }
-    
-    const stats = Array.from(this.connectionStats.entries());
-    const avgLatency = stats.length > 0
-      ? stats.reduce((sum, [_, s]) => sum + s.averageLatency, 0) / stats.length
-      : 0;
-    
-    logger.info(`Analytics summary`, {
-      roomId: this.roomId,
-      totalConnections: stats.length,
-      avgRTT: `${avgLatency.toFixed(0)}ms`,
-      totalJoins: stats.reduce((sum, [_, s]) => sum + s.joins, 0),
-      totalRejoins: stats.reduce((sum, [_, s]) => sum + s.rejoins, 0)
-    });
-    
-    // Log per-client stats
-    stats.forEach(([sessionId, s]) => {
-      const playerName = this.state.users.get(sessionId)?.name || "Unknown";
-      logger.debug(`Player stats: ${playerName}`, {
-        avgRTT: `${s.averageLatency.toFixed(0)}ms`,
-        joins: s.joins,
-        rejoins: s.rejoins
-      });
-    });
   }
 
   private replaceSession(oldSessionId: string, newClient: Client) {
@@ -327,13 +168,8 @@ export class MyRoom extends Room<MyRoomState> {
       this.state.currentTurn = newClient.sessionId;
     }
 
-    const userId = this.sessionUsers.get(oldSessionId);
-    if (userId) {
-      this.activeUsers.set(userId, newClient.sessionId);
-      this.sessionUsers.delete(oldSessionId);
-      this.sessionUsers.set(newClient.sessionId, userId);
-      this.pendingUsers.delete(userId);
-    }
+    // Update session tracking
+    this.sessionManager.replaceSession(oldSessionId, newClient.sessionId);
 
     newClient.send("reconnected", {
       id: newClient.sessionId,
@@ -390,15 +226,13 @@ export class MyRoom extends Room<MyRoomState> {
       this.engine.endRound([this.playersInHand[0]], "Gana por fold");
     }
 
-    const userId = this.sessionUsers.get(client.sessionId);
-    if (userId) {
-      const currentSessionId = this.activeUsers.get(userId);
-      if (currentSessionId === client.sessionId) {
-        this.activeUsers.delete(userId);
-      }
-      this.pendingUsers.delete(userId);
-      this.sessionUsers.delete(client.sessionId);
-    }
+    // Clean up session tracking
+    this.sessionManager.removeSession(client.sessionId);
+    
+    // Clean up other managers
+    this.connectionMonitor.removeClient(client.sessionId);
+    this.rateLimiter.clearClient(client.sessionId);
+    this.analytics.removeSession(client.sessionId);
 
     // Notify other players
     this.broadcast("playerLeft", {
@@ -410,6 +244,38 @@ export class MyRoom extends Room<MyRoomState> {
     this.setState(new MyRoomState());
     this.autoDispose = false;
     this.engine = new GameEngine(this);
+
+    // Initialize managers
+    this.sessionManager = new SessionManager(this.roomId, this.reconnectionTimeoutSeconds);
+    this.seatManager = new SeatManager(this.roomId, this.maxClients, this.REBUY_TIMEOUT_MS);
+    this.rateLimiter = new RateLimiterService(this.roomId, {
+      defaultCooldownMs: ACTION_COOLDOWN,
+      customCooldowns: new Map([
+        ["startGame", 2000],
+        ["bet", 100],
+        ["raise", 100]
+      ])
+    });
+    this.analytics = new AnalyticsService(this.roomId, 300000); // 5 minutes
+    this.connectionMonitor = new ConnectionMonitor(
+      this.roomId,
+      {
+        heartbeatIntervalMs: HEARTBEAT_INTERVAL,
+        heartbeatTimeoutMs: HEARTBEAT_TIMEOUT
+      },
+      (sessionId) => {
+        // Handle timeout: disconnect client
+        const client = this.clients.find(c => c.sessionId === sessionId);
+        if (client) {
+          logger.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
+          client.close(4000, "Heartbeat timeout");
+        }
+      }
+    );
+
+    // Start managers
+    this.connectionMonitor.start();
+    this.analytics.start();
 
     // Game messages with rate limiting
     this.onMessage("startGame", (client) => {
@@ -441,27 +307,10 @@ export class MyRoom extends Room<MyRoomState> {
       this.engine.handleRaise(client, amount);
     });
 
-    // Heartbeat message to detect dead connections & track latency
-    this.onMessage("heartbeat", (client, clientTimestampMs?: number) => {
-      this.clientHeartbeats.set(client.sessionId, Date.now());
-      
-      // Calculate and track latency if client sent timestamp
-      if (clientTimestampMs && typeof clientTimestampMs === 'number') {
-        const now = Date.now();
-        const latency = now - clientTimestampMs;
-        
-        // Update analytics
-        let stats = this.connectionStats.get(client.sessionId);
-        if (!stats) {
-          stats = { joins: 0, rejoins: 0, heartbeatsMissed: 0, latencyMs: [], lastLatency: 0, averageLatency: 0 };
-        }
-        stats.latencyMs.push(latency);
-        if (stats.latencyMs.length > 30) stats.latencyMs.shift(); // Keep last 30
-        stats.lastLatency = latency;
-        stats.averageLatency = stats.latencyMs.reduce((a, b) => a + b, 0) / stats.latencyMs.length;
-        this.connectionStats.set(client.sessionId, stats);
-      }
-      
+    // Heartbeat message handler
+    this.onMessage("heartbeat", (client) => {
+      this.connectionMonitor.recordHeartbeat(client.sessionId);
+      this.analytics.recordMessageReceived(client.sessionId);
       client.send("heartbeat_ack");
     });
 
@@ -469,15 +318,6 @@ export class MyRoom extends Room<MyRoomState> {
     this.onMessage("rebuy", (client) => {
       this.handleRebuy(client);
     });
-
-    // Start heartbeat monitoring and cleanup
-    this.startHeartbeatMonitor();
-    this.startAnalytics();
-    
-    // Start periodic cleanup of expired seat reservations
-    this.reservationCleanupInterval = setInterval(() => {
-      this.cleanupExpiredReservations();
-    }, 5000); // Check every 5 seconds
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
@@ -514,18 +354,18 @@ export class MyRoom extends Room<MyRoomState> {
       throw new Error("INVALID_TOKEN");
     }
 
-    const existingSessionId = this.activeUsers.get(userId);
-    const hasPending = this.pendingUsers.has(userId);
+    const hasActiveSession = this.sessionManager.hasActiveSession(userId);
+    const isPending = this.sessionManager.isPending(userId);
 
-    if ((existingSessionId || hasPending) && !options?.forceReplace) {
+    if ((hasActiveSession || isPending) && !options?.forceReplace) {
       throw new Error("SESSION_EXISTS");
     }
 
-    if (existingSessionId && options?.forceReplace) {
-      options.replaceSessionId = existingSessionId;
+    if (hasActiveSession && options?.forceReplace) {
+      options.replaceSessionId = this.sessionManager.getSessionId(userId);
     }
 
-    this.pendingUsers.add(userId);
+    this.sessionManager.addPending(userId);
     return options.authUser;
   }
 
@@ -607,11 +447,9 @@ export class MyRoom extends Room<MyRoomState> {
       if (previousClient) {
         previousClient.leave(4001, "SESSION_REPLACED");
       }
-      const previousUserId = this.sessionUsers.get(replaceSessionId);
-      if (previousUserId) {
-        this.activeUsers.delete(previousUserId);
-        this.sessionUsers.delete(replaceSessionId);
-      }
+      
+      // Remove old session from managers
+      this.sessionManager.removeSession(replaceSessionId);
 
       const orderedEntries = Array.from(this.state.users.entries());
       let replaced = false;
@@ -636,11 +474,19 @@ export class MyRoom extends Room<MyRoomState> {
       this.state.users.set(client.sessionId, player);
     }
 
+    // Register session
     if (Number.isFinite(userId)) {
-      this.activeUsers.set(userId, client.sessionId);
-      this.sessionUsers.set(client.sessionId, userId);
-      this.pendingUsers.delete(userId);
+      this.sessionManager.registerSession(userId, client.sessionId);
     }
+
+    // Mark seat as occupied
+    if (player.seatIndex >= 0) {
+      this.seatManager.occupySeat(player.seatIndex, userId);
+    }
+
+    // Track analytics
+    this.analytics.recordConnection(client.sessionId);
+    this.connectionMonitor.recordHeartbeat(client.sessionId);
 
     logger.info(`Player joined`, {
       name: player.name,
@@ -668,15 +514,17 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   async onLeave(client: Client, consented: boolean) {
-    const userId = this.sessionUsers.get(client.sessionId);
+    const userId = this.sessionManager.getUserId(client.sessionId);
 
     if (!consented && userId) {
       try {
         const reconnected = await this.allowReconnection(client, this.reconnectionTimeoutSeconds);
         this.replaceSession(client.sessionId, reconnected);
+        this.analytics.recordReconnection(reconnected.sessionId);
         return;
       } catch {
         // Reconnection failed or timed out. Continue cleanup.
+        this.analytics.recordDisconnection(client.sessionId);
       }
     }
 
@@ -686,14 +534,18 @@ export class MyRoom extends Room<MyRoomState> {
   onDispose() {
     logger.info(`Room disposing`, { roomId: this.roomId });
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
-    // Stop heartbeat monitoring
-    this.stopHeartbeatMonitor();
-    // Stop analytics reporting
-    if (this.analyticsInterval) clearInterval(this.analyticsInterval);
-    // Stop reservation cleanup
-    if (this.reservationCleanupInterval) clearInterval(this.reservationCleanupInterval);
-    // Log final analytics summary
-    this.logAnalyticsSummary();
+    
+    // Dispose all managers
+    this.connectionMonitor?.clearAll();
+    this.seatManager?.clearAll();
+    this.rateLimiter?.clearAll();
+    this.sessionManager?.clearAll();
+    
+    // Log analytics summary
+    if (this.analytics) {
+      this.analytics.logSummary();
+      this.analytics.clearAll();
+    }
   }
 
 }
