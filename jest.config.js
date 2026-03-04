@@ -14,6 +14,8 @@ module.exports = {
     '!src/**/__tests__/**',
     '!src/**/types/**',
     '!src/**/schema/**',
+    '!src/app.config.ts',
+    '!src/config/**',
   ],
   coveragePathIgnorePatterns: [
     '/node_modules/',
@@ -26,11 +28,17 @@ module.exports = {
       lines: 1,
       statements: 1,
     },
-    './src/rooms/game/': {
-      branches: 25,
-      functions: 35,
-      lines: 33,
-      statements: 33,
+    './src/rooms/game/GameEngine.ts': {
+      branches: 40,
+      functions: 40,
+      lines: 40,
+      statements: 40,
+    },
+    './src/rooms/managers/': {
+      branches: 30,
+      functions: 30,
+      lines: 30,
+      statements: 30,
     },
   },
   coverageReporters: [
