@@ -69,13 +69,14 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   } catch (error) {
     logger.error('Authentication error', { error: String(error) });
     
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ error: 'Invalid token' });
+    // Check TokenExpiredError first as it's a subclass of JsonWebTokenError
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ error: 'Token expired' });
       return;
     }
     
-    if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ error: 'Token expired' });
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: 'Invalid token' });
       return;
     }
     

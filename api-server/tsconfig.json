@@ -19,12 +19,13 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "types": ["node"],
+    "types": ["jest", "node"],
     "resolveJsonModule": true
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "src/__tests__/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
