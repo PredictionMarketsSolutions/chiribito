@@ -28,19 +28,7 @@ module.exports = {
   forceExit: true,
   transform: {
     '^.+\\.ts$': ['ts-jest', {
-      tsconfig: {
-        target: 'es2018',
-        module: 'commonjs',
-        lib: ['es2018'],
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        strict: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true,
-        moduleResolution: 'node',
-        types: ['jest', 'node']
-      },
-      isolatedModules: true
+      tsconfig: 'tsconfig.test.json'
     }]
   }
 };
