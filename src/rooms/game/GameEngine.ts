@@ -212,7 +212,9 @@ export class GameEngine {
 
   endTurn(): void {
     const activePlayers = this.utils.getActivePlayerIds();
-    const acted = this.room.playersActedThisRound.size;
+    const actedActivePlayersCount = activePlayers.filter(id =>
+      this.room.playersActedThisRound.has(id)
+    ).length;
 
     logger.info(`Turn ended`, {
       player: this.utils.getPlayerName(this.room.state.currentTurn),
@@ -220,7 +222,7 @@ export class GameEngine {
     });
 
     // Check if betting round is complete
-    if (activePlayers.length === 0 || acted === activePlayers.length) {
+    if (activePlayers.length === 0 || actedActivePlayersCount === activePlayers.length) {
       this.proceedToNextPhase();
       return;
     }
