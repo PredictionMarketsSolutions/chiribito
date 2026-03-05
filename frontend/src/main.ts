@@ -1748,6 +1748,8 @@ async function joinRoom(forceReplace = false) {
         allInRevealInProgress = false;
         pendingWinners = null;
         pendingWinningHand = null;
+        previousCommunityCards = [...communityCards];
+        if (lastRoomState) renderState(lastRoomState);
       };
 
       if (allInCardsRevealedByServer) {
@@ -1759,7 +1761,6 @@ async function joinRoom(forceReplace = false) {
       }
     } else {
       previousCommunityCards = [...communityCards];
-      
       if (payload?.winningHand) {
         lastWinningHand = payload.winningHand;
         winningHandStatus.textContent = lastWinningHand;
@@ -1774,6 +1775,7 @@ async function joinRoom(forceReplace = false) {
           playEffect("win");
         }
       }
+      if (lastRoomState) renderState(lastRoomState);
     }
     
     const historyEntry: HandHistoryEntry = {
