@@ -47,6 +47,21 @@ if (isProduction) {
   }));
 }
 
+// Add file transports in development too (for persistent logs)
+if (isDevelopment) {
+  logger.add(new winston.transports.File({ 
+    filename: 'logs/dev.log',
+    maxsize: 5242880, // 5MB
+    maxFiles: 3,
+  }));
+  logger.add(new winston.transports.File({ 
+    filename: 'logs/dev-error.log',
+    level: 'error',
+    maxsize: 5242880, // 5MB
+    maxFiles: 3,
+  }));
+}
+
 // Convenience wrappers matching console API
 export default {
   debug: (message: string, meta?: any) => logger.debug(message, meta),

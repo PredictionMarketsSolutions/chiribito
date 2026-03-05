@@ -5,7 +5,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   
-  // Increase timeout for tests
+   // Increase timeout for tests
   testTimeout: 10000,
   
   // Force Jest to exit after tests complete
@@ -60,4 +60,7 @@ module.exports = {
       tsconfig: 'tsconfig.test.json',
     }],
   },
+
+  // Setup files to run before each test
+  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
 };

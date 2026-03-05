@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for rooms/managers/SeatManager.ts</title>
+    <title>Code coverage report for rooms/managers/PlayerLifecycleManager.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">rooms/managers</a> SeatManager.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">rooms/managers</a> PlayerLifecycleManager.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">94.79% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>62/62</span>
+                <span class='fraction'>91/96</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">84.61% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>12/14</span>
+                <span class='fraction'>55/65</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">95.65% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>59/59</span>
+                <span class='fraction'>88/92</span>
             </div>
         
             
@@ -277,109 +277,282 @@
 <a name='L212'></a><a href='#L212'>212</a>
 <a name='L213'></a><a href='#L213'>213</a>
 <a name='L214'></a><a href='#L214'>214</a>
-<a name='L215'></a><a href='#L215'>215</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-yes">70x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">36x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -393,12 +566,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -407,49 +582,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -458,251 +612,304 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">72x</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-yes">70x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">72x</span>
-<span class="cline-any cline-yes">72x</span>
-<span class="cline-any cline-yes">72x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">72x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
- * SeatManager.ts
- * Manages player seats, reservations, and rebuy logic
- */
-&nbsp;
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Client } from "@colyseus/core";
+import { MyRoomState, Player } from "../schema/MyRoomState";
+import { SessionManager } from "./SessionManager";
+import { SeatManager } from "./SeatManager";
+import { ConnectionMonitor } from "./ConnectionMonitor";
+import { AnalyticsService } from "./AnalyticsService";
+import { GameEngine } from "../game/GameEngine";
 import logger from "../../config/logger";
 &nbsp;
-export interface SeatReservation {
-  userId: number;
-  expiresAt: number;
+export interface PlayerLifecycleConfig {
+  reconnectionTimeoutSeconds: number;
 }
 &nbsp;
-export class SeatManager {
-  private readonly maxSeats: number;
-  private occupiedSeats: Set&lt;number&gt; = new Set();
-  private rebuySeatReservations: Map&lt;number, SeatReservation&gt; = new Map();
-  private cleanupInterval: NodeJS.Timeout | null = null;
+export interface LifecycleDependencies {
+  sessionManager: SessionManager;
+  seatManager: SeatManager;
+  connectionMonitor: ConnectionMonitor;
+  analytics: AnalyticsService;
+}
 &nbsp;
-  constructor(
-    private roomId: string,
-    maxSeats: number = <span class="branch-0 cbranch-no" title="branch not covered" >6,</span>
-    private reservationTimeoutMs: number = <span class="branch-0 cbranch-no" title="branch not covered" >180000 </span>// 3 minutes
-  ) {
-    this.maxSeats = maxSeats;
-    this.startCleanupTask();
+/**
+ * Manages player lifecycle: joining, leaving, reconnection, and cleanup.
+ * Coordinates with multiple managers to maintain consistent state.
+ */
+export class PlayerLifecycleManager {
+  private roomId: string;
+  private config: PlayerLifecycleConfig;
+&nbsp;
+  constructor(roomId: string, config?: Partial&lt;PlayerLifecycleConfig&gt;) {
+    this.roomId = roomId;
+    this.config = {
+      reconnectionTimeoutSeconds: config?.reconnectionTimeoutSeconds ?? 60,
+    };
   }
 &nbsp;
   /**
-   * Get the next available seat number
+   * Handle player joining the room.
+   * Manages session replacement, seat assignment, and state initialization.
    */
-  getNextAvailableSeat(): number | null {
-    for (let seatIndex = 0; seatIndex &lt; this.maxSeats; seatIndex++) {
-      if (!this.occupiedSeats.has(seatIndex)) {
-        return seatIndex;
+  handleJoin(
+    client: Client,
+    options: any,
+    state: MyRoomState,
+    dependencies: LifecycleDependencies,
+    getAllClients: () =&gt; Client[],
+    broadcastFn: (type: string, message: any, opts?: any) =&gt; void
+  ): Player {
+    const { sessionManager, seatManager, connectionMonitor, analytics } = dependencies;
+    const userId = Number(options<span class="branch-0 cbranch-no" title="branch not covered" >?.a</span>uthUser<span class="branch-0 cbranch-no" title="branch not covered" >?.u</span>serId);
+    const replaceSessionId = typeof options<span class="branch-0 cbranch-no" title="branch not covered" >?.r</span>eplaceSessionId === "string"
+      ? options.replaceSessionId
+      : "";
+&nbsp;
+    const previousSeatIndex = replaceSessionId
+      ? state.users.get(replaceSessionId)<span class="branch-0 cbranch-no" title="branch not covered" >?.s</span>eatIndex ?? <span class="branch-1 cbranch-no" title="branch not covered" >-1</span>
+      : -1;
+&nbsp;
+    const player = new Player(client.sessionId);
+    player.name = options.name || options.authUser<span class="branch-0 cbranch-no" title="branch not covered" >?.u</span>sername || `Player-${client.sessionId.slice(0, 4)}`;
+    player.chips = options.chips || 1000;
+    player.seatIndex = previousSeatIndex &gt;= 0 ? previousSeatIndex : this.getNextAvailableSeat(state);
+&nbsp;
+    if (replaceSessionId) {
+      const previousClient = getAllClients().find(c =&gt; c.sessionId === replaceSessionId);
+      if (previousClient) {
+        previousClient.leave(4001, "SESSION_REPLACED");
       }
-    }
-    return null;
-  }
+      
+      // Remove old session from managers
+      sessionManager.removeSession(replaceSessionId);
 &nbsp;
-  /**
-   * Occupy a seat
-   */
-  occupySeat(seatIndex: number, userId: number): void {
-    if (seatIndex &lt; 0 || seatIndex &gt;= this.maxSeats) {
-      throw new Error(`Invalid seat index: ${seatIndex}`);
-    }
-&nbsp;
-    if (this.occupiedSeats.has(seatIndex)) {
-      logger.warn("Attempted to occupy already taken seat", {
-        seatIndex,
-        userId,
-        roomId: this.roomId
+      const orderedEntries = Array.from(state.users.entries());
+      let replaced = false;
+      state.users.clear();
+      orderedEntries.forEach(([sessionId, existingPlayer]) =&gt; {
+        if (sessionId === replaceSessionId) {
+          state.users.set(client.sessionId, player);
+          replaced = true;
+          return;
+        }
+        state.users.set(sessionId, existingPlayer);
       });
-      return;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!replaced) {
+<span class="cstat-no" title="statement not covered" >        state.users.set(client.sessionId, player);</span>
+      }
+    } else {
+      state.users.set(client.sessionId, player);
     }
 &nbsp;
-    this.occupiedSeats.add(seatIndex);
-    
-    logger.info("Seat occupied", {
-      seatIndex,
-      userId,
-      roomId: this.roomId
-    });
-  }
-&nbsp;
-  /**
-   * Free a seat
-   */
-  freeSeat(seatIndex: number): void {
-    this.occupiedSeats.delete(seatIndex);
-    
-    logger.info("Seat freed", {
-      seatIndex,
-      roomId: this.roomId
-    });
-  }
-&nbsp;
-  /**
-   * Check if a seat is occupied
-   */
-  isSeatOccupied(seatIndex: number): boolean {
-    return this.occupiedSeats.has(seatIndex);
-  }
-&nbsp;
-  /**
-   * Get total occupied seats
-   */
-  getOccupiedCount(): number {
-    return this.occupiedSeats.size;
-  }
-&nbsp;
-  /**
-   * Reserve a seat for rebuy (temporary hold)
-   */
-  reserveSeatForRebuy(seatIndex: number, userId: number): void {
-    const expiresAt = Date.now() + this.reservationTimeoutMs;
-    
-    this.rebuySeatReservations.set(seatIndex, {
-      userId,
-      expiresAt
-    });
-&nbsp;
-    logger.info("Seat reserved for rebuy", {
-      seatIndex,
-      userId,
-      expiresAt,
-      roomId: this.roomId
-    });
-  }
-&nbsp;
-  /**
-   * Check if a seat is reserved for rebuy
-   */
-  isSeatReservedForRebuy(seatIndex: number): boolean {
-    const reservation = this.rebuySeatReservations.get(seatIndex);
-    if (!reservation) return false;
-&nbsp;
-    // Check if expired
-    if (Date.now() &gt; reservation.expiresAt) {
-      this.rebuySeatReservations.delete(seatIndex);
-      return false;
+    // Register session
+    if (Number.isFinite(userId)) {
+      sessionManager.registerSession(userId, client.sessionId);
     }
 &nbsp;
-    return true;
-  }
-&nbsp;
-  /**
-   * Get reservation for a seat
-   */
-  getReservation(seatIndex: number): SeatReservation | undefined {
-    const reservation = this.rebuySeatReservations.get(seatIndex);
-    if (!reservation) return undefined;
-&nbsp;
-    // Check if expired
-    if (Date.now() &gt; reservation.expiresAt) {
-      this.rebuySeatReservations.delete(seatIndex);
-      return undefined;
+    // Mark seat as occupied
+    if (player.seatIndex &gt;= 0) {
+      seatManager.occupySeat(player.seatIndex, userId);
     }
 &nbsp;
-    return reservation;
-  }
+    // Track analytics
+    analytics.recordConnection(client.sessionId);
+    connectionMonitor.recordHeartbeat(client.sessionId);
 &nbsp;
-  /**
-   * Clear a rebuy reservation
-   */
-  clearReservation(seatIndex: number): void {
-    this.rebuySeatReservations.delete(seatIndex);
-    
-    logger.info("Seat reservation cleared", {
-      seatIndex,
+    logger.info(`Player joined`, {
+      name: player.name,
+      sessionId: client.sessionId,
       roomId: this.roomId
     });
+&nbsp;
+    // Notify the player they joined
+    client.send("joined", { 
+      name: player.name, 
+      chips: player.chips,
+      players: Array.from(state.users.values()).map(p =&gt; ({
+        id: p.sessionId,
+        name: p.name,
+        chips: p.chips
+      }))
+    });
+&nbsp;
+    // Notify other players
+    broadcastFn("playerJoined", {
+      id: client.sessionId,
+      name: player.name,
+      chips: player.chips
+    }, { except: client });
+&nbsp;
+    return player;
   }
 &nbsp;
   /**
-   * Clean up expired reservations (called periodically)
+   * Handle player leaving the room.
+   * Attempts reconnection for non-consented leaves with user IDs.
    */
-  private cleanupExpiredReservations(): void {
-    const now = Date.now();
-    let expiredCount = 0;
+  async handleLeave(
+    client: Client,
+    consented: boolean,
+    state: MyRoomState,
+    dependencies: LifecycleDependencies,
+    playersInHand: string[],
+    engine: GameEngine,
+    allowReconnectionFn: (client: Client, seconds: number) =&gt; Promise&lt;Client&gt;,
+    broadcastFn: (type: string, message: any, opts?: any) =&gt; void
+  ): Promise&lt;void&gt; {
+    const { sessionManager, analytics } = dependencies;
+    const userId = sessionManager.getUserId(client.sessionId);
 &nbsp;
-    for (const [seatIndex, reservation] of this.rebuySeatReservations.entries()) {
-      if (now &gt; reservation.expiresAt) {
-        this.rebuySeatReservations.delete(seatIndex);
-        expiredCount++;
+    if (!consented &amp;&amp; userId) {
+      try {
+        const reconnected = await allowReconnectionFn(client, this.config.reconnectionTimeoutSeconds);
+        this.replaceSession(client.sessionId, reconnected, state, playersInHand, dependencies);
+        analytics.recordReconnection(reconnected.sessionId);
+        return;
+      } catch {
+        // Reconnection failed or timed out. Continue cleanup.
+        analytics.recordDisconnection(client.sessionId);
       }
     }
 &nbsp;
-    if (expiredCount &gt; 0) {
-      logger.info("Expired reservations cleaned", {
-        count: expiredCount,
-        roomId: this.roomId
-      });
+    this.handleLeaveCleanup(client, state, playersInHand, dependencies, engine, broadcastFn);
+  }
+&nbsp;
+  /**
+   * Replace an old session with a new client during reconnection.
+   * Maintains player order and game state consistency.
+   */
+  private replaceSession(
+    oldSessionId: string,
+    newClient: Client,
+    state: MyRoomState,
+    playersInHand: string[],
+    dependencies: LifecycleDependencies
+  ): void {
+    const { sessionManager } = dependencies;
+    const existingPlayer = state.users.get(oldSessionId);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!existingPlayer) <span class="cstat-no" title="statement not covered" >return;</span>
+&nbsp;
+    existingPlayer.sessionId = newClient.sessionId;
+    state.users.delete(oldSessionId);
+    state.users.set(newClient.sessionId, existingPlayer);
+&nbsp;
+    // Update playersInHand array
+    const handIndex = playersInHand.indexOf(oldSessionId);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (handIndex &gt;= 0) {
+<span class="cstat-no" title="statement not covered" >      playersInHand[handIndex] = newClient.sessionId;</span>
     }
-  }
 &nbsp;
-  /**
-   * Start periodic cleanup task
-   */
-  private startCleanupTask(): void {
-    // Run cleanup every 60 seconds
-    this.cleanupInterval = setInterval(() =&gt; {
-      this.cleanupExpiredReservations();
-    }, 60000);
-  }
-&nbsp;
-  /**
-   * Stop cleanup task
-   */
-  private stopCleanupTask(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (state.currentTurn === oldSessionId) {
+<span class="cstat-no" title="statement not covered" >      state.currentTurn = newClient.sessionId;</span>
     }
+&nbsp;
+    sessionManager.replaceSession(oldSessionId, newClient.sessionId);
+&nbsp;
+    newClient.send("reconnected", {
+      id: existingPlayer.sessionId,
+      name: existingPlayer.name,
+      chips: existingPlayer.chips
+    });
+&nbsp;
+    logger.info(`Session replaced`, {
+      oldSessionId,
+      newSessionId: newClient.sessionId,
+      roomId: this.roomId
+    });
   }
 &nbsp;
   /**
-   * Clear all seats and reservations (on room dispose)
+   * Full cleanup when a player permanently leaves.
+   * Handles fold, turn progression, manager cleanup, and winner determination.
    */
-  clearAll(): void {
-    this.stopCleanupTask();
-    this.occupiedSeats.clear();
-    this.rebuySeatReservations.clear();
-    
-    logger.info("SeatManager cleared", { roomId: this.roomId });
+  private handleLeaveCleanup(
+    client: Client,
+    state: MyRoomState,
+    playersInHand: string[],
+    dependencies: LifecycleDependencies,
+    engine: GameEngine,
+    broadcastFn: (type: string, message: any, opts?: any) =&gt; void
+  ): void {
+    const { sessionManager, connectionMonitor, analytics } = dependencies;
+    const player = state.users.get(client.sessionId);
+    const wasCurrentTurn = state.currentTurn === client.sessionId;
+&nbsp;
+    if (player) {
+      const playerIndex = playersInHand.indexOf(client.sessionId);
+      
+      if (playerIndex &gt;= 0) {
+        player.isFolded = true;
+        playersInHand.splice(playerIndex, 1);
+&nbsp;
+        broadcastFn("playerDisconnected", {
+          playerId: client.sessionId,
+          playerName: player.name,
+          wasCurrentTurn,
+          timestamp: Date.now()
+        });
+&nbsp;
+        if (wasCurrentTurn &amp;&amp; playersInHand.length &gt; 0) {
+          engine.setCurrentPlayerIndexBeforeNextActive(playerIndex);
+          engine.endTurn();
+        }
+      }
+&nbsp;
+      state.users.delete(client.sessionId);
+    }
+&nbsp;
+    // Check for winner by fold
+    if (playersInHand.length === 1 &amp;&amp; state.roundStarted) {
+      engine.endRound([playersInHand[0]], "Gana por fold");
+    }
+&nbsp;
+    // Manager cleanup
+    sessionManager.removeSession(client.sessionId);
+    connectionMonitor.removeClient(client.sessionId);
+    analytics.removeSession(client.sessionId);
+&nbsp;
+    broadcastFn("playerLeft", { id: client.sessionId });
+&nbsp;
+    logger.info(`Player left`, {
+      sessionId: client.sessionId,
+      roomId: this.roomId
+    });
   }
 &nbsp;
   /**
-   * Get all occupied seat indices
+   * Find the next available seat index.
    */
-  getOccupiedSeats(): number[] {
-    return Array.from(this.occupiedSeats);
+  private getNextAvailableSeat(state: MyRoomState): number {
+    const occupiedSeats = new Set(
+      Array.from(state.users.values()).map(p =&gt; p.seatIndex).filter(s =&gt; s &gt;= 0)
+    );
+&nbsp;
+    for (let i = 0; i &lt; 9; i++) {
+      if (!occupiedSeats.has(i)) {
+        return i;
+      }
+    }
+<span class="cstat-no" title="statement not covered" >    return -1;</span>
+  }
+&nbsp;
+  getConfig(): Readonly&lt;PlayerLifecycleConfig&gt; {
+    return { ...this.config };
   }
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -712,7 +919,7 @@ export class SeatManager {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-05T13:30:08.502Z
+                at 2026-03-05T13:30:08.645Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

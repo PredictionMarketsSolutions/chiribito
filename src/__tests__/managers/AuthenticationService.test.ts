@@ -8,8 +8,7 @@ import { SessionManager } from "../../rooms/managers/SessionManager";
 import { Client } from "@colyseus/core";
 import * as jwt from "jsonwebtoken";
 
-// Mock fetch globally
-global.fetch = jest.fn();
+// Note: global.fetch is mocked in setup.ts
 
 describe("AuthenticationService", () => {
   let authService: AuthenticationService;
@@ -32,8 +31,8 @@ describe("AuthenticationService", () => {
       send: jest.fn()
     };
 
-    // Reset fetch mock
-    (global.fetch as jest.Mock).mockReset();
+    // Clear fetch mock calls (but keep default implementation from setup.ts)
+    (global.fetch as jest.Mock).mockClear();
   });
 
   afterEach(() => {

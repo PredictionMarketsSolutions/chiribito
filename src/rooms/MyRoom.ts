@@ -145,7 +145,7 @@ export class MyRoom extends Room<MyRoomState> {
         const client = this.clients.find(c => c.sessionId === sessionId);
         if (client) {
           logger.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
-          client.close(4000, "Heartbeat timeout");
+          client.leave(4000, "Heartbeat timeout");
         }
       }
     );
