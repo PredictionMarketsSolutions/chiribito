@@ -57,6 +57,16 @@ export class GameEngine {
   }
 
   startNewHand(): void {
+    const playersWithChips = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+    if (playersWithChips.length < 2) {
+      this.room.state.roundStarted = false;
+      logger.info(`Not starting hand: need at least 2 players with chips`, {
+        roomId: this.room.roomId,
+        count: playersWithChips.length
+      });
+      return;
+    }
+
     logger.info(`Starting new hand`, { roomId: this.room.roomId });
     
     this.roundManager.resetForNewHand(this.handContributions);

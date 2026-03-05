@@ -222,18 +222,43 @@ describe("GameFlow Bug Fixes", () => {
       expect(roomState.roundStarted).toBe(true);
     });
 
-    it("should reset roundStarted to false after endRound", () => {
+    it("should keep roundStarted true after endRound when 2+ players have chips (auto-start next hand)", () => {
       const mockClient = { send: jest.fn() } as any;
 
-      // Start game
+      // Start game (both players have chips)
       engine.handleStartGame(mockClient);
       expect(roomState.roundStarted).toBe(true);
 
-      // End round
+      // End round with one winner; both still have chips → auto-start next hand
       engine.endRound(["player-1"], null, false);
 
-      // roundStarted should be false (reset for next hand)
+      expect(roomState.roundStarted).toBe(true);
+    });
+
+    it("should set roundStarted to false after endRound when only 1 player has chips (game over)", () => {
+      const mockClient = { send: jest.fn() } as any;
+
+      engine.handleStartGame(mockClient);
+      expect(roomState.roundStarted).toBe(true);
+
+      // One player busted (0 chips)
+      const player2 = roomState.users.get("player-2") as Player;
+      player2.chips = 0;
+
+      engine.endRound(["player-1"], null, false);
+
       expect(roomState.roundStarted).toBe(false);
+    });
+
+    it("should not start a hand when only one player has chips (startNewHand guard)", () => {
+      const player2 = roomState.users.get("player-2") as Player;
+      player2.chips = 0;
+
+      roomState.roundStarted = true;
+      engine.startNewHand();
+
+      expect(roomState.roundStarted).toBe(false);
+      expect(mockRoom.playersInHand.length).toBe(0);
     });
   });
 });
