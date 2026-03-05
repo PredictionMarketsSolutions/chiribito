@@ -96,36 +96,17 @@ export default config({
             },
         }));
 
-        // Middleware to protect /colyseus and /playground routes
-        const protectRoute = (req: Request, res: Response, next: Function) => {
-            const password = process.env.MONITOR_PASSWORD;
-            if (!password) {
-                logger.warn("MONITOR_PASSWORD not set - /colyseus and /playground are publicly accessible");
-                return next();
-            }
-            
-            const authHeader = req.headers["authorization"];
-            if (!authHeader) {
-                return res.status(401).json({ error: "Unauthorized" });
-            }
-            
-            const token = authHeader.replace("Bearer ", "");
-            if (token !== password) {
-                return res.status(403).json({ error: "Forbidden" });
-            }
-            
-            next();
-        };
+        /**
+         * Bind @colyseus/monitor (PUBLIC - No authentication required)
+         * Access at: http://localhost:2567/colyseus
+         */
+        app.use("/colyseus", monitor());
 
         /**
-         * Bind @colyseus/monitor (PROTECTED)
-         * Requires MONITOR_PASSWORD environment variable
-         * Usage: Authorization: Bearer <password>
+         * Bind "playground" (PUBLIC - No authentication required)
+         * Access at: http://localhost:2567/playground
          */
-        app.use("/colyseus", protectRoute, monitor());
-
-        // Bind "playground" (PROTECTED)
-        app.use("/playground", protectRoute, playground());
+        app.use("/playground", playground());
 
         // Bind auth routes
         app.use(auth.prefix, auth.routes());
@@ -143,7 +124,7 @@ export default config({
         }
         const isProduction = process.env.NODE_ENV === 'production';
         const requiredVars = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
-        const productionOnlyVars = ['MONITOR_PASSWORD', 'ALLOWED_ORIGINS'];
+        const productionOnlyVars = ['ALLOWED_ORIGINS'];
         
         const missing: string[] = [];
         
@@ -176,10 +157,6 @@ export default config({
             }
         }
         
-        // Warn about MONITOR_PASSWORD in development
-        if (!isProduction && !process.env.MONITOR_PASSWORD) {
-            logger.warn("MONITOR_PASSWORD not set - development mode allows unprotected monitor access");
-        }
         
         logger.info("Environment validation passed", { 
             NODE_ENV: process.env.NODE_ENV,
