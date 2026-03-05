@@ -2,7 +2,6 @@
  * GameEngine.ts
  * Main orchestrator for poker game logic.
  * Delegates to specialized modules: betting, rounds, winners, and actions.
- * ~250 lines total (was 967 lines)
  */
 
 import { Client } from "@colyseus/core";
@@ -36,6 +35,12 @@ export class GameEngine {
   // ============ Game Lifecycle ============
 
   handleStartGame(client: Client): void {
+    // Block startGame if round is already in progress (prevents double-click)
+    if (this.room.state.roundStarted) {
+      client.send("error", { message: "Game already in progress" });
+      return;
+    }
+
     const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
     
     if (activePlayers.length < 2) {
@@ -46,11 +51,8 @@ export class GameEngine {
       return;
     }
 
-    if (this.room.state.roundStarted) {
-      client.send("error", { message: "Game already in progress" });
-      return;
-    }
-
+    // Lock immediately to prevent double-click
+    this.room.state.roundStarted = true;
     this.startNewHand();
   }
 
@@ -61,7 +63,6 @@ export class GameEngine {
     this.roundManager.dealInitialHands();
     this.roundManager.resetDealerAndPhase();
     
-    this.room.state.roundStarted = true;
     this.room.currentPlayerIndex = this.utils.getNextActiveIndexFrom(this.room.dealerIndex);
     
     if (this.room.currentPlayerIndex === -1) {
@@ -285,11 +286,40 @@ export class GameEngine {
     });
 
     this.winnerDeterminator.logRoundEnd(winners, winningHand, isAllInShowdown, this.room.state.pot);
+
+    // Check if game should end (only 1 active player remaining)
+    this.checkGameEnd();
   }
 
   private endRoundWithWinners(): void {
     const result = this.winnerDeterminator.determineWinners();
     this.endRound(result.winners, result.winningHand);
+  }
+
+  /**
+   * Check if game should end (only 1 player with chips remaining).
+   * If so, broadcast game end and prevent further hands.
+   */
+  private checkGameEnd(): void {
+    const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+    
+    if (activePlayers.length === 1) {
+      const winner = activePlayers[0];
+      logger.info(`Game ended - champion crowned`, {
+        winner: winner.name,
+        sessionId: winner.sessionId,
+        finalChips: winner.chips,
+        roomId: this.room.roomId
+      });
+
+      this.broadcaster.broadcastGameEnded({
+        champion: {
+          sessionId: winner.sessionId,
+          name: winner.name,
+          chips: winner.chips
+        }
+      });
+    }
   }
 
   // ============ Betting Helpers ============

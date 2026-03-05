@@ -44,4 +44,14 @@ export class GameBroadcaster {
   }): void {
     this.room.broadcast("turnTimer", payload);
   }
+
+  broadcastGameEnded(payload: {
+    champion: {
+      sessionId: string;
+      name: string;
+      chips: number;
+    };
+  }): void {
+    this.room.broadcast("gameEnded", payload);
+  }
 }
