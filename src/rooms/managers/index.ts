@@ -18,3 +18,8 @@ export {
   type AuthConfig, 
   type AuthResult 
 } from "./AuthenticationService";
+export { 
+  PlayerLifecycleManager, 
+  type PlayerLifecycleConfig, 
+  type LifecycleDependencies 
+} from "./PlayerLifecycleManager";

@@ -16,7 +16,8 @@ import {
   RateLimiterService,
   AnalyticsService,
   RebuyManager,
-  AuthenticationService
+  AuthenticationService,
+  PlayerLifecycleManager
 } from "./managers";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
@@ -40,6 +41,7 @@ export class MyRoom extends Room<MyRoomState> {
   private analytics!: AnalyticsService;
   private rebuyManager!: RebuyManager;
   private authService!: AuthenticationService;
+  private lifecycleManager!: PlayerLifecycleManager;
 
   private getNextAvailableSeat(): number {
     return this.seatManager.getNextAvailableSeat() ?? -1;
@@ -101,91 +103,6 @@ export class MyRoom extends Room<MyRoomState> {
     return true;
   }
 
-  private replaceSession(oldSessionId: string, newClient: Client) {
-    const existingPlayer = this.state.users.get(oldSessionId);
-    if (!existingPlayer) return;
-
-    existingPlayer.sessionId = newClient.sessionId;
-    this.state.users.delete(oldSessionId);
-    this.state.users.set(newClient.sessionId, existingPlayer);
-
-    this.playersInHand = this.playersInHand.map(id => id === oldSessionId ? newClient.sessionId : id);
-    if (this.state.currentTurn === oldSessionId) {
-      this.state.currentTurn = newClient.sessionId;
-    }
-
-    // Update session tracking
-    this.sessionManager.replaceSession(oldSessionId, newClient.sessionId);
-
-    newClient.send("reconnected", {
-      id: newClient.sessionId,
-      name: existingPlayer.name,
-      chips: existingPlayer.chips
-    });
-  }
-
-  private handleLeaveCleanup(client: Client) {
-    const player = this.state.users.get(client.sessionId);
-    const wasCurrentTurn = this.state.currentTurn === client.sessionId;
-    
-    logger.info(`Player leaving`, {
-      name: player?.name ?? "Unknown",
-      sessionId: client.sessionId,
-      wasCurrentTurn,
-      roomId: this.roomId
-    });
-    
-    if (player) {
-      const foldIndex = this.playersInHand.indexOf(client.sessionId);
-      player.isFolded = true;
-      const playerIndex = this.playersInHand.indexOf(client.sessionId);
-      if (playerIndex > -1) {
-        this.playersInHand.splice(playerIndex, 1);
-      }
-
-      // Broadcast player disconnection to all clients
-      this.broadcast("playerDisconnected", {
-        playerId: client.sessionId,
-        playerName: player.name,
-        wasCurrentTurn,
-        timestamp: Date.now()
-      });
-
-      if (wasCurrentTurn && this.playersInHand.length > 0 && foldIndex !== -1) {
-        this.engine.setCurrentPlayerIndexBeforeNextActive(foldIndex);
-      }
-
-      if (wasCurrentTurn) {
-        logger.info(`Ending turn for disconnected player`, {
-          player: player.name,
-          sessionId: client.sessionId,
-          roomId: this.roomId
-        });
-        this.engine.endTurn();
-      }
-
-      // Remove player from the room completely
-      this.state.users.delete(client.sessionId);
-    }
-
-    if (this.playersInHand.length === 1 && this.state.roundStarted) {
-      this.engine.endRound([this.playersInHand[0]], "Gana por fold");
-    }
-
-    // Clean up session tracking
-    this.sessionManager.removeSession(client.sessionId);
-    
-    // Clean up other managers
-    this.connectionMonitor.removeClient(client.sessionId);
-    this.rateLimiter.clearClient(client.sessionId);
-    this.analytics.removeSession(client.sessionId);
-
-    // Notify other players
-    this.broadcast("playerLeft", {
-      id: client.sessionId
-    });
-  }
-
   onCreate(options: any) {
     this.setState(new MyRoomState());
     this.autoDispose = false;
@@ -214,6 +131,9 @@ export class MyRoom extends Room<MyRoomState> {
       ])
     });
     this.analytics = new AnalyticsService(this.roomId, 300000); // 5 minutes
+    this.lifecycleManager = new PlayerLifecycleManager(this.roomId, {
+      reconnectionTimeoutSeconds: this.reconnectionTimeoutSeconds
+    });
     this.connectionMonitor = new ConnectionMonitor(
       this.roomId,
       {
@@ -295,107 +215,37 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onJoin(client: Client, options: any) {
-    const userId = Number(options?.authUser?.userId);
-    const replaceSessionId = typeof options?.replaceSessionId === "string"
-      ? options.replaceSessionId
-      : "";
-
-    const previousSeatIndex = replaceSessionId
-      ? this.state.users.get(replaceSessionId)?.seatIndex ?? -1
-      : -1;
-
-    const player = new Player(client.sessionId);
-    player.name = options.name || options.authUser?.username || `Player-${client.sessionId.slice(0, 4)}`;
-    player.chips = options.chips || 1000;
-    player.seatIndex = previousSeatIndex >= 0 ? previousSeatIndex : this.getNextAvailableSeat();
-
-    if (replaceSessionId) {
-      const previousClient = this.clients.find(c => c.sessionId === replaceSessionId);
-      if (previousClient) {
-        previousClient.leave(4001, "SESSION_REPLACED");
-      }
-      
-      // Remove old session from managers
-      this.sessionManager.removeSession(replaceSessionId);
-
-      const orderedEntries = Array.from(this.state.users.entries());
-      let replaced = false;
-      this.state.users.clear();
-      orderedEntries.forEach(([sessionId, existingPlayer]) => {
-        if (sessionId === replaceSessionId) {
-          this.state.users.set(client.sessionId, player);
-          replaced = true;
-          return;
-        }
-        this.state.users.set(sessionId, existingPlayer);
-      });
-      if (!replaced) {
-        this.state.users.set(client.sessionId, player);
-      }
-
-      this.playersInHand = this.playersInHand.map(id => id === replaceSessionId ? client.sessionId : id);
-      if (this.state.currentTurn === replaceSessionId) {
-        this.state.currentTurn = client.sessionId;
-      }
-    } else {
-      this.state.users.set(client.sessionId, player);
-    }
-
-    // Register session
-    if (Number.isFinite(userId)) {
-      this.sessionManager.registerSession(userId, client.sessionId);
-    }
-
-    // Mark seat as occupied
-    if (player.seatIndex >= 0) {
-      this.seatManager.occupySeat(player.seatIndex, userId);
-    }
-
-    // Track analytics
-    this.analytics.recordConnection(client.sessionId);
-    this.connectionMonitor.recordHeartbeat(client.sessionId);
-
-    logger.info(`Player joined`, {
-      name: player.name,
-      sessionId: client.sessionId,
-      roomId: this.roomId
-    });
-
-    // Notify the player they joined
-    client.send("joined", { 
-      name: player.name, 
-      chips: player.chips,
-      players: Array.from(this.state.users.values()).map(p => ({
-        id: p.sessionId,
-        name: p.name,
-        chips: p.chips
-      }))
-    });
-
-    // Notify other players
-    this.broadcast("playerJoined", {
-      id: client.sessionId,
-      name: player.name,
-      chips: player.chips
-    }, { except: client });
+    this.lifecycleManager.handleJoin(
+      client,
+      options,
+      this.state,
+      {
+        sessionManager: this.sessionManager,
+        seatManager: this.seatManager,
+        connectionMonitor: this.connectionMonitor,
+        analytics: this.analytics
+      },
+      () => Array.from(this.clients),
+      (type, message, opts) => this.broadcast(type, message, opts)
+    );
   }
 
   async onLeave(client: Client, consented: boolean) {
-    const userId = this.sessionManager.getUserId(client.sessionId);
-
-    if (!consented && userId) {
-      try {
-        const reconnected = await this.allowReconnection(client, this.reconnectionTimeoutSeconds);
-        this.replaceSession(client.sessionId, reconnected);
-        this.analytics.recordReconnection(reconnected.sessionId);
-        return;
-      } catch {
-        // Reconnection failed or timed out. Continue cleanup.
-        this.analytics.recordDisconnection(client.sessionId);
-      }
-    }
-
-    this.handleLeaveCleanup(client);
+    await this.lifecycleManager.handleLeave(
+      client,
+      consented,
+      this.state,
+      {
+        sessionManager: this.sessionManager,
+        seatManager: this.seatManager,
+        connectionMonitor: this.connectionMonitor,
+        analytics: this.analytics
+      },
+      this.playersInHand,
+      this.engine,
+      (c, seconds) => this.allowReconnection(c, seconds) as any as Promise<Client>,
+      (type, message, opts) => this.broadcast(type, message, opts)
+    );
   }
 
   onDispose() {
