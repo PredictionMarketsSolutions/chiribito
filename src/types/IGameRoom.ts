@@ -21,4 +21,7 @@ export interface IGameRoom {
 
   // Broadcasting method (from Colyseus Room)
   broadcast(type: string, data?: any): void;
+
+  /** Schedule a callback after delay (e.g. for all-in showdown card reveal). */
+  scheduleDelayed(callback: () => void, ms: number): void;
 }

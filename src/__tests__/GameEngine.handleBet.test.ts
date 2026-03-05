@@ -28,7 +28,8 @@ describe('GameEngine.handleBet', () => {
       dealerIndex: 0,
       currentPlayerIndex: 0,
       turnTimeout: null,
-      broadcast: jest.fn()
+      broadcast: jest.fn(),
+      scheduleDelayed: jest.fn((cb: () => void) => cb())
     } as any;
 
     const player1 = new Player('player1');

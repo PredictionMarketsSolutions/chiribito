@@ -21,14 +21,13 @@ describe("GameFlow Bug Fixes", () => {
       state: new MyRoomState(),
       broadcast: jest.fn(),
       clients: [],
-      // Required by RoundManager and GameEngine
       playersInHand: [],
       playersActedThisRound: new Set<string>(),
       playersAllIn: new Set<string>(),
       turnTimeout: null,
       dealerIndex: 0,
       currentPlayerIndex: 0,
-      // Managers (needed by GameEngine for dependencies)
+      scheduleDelayed: jest.fn((cb: () => void) => cb()),
       sessionManager: {
         getUserId: jest.fn(),
         getSessionId: jest.fn(),
@@ -259,6 +258,33 @@ describe("GameFlow Bug Fixes", () => {
 
       expect(roomState.roundStarted).toBe(false);
       expect(mockRoom.playersInHand.length).toBe(0);
+    });
+  });
+
+  describe("all-in showdown card reveal", () => {
+    it("reveals community cards progressively and only then broadcasts roundEnded (winner at end)", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
+      roomState.communityCards.clear();
+      roomState.phase = "flop";
+      roomState.pot = 500;
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.currentBet = 250;
+      p2.currentBet = 250;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(mockRoom.scheduleDelayed).toHaveBeenCalled();
+      const roundEndedCalls = (mockRoom.broadcast as jest.Mock).mock.calls.filter(
+        (call: unknown[]) => call[0] === "roundEnded"
+      );
+      const communityRevealCalls = (mockRoom.broadcast as jest.Mock).mock.calls.filter(
+        (call: unknown[]) => call[0] === "communityCardRevealed"
+      );
+      expect(communityRevealCalls.length).toBe(5);
+      expect(roundEndedCalls.length).toBe(1);
+      expect(roundEndedCalls[0][1].isAllInShowdown).toBe(true);
     });
   });
 });

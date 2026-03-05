@@ -6,7 +6,7 @@
 
 import { Client } from "@colyseus/core";
 import type { IGameRoom } from "../../types/IGameRoom";
-import { TURN_TIMEOUT } from "./constants";
+import { TURN_TIMEOUT, ALLIN_REVEAL_DELAY_MS } from "./constants";
 import logger from "../../config/logger";
 import {
   GameUtils,
@@ -106,10 +106,7 @@ export class GameEngine {
       logger.info(`All players all-in, auto-playing to showdown`, {
         roomId: this.room.roomId
       });
-      while (this.room.state.communityCards.length < 5) {
-        this.roundManager.dealNextCommunityCard();
-      }
-      this.endRoundWithWinners();
+      this.startAllInShowdownReveal();
       return;
     }
 
@@ -311,9 +308,44 @@ export class GameEngine {
     }
   }
 
-  private endRoundWithWinners(): void {
+  private endRoundWithWinners(isAllInShowdown = false): void {
     const result = this.winnerDeterminator.determineWinners();
-    this.endRound(result.winners, result.winningHand);
+    this.endRound(result.winners, result.winningHand, isAllInShowdown);
+  }
+
+  /**
+   * All-in showdown: reveal community cards one at a time (1s delay), then show winner.
+   * Client should show each card as it arrives and only show winner on "roundEnded".
+   */
+  private startAllInShowdownReveal(): void {
+    if (this.room.state.communityCards.length >= 5) {
+      this.endRoundWithWinners();
+      return;
+    }
+
+    const revealNext = (): void => {
+      if (this.room.state.communityCards.length >= 5) {
+        this.endRoundWithWinners();
+        return;
+      }
+      this.roundManager.dealNextCommunityCard();
+      const cards = this.room.state.communityCards.toArray();
+      const lastIndex = cards.length - 1;
+      if (lastIndex >= 0) {
+        this.broadcaster.broadcastCommunityCardRevealed({
+          index: lastIndex,
+          card: cards[lastIndex],
+          communityCards: cards
+        });
+      }
+      if (this.room.state.communityCards.length >= 5) {
+        this.room.scheduleDelayed(() => this.endRoundWithWinners(true), ALLIN_REVEAL_DELAY_MS);
+      } else {
+        this.room.scheduleDelayed(revealNext, ALLIN_REVEAL_DELAY_MS);
+      }
+    };
+
+    this.room.scheduleDelayed(revealNext, ALLIN_REVEAL_DELAY_MS);
   }
 
   /**

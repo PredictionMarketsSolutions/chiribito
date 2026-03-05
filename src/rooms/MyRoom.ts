@@ -248,6 +248,10 @@ export class MyRoom extends Room<MyRoomState> {
     );
   }
 
+  scheduleDelayed(callback: () => void, ms: number): void {
+    this.clock.setTimeout(callback, ms);
+  }
+
   onDispose() {
     logger.info(`Room disposing`, { roomId: this.roomId });
     if (this.turnTimeout) clearTimeout(this.turnTimeout);

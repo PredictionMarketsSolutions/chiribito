@@ -261,6 +261,20 @@ describe("AuthenticationService", () => {
       expect(global.fetch).toHaveBeenCalledTimes(3); // maxRetries
     });
 
+    test("throws AUTH_TIMEOUT when request is aborted (client can show 'session expired')", async () => {
+      const abortErr = new Error("This operation was aborted");
+      abortErr.name = "AbortError";
+      (global.fetch as jest.Mock).mockRejectedValue(abortErr);
+
+      const options = { token: validToken };
+
+      await expect(
+        authService.authenticate(mockClient as Client, options, sessionManager)
+      ).rejects.toThrow("AUTH_TIMEOUT");
+
+      expect(global.fetch).toHaveBeenCalledTimes(3);
+    });
+
     test("handles timeout correctly", async () => {
       // Skip this test as timeout behavior with AbortController is hard to mock reliably
       // The timeout is tested indirectly through retry logic

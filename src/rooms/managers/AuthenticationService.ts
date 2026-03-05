@@ -153,19 +153,23 @@ export class AuthenticationService {
         
         const isLastAttempt = attempt >= maxRetries;
         const isAuthError = err instanceof Error && err.message === "INVALID_TOKEN";
-        
+        const isAbortOrTimeout =
+          err instanceof Error &&
+          (err.name === "AbortError" || err.message?.includes("aborted"));
+
         // Don't retry auth errors - fail immediately
         if (isAuthError) {
           throw err;
         }
-        
-        // For network errors, use exponential backoff
+
+        // Client-friendly code so the frontend can show "Session expired, please log in again"
         if (isLastAttempt) {
-          logger.error(`Token validation failed after ${maxRetries} attempts`, { 
-            error: String(err), 
-            roomId: this.roomId 
+          logger.error(`Token validation failed after ${maxRetries} attempts`, {
+            error: err instanceof Error ? err.message : String(err),
+            roomId: this.roomId
           });
-          throw new Error("AUTH_UNAVAILABLE");
+          const clientCode = isAbortOrTimeout ? "AUTH_TIMEOUT" : "AUTH_UNAVAILABLE";
+          throw new Error(clientCode);
         }
         
         // Exponential backoff: 500ms, 1s, 2s, etc.

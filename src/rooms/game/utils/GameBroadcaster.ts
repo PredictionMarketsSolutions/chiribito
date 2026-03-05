@@ -8,6 +8,10 @@ import type { IGameRoom } from "../../../types/IGameRoom";
 export class GameBroadcaster {
   constructor(private room: IGameRoom) {}
 
+  broadcastCommunityCardRevealed(payload: { index: number; card: string; communityCards: string[] }): void {
+    this.room.broadcast("communityCardRevealed", payload);
+  }
+
   broadcastBettingRoundStarted(payload: {
     phase: string;
     currentTurn: string;
