@@ -4,6 +4,7 @@
  * These tests validate the behavior through the GameEngine and room state
  */
 
+import { StateView } from "@colyseus/schema";
 import { GameEngine } from "../../rooms/game/GameEngine";
 import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
 import { GameBroadcaster } from "../../rooms/game/utils/GameBroadcaster";
@@ -285,6 +286,21 @@ describe("GameFlow Bug Fixes", () => {
       expect(communityRevealCalls.length).toBe(5);
       expect(roundEndedCalls.length).toBe(1);
       expect(roundEndedCalls[0][1].isAllInShowdown).toBe(true);
+    });
+  });
+
+  describe("StateView (per-client hand visibility)", () => {
+    it("StateView.add(player) allows client to see own hand only when player is in state", () => {
+      const state = new MyRoomState();
+      const player = new Player("session-1");
+      player.hand.push("1O", "7C");
+      state.users.set("session-1", player);
+      const view = new StateView();
+      view.add(player);
+      expect(view.has(player)).toBe(true);
+      const otherPlayer = new Player("session-2");
+      state.users.set("session-2", otherPlayer);
+      expect(view.has(otherPlayer)).toBe(false);
     });
   });
 });

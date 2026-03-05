@@ -1,4 +1,5 @@
 import { Room, Client } from "@colyseus/core";
+import { StateView } from "@colyseus/schema";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import { GameEngine } from "./game/GameEngine";
 import logger from "../config/logger";
@@ -215,7 +216,7 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onJoin(client: Client, options: any) {
-    this.lifecycleManager.handleJoin(
+    const player = this.lifecycleManager.handleJoin(
       client,
       options,
       this.state,
@@ -228,6 +229,8 @@ export class MyRoom extends Room<MyRoomState> {
       () => Array.from(this.clients),
       (type, message, opts) => this.broadcast(type, message, opts)
     );
+    client.view = new StateView();
+    client.view.add(player);
   }
 
   async onLeave(client: Client, consented: boolean) {

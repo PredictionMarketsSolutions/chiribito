@@ -1,9 +1,10 @@
-import { Schema, MapSchema, ArraySchema, type } from "@colyseus/schema";
+import { Schema, MapSchema, ArraySchema, type, view } from "@colyseus/schema";
 
 export class Player extends Schema {
   @type("string") sessionId: string;
   @type("string") name: string = "";
-  @type(["string"]) hand: ArraySchema<string> = new ArraySchema<string>();
+  /** Solo visible para el cliente que tiene este Player en su StateView (cartas privadas). */
+  @view() @type(["string"]) hand: ArraySchema<string> = new ArraySchema<string>();
   @type("number") chips: number = 1000;
   @type("number") currentBet: number = 0;
   @type("boolean") isFolded: boolean = false;
