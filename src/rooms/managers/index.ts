@@ -12,3 +12,9 @@ export {
   type ConnectionStats,
   type AnalyticsSummary
 } from "./AnalyticsService";
+export { RebuyManager, type RebuyConfig } from "./RebuyManager";
+export { 
+  AuthenticationService, 
+  type AuthConfig, 
+  type AuthResult 
+} from "./AuthenticationService";

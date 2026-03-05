@@ -1,6 +1,5 @@
 import { Room, Client } from "@colyseus/core";
 import { MyRoomState, Player } from "./schema/MyRoomState";
-import * as jwt from "jsonwebtoken";
 import { GameEngine } from "./game/GameEngine";
 import logger from "../config/logger";
 import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/constants";
@@ -15,7 +14,9 @@ import {
   ConnectionMonitor,
   SeatManager,
   RateLimiterService,
-  AnalyticsService
+  AnalyticsService,
+  RebuyManager,
+  AuthenticationService
 } from "./managers";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
@@ -37,10 +38,8 @@ export class MyRoom extends Room<MyRoomState> {
   private seatManager!: SeatManager;
   private rateLimiter!: RateLimiterService;
   private analytics!: AnalyticsService;
-
-  // Rebuy constants
-  private readonly REBUY_TIMEOUT_MS = 120000; // 120 seconds
-  private readonly REBUY_AMOUNT = 1000;
+  private rebuyManager!: RebuyManager;
+  private authService!: AuthenticationService;
 
   private getNextAvailableSeat(): number {
     return this.seatManager.getNextAvailableSeat() ?? -1;
@@ -48,26 +47,15 @@ export class MyRoom extends Room<MyRoomState> {
 
   /**
    * Reserve a seat for a player who busted out (0 chips)
-   * Allows 120s for rebuy decision
+   * Allows time for rebuy decision
    */
   private reserveSeat(sessionId: string, seatIndex: number) {
-    this.seatManager.reserveSeatForRebuy(seatIndex, this.sessionManager.getUserId(sessionId) ?? 0);
-
-    // Notify client of reservation
     const client = this.clients.find(c => c.sessionId === sessionId);
-    if (client) {
-      client.send("seatReserved", {
-        seatIndex,
-        expiresIn: this.REBUY_TIMEOUT_MS
-      });
+    const userId = this.sessionManager.getUserId(sessionId);
+    
+    if (client && userId) {
+      this.rebuyManager.reserveSeat(client, seatIndex, userId, this.seatManager);
     }
-
-    logger.info(`Seat reserved for rebuy`, {
-      sessionId,
-      seatIndex,
-      roomId: this.roomId,
-      expiresIn: `${this.REBUY_TIMEOUT_MS}ms`
-    });
   }
 
   /**
@@ -81,55 +69,13 @@ export class MyRoom extends Room<MyRoomState> {
    * Process a rebuy request from a player
    */
   private handleRebuy(client: Client): boolean {
-    const player = this.state.users.get(client.sessionId);
-    if (!player) {
-      client.send("error", { message: "Player not found" });
-      return false;
-    }
-
-    if (player.chips > 0) {
-      client.send("error", { message: "You still have chips, no rebuy needed" });
-      return false;
-    }
-
-    if (player.seatIndex < 0) {
-      client.send("error", { message: "You are not seated" });
-      return false;
-    }
-
-    const reservation = this.seatManager.getReservation(player.seatIndex);
-    const userId = this.sessionManager.getUserId(client.sessionId);
-    
-    if (!reservation || !userId || reservation.userId !== userId) {
-      client.send("error", { message: "Seat reservation not found or expired" });
-      return false;
-    }
-
-    // Remove reservation and rebuy
-    this.seatManager.clearReservation(player.seatIndex);
-    player.chips = this.REBUY_AMOUNT;
-    player.isFolded = false;
-
-    client.send("rebuySuccess", {
-      chips: this.REBUY_AMOUNT,
-      seatIndex: player.seatIndex
-    });
-
-    this.broadcast("playerRebuyed", {
-      playerId: client.sessionId,
-      playerName: player.name,
-      newChips: this.REBUY_AMOUNT,
-      seatIndex: player.seatIndex
-    });
-
-    logger.info(`Player rebuyed`, {
-      player: player.name,
-      sessionId: client.sessionId,
-      newChips: this.REBUY_AMOUNT,
-      roomId: this.roomId
-    });
-
-    return true;
+    return this.rebuyManager.handleRebuy(
+      client,
+      this.state,
+      this.seatManager,
+      this.sessionManager,
+      (type, message) => this.broadcast(type, message)
+    );
   }
 
   /**
@@ -247,7 +193,18 @@ export class MyRoom extends Room<MyRoomState> {
 
     // Initialize managers
     this.sessionManager = new SessionManager(this.roomId, this.reconnectionTimeoutSeconds);
-    this.seatManager = new SeatManager(this.roomId, this.maxClients, this.REBUY_TIMEOUT_MS);
+    this.authService = new AuthenticationService(this.roomId, {
+      apiUrl: API_URL,
+      jwtSecret: process.env.JWT_SECRET || "",
+      maxRetries: 3,
+      retryDelayMs: 500,
+      requestTimeoutMs: 8000
+    });
+    this.rebuyManager = new RebuyManager(this.roomId, {
+      rebuyTimeoutMs: 120000,
+      rebuyAmount: 1000
+    });
+    this.seatManager = new SeatManager(this.roomId, this.maxClients, this.rebuyManager.getConfig().rebuyTimeoutMs);
     this.rateLimiter = new RateLimiterService(this.roomId, {
       defaultCooldownMs: ACTION_COOLDOWN,
       customCooldowns: new Map([
@@ -322,109 +279,19 @@ export class MyRoom extends Room<MyRoomState> {
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
   async requestJoin(options: any, isNew?: boolean) {
-    if (!options?.authUser) {
-      logger.warn("Request join without authUser", { roomId: this.roomId });
-      return false;
-    }
-    return true;
+    return this.authService.requestJoin(options);
   }
 
   async onAuth(client: Client, options: any) {
-    const token = options?.token || options?.auth?.token ||
-      (options?.headers && typeof options.headers.authorization === 'string'
-        ? options.headers.authorization.split(' ')[1]
-        : undefined);
-
-    if (!token) {
-      throw new Error("NO_TOKEN");
-    }
-
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      logger.error("JWT_SECRET not set on server", { roomId: this.roomId });
-      throw new Error("SERVER_CONFIG");
-    }
-
-    const decoded = jwt.verify(token, secret) as any;
-    await this.validateTokenRemote(token);
-    options.authUser = decoded;
-
-    const userId = Number(decoded?.userId);
-    if (!Number.isFinite(userId)) {
-      throw new Error("INVALID_TOKEN");
-    }
-
-    const hasActiveSession = this.sessionManager.hasActiveSession(userId);
-    const isPending = this.sessionManager.isPending(userId);
-
-    if ((hasActiveSession || isPending) && !options?.forceReplace) {
-      throw new Error("SESSION_EXISTS");
-    }
-
-    if (hasActiveSession && options?.forceReplace) {
-      options.replaceSessionId = this.sessionManager.getSessionId(userId);
-    }
-
-    this.sessionManager.addPending(userId);
-    return options.authUser;
-  }
-
-  /**
-   * Validate token with API server using exponential backoff
-   * This ensures token is still valid and user still exists
-   */
-  private async validateTokenRemote(token: string): Promise<void> {
-    const maxAttempts = 3;
-    const initialDelayMs = 500;
+    const result = await this.authService.authenticate(client, options, this.sessionManager);
     
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const controller = new AbortController();
-      // Increased timeout: 8 seconds for slower networks
-      const timeoutMs = 8000;
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-      try {
-        const response = await fetch(`${API_URL}/api/auth/validate`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          signal: controller.signal
-        });
-
-        if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            throw new Error("INVALID_TOKEN");
-          }
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        // Token valid
-        return;
-      } catch (err) {
-        clearTimeout(timeoutId);
-        
-        const isLastAttempt = attempt >= maxAttempts;
-        const isAuthError = err instanceof Error && err.message === "INVALID_TOKEN";
-        
-        // Don't retry auth errors - fail immediately
-        if (isAuthError) {
-          throw err;
-        }
-        
-        // For network errors, use exponential backoff
-        if (isLastAttempt) {
-          logger.error(`Token validation failed after ${maxAttempts} attempts`, { error: String(err), roomId: this.roomId });
-          throw err instanceof Error ? err : new Error("AUTH_UNAVAILABLE");
-        }
-        
-        // Exponential backoff: 500ms, 1s, 2s
-        const delayMs = initialDelayMs * Math.pow(2, attempt - 1);
-        logger.warn(`Token validation attempt ${attempt}/${maxAttempts} failed, retrying in ${delayMs}ms`, { roomId: this.roomId });
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
+    // Store results in options for onJoin
+    options.authUser = result.authUser;
+    if (result.replaceSessionId) {
+      options.replaceSessionId = result.replaceSessionId;
     }
+    
+    return options.authUser;
   }
 
   onJoin(client: Client, options: any) {
