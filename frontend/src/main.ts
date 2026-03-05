@@ -1,58 +1,73 @@
 import { Client, Room } from "colyseus.js";
 
+import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_RECONNECT_ATTEMPTS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
+import type { RoomState, PlayerState, HandHistoryWinner, BufferedAction, ConnectionState } from "./types";
+import { audio } from "./audio";
+import { dom } from "./dom-refs";
+import {
+  request,
+  getFormValues,
+  getLoginValues,
+  mapAuthError,
+  setAuthOverlayVisible,
+  setAuthMessage
+} from "./auth-helpers";
+import {
+  addHandHistoryEntry,
+  clearHandHistory,
+  renderHandHistory
+} from "./hand-history";
+import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
+
 // Security modules
-import { 
-  initFrontendSecurity, 
-  SecureStorage, 
-  ApiClient, 
+import {
+  initFrontendSecurity,
+  SecureStorage,
+  ApiClient,
   validateEmail,
   validatePassword,
   validateUsername,
-  stateGuard 
+  stateGuard
 } from "./security";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://chiri-backend.onrender.com";
-const WS_URL = import.meta.env.VITE_WS_URL || "wss://chiri-backend-colyseus.onrender.com";
-
-const logEl = document.querySelector<HTMLPreElement>("#log")!;
-const authOverlay = document.querySelector<HTMLDivElement>("#auth-overlay")!;
-const authMessage = document.querySelector<HTMLDivElement>("#auth-message")!;
-const tokenStatus = document.querySelector<HTMLSpanElement>("#token-status")!;
-const roomStatus = document.querySelector<HTMLSpanElement>("#room-status")!;
-const phaseStatus = document.querySelector<HTMLSpanElement>("#phase-status")!;
-const turnStatus = document.querySelector<HTMLSpanElement>("#turn-status")!;
-const potStatus = document.querySelector<HTMLSpanElement>("#pot-status")!;
-const betStatus = document.querySelector<HTMLSpanElement>("#bet-status")!;
-const communityStatus = document.querySelector<HTMLSpanElement>("#community-status")!;
-const handStatus = document.querySelector<HTMLSpanElement>("#hand-status")!;
-const winningHandStatus = document.querySelector<HTMLSpanElement>("#winning-hand")!;
-const winnersStatus = document.querySelector<HTMLSpanElement>("#winners-status")!;
-const communityCardsEl = document.querySelector<HTMLDivElement>("#community-cards")!;
-const handCardsEl = document.querySelector<HTMLDivElement>("#hand-cards")!;
-const potChip = document.querySelector<HTMLSpanElement>("#pot-chip")!;
-const phaseChip = document.querySelector<HTMLSpanElement>("#phase-chip")!;
-const turnChip = document.querySelector<HTMLSpanElement>("#turn-chip")!;
-const turnTimerChip = document.querySelector<HTMLSpanElement>("#turn-timer")!;
-const winningHandChip = document.querySelector<HTMLSpanElement>("#winning-hand-chip")!;
-const seatsEl = document.querySelector<HTMLDivElement>("#seats")!;
-const playersList = document.querySelector<HTMLUListElement>("#players")!;
-const handHistoryList = document.querySelector<HTMLUListElement>("#hand-history")!;
-const mobileSeatsList = document.querySelector<HTMLUListElement>("#mobile-seats")!;
-const apiUrlEl = document.querySelector<HTMLSpanElement>("#api-url")!;
-const wsUrlEl = document.querySelector<HTMLSpanElement>("#ws-url")!;
-const startGameButton = document.querySelector<HTMLButtonElement>("#start-game")!;
-const checkButton = document.querySelector<HTMLButtonElement>("#check")!;
-const callButton = document.querySelector<HTMLButtonElement>("#call")!;
-const foldButton = document.querySelector<HTMLButtonElement>("#fold")!;
-const allInButton = document.querySelector<HTMLButtonElement>("#all-in")!;
-const betButton = document.querySelector<HTMLButtonElement>("#bet")!;
-const raiseButton = document.querySelector<HTMLButtonElement>("#raise")!
-
-const connectionIndicator = document.querySelector<HTMLDivElement>("#connection-indicator")!;
-const rttStatus = document.querySelector<HTMLSpanElement>("#rtt-status")!;
-const qualityStatus = document.querySelector<HTMLSpanElement>("#quality-status")!;
-const bufferStatus = document.querySelector<HTMLSpanElement>("#buffer-status")!;
-const yourTurnIndicator = document.querySelector<HTMLDivElement>("#your-turn-indicator")!;;
+const logEl = dom.log!;
+const authOverlay = dom.authOverlay!;
+const authMessage = dom.authMessage!;
+const tokenStatus = dom.tokenStatus!;
+const roomStatus = dom.roomStatus!;
+const phaseStatus = dom.phaseStatus!;
+const turnStatus = dom.turnStatus!;
+const potStatus = dom.potStatus!;
+const betStatus = dom.betStatus!;
+const communityStatus = dom.communityStatus!;
+const handStatus = dom.handStatus!;
+const winningHandStatus = dom.winningHandStatus!;
+const winnersStatus = dom.winnersStatus!;
+const communityCardsEl = dom.communityCardsEl!;
+const handCardsEl = dom.handCardsEl!;
+const potChip = dom.potChip!;
+const phaseChip = dom.phaseChip!;
+const turnChip = dom.turnChip!;
+const turnTimerChip = dom.turnTimerChip!;
+const winningHandChip = dom.winningHandChip!;
+const seatsEl = dom.seatsEl!;
+const playersList = dom.playersList!;
+const handHistoryList = dom.handHistoryList!;
+const mobileSeatsList = dom.mobileSeatsList!;
+const apiUrlEl = dom.apiUrlEl!;
+const wsUrlEl = dom.wsUrlEl!;
+const startGameButton = dom.startGameButton!;
+const checkButton = dom.checkButton!;
+const callButton = dom.callButton!;
+const foldButton = dom.foldButton!;
+const allInButton = dom.allInButton!;
+const betButton = dom.betButton!;
+const raiseButton = dom.raiseButton!;
+const connectionIndicator = dom.connectionIndicator!;
+const rttStatus = dom.rttStatus!;
+const qualityStatus = dom.qualityStatus!;
+const bufferStatus = dom.bufferStatus!;
+const yourTurnIndicator = dom.yourTurnIndicator!;;
 
 // Initialize after functions are defined
 document.addEventListener("DOMContentLoaded", () => {
@@ -60,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   wsUrlEl.textContent = WS_URL;
   void initPixiLayer();
   setAuthOverlayVisible(true);
-  renderHandHistory();
+  renderHandHistoryUi();
 });
 
 window.addEventListener("error", (event) => {
@@ -76,15 +91,7 @@ window.addEventListener("unhandledrejection", (event) => {
   log(`Unhandled rejection: ${message}`);
 });
 
-document.addEventListener(
-  "pointerdown",
-  () => {
-    if (!audioUnlocked) {
-      initAudio();
-    }
-  },
-  { once: true }
-);
+document.addEventListener("pointerdown", () => { if (!audio.isUnlocked()) audio.init(); }, { once: true });
 
 // Mobile background handling
 document.addEventListener("visibilitychange", () => {
@@ -110,189 +117,6 @@ function log(message: string) {
   logEl.textContent = `[${ts}] ${message}\n` + logEl.textContent;
 }
 
-type SoundEffect = "bet" | "call" | "raise" | "check" | "fold" | "allIn" | "win";
-
-const soundProfiles: Record<SoundEffect, {
-  frequency: number;
-  durationMs: number;
-  type: OscillatorType;
-  volume: number;
-}> = {
-  bet: { frequency: 440, durationMs: 120, type: "sine", volume: 0.08 },
-  call: { frequency: 520, durationMs: 120, type: "triangle", volume: 0.08 },
-  raise: { frequency: 620, durationMs: 160, type: "triangle", volume: 0.1 },
-  check: { frequency: 360, durationMs: 90, type: "sine", volume: 0.06 },
-  fold: { frequency: 220, durationMs: 140, type: "sawtooth", volume: 0.08 },
-  allIn: { frequency: 740, durationMs: 220, type: "square", volume: 0.1 },
-  win: { frequency: 880, durationMs: 260, type: "triangle", volume: 0.12 }
-};
-
-function initAudio() {
-  if (!audioEnabled) return;
-  if (!audioContext) {
-    audioContext = new AudioContext();
-  }
-  if (audioContext.state === "suspended") {
-    void audioContext.resume();
-  }
-  audioUnlocked = true;
-}
-
-function playEffect(effect: SoundEffect) {
-  if (!audioEnabled || !audioContext || audioContext.state !== "running") return;
-  const profile = soundProfiles[effect];
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-  osc.type = profile.type;
-  osc.frequency.value = profile.frequency;
-  gain.gain.value = profile.volume;
-  osc.connect(gain);
-  gain.connect(audioContext.destination);
-  const now = audioContext.currentTime;
-  osc.start(now);
-  osc.stop(now + profile.durationMs / 1000);
-}
-
-function playActionSound(action: string) {
-  if (!action) return;
-  switch (action) {
-    case "bet":
-      playEffect("bet");
-      break;
-    case "call":
-      playEffect("call");
-      break;
-    case "raise":
-      playEffect("raise");
-      break;
-    case "check":
-      playEffect("check");
-      break;
-    case "fold":
-      playEffect("fold");
-      break;
-    case "allIn":
-      playEffect("allIn");
-      break;
-    default:
-      break;
-  }
-}
-
-function setAuthOverlayVisible(visible: boolean) {
-  authOverlay.classList.toggle("hidden", !visible);
-}
-
-function setAuthMessage(message: string, type: "success" | "error" | "info" = "info") {
-  authMessage.textContent = message;
-  authMessage.classList.toggle("visible", Boolean(message));
-  authMessage.classList.toggle("success", type === "success");
-  authMessage.classList.toggle("error", type === "error");
-}
-
-function mapAuthError(message: string, context: "login" | "register") {
-  const normalized = message.toLowerCase();
-  if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
-    return "No se pudo conectar al servidor. Verifica la conexion.";
-  }
-  if (normalized.includes("missing required fields")) {
-    return "Completa todos los campos requeridos.";
-  }
-  if (normalized.includes("invalid credentials")) {
-    return "Correo o contrasena incorrectos.";
-  }
-  if (normalized.includes("email and password are required")) {
-    return "Correo y contrasena son obligatorios.";
-  }
-  if (normalized.includes("username, email, and password are required")) {
-    return "Usuario, correo y contrasena son obligatorios.";
-  }
-  if (normalized.includes("password must be at least 6")) {
-    return "La contrasena debe tener al menos 6 caracteres.";
-  }
-  if (normalized.includes("user with this email or username already exists")) {
-    return "Ese usuario o correo ya existe.";
-  }
-  if (normalized.includes("internal server error")) {
-    return "Error del servidor. Intenta de nuevo.";
-  }
-  if (context === "login") {
-    return "No pudimos iniciar sesion. Verifica tus datos.";
-  }
-  return "No pudimos registrar la cuenta. Verifica tus datos.";
-}
-
-async function request(path: string, body: unknown) {
-  try {
-    const response = await fetch(`${API_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    const text = await response.text();
-    let maybeJson: unknown = null;
-    if (text) {
-      try {
-        maybeJson = JSON.parse(text);
-      } catch (err) {
-        maybeJson = null;
-      }
-    }
-
-    if (!response.ok) {
-      if (maybeJson && typeof maybeJson === "object") {
-        const record = maybeJson as Record<string, unknown>;
-        const apiError = typeof record.error === "string" ? record.error : undefined;
-        const apiMessage = typeof record.message === "string" ? record.message : undefined;
-        throw new Error(apiError || apiMessage || response.statusText);
-      }
-      throw new Error(text || response.statusText);
-    }
-
-    if (!text) return {};
-    if (maybeJson && typeof maybeJson === "object") return maybeJson;
-    return JSON.parse(text);
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error("Respuesta invalida del servidor.");
-    }
-    throw error;
-  }
-}
-
-function getFormValues() {
-  const username = (document.querySelector("#username") as HTMLInputElement).value.trim();
-  const email = (document.querySelector("#email") as HTMLInputElement).value.trim();
-  const password = (document.querySelector("#password") as HTMLInputElement).value;
-  
-  if (!username || !email || !password) {
-    const missing = [
-      !username ? "username" : "",
-      !email ? "email" : "",
-      !password ? "password" : ""
-    ].filter(Boolean).join(", ");
-    throw new Error(`Missing required fields: ${missing}`);
-  }
-  
-  return { username, email, password };
-}
-
-function getLoginValues() {
-  const email = (document.querySelector("#email") as HTMLInputElement).value.trim();
-  const password = (document.querySelector("#password") as HTMLInputElement).value;
-
-  if (!email || !password) {
-    const missing = [
-      !email ? "email" : "",
-      !password ? "password" : ""
-    ].filter(Boolean).join(", ");
-    throw new Error(`Missing required fields: ${missing}`);
-  }
-
-  return { email, password };
-}
-
 let token: string | null = null;
 let refreshToken: string | null = null;
 let room: Room | null = null;
@@ -303,18 +127,13 @@ let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: any = null;
 let pixiLayer: HTMLDivElement | null = null;
-let audioContext: AudioContext | null = null;
-let audioUnlocked = false;
-let audioEnabled = true;
-
 // Connection monitoring
-let connectionState: "disconnected" | "connecting" | "connected" = "disconnected";
+let connectionState: ConnectionState = "disconnected";
 let reconnectAttempts = 0;
 let heartbeatTimeoutId: number | null = null;
 let clientHeartbeatId: number | null = null;
-const MAX_RECONNECT_ATTEMPTS = 10;
-const HEARTBEAT_INTERVAL_MS = 25000; // 25 seconds (matches server 30s)
-const HEARTBEAT_TIMEOUT_MS = 10000; // 10 seconds to receive ack
+const HEARTBEAT_INTERVAL_MS = 25000;
+const HEARTBEAT_TIMEOUT_MS = 10000;
 
 // Connection metrics (RTT tracking)
 let lastHeartbeatSendTime = 0;
@@ -323,13 +142,7 @@ let averageRtt = 0;
 let connectionQuality: "excellent" | "good" | "degraded" | "poor" = "excellent";
 
 // Action buffering for offline resilience
-interface BufferedAction {
-  action: string;
-  data: any;
-  timestamp: number;
-}
 const actionBuffer: BufferedAction[] = [];
-const ACTION_BUFFER_MAX_SIZE = 50;
 let pixiTableSurface: HTMLDivElement | null = null;
 let previousCommunityCards: string[] = [];
 let previousHandCards: string[] = [];
@@ -351,49 +164,11 @@ let allInCardsRevealedByServer = false;
 let pendingWinners: string[] | null = null;
 let pendingWinningHand: string | null = null;
 let lastRoomState: RoomState | null = null;
-const handHistory: HandHistoryEntry[] = [];
-const MAX_HAND_HISTORY = 20;
-let handHistoryCounter = 0;
 const latestPlayerNames = new Map<string, string>();
 
-
-const TURN_TIMEOUT_MS = 30000;
-
-type PlayerState = {
-  sessionId: string;
-  name: string;
-  chips: number;
-  currentBet: number;
-  isFolded: boolean;
-  seatIndex: number;
-  hand?: string[];
-};
-
-type RoomState = {
-  users?: Map<string, PlayerState> | Record<string, PlayerState>;
-  dealerIndex?: number;
-  currentTurn?: string;
-  phase?: string;
-  pot?: number;
-  currentBet?: number;
-  roundStarted?: boolean;
-  communityCards?: string[];
-};
-
-type HandHistoryWinner = {
-  playerId: string;
-  amount?: number;
-};
-
-type HandHistoryEntry = {
-  id: number;
-  timestamp: number;
-  winners: HandHistoryWinner[];
-  winningHand: string;
-  communityCards: string[];
-  pot: number;
-  yourHand?: string[];
-};
+function renderHandHistoryUi() {
+  renderHandHistory(handHistoryList, (id) => latestPlayerNames.get(id) ?? id);
+}
 
 function isPlayerState(value: unknown): value is PlayerState {
   if (!value || typeof value !== "object") return false;
@@ -414,72 +189,24 @@ function triggerAnimation(element: HTMLElement, className: string) {
   element.classList.add(className);
 }
 
-function formatWinnerLabel(winner: HandHistoryWinner) {
-  const name = latestPlayerNames.get(winner.playerId) ?? winner.playerId;
-  if (typeof winner.amount === "number") {
-    return `${name} (+${winner.amount})`;
-  }
-  return name;
-}
-
-function renderHandHistory() {
-  handHistoryList.innerHTML = "";
-  if (handHistory.length === 0) {
-    const emptyEl = document.createElement("li");
-    emptyEl.classList.add("history-empty");
-    emptyEl.textContent = "No hands yet.";
-    handHistoryList.appendChild(emptyEl);
-    return;
-  }
-
-  handHistory.forEach((entry) => {
-    const itemEl = document.createElement("li");
-    itemEl.classList.add("history-item");
-
-    const headerEl = document.createElement("div");
-    headerEl.classList.add("history-header");
-
-    const timeEl = document.createElement("span");
-    timeEl.classList.add("history-time");
-    timeEl.textContent = new Date(entry.timestamp).toLocaleTimeString();
-
-    const winnersEl = document.createElement("span");
-    winnersEl.classList.add("history-winners");
-    winnersEl.textContent = entry.winners.length
-      ? `Winners: ${entry.winners.map(formatWinnerLabel).join(", ")}`
-      : "Winners: -";
-
-    const potEl = document.createElement("span");
-    potEl.classList.add("history-pot");
-    potEl.textContent = `Pot: ${entry.pot}`;
-
-    headerEl.appendChild(timeEl);
-    headerEl.appendChild(winnersEl);
-    headerEl.appendChild(potEl);
-
-    const bodyEl = document.createElement("div");
-    bodyEl.classList.add("history-body");
-
-    const handEl = document.createElement("div");
-    handEl.textContent = `Winning hand: ${entry.winningHand || "-"}`;
-    bodyEl.appendChild(handEl);
-
-    const communityEl = document.createElement("div");
-    communityEl.textContent = entry.communityCards.length
-      ? `Community: ${entry.communityCards.join(" ")}`
-      : "Community: -";
-    bodyEl.appendChild(communityEl);
-
-    if (entry.yourHand && entry.yourHand.length) {
-      const yourHandEl = document.createElement("div");
-      yourHandEl.textContent = `Your hand: ${entry.yourHand.join(" ")}`;
-      bodyEl.appendChild(yourHandEl);
+/** Normalize Colyseus ArraySchema or plain array to string[] (handles toArray(), Array.from, or copy). */
+function schemaArrayToCards(value: unknown): string[] {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value as string[];
+  const raw = value as { toArray?: () => string[]; length?: number; [i: number]: string };
+  if (typeof raw.toArray === "function") return raw.toArray();
+  if (typeof raw.length === "number" && raw.length >= 0) {
+    const out: string[] = [];
+    for (let i = 0; i < raw.length; i++) {
+      if (typeof raw[i] === "string") out.push(raw[i]);
     }
-
-    itemEl.appendChild(headerEl);
-    itemEl.appendChild(bodyEl);
-    handHistoryList.appendChild(itemEl);
-  });
+    return out;
+  }
+  try {
+    return Array.from(value as Iterable<string>);
+  } catch {
+    return [];
+  }
 }
 
 function getUserEntries(state: RoomState): PlayerState[] {
@@ -678,8 +405,8 @@ function resetRoomUi(message?: string) {
     window.clearTimeout(allInAnimationTimeoutId);
     allInAnimationTimeoutId = null;
   }
-  handHistory.length = 0;
-  renderHandHistory();
+  clearHandHistory();
+  renderHandHistoryUi();
   setAuthOverlayVisible(true);
   setAuthMessage("", "info");
   roomStatus.textContent = message || "not joined";
@@ -808,91 +535,6 @@ function startTokenMonitor() {
     }
   }, 50 * 60 * 1000); // 50 minutes
 }
-
-function preloadCardImages() {
-  const suits = ["O", "C", "E", "B"];
-  const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-  const sources = ["/cards/back_logo.png"];
-
-  suits.forEach(suit => {
-    ranks.forEach(rank => {
-      sources.push(`/cards/${suit}_${rank}.jpg`);
-    });
-  });
-
-  sources.forEach(src => {
-    const img = new Image();
-    img.decoding = "async";
-    img.src = src;
-  });
-}
-
-function createCardElement(card: string | undefined) {
-  const el = document.createElement("div");
-  el.classList.add("card");
-
-  const img = document.createElement("img");
-  img.alt = card ? `Carta ${card}` : "Carta oculta";
-  img.decoding = "async";
-  img.loading = "eager";
-
-  if (!card) {
-    el.classList.add("card-back");
-    img.src = "/cards/back_logo.png";
-    img.addEventListener("load", () => el.classList.add("has-image"));
-    img.addEventListener("error", () => {
-      el.classList.add("back");
-      el.innerHTML = "<span class=\"rank\">?</span><span class=\"suit\">?</span>";
-    });
-    el.appendChild(img);
-    return el;
-  }
-
-  const suit = card.slice(-1);
-  const rank = card.slice(0, -1);
-  img.src = `/cards/${suit}_${rank}.jpg`;
-  img.addEventListener("load", () => el.classList.add("has-image"));
-  img.addEventListener("error", () => {
-    const suitMap: Record<string, { symbol: string; color: string }> = {
-      O: { symbol: "◆", color: "red" },
-      C: { symbol: "♥", color: "red" },
-      E: { symbol: "♠", color: "black" },
-      B: { symbol: "♣", color: "black" }
-    };
-
-    const rankMap: Record<string, string> = {
-      "1": "1",
-      "10": "S",
-      "11": "C",
-      "12": "R"
-    };
-
-    const suitInfo = suitMap[suit] ?? { symbol: suit, color: "black" };
-    el.classList.add(suitInfo.color);
-    const displayRank = rankMap[rank] ?? rank;
-    el.innerHTML = `<span class="rank">${displayRank}</span><span class="suit">${suitInfo.symbol}</span>`;
-  });
-  el.appendChild(img);
-  return el;
-}
-
-function renderCardRow(el: HTMLElement, cards: string[], slots: number) {
-  el.innerHTML = "";
-  for (let i = 0; i < slots; i += 1) {
-    const card = cards[i];
-    const cardEl = createCardElement(card);
-    el.appendChild(cardEl);
-  }
-}
-
-function cardsEqual(a: string[], b: string[]) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
 
 function renderSeats(state: RoomState) {
   const entries = getUserEntries(state).filter(isPlayerState);
@@ -1064,7 +706,8 @@ function renderState(state: RoomState) {
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
   winnersStatus.textContent = lastWinners.join(", ") || "-";
-  const community = state.communityCards ? Array.from(state.communityCards) : [];
+  const rawCommunity = state.communityCards;
+  const community = schemaArrayToCards(rawCommunity);
   communityStatus.textContent = community.length ? community.join(" ") : "-";
   
   // Check if all active players are all-in (0 chips and not folded)
@@ -1084,7 +727,7 @@ function renderState(state: RoomState) {
   if (currentSessionId) {
     const me = entries.find((player: any) => player.sessionId === currentSessionId);
     // With StateView (backend), only this client's Player has hand synced; others have no hand.
-    const hand = me?.hand ? Array.from(me.hand) : [];
+    const hand = schemaArrayToCards(me?.hand);
     handStatus.textContent = hand.length ? hand.join(" ") : "-";
     if (!cardsEqual(hand, previousHandCards)) {
       renderCardRow(handCardsEl, hand, 2);
@@ -1193,8 +836,8 @@ async function register() {
   
   try {
     const data = await request("/api/auth/register", { username, email, password });
-    token = data.token;
-    refreshToken = data.refreshToken;
+    token = typeof data.token === "string" ? data.token : null;
+    refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
     if (refreshToken) {
       SecureStorage.saveRefreshToken(refreshToken);
     }
@@ -1234,8 +877,8 @@ async function login() {
   
   try {
     const data = await request("/api/auth/login", { email, password });
-    token = data.token;
-    refreshToken = data.refreshToken;
+    token = typeof data.token === "string" ? data.token : null;
+    refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
     if (refreshToken) {
       SecureStorage.saveRefreshToken(refreshToken);
     }
@@ -1380,7 +1023,7 @@ function updateConnectionIndicator() {
     connectionIndicator.title = `Connected (${averageRtt.toFixed(0)}ms, ${connectionQuality})`;
   } else if (connectionState === "connecting") {
     connectionIndicator.style.backgroundColor = "var(--gold)";
-    connectionIndicator.title = `Connecting (attempt ${reconnectAttempts}/10)`;
+    connectionIndicator.title = `Connecting (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`;
   } else {
     connectionIndicator.style.backgroundColor = "#ff4444";
     connectionIndicator.title = "Disconnected";
@@ -1596,8 +1239,8 @@ async function joinRoom(forceReplace = false) {
   winningHandStatus.textContent = lastWinningHand;
   winningHandChip.textContent = lastWinningHand;
   winnersStatus.textContent = "-";
-  handHistory.length = 0;
-  renderHandHistory();
+  clearHandHistory();
+  renderHandHistoryUi();
   preloadCardImages();
   const roomId = (joinedRoom as { id?: string; roomId?: string }).id
     ?? (joinedRoom as { roomId?: string }).roomId
@@ -1683,7 +1326,7 @@ async function joinRoom(forceReplace = false) {
   joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
     if (payload?.action && typeof payload.action === "string") {
-      playActionSound(payload.action);
+      audio.playActionSound(payload.action);
     }
   });
 
@@ -1742,7 +1385,7 @@ async function joinRoom(forceReplace = false) {
           winningHandStatus.textContent = lastWinningHand;
           winningHandChip.textContent = lastWinningHand;
           if (currentSessionId && lastWinners.includes(currentSessionId)) {
-            playEffect("win");
+            audio.playEffect("win");
           }
         }
         allInRevealInProgress = false;
@@ -1772,26 +1415,24 @@ async function joinRoom(forceReplace = false) {
         const winnersKey = lastWinners.join("|");
         previousWinnersKey = winnersKey;
         if (currentSessionId && lastWinners.includes(currentSessionId)) {
-          playEffect("win");
+          audio.playEffect("win");
         }
       }
       if (lastRoomState) renderState(lastRoomState);
     }
     
-    const historyEntry: HandHistoryEntry = {
-      id: ++handHistoryCounter,
-      timestamp: Date.now(),
-      winners: winnersForHistory,
-      winningHand: payload?.winningHand ?? "-",
-      communityCards,
-      pot: potValue,
-      yourHand
-    };
-    handHistory.unshift(historyEntry);
-    if (handHistory.length > MAX_HAND_HISTORY) {
-      handHistory.length = MAX_HAND_HISTORY;
-    }
-    renderHandHistory();
+    addHandHistoryEntry(
+      {
+        timestamp: Date.now(),
+        winners: winnersForHistory,
+        winningHand: payload?.winningHand ?? "-",
+        communityCards,
+        pot: potValue,
+        yourHand
+      },
+      MAX_HAND_HISTORY
+    );
+    renderHandHistoryUi();
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
 

@@ -67,11 +67,7 @@ export class PlayerActions {
       action: "fold"
     });
 
-    if (this.room.playersInHand.length === 1) {
-      // One player left - round ends (will be handled by caller)
-      return;
-    }
-
+    // Always invoke callback so GameEngine can end round when 1 player left, or advance turn
     endTurnCallback();
   }
 
