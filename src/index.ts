@@ -8,13 +8,20 @@
  */
 
 
-import 'dotenv/config';
-
+import "dotenv/config";
 
 import { listen } from "@colyseus/tools";
+import logger from "./config/logger";
 
 // Import arena config
 import app from "./app.config";
 
 // Create and listen on 2567 (or PORT environment variable.)
+const port = Number(process.env.PORT || 2567);
+
+logger.info("Chiribito backend starting", {
+  port,
+  env: process.env.NODE_ENV || "development",
+});
+
 listen(app);

@@ -1,4 +1,6 @@
 import winston from 'winston';
+import { Logtail } from '@logtail/node';
+import { LogtailTransport } from '@logtail/winston';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -31,6 +33,13 @@ const logger = winston.createLogger({
     new winston.transports.Console(),
   ],
 });
+
+// Optional: Better Stack (Logtail) transport, enabled via LOGTAIL_SOURCE_TOKEN
+const logtailToken = process.env.LOGTAIL_SOURCE_TOKEN;
+if (logtailToken) {
+  const logtail = new Logtail(logtailToken);
+  logger.add(new LogtailTransport(logtail));
+}
 
 // Add file transports in production
 if (isProduction) {
