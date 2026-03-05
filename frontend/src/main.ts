@@ -346,6 +346,8 @@ let allInAnimationTimeoutId: number | null = null;
 let allInCardIndex = 0;
 let allInRevealStarted = false;
 let allInRevealInProgress = false;
+/** True if server sent communityCardRevealed this round (all-in); then roundEnded only shows winners. */
+let allInCardsRevealedByServer = false;
 let pendingWinners: string[] | null = null;
 let pendingWinningHand: string | null = null;
 let lastRoomState: RoomState | null = null;
@@ -669,6 +671,7 @@ function resetRoomUi(message?: string) {
   previousWinnersKey = "";
   allInRevealStarted = false;
   allInRevealInProgress = false;
+  allInCardsRevealedByServer = false;
   pendingWinners = null;
   pendingWinningHand = null;
   if (allInAnimationTimeoutId !== null) {
@@ -1080,6 +1083,7 @@ function renderState(state: RoomState) {
   }
   if (currentSessionId) {
     const me = entries.find((player: any) => player.sessionId === currentSessionId);
+    // With StateView (backend), only this client's Player has hand synced; others have no hand.
     const hand = me?.hand ? Array.from(me.hand) : [];
     handStatus.textContent = hand.length ? hand.join(" ") : "-";
     if (!cardsEqual(hand, previousHandCards)) {
@@ -1570,6 +1574,13 @@ async function joinRoom(forceReplace = false) {
       handleTokenInvalidated();
       return;
     }
+    if (message === "AUTH_TIMEOUT" || message === "AUTH_UNAVAILABLE") {
+      setConnectionState("disconnected");
+      log("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.");
+      setAuthMessage("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.", "error");
+      setAuthOverlayVisible(true);
+      return;
+    }
     log(`Join error: ${message}`);
     setConnectionState("disconnected");
     return;
@@ -1655,6 +1666,18 @@ async function joinRoom(forceReplace = false) {
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;
+    allInCardsRevealedByServer = false;
+  });
+
+  joinedRoom.onMessage("communityCardRevealed", (payload: { communityCards?: string[]; index?: number; card?: string }) => {
+    const cards = Array.isArray(payload?.communityCards) ? payload.communityCards : [];
+    if (cards.length > 0) {
+      allInRevealInProgress = true;
+      allInCardsRevealedByServer = true;
+      previousCommunityCards = [...cards];
+      renderCardRow(communityCardsEl, cards, 5);
+      communityStatus.textContent = cards.join(" ");
+    }
   });
 
   joinedRoom.onMessage("playerAction", (payload) => {
@@ -1706,30 +1729,34 @@ async function joinRoom(forceReplace = false) {
       revealedHands = payload.playerHands as Record<string, string[]>;
     }
     
-    // If all players went all-in, animate card reveal and show winners after completion
+    // If all players went all-in, show cards (if not already revealed by server) then winners
     if (isAllInShowdown && communityCards.length === 5) {
-      // Store winners/winning hand to show after animation completes
       pendingWinners = payload?.winners?.map((w: any) => w.playerId) || [];
       pendingWinningHand = payload?.winningHand ?? "";
-      
-      previousCommunityCards = [];
-      revealAllInCards(communityCards, () => {
-        // After cards are done animating, show winners
+
+      const showWinners = () => {
         if (pendingWinners && pendingWinners.length > 0) {
           lastWinners = pendingWinners;
           lastWinningHand = pendingWinningHand ?? "";
           winnersStatus.textContent = lastWinners.join(", ") || "-";
           winningHandStatus.textContent = lastWinningHand;
           winningHandChip.textContent = lastWinningHand;
-          
           if (currentSessionId && lastWinners.includes(currentSessionId)) {
             playEffect("win");
           }
         }
-        // Clear pending
+        allInRevealInProgress = false;
         pendingWinners = null;
         pendingWinningHand = null;
-      });
+      };
+
+      if (allInCardsRevealedByServer) {
+        previousCommunityCards = [...communityCards];
+        showWinners();
+      } else {
+        previousCommunityCards = [];
+        revealAllInCards(communityCards, showWinners);
+      }
     } else {
       previousCommunityCards = [...communityCards];
       

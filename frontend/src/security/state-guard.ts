@@ -346,8 +346,10 @@ export function validateGameState(state: State): {
     errors.push('Invalid community cards');
   }
 
-  if (!Array.isArray(state.hand)) {
-    errors.push('Invalid hand');
+  // Colyseus state has state.users (map of Player); hand is per-player and optional (StateView hides others)
+  const hasUsers = state.users && (typeof state.users === 'object' || typeof (state.users as Map<string, unknown>)?.get === 'function');
+  if (!hasUsers && !Array.isArray(state.hand)) {
+    errors.push('Invalid hand or missing users');
   }
 
   // Check poker rules
@@ -370,14 +372,19 @@ export function sanitizeGameState(
 ): State {
   const sanitized = JSON.parse(JSON.stringify(state));
 
-  // Hide other players' hands
-  if (sanitized.players) {
-    for (const playerId in sanitized.players) {
-      if (playerId !== userPlayerId && sanitized.players[playerId].hand) {
-        // Keep hand info for development, remove in production
-        sanitized.players[playerId].hand = ['[hidden]', '[hidden]'];
+  const hideOtherHands = (playersObj: Record<string, { hand?: unknown }>, currentId: string) => {
+    if (!playersObj || typeof playersObj !== 'object') return;
+    for (const id of Object.keys(playersObj)) {
+      if (id !== currentId && playersObj[id] && Array.isArray(playersObj[id].hand)) {
+        (playersObj[id] as { hand: string[] }).hand = ['[hidden]', '[hidden]'];
       }
     }
+  };
+
+  if (sanitized.players) hideOtherHands(sanitized.players, userPlayerId);
+  if (sanitized.users) {
+    const users = sanitized.users as Record<string, { hand?: unknown }>;
+    if (typeof users === 'object' && !(users instanceof Map)) hideOtherHands(users, userPlayerId);
   }
 
   return sanitized;
