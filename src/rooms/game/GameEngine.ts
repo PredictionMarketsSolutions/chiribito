@@ -258,6 +258,8 @@ export class GameEngine {
   // ============ Round End ============
 
   endRound(winners: string[], winningHand: string, isAllInShowdown = false): void {
+    const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
 
     this.room.state.roundStarted = false;
@@ -289,6 +291,12 @@ export class GameEngine {
 
     // Check if game should end (only 1 active player remaining)
     this.checkGameEnd();
+
+    // Auto-start next hand if game has not ended (2+ players with chips)
+    if (activePlayers.length >= 2) {
+      this.room.state.roundStarted = true;
+      this.startNewHand();
+    }
   }
 
   private endRoundWithWinners(): void {
