@@ -216,7 +216,7 @@ export class PlayerLifecycleManager {
     engine: GameEngine,
     broadcastFn: (type: string, message: any, opts?: any) => void
   ): void {
-    const { sessionManager, connectionMonitor, analytics } = dependencies;
+    const { sessionManager, seatManager, connectionMonitor, analytics } = dependencies;
     const player = state.users.get(client.sessionId);
     const wasCurrentTurn = state.currentTurn === client.sessionId;
 
@@ -234,16 +234,20 @@ export class PlayerLifecycleManager {
           timestamp: Date.now()
         });
 
-        if (wasCurrentTurn && playersInHand.length > 0) {
+        // Solo avanzar turno/ronda si la partida sigue en curso (evita doble endRound al desconectar tras game over)
+        if (wasCurrentTurn && playersInHand.length > 0 && state.roundStarted) {
           engine.setCurrentPlayerIndexBeforeNextActive(playerIndex);
           engine.endTurn();
         }
       }
 
+      if (player.seatIndex >= 0) {
+        seatManager.freeSeat(player.seatIndex);
+      }
       state.users.delete(client.sessionId);
     }
 
-    // Check for winner by fold
+    // Ganador por fold solo si la ronda estaba activa (evita pagar dos veces al ganador)
     if (playersInHand.length === 1 && state.roundStarted) {
       engine.endRound([playersInHand[0]], "Gana por fold");
     }

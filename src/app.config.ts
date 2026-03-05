@@ -45,9 +45,10 @@ export default config({
 
     initializeGameServer: (gameServer) => {
         /**
-         * Define your room handlers:
+         * Define your room handlers.
+         * enableRealtimeListing() so LobbyRoom gets live updates when my_room instances are created/joined/left/disposed.
          */
-        gameServer.define('my_room', MyRoom);
+        gameServer.define('my_room', MyRoom).enableRealtimeListing();
 
         gameServer.define('lobby', LobbyRoom);
     },

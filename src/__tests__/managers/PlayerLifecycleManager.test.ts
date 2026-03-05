@@ -423,11 +423,12 @@ describe("PlayerLifecycleManager", () => {
       });
     });
 
-    it("should progress turn if leaving player was current turn", async () => {
+    it("should progress turn if leaving player was current turn and round is active", async () => {
       const client = createMockClient("session-1");
       const player = new Player("session-1");
       mockState.users.set("session-1", player);
       mockState.currentTurn = "session-1";
+      mockState.roundStarted = true;
       playersInHand.push("session-1", "session-2");
 
       await manager.handleLeave(
@@ -507,6 +508,51 @@ describe("PlayerLifecycleManager", () => {
       );
 
       expect(mockEngine.endRound).not.toHaveBeenCalled();
+    });
+
+    it("should not call endTurn when round already ended (avoids double payout on disconnect)", async () => {
+      const client = createMockClient("session-1");
+      const player = new Player("session-1");
+      mockState.users.set("session-1", player);
+      mockState.currentTurn = "session-1";
+      mockState.roundStarted = false; // partida ya terminada (game over)
+      playersInHand.push("session-1", "session-2");
+
+      await manager.handleLeave(
+        client,
+        true,
+        mockState,
+        dependencies(),
+        playersInHand,
+        mockEngine as GameEngine,
+        allowReconnectionFn,
+        broadcastFn
+      );
+
+      expect(mockEngine.endTurn).not.toHaveBeenCalled();
+      expect(mockEngine.endRound).not.toHaveBeenCalled();
+    });
+
+    it("should free seat when player leaves", async () => {
+      const client = createMockClient("session-1");
+      const player = new Player("session-1");
+      player.seatIndex = 2;
+      mockState.users.set("session-1", player);
+      const freeSeatSpy = jest.spyOn(seatManager, "freeSeat");
+
+      await manager.handleLeave(
+        client,
+        true,
+        mockState,
+        dependencies(),
+        playersInHand,
+        mockEngine as GameEngine,
+        allowReconnectionFn,
+        broadcastFn
+      );
+
+      expect(freeSeatSpy).toHaveBeenCalledWith(2);
+      freeSeatSpy.mockRestore();
     });
 
     it("should clean up all managers", async () => {

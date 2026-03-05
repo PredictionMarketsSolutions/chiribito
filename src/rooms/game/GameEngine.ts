@@ -18,6 +18,7 @@ import {
 
 export class GameEngine {
   private handContributions = new Map<string, number>();
+  private gameEndBroadcasted = false;
   private utils: GameUtils;
   private broadcaster: GameBroadcaster;
   private roundManager: RoundManager;
@@ -67,6 +68,7 @@ export class GameEngine {
       return;
     }
 
+    this.gameEndBroadcasted = false;
     logger.info(`Starting new hand`, { roomId: this.room.roomId });
     
     this.roundManager.resetForNewHand(this.handContributions);
@@ -267,8 +269,6 @@ export class GameEngine {
   // ============ Round End ============
 
   endRound(winners: string[], winningHand: string, isAllInShowdown = false): void {
-    const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
-
     if (this.room.turnTimeout) clearTimeout(this.room.turnTimeout);
 
     this.room.state.roundStarted = false;
@@ -298,11 +298,19 @@ export class GameEngine {
 
     this.winnerDeterminator.logRoundEnd(winners, winningHand, isAllInShowdown, this.room.state.pot);
 
+    // Reservar asiento y ventana de rebuy para jugadores que quedaron con 0 fichas (bust)
+    for (const [, player] of this.room.state.users) {
+      if (player.chips === 0 && player.seatIndex >= 0 && this.room.onPlayerBusted) {
+        this.room.onPlayerBusted(player.sessionId, player.seatIndex);
+      }
+    }
+
     // Check if game should end (only 1 active player remaining)
     this.checkGameEnd();
 
-    // Auto-start next hand if game has not ended (2+ players with chips)
-    if (activePlayers.length >= 2) {
+    // Auto-start next hand only if we still have 2+ players with chips after payouts (avoids flip when loser ends with 0)
+    const playersWithChipsAfterPayout = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+    if (playersWithChipsAfterPayout.length >= 2) {
       this.room.state.roundStarted = true;
       this.startNewHand();
     }
@@ -319,13 +327,13 @@ export class GameEngine {
    */
   private startAllInShowdownReveal(): void {
     if (this.room.state.communityCards.length >= 5) {
-      this.endRoundWithWinners();
+      this.endRoundWithWinners(true);
       return;
     }
 
     const revealNext = (): void => {
       if (this.room.state.communityCards.length >= 5) {
-        this.endRoundWithWinners();
+        this.endRoundWithWinners(true);
         return;
       }
       this.roundManager.dealNextCommunityCard();
@@ -350,27 +358,54 @@ export class GameEngine {
 
   /**
    * Check if game should end (only 1 player with chips remaining).
-   * If so, broadcast game end and prevent further hands.
+   * If there are players in rebuy window, do not end yet — wait for rebuy or timeout.
    */
   private checkGameEnd(): void {
     const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
-    
-    if (activePlayers.length === 1) {
-      const winner = activePlayers[0];
-      logger.info(`Game ended - champion crowned`, {
-        winner: winner.name,
-        sessionId: winner.sessionId,
-        finalChips: winner.chips,
-        roomId: this.room.roomId
-      });
+    if (activePlayers.length !== 1) return;
 
-      this.broadcaster.broadcastGameEnded({
-        champion: {
-          sessionId: winner.sessionId,
-          name: winner.name,
-          chips: winner.chips
-        }
-      });
+    const inRebuyWindow = this.room.onHasPlayersInRebuyWindow?.();
+    if (inRebuyWindow) {
+      logger.info(`Game not ended: players in rebuy window`, { roomId: this.room.roomId });
+      return;
+    }
+
+    if (this.gameEndBroadcasted) return;
+
+    const winner = activePlayers[0];
+    logger.info(`Game ended - champion crowned`, {
+      winner: winner.name,
+      sessionId: winner.sessionId,
+      finalChips: winner.chips,
+      roomId: this.room.roomId
+    });
+
+    this.broadcaster.broadcastGameEnded({
+      champion: {
+        sessionId: winner.sessionId,
+        name: winner.name,
+        chips: winner.chips
+      }
+    });
+    this.gameEndBroadcasted = true;
+  }
+
+  /**
+   * Call after a player leaves so we can broadcast game ended if only 1 remains (e.g. after rebuy timeout kick).
+   */
+  tryGameEnd(): void {
+    this.checkGameEnd();
+  }
+
+  /**
+   * Call after a successful rebuy: if we were waiting (no round) and now have 2+ players with chips, start a new hand.
+   */
+  tryResumeAfterRebuy(): void {
+    if (this.room.state.roundStarted) return;
+    const playersWithChips = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
+    if (playersWithChips.length >= 2) {
+      this.room.state.roundStarted = true;
+      this.startNewHand();
     }
   }
 

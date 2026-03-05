@@ -201,6 +201,28 @@ describe("SeatManager", () => {
       expect(seatManager.isSeatReservedForRebuy(2)).toBe(true);
       expect(seatManager.isSeatReservedForRebuy(4)).toBe(true);
     });
+
+    it("hasActiveRebuyReservations returns true when any reservation is not expired", () => {
+      seatManager.reserveSeatForRebuy(1, 100);
+      expect(seatManager.hasActiveRebuyReservations()).toBe(true);
+      jest.advanceTimersByTime(180000 + 1000);
+      expect(seatManager.hasActiveRebuyReservations()).toBe(false);
+    });
+
+    it("takeExpiredReservations returns and removes expired entries for room to kick clients", () => {
+      seatManager.reserveSeatForRebuy(1, 100);
+      seatManager.reserveSeatForRebuy(3, 200);
+      const reservationTimeoutMs = 180000;
+      jest.advanceTimersByTime(reservationTimeoutMs + 1000);
+
+      const expired = seatManager.takeExpiredReservations();
+
+      expect(expired).toHaveLength(2);
+      expect(expired).toContainEqual({ seatIndex: 1, userId: 100 });
+      expect(expired).toContainEqual({ seatIndex: 3, userId: 200 });
+      expect(seatManager.isSeatReservedForRebuy(1)).toBe(false);
+      expect(seatManager.isSeatReservedForRebuy(3)).toBe(false);
+    });
   });
 
   describe("Clear All", () => {

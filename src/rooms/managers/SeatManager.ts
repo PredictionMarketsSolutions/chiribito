@@ -153,25 +153,47 @@ export class SeatManager {
   }
 
   /**
-   * Clean up expired reservations (called periodically)
+   * True if there is at least one rebuy reservation still active (not expired).
+   * Used to delay "game ended" until rebuy window expires or player rebuys.
    */
-  private cleanupExpiredReservations(): void {
+  hasActiveRebuyReservations(): boolean {
     const now = Date.now();
-    let expiredCount = 0;
+    for (const reservation of this.rebuySeatReservations.values()) {
+      if (now <= reservation.expiresAt) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Take and remove all expired rebuy reservations.
+   * Returns them so the room can kick the corresponding clients (no rebuy in time).
+   */
+  takeExpiredReservations(): { seatIndex: number; userId: number }[] {
+    const now = Date.now();
+    const expired: { seatIndex: number; userId: number }[] = [];
 
     for (const [seatIndex, reservation] of this.rebuySeatReservations.entries()) {
       if (now > reservation.expiresAt) {
+        expired.push({ seatIndex, userId: reservation.userId });
         this.rebuySeatReservations.delete(seatIndex);
-        expiredCount++;
       }
     }
 
-    if (expiredCount > 0) {
-      logger.info("Expired reservations cleaned", {
-        count: expiredCount,
+    if (expired.length > 0) {
+      logger.info("Expired rebuy reservations taken", {
+        count: expired.length,
         roomId: this.roomId
       });
     }
+
+    return expired;
+  }
+
+  /**
+   * Clean up expired reservations (called periodically)
+   */
+  private cleanupExpiredReservations(): void {
+    this.takeExpiredReservations();
   }
 
   /**

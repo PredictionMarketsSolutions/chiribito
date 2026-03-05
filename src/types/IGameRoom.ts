@@ -24,4 +24,10 @@ export interface IGameRoom {
 
   /** Schedule a callback after delay (e.g. for all-in showdown card reveal). */
   scheduleDelayed(callback: () => void, ms: number): void;
+
+  /** Llamado cuando un jugador queda con 0 fichas (bust) para reservar asiento y ventana de rebuy. */
+  onPlayerBusted?(sessionId: string, seatIndex: number): void;
+
+  /** True si hay jugadores en ventana de rebuy (no declarar game ended hasta que expiren o rebuyn). */
+  onHasPlayersInRebuyWindow?: () => boolean;
 }
