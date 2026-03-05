@@ -158,6 +158,31 @@ describe('GameEngine.handleBet', () => {
       engine.handleBet(mockClient as Client, 100);
       expect(p1.chips).toBeGreaterThanOrEqual(0);
     });
+
+    test('does not skip betting round after opening all-in in heads-up', () => {
+      const p1 = state.users.get('player1')!;
+      const p2 = state.users.get('player2')!;
+
+      // Both players start with chips, heads-up
+      p1.chips = 1000;
+      p2.chips = 1000;
+      state.currentBet = 0;
+      state.currentTurn = 'player1';
+      mockRoom.currentPlayerIndex = 0;
+
+      const proceedSpy = jest.spyOn(engine as any, 'proceedToNextPhase');
+
+      // Player 1 goes all-in as opening action
+      engine.handleAllIn(mockClient as Client);
+
+      // All-in player should be marked and betting round should not be skipped
+      expect(mockRoom.playersAllIn.has('player1')).toBe(true);
+      expect(proceedSpy).not.toHaveBeenCalled();
+
+      // Turn should move to player 2
+      expect(mockRoom.currentPlayerIndex).toBe(1);
+      expect(state.currentTurn).toBe('player2');
+    });
   });
 
   describe('_validateBetAction', () => {
