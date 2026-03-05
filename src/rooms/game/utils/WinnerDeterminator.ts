@@ -82,34 +82,65 @@ export class WinnerDeterminator {
     contributions: Map<string, number>,
     winners: string[]
   ): Array<{ playerId: string; amount: number }> {
-    const payouts: Array<{ playerId: string; amount: number }> = [];
+    const payouts = new Map<string, number>();
 
-    if (winners.length === 0) return payouts;
+    if (winners.length === 0) return [];
 
-    const sortedContributions = Array.from(contributions.entries())
+    const contributionEntries = Array.from(contributions.entries())
+      .filter(([_, amount]) => amount > 0)
       .sort((a, b) => a[1] - b[1]);
 
+    // Get unique contribution levels
+    const levels = Array.from(new Set(contributionEntries.map(([_, amount]) => amount)))
+      .sort((a, b) => a - b);
+
     let previousLevel = 0;
-    const claimedPlayers = new Set(winners);
 
-    for (const [playerId, totalContribution] of sortedContributions) {
-      const betAmount = totalContribution - previousLevel;
-      const potSize = betAmount * sortedContributions.length;
-      const splitAmount = Math.floor(potSize / claimedPlayers.size);
+    for (const level of levels) {
+      // Find participants at this level (contributed >= level)
+      const participantEntries = contributionEntries
+        .filter(([_, amount]) => amount >= level);
+      
+      const participants = participantEntries.map(([id]) => id);
 
-      for (const winnerId of claimedPlayers) {
-        const existingIndex = payouts.findIndex(p => p.playerId === winnerId);
-        if (existingIndex !== -1) {
-          payouts[existingIndex].amount += splitAmount;
-        } else {
-          payouts.push({ playerId: winnerId, amount: splitAmount });
-        }
+      const sidePotAmount = (level - previousLevel) * participants.length;
+      
+      if (sidePotAmount <= 0 || participants.length === 0) {
+        previousLevel = level;
+        continue;
       }
 
-      previousLevel = totalContribution;
+      // Only winners who are participants in this sidepot can claim it
+      const eligibleWinners = winners.filter(w => participants.includes(w));
+
+      if (eligibleWinners.length === 0) {
+        // No winner eligible for this sidepot
+        // Return chips to participants proportionally (uncalled bets)
+        // Each participant gets back their contribution to this sidepot level
+        const returnPerParticipant = (level - previousLevel);
+        for (const participantId of participants) {
+          payouts.set(participantId, (payouts.get(participantId) ?? 0) + returnPerParticipant);
+        }
+      } else {
+        // Split sidepot among eligible winners
+        const base = Math.floor(sidePotAmount / eligibleWinners.length);
+        let remainder = sidePotAmount % eligibleWinners.length;
+
+        for (const winnerId of eligibleWinners) {
+          const bonus = remainder > 0 ? 1 : 0;
+          payouts.set(winnerId, (payouts.get(winnerId) ?? 0) + base + bonus);
+          if (remainder > 0) remainder -= 1;
+        }
+      }
+      
+      previousLevel = level;
     }
 
-    return payouts;
+    // Convert to array format
+    return Array.from(payouts.entries()).map(([playerId, amount]) => ({
+      playerId,
+      amount
+    }));
   }
 
   logRoundEnd(

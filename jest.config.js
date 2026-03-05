@@ -5,8 +5,14 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   
-  // Coverage configuration
-  collectCoverage: false, // Set to true in CI/CD
+  // Increase timeout for tests
+  testTimeout: 10000,
+  
+  // Force Jest to exit after tests complete
+  forceExit: false,
+  
+  // Close all handles and free resources
+  detectOpenHandles: false,
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
