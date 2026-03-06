@@ -1629,7 +1629,7 @@ function renderLobbyRooms(rooms: AvailableRoom[]) {
   roomsList.innerHTML = "";
   if (!rooms || rooms.length === 0) {
     const empty = document.createElement("li");
-    empty.className = "room-item";
+    empty.className = "room-item room-item-empty";
     empty.textContent = "No hay mesas disponibles ahora mismo.";
     roomsList.appendChild(empty);
     return;
