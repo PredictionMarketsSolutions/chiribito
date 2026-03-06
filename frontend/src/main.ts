@@ -1141,7 +1141,7 @@ function replayBufferedActions() {
  */
 let rebuyDialog: HTMLDivElement | null = null;
 let rebuyTimeoutMs = 0;
-let rebuyCountdownInterval: number | null = null;
+let rebuyCountdownInterval: ReturnType<typeof setInterval> | null = null;
 
 function showRebuyDialog(cost: number, timeoutSeconds: number) {
   rebuyTimeoutMs = timeoutSeconds * 1000;
