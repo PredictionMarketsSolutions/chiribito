@@ -1347,7 +1347,7 @@ async function joinRoom(
   // Start client-side heartbeat to monitor connection
   startClientHeartbeat();
 
-  joinedRoom.onLeave((code) => {
+  joinedRoom.onLeave((code: number) => {
     stopClientHeartbeat();
     
     // 4011 = app custom: session replaced by another login
