@@ -3,6 +3,13 @@
  * Tests for tournament end: notifyTournamentEnd sends gameResult (won/lost) to each client and closes the room.
  */
 
+// Avoid loading full @colyseus/core (pulls ESM deps like rou3 that Jest does not transform)
+jest.mock("@colyseus/core", () => ({
+  Room: class {},
+  Client: class {},
+  CloseCode: { CONSENTED: 4000 },
+}));
+
 import { MyRoom } from "../../rooms/MyRoom";
 
 describe("MyRoom tournament end", () => {

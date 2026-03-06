@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "my-app",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "npm init template for bootstrapping an empty Colyseus project",
   "main": "dist/index.js",
   "scripts": {
@@ -39,8 +39,8 @@
   },
   "homepage": "https://github.com/colyseus/create-colyseus#readme",
   "devDependencies": {
-    "@colyseus/loadtest": "^0.16.0",
-    "@colyseus/testing": "^0.16.0",
+    "@colyseus/loadtest": "^0.17.8",
+    "@colyseus/testing": "^0.17.11",
     "@types/cors": "^2.8.18",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.9",
@@ -55,17 +55,20 @@
     "vite": "^5.4.11"
   },
   "dependencies": {
-    "@colyseus/auth": "^0.16.0",
-    "@colyseus/core": "^0.16.0",
-    "@colyseus/monitor": "^0.16.0",
-    "@colyseus/playground": "^0.16.0",
-    "@colyseus/schema": "^3.0.37",
-    "@colyseus/tools": "^0.16.0",
-    "@colyseus/ws-transport": "^0.16.5",
+    "@colyseus/auth": "^0.17.6",
+    "@colyseus/core": "^0.17.32",
+    "@colyseus/monitor": "^0.17.7",
+    "@colyseus/playground": "^0.17.10",
+    "@colyseus/schema": "^4.0.8",
+    "@colyseus/sdk": "^0.17.26",
+    "@colyseus/tools": "^0.17.18",
+    "@colyseus/ws-transport": "^0.17.9",
+    "@logtail/node": "^0.5.4",
+    "@logtail/winston": "^0.5.4",
     "@types/express": "^4.17.22",
     "@types/express-session": "^1.18.2",
     "bcryptjs": "^3.0.3",
-    "colyseus.js": "^0.16.17",
+    "colyseus": "^0.17.8",
     "connect-redis": "^9.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -76,9 +79,7 @@
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.24",
     "winston": "^3.19.0",
-    "zod": "^3.24.2",
-    "@logtail/node": "^0.5.4",
-    "@logtail/winston": "^0.5.4"
+    "zod": "^3.24.2"
   },
   "workspaces": [
     "api-server"

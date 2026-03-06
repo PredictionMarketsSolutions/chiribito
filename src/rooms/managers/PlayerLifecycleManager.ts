@@ -1,4 +1,5 @@
 import { Client } from "@colyseus/core";
+import { CUSTOM_SESSION_REPLACED } from "../close-codes";
 import { MyRoomState, Player } from "../schema/MyRoomState";
 import { SessionManager } from "./SessionManager";
 import { SeatManager } from "./SeatManager";
@@ -63,7 +64,7 @@ export class PlayerLifecycleManager {
     if (replaceSessionId) {
       const previousClient = getAllClients().find(c => c.sessionId === replaceSessionId);
       if (previousClient) {
-        previousClient.leave(4001, "SESSION_REPLACED");
+        previousClient.leave(CUSTOM_SESSION_REPLACED, "SESSION_REPLACED");
       }
       
       // Remove old session from managers

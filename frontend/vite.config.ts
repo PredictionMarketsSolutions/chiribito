@@ -10,8 +10,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Force ESM build to avoid CJS resolution of ./errors/Errors.js (package ships .cjs/.mjs only)
-      "colyseus.js": path.resolve(__dirname, "node_modules/@colyseus/sdk/build/index.mjs")
+      // Map legacy \"colyseus.js\" import to the modern ESM client SDK.
+      // @colyseus/sdk is compatible with Colyseus 0.16+ servers.
+      "colyseus.js": "@colyseus/sdk"
     }
   }
 });

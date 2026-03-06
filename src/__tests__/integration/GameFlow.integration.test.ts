@@ -317,7 +317,7 @@ describe("GameFlow Bug Fixes", () => {
       expect(mockRoom.playersInHand.length).toBe(0);
     });
 
-    it("should reset gameEndBroadcasted even when startNewHand bails out (<2 players)", () => {
+    it("should keep gameEndBroadcasted true when startNewHand bails out (<2 players)", () => {
       const player2 = roomState.users.get("player-2") as Player;
       player2.chips = 0;
 
@@ -326,7 +326,7 @@ describe("GameFlow Bug Fixes", () => {
 
       engine.startNewHand();
 
-      expect((engine as any).gameEndBroadcasted).toBe(false);
+      expect((engine as any).gameEndBroadcasted).toBe(true);
       expect(roomState.roundStarted).toBe(false);
     });
   });

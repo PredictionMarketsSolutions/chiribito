@@ -58,10 +58,6 @@ export class GameEngine {
   }
 
   startNewHand(): void {
-    // Always reset game-ended broadcast guard when attempting to start a new hand.
-    // This keeps the flag consistent even if we bail out due to not enough active players.
-    this.gameEndBroadcasted = false;
-
     const playersWithChips = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
     if (playersWithChips.length < 2) {
       this.room.state.roundStarted = false;
@@ -71,6 +67,10 @@ export class GameEngine {
       });
       return;
     }
+
+    // Reset game-ended broadcast guard only when a new hand actually starts.
+    // If we bail out due to <2 players, keep the previous \"game ended\" state.
+    this.gameEndBroadcasted = false;
 
     logger.info(`Starting new hand`, { roomId: this.room.roomId });
     

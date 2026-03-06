@@ -1,4 +1,4 @@
-import { Room, Client } from "@colyseus/core";
+import { Room, Client, CloseCode } from "@colyseus/core";
 import { StateView } from "@colyseus/schema";
 import { MyRoomState, Player } from "./schema/MyRoomState";
 import { GameEngine } from "./game/GameEngine";
@@ -20,12 +20,13 @@ import {
   AuthenticationService,
   PlayerLifecycleManager
 } from "./managers";
+import { CUSTOM_REBUY_TIMEOUT } from "./close-codes";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 const REBUY_KICK_CHECK_INTERVAL_MS = 15000; // cada 15s revisar reservas de rebuy expiradas
 
-export class MyRoom extends Room<MyRoomState> {
+export class MyRoom extends Room<{ state: MyRoomState }> {
   maxClients = 6;
   public turnTimeout: NodeJS.Timeout | null = null;
   public dealerIndex: number = 0;
@@ -192,7 +193,7 @@ export class MyRoom extends Room<MyRoomState> {
           const client = this.clients.find(c => c.sessionId === sessionId);
           if (client) {
             logger.info(`Kicking client for rebuy timeout`, { sessionId, userId, roomId: this.roomId });
-            client.leave(4002, "REBUY_TIMEOUT");
+            client.leave(CUSTOM_REBUY_TIMEOUT, "REBUY_TIMEOUT");
           }
         }
       }
@@ -282,7 +283,8 @@ export class MyRoom extends Room<MyRoomState> {
     client.view.add(player);
   }
 
-  async onLeave(client: Client, consented: boolean) {
+  async onLeave(client: Client, code: number) {
+    const consented = code === CloseCode.CONSENTED;
     await this.lifecycleManager.handleLeave(
       client,
       consented,

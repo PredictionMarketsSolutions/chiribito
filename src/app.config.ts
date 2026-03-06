@@ -1,6 +1,4 @@
-import config from "@colyseus/tools";
-
-import { WebSocketTransport } from "@colyseus/ws-transport";
+import { defineServer, defineRoom } from "colyseus";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
 import type { Request, Response } from "express";
@@ -17,43 +15,16 @@ import { MyRoom } from "./rooms/MyRoom";
 import auth from "./config/auth";
 import { LobbyRoom } from "@colyseus/core";
 
-export default config({
-    options: {
-        // devMode: true,
-        // driver: new RedisDriver(),
-        // presence: new RedisPresence(),
+const server = defineServer({
+    rooms: {
+        my_room: defineRoom(MyRoom),
+        lobby: defineRoom(LobbyRoom),
     },
 
-        initializeTransport: (options) => {
-                // Create transport and attach compatibility helpers that some @colyseus/core
-                // router code expects (either `expressApp` property or `getExpressApp()` method).
-                const transport = new WebSocketTransport(options as any);
-                // prefer existing property if present
-                try {
-                    // attach expressApp for @colyseus/tools compatibility
-                    (transport as any).expressApp = (options as any).app;
-                } catch (e) {
-                    // ignore
-                }
-                // attach getExpressApp for @colyseus/core router compatibility
-                if (typeof (transport as any).getExpressApp !== 'function') {
-                    (transport as any).getExpressApp = () => (options as any).app;
-                }
-
-                return transport;
-        },
-
-    initializeGameServer: (gameServer) => {
-        /**
-         * Define your room handlers.
-         * enableRealtimeListing() so LobbyRoom gets live updates when my_room instances are created/joined/left/disposed.
-         */
-        gameServer.define('my_room', MyRoom).enableRealtimeListing();
-
-        gameServer.define('lobby', LobbyRoom);
-    },
-
-    initializeExpress: (app) => {
+    /**
+     * Configure Express routes and middleware.
+     */
+    express: (app) => {
         /**
          * Bind your custom express routes here:
          */
@@ -113,7 +84,9 @@ export default config({
         app.use(auth.prefix, auth.routes());
     },
 
-
+    /**
+     * Validación de entorno antes de que el servidor empiece a escuchar.
+     */
     beforeListen: () => {
         /**
          * Before before gameServer.listen() is called.
@@ -165,3 +138,5 @@ export default config({
         });
     }
 });
+
+export default server;

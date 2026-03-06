@@ -1350,7 +1350,8 @@ async function joinRoom(
   joinedRoom.onLeave((code) => {
     stopClientHeartbeat();
     
-    if (code === 4001) {
+    // 4011 = app custom: session replaced by another login
+    if (code === 4011) {
       alert("Tu sesion fue reemplazada por otro ingreso.");
       clearAuthToken();
       resetRoomUi("replaced");

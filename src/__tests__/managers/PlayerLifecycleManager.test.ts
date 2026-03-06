@@ -219,7 +219,7 @@ describe("PlayerLifecycleManager", () => {
 
       manager.handleJoin(newClient, options, mockState, dependencies(), getAllClientsFn, broadcastFn);
 
-      expect(oldClient.leave).toHaveBeenCalledWith(4001, "SESSION_REPLACED");
+      expect(oldClient.leave).toHaveBeenCalledWith(4011, "SESSION_REPLACED");
     });
 
     it("should remove old session from sessionManager", () => {
