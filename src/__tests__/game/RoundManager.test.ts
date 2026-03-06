@@ -388,6 +388,21 @@ describe("RoundManager", () => {
       // Only rich player should get cards
       expect(mockRoom.playersInHand).toContain("p1");
     });
+
+    it("should set playerStatus to in_hand for all dealt players (server-only)", () => {
+      const player1 = { hand: { clear: jest.fn(), push: jest.fn() }, currentBet: 0, isFolded: false, sessionId: "p1", chips: 1000, playerStatus: "" };
+      const player2 = { hand: { clear: jest.fn(), push: jest.fn() }, currentBet: 0, isFolded: false, sessionId: "p2", chips: 500, playerStatus: "" };
+
+      mockRoom.state.users.set("p1", player1 as any);
+      mockRoom.state.users.set("p2", player2 as any);
+      mockRoom.playersInHand = [];
+      mockRoom.state.dealCard = jest.fn(() => "A♠");
+
+      roundManager.dealInitialHands();
+
+      expect(player1.playerStatus).toBe("in_hand");
+      expect(player2.playerStatus).toBe("in_hand");
+    });
   });
 
   describe("resetDealerAndPhase", () => {

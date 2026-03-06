@@ -1,6 +1,6 @@
 import { Client } from "@colyseus/core";
 import { CUSTOM_SESSION_REPLACED } from "../close-codes";
-import { MyRoomState, Player } from "../schema/MyRoomState";
+import { MyRoomState, Player, PLAYER_STATUS } from "../schema/MyRoomState";
 import { SessionManager } from "./SessionManager";
 import { SeatManager } from "./SeatManager";
 import { ConnectionMonitor } from "./ConnectionMonitor";
@@ -60,6 +60,7 @@ export class PlayerLifecycleManager {
     player.name = options.name || options.authUser?.username || `Player-${client.sessionId.slice(0, 4)}`;
     player.chips = options.chips || 1000;
     player.seatIndex = previousSeatIndex >= 0 ? previousSeatIndex : this.getNextAvailableSeat(state);
+    player.playerStatus = PLAYER_STATUS.SEATED;
 
     if (replaceSessionId) {
       const previousClient = getAllClients().find(c => c.sessionId === replaceSessionId);

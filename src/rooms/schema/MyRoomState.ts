@@ -1,5 +1,17 @@
 import { Schema, MapSchema, ArraySchema, type, view } from "@colyseus/schema";
 
+/**
+ * Valores válidos de estado del jugador. Solo el servidor puede asignarlos (nunca desde mensajes del cliente).
+ * Seguridad: no existe onMessage ni API que permita al cliente cambiar playerStatus.
+ */
+export const PLAYER_STATUS = {
+  SEATED: "seated",
+  IN_HAND: "in_hand",
+} as const;
+export type PlayerStatusValue = (typeof PLAYER_STATUS)[keyof typeof PLAYER_STATUS];
+
+const DEFAULT_PLAYER_STATUS: PlayerStatusValue = PLAYER_STATUS.SEATED;
+
 export class Player extends Schema {
   @type("string") sessionId: string;
   @type("string") name: string = "";
@@ -9,6 +21,8 @@ export class Player extends Schema {
   @type("number") currentBet: number = 0;
   @type("boolean") isFolded: boolean = false;
   @type("number") seatIndex: number = -1;
+  /** Estado dentro de la sala. Solo el servidor lo actualiza (join → seated, deal hand → in_hand, end round → seated). */
+  @type("string") playerStatus: string = DEFAULT_PLAYER_STATUS;
 
   constructor(sessionId: string) {
     super();

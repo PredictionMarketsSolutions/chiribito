@@ -6,7 +6,7 @@
 
 import { StateView } from "@colyseus/schema";
 import { GameEngine } from "../../rooms/game/GameEngine";
-import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
+import { MyRoomState, Player, PLAYER_STATUS } from "../../rooms/schema/MyRoomState";
 import { GameBroadcaster } from "../../rooms/game/utils/GameBroadcaster";
 import { Room, Client } from "@colyseus/core";
 
@@ -349,6 +349,44 @@ describe("GameFlow Bug Fixes", () => {
       player2.seatIndex = 1;
 
       expect(() => engine.endRound(["player-1"], "High Card", false)).not.toThrow();
+    });
+  });
+
+  describe("playerStatus (server-only transitions)", () => {
+    it("sets playerStatus to in_hand when hand starts (dealInitialHands)", () => {
+      const mockClient = { send: jest.fn() } as any;
+      engine.handleStartGame(mockClient);
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      expect(p1.playerStatus).toBe(PLAYER_STATUS.IN_HAND);
+      expect(p2.playerStatus).toBe(PLAYER_STATUS.IN_HAND);
+    });
+
+    it("sets playerStatus to seated for all players after endRound when next hand does not start", () => {
+      const mockClient = { send: jest.fn() } as any;
+      engine.handleStartGame(mockClient);
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      expect(p1.playerStatus).toBe(PLAYER_STATUS.IN_HAND);
+      expect(p2.playerStatus).toBe(PLAYER_STATUS.IN_HAND);
+
+      p2.chips = 0; // only 1 player with chips → no auto startNewHand after endRound
+      engine.endRound(["player-1"], "High Card", false);
+
+      expect(p1.playerStatus).toBe(PLAYER_STATUS.SEATED);
+      expect(p2.playerStatus).toBe(PLAYER_STATUS.SEATED);
+    });
+
+    it("sets playerStatus to seated after endRound even when one player has 0 chips (bust)", () => {
+      const player2 = roomState.users.get("player-2") as Player;
+      player2.chips = 0;
+      player2.seatIndex = 1;
+
+      engine.endRound(["player-1"], "High Card", false);
+
+      expect((roomState.users.get("player-1") as Player).playerStatus).toBe(PLAYER_STATUS.SEATED);
+      expect(player2.playerStatus).toBe(PLAYER_STATUS.SEATED);
     });
   });
 

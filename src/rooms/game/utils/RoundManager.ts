@@ -5,6 +5,7 @@
 
 import logger from "../../../config/logger";
 import type { IGameRoom } from "../../../types/IGameRoom";
+import { PLAYER_STATUS } from "../../schema/MyRoomState";
 import { GameUtils } from "./GameUtils";
 import { GameBroadcaster } from "./GameBroadcaster";
 
@@ -66,6 +67,7 @@ export class RoundManager {
       player.hand.clear();
       player.currentBet = 0;
       player.isFolded = false;
+      player.playerStatus = PLAYER_STATUS.IN_HAND;
       player.hand.push(this.room.state.dealCard(), this.room.state.dealCard());
       this.room.playersInHand.push(player.sessionId);
     });

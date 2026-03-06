@@ -4,7 +4,7 @@ import { SessionManager } from "../../rooms/managers/SessionManager";
 import { SeatManager } from "../../rooms/managers/SeatManager";
 import { ConnectionMonitor } from "../../rooms/managers/ConnectionMonitor";
 import { AnalyticsService } from "../../rooms/managers/AnalyticsService";
-import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
+import { MyRoomState, Player, PLAYER_STATUS } from "../../rooms/schema/MyRoomState";
 import { GameEngine } from "../../rooms/game/GameEngine";
 
 describe("PlayerLifecycleManager", () => {
@@ -100,7 +100,17 @@ describe("PlayerLifecycleManager", () => {
       expect(player.sessionId).toBe("session-1");
       expect(player.name).toBe("Alice");
       expect(player.chips).toBe(1500);
+      expect(player.playerStatus).toBe(PLAYER_STATUS.SEATED);
       expect(mockState.users.get("session-1")).toBe(player);
+    });
+
+    it("should set playerStatus to seated on join (server-only, security)", () => {
+      const client = createMockClient("session-1");
+      const options = { authUser: { userId: 1 }, name: "Alice", chips: 1000 };
+
+      const player = manager.handleJoin(client, options, mockState, dependencies(), getAllClientsFn, broadcastFn);
+
+      expect(player.playerStatus).toBe(PLAYER_STATUS.SEATED);
     });
 
     it("should register session and occupy seat", () => {

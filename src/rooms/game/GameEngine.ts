@@ -6,6 +6,7 @@
 
 import { Client } from "@colyseus/core";
 import type { IGameRoom } from "../../types/IGameRoom";
+import { PLAYER_STATUS } from "../schema/MyRoomState";
 import { TURN_TIMEOUT, ALLIN_REVEAL_DELAY_MS } from "./constants";
 import logger from "../../config/logger";
 import {
@@ -335,6 +336,11 @@ export class GameEngine {
       if (player.chips === 0 && player.seatIndex >= 0 && this.room.onPlayerBusted) {
         this.room.onPlayerBusted(player.sessionId, player.seatIndex);
       }
+    }
+
+    // Estado "seated" entre manos para todos los de la mesa (incl. rebuy). Solo el servidor actualiza (seguridad).
+    for (const [, player] of this.room.state.users) {
+      player.playerStatus = PLAYER_STATUS.SEATED;
     }
 
     // Check if game should end (only 1 active player remaining)
