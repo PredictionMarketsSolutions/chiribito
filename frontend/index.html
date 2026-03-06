@@ -41,6 +41,66 @@
         </section>
       </div>
     </div>
+    <div id="lobby-overlay" class="auth-overlay hidden">
+      <div class="auth-card lobby-card">
+        <header class="panel-header">
+          <div>
+            <p class="panel-kicker">Casino Control</p>
+            <h1>Lobby</h1>
+          </div>
+          <div class="panel-pill">Mesas</div>
+        </header>
+        <section class="panel-card">
+          <h2>Mesas disponibles</h2>
+          <div id="lobby-message" class="auth-message" role="status"></div>
+          <div class="lobby-actions">
+            <button id="refresh-rooms">Refrescar</button>
+          </div>
+          <ul id="rooms-list" class="rooms-list" aria-label="Lista de mesas"></ul>
+        </section>
+        <section class="panel-card">
+          <h2>Crear mesa</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Nombre (opcional)</span>
+              <input id="table-name" type="text" placeholder="Mesa 1" maxlength="32" />
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="create-table" class="accent">Crear y unirme</button>
+            <button id="back-to-auth">Salir</button>
+          </div>
+        </section>
+        <section class="panel-card">
+          <h2>Unirme por ID</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Room ID</span>
+              <input id="join-room-id" type="text" placeholder="Vm1j3o6RM" />
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="join-by-id" class="accent">Unirme</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div id="tournament-result-overlay" class="auth-overlay hidden">
+      <div class="auth-card">
+        <header class="panel-header">
+          <div>
+            <p class="panel-kicker">Torneo</p>
+            <h1 id="tournament-result-title">Fin de la mesa</h1>
+          </div>
+        </header>
+        <section class="panel-card">
+          <p id="tournament-result-message" class="tournament-result-message"></p>
+          <div class="button-row" style="margin-top: 20px;">
+            <button id="tournament-back-to-lobby" class="accent">Volver al lobby</button>
+          </div>
+        </section>
+      </div>
+    </div>
     <div id="app">
       <aside id="ui" class="panel">
         <header class="panel-header">

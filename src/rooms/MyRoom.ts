@@ -42,6 +42,15 @@ export class MyRoom extends Room<MyRoomState> {
   /** Callback para retrasar game ended si hay jugadores en ventana de rebuy. */
   public onHasPlayersInRebuyWindow?: () => boolean;
 
+  /** Modo torneo: envía a cada cliente si ganó o perdió y cierra la mesa. */
+  public notifyTournamentEnd(champion: { sessionId: string; name: string; chips: number }): void {
+    for (const client of this.clients) {
+      const result = client.sessionId === champion.sessionId ? "won" : "lost";
+      client.send("gameResult", { result, champion });
+    }
+    this.disconnect();
+  }
+
   // Managers
   private sessionManager!: SessionManager;
   private connectionMonitor!: ConnectionMonitor;
@@ -114,6 +123,15 @@ export class MyRoom extends Room<MyRoomState> {
   onCreate(options: any) {
     this.setState(new MyRoomState());
     this.autoDispose = false;
+
+    const requestedName = typeof options?.tableName === "string" ? options.tableName.trim() : "";
+    const safeName = requestedName ? requestedName.slice(0, 32) : "";
+    const defaultName = `Mesa ${this.roomId.slice(0, 6)}`;
+    this.setMetadata({
+      name: safeName || defaultName,
+      createdAt: Date.now()
+    });
+
     this.engine = new GameEngine(this);
 
     // Initialize managers
@@ -224,8 +242,8 @@ export class MyRoom extends Room<MyRoomState> {
     // Rebuy message handler (allowed when round not active so busted can rebuy)
     this.onMessage("rebuy", (client) => {
       if (!this.isActionAllowed(client.sessionId, "rebuy")) return;
-      const ok = this.handleRebuy(client);
-      if (ok) this.engine.tryResumeAfterRebuy();
+      const ok: boolean = this.handleRebuy(client);
+      if (ok === true) this.engine.tryResumeAfterRebuy();
     });
   }
 

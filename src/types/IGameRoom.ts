@@ -30,4 +30,7 @@ export interface IGameRoom {
 
   /** True si hay jugadores en ventana de rebuy (no declarar game ended hasta que expiren o rebuyn). */
   onHasPlayersInRebuyWindow?: () => boolean;
+
+  /** Modo torneo: notificar a cada cliente si ganó/perdió y cerrar la mesa. */
+  notifyTournamentEnd?(champion: { sessionId: string; name: string; chips: number }): void;
 }

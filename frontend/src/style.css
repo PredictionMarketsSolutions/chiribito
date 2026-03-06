@@ -137,6 +137,60 @@ body {
   border: 1px solid var(--gray-200);
 }
 
+.lobby-card {
+  max-width: 560px;
+}
+
+.lobby-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.rooms-list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+.room-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: var(--gray-50);
+}
+
+.room-item strong {
+  color: var(--gray-900);
+}
+
+.room-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.room-meta small {
+  color: var(--gray-600);
+}
+
+.room-item button {
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.tournament-result-message {
+  font-size: 16px;
+  color: var(--gray-800);
+  line-height: 1.5;
+}
+
 .auth-message {
   min-height: 44px;
   margin-bottom: 20px;
@@ -154,6 +208,12 @@ body {
   background: #d1fae5;
   color: #065f46;
   border: 1px solid #a7f3d0;
+}
+
+.auth-message.info {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
 }
 
 .auth-message.error {

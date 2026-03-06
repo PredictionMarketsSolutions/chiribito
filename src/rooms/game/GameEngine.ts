@@ -399,6 +399,12 @@ export class GameEngine {
       }
     });
     this.gameEndBroadcasted = true;
+
+    this.room.notifyTournamentEnd?.({
+      sessionId: winner.sessionId,
+      name: winner.name,
+      chips: winner.chips
+    });
   }
 
   /**

@@ -33,6 +33,19 @@ import {
 const logEl = dom.log!;
 const authOverlay = dom.authOverlay!;
 const authMessage = dom.authMessage!;
+const lobbyOverlay = dom.lobbyOverlay!;
+const lobbyMessage = dom.lobbyMessage!;
+const roomsList = dom.roomsList!;
+const refreshRoomsButton = dom.refreshRoomsButton!;
+const tableNameInput = dom.tableNameInput!;
+const createTableButton = dom.createTableButton!;
+const backToAuthButton = dom.backToAuthButton!;
+const joinRoomIdInput = dom.joinRoomIdInput!;
+const joinByIdButton = dom.joinByIdButton!;
+const tournamentResultOverlay = dom.tournamentResultOverlay!;
+const tournamentResultTitle = dom.tournamentResultTitle!;
+const tournamentResultMessage = dom.tournamentResultMessage!;
+const tournamentBackToLobbyButton = dom.tournamentBackToLobbyButton!;
 const tokenStatus = dom.tokenStatus!;
 const roomStatus = dom.roomStatus!;
 const phaseStatus = dom.phaseStatus!;
@@ -117,10 +130,56 @@ function log(message: string) {
   logEl.textContent = `[${ts}] ${message}\n` + logEl.textContent;
 }
 
+function setLobbyOverlayVisible(visible: boolean) {
+  if (visible) {
+    lobbyOverlay.classList.remove("hidden");
+  } else {
+    lobbyOverlay.classList.add("hidden");
+  }
+}
+
+function setLobbyMessage(message: string, type: "success" | "error" | "info" = "info") {
+  lobbyMessage.textContent = message;
+  lobbyMessage.classList.remove("success", "error", "info", "visible");
+  if (!message) return;
+  lobbyMessage.classList.add("visible", type);
+}
+
+function showTournamentResult(
+  result: "won" | "lost",
+  champion?: { sessionId?: string; name?: string; chips?: number }
+) {
+  tournamentEnded = true;
+  const name = champion?.name ?? "Ganador";
+  const chips = champion?.chips ?? 0;
+  if (result === "won") {
+    tournamentResultTitle.textContent = "¡Has ganado!";
+    tournamentResultMessage.textContent = `Eres el campeón de la mesa con ${chips} fichas. La mesa se ha cerrado.`;
+  } else {
+    tournamentResultTitle.textContent = "Has perdido";
+    tournamentResultMessage.textContent = `${name} ha ganado la mesa con ${chips} fichas. La mesa se ha cerrado.`;
+  }
+  tournamentResultOverlay.classList.remove("hidden");
+  setAuthOverlayVisible(false);
+  setLobbyOverlayVisible(false);
+}
+
+function setTournamentResultVisible(visible: boolean) {
+  if (visible) {
+    tournamentResultOverlay.classList.remove("hidden");
+  } else {
+    tournamentResultOverlay.classList.add("hidden");
+  }
+}
+
 let token: string | null = null;
 let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
+let wsClient: Client | null = null;
+let lobbyPollId: number | null = null;
+/** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
+let tournamentEnded = false;
 let lastWinningHand = "-";
 let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
@@ -1181,7 +1240,17 @@ async function attemptReconnect() {
   }
 }
 
-async function joinRoom(forceReplace = false) {
+function getWsClient(): Client {
+  if (!wsClient) wsClient = new Client(WS_URL);
+  return wsClient;
+}
+
+type JoinMode = "joinOrCreate" | "create" | "joinById";
+
+async function joinRoom(
+  forceReplace = false,
+  opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
+) {
   if (!token) {
     log("No token. Login or register first.");
     setConnectionState("disconnected");
@@ -1192,15 +1261,38 @@ async function joinRoom(forceReplace = false) {
   setConnectionState("connecting");
   log("Connecting to Colyseus...");
 
-  const client = new Client(WS_URL);
+  const client = getWsClient();
   
   let joinedRoom: Room;
   try {
-    joinedRoom = await client.joinOrCreate("my_room", {
-      auth: { token },
-      name: username,
-      forceReplace
-    });
+    const mode: JoinMode = opts?.mode ?? "joinOrCreate";
+    if (mode === "joinById") {
+      const roomId = (opts?.roomId ?? "").trim();
+      if (!roomId) {
+        setConnectionState("disconnected");
+        log("Room ID vacío.");
+        return;
+      }
+      joinedRoom = await client.joinById(roomId, {
+        auth: { token },
+        name: username,
+        forceReplace
+      } as any);
+    } else if (mode === "create") {
+      const tableName = (opts?.tableName ?? "").trim();
+      joinedRoom = await client.create("my_room", {
+        auth: { token },
+        name: username,
+        tableName,
+        forceReplace
+      } as any);
+    } else {
+      joinedRoom = await client.joinOrCreate("my_room", {
+        auth: { token },
+        name: username,
+        forceReplace
+      } as any);
+    }
   } catch (err: any) {
     const message = err?.message || String(err);
     if (message.includes("SESSION_EXISTS")) {
@@ -1231,7 +1323,11 @@ async function joinRoom(forceReplace = false) {
 
   room = joinedRoom;
   currentSessionId = joinedRoom.sessionId;
+  tournamentEnded = false;
   setAuthOverlayVisible(false);
+  setLobbyOverlayVisible(false);
+  setTournamentResultVisible(false);
+  stopLobbyPolling();
   setConnectionState("connected");
   reconnectAttempts = 0;
   lastWinningHand = "-";
@@ -1261,11 +1357,27 @@ async function joinRoom(forceReplace = false) {
       setConnectionState("disconnected");
       return;
     }
+
+    if (tournamentEnded) {
+      setConnectionState("disconnected");
+      room = null;
+      if (!tournamentResultOverlay.classList.contains("hidden")) return;
+      tournamentResultTitle.textContent = "Fin de la mesa";
+      tournamentResultMessage.textContent = "La mesa se ha cerrado. Puedes volver al lobby para unirte a otra.";
+      tournamentResultOverlay.classList.remove("hidden");
+      return;
+    }
     
     // Unexpected disconnect - attempt to reconnect
     log(`Disconnected from room (code: ${code}). Attempting to reconnect...`);
     setConnectionState("disconnected");
     attemptReconnect();
+  });
+
+  joinedRoom.onMessage("gameResult", (payload: { result?: string; champion?: { sessionId?: string; name?: string; chips?: number } }) => {
+    const result = payload?.result === "won" ? "won" : "lost";
+    showTournamentResult(result, payload?.champion);
+    log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
   });
 
   joinedRoom.onMessage("joined", (payload) => {
@@ -1312,16 +1424,35 @@ async function joinRoom(forceReplace = false) {
     allInCardsRevealedByServer = false;
   });
 
-  joinedRoom.onMessage("communityCardRevealed", (payload: { communityCards?: string[]; index?: number; card?: string }) => {
-    const cards = Array.isArray(payload?.communityCards) ? payload.communityCards : [];
-    if (cards.length > 0) {
-      allInRevealInProgress = true;
-      allInCardsRevealedByServer = true;
-      previousCommunityCards = [...cards];
-      renderCardRow(communityCardsEl, cards, 5);
-      communityStatus.textContent = cards.join(" ");
+  joinedRoom.onMessage(
+    "communityCardRevealed",
+    (payload: { communityCards?: unknown; index?: number; card?: string }) => {
+      // Compatible with both payload shapes:
+      // - { communityCards: string[] }
+      // - { index: number, card: string } (older backend builds / dist)
+      let cards = schemaArrayToCards(payload?.communityCards);
+
+      const idx = typeof payload?.index === "number" ? payload.index : null;
+      const card = typeof payload?.card === "string" ? payload.card : null;
+
+      if ((!cards || cards.length === 0) && card) {
+        const next = [...previousCommunityCards];
+        const targetIndex = idx ?? next.length;
+        while (next.length < targetIndex) next.push("");
+        next[targetIndex] = card;
+        cards = next;
+      }
+
+      if (cards.length > 0) {
+        allInRevealInProgress = true;
+        allInCardsRevealedByServer = true;
+        previousCommunityCards = [...cards];
+        renderCardRow(communityCardsEl, cards, 5);
+        const shown = cards.filter(Boolean);
+        communityStatus.textContent = shown.length ? shown.join(" ") : "-";
+      }
     }
-  });
+  );
 
   joinedRoom.onMessage("playerAction", (payload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
@@ -1356,9 +1487,7 @@ async function joinRoom(forceReplace = false) {
         amount: typeof winner.amount === "number" ? winner.amount : undefined
       }));
     const potValue = Number(potStatus.textContent ?? 0);
-    const communityCards = Array.isArray(payload?.communityCards)
-      ? payload.communityCards
-      : [];
+    const communityCards = schemaArrayToCards(payload?.communityCards);
     const yourHand = currentSessionId && payload?.playerHands?.[currentSessionId]
       ? payload.playerHands[currentSessionId]
       : undefined;
@@ -1374,19 +1503,20 @@ async function joinRoom(forceReplace = false) {
     
     // If all players went all-in, show cards (if not already revealed by server) then winners
     if (isAllInShowdown && communityCards.length === 5) {
-      pendingWinners = payload?.winners?.map((w: any) => w.playerId) || [];
+      const winnerIds = winnersPayload
+        .filter((w: any) => w && typeof w.playerId === "string")
+        .map((w: any) => w.playerId);
+      pendingWinners = winnerIds;
       pendingWinningHand = payload?.winningHand ?? "";
 
       const showWinners = () => {
-        if (pendingWinners && pendingWinners.length > 0) {
-          lastWinners = pendingWinners;
-          lastWinningHand = pendingWinningHand ?? "";
-          winnersStatus.textContent = lastWinners.join(", ") || "-";
-          winningHandStatus.textContent = lastWinningHand;
-          winningHandChip.textContent = lastWinningHand;
-          if (currentSessionId && lastWinners.includes(currentSessionId)) {
-            audio.playEffect("win");
-          }
+        lastWinners = pendingWinners ?? [];
+        lastWinningHand = pendingWinningHand ?? "";
+        winnersStatus.textContent = lastWinners.join(", ") || "-";
+        winningHandStatus.textContent = lastWinningHand;
+        winningHandChip.textContent = lastWinningHand;
+        if (currentSessionId && lastWinners.includes(currentSessionId)) {
+          audio.playEffect("win");
         }
         allInRevealInProgress = false;
         pendingWinners = null;
@@ -1474,6 +1604,98 @@ async function joinRoom(forceReplace = false) {
   });
 }
 
+type AvailableRoom = {
+  roomId: string;
+  clients: number;
+  maxClients: number;
+  metadata?: Record<string, unknown>;
+};
+
+function renderLobbyRooms(rooms: AvailableRoom[]) {
+  roomsList.innerHTML = "";
+  if (!rooms || rooms.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "room-item";
+    empty.textContent = "No hay mesas disponibles ahora mismo.";
+    roomsList.appendChild(empty);
+    return;
+  }
+
+  rooms.forEach((r) => {
+    const li = document.createElement("li");
+    li.className = "room-item";
+
+    const meta = document.createElement("div");
+    meta.className = "room-meta";
+
+    const name = document.createElement("strong");
+    const tableName = typeof r?.metadata?.name === "string" ? (r.metadata.name as string) : "";
+    name.textContent = tableName || `Mesa ${r.roomId.slice(0, 6)}`;
+
+    const sub = document.createElement("small");
+    sub.textContent = `${r.clients}/${r.maxClients} jugadores · id ${r.roomId}`;
+
+    meta.appendChild(name);
+    meta.appendChild(sub);
+
+    const btn = document.createElement("button");
+    btn.className = "accent";
+    btn.textContent = "Unirme";
+    btn.disabled = r.clients >= r.maxClients;
+    btn.addEventListener("click", () => {
+      joinRoom(false, { mode: "joinById", roomId: r.roomId }).catch((err) => {
+        log(`Join error: ${err?.message || err}`);
+      });
+    });
+
+    li.appendChild(meta);
+    li.appendChild(btn);
+    roomsList.appendChild(li);
+  });
+}
+
+async function refreshLobbyRooms() {
+  try {
+    setLobbyMessage("Cargando mesas...", "info");
+    const client = getWsClient();
+    const rooms = (await (client as any).getAvailableRooms("my_room")) as unknown as AvailableRoom[];
+    const sorted = [...rooms].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
+    renderLobbyRooms(sorted);
+    setLobbyMessage("", "info");
+  } catch (err: any) {
+    setLobbyMessage("No se pudieron cargar las mesas.", "error");
+    renderLobbyRooms([]);
+    log(`Lobby rooms error: ${err?.message || err}`);
+  }
+}
+
+function startLobbyPolling() {
+  stopLobbyPolling();
+  lobbyPollId = window.setInterval(() => {
+    refreshLobbyRooms().catch(() => undefined);
+  }, 5000);
+}
+
+function stopLobbyPolling() {
+  if (lobbyPollId !== null) {
+    clearInterval(lobbyPollId);
+    lobbyPollId = null;
+  }
+}
+
+async function openLobby() {
+  if (!token) {
+    setAuthOverlayVisible(true);
+    setLobbyOverlayVisible(false);
+    log("No token. Login o registro requerido.");
+    return;
+  }
+  setAuthOverlayVisible(false);
+  setLobbyOverlayVisible(true);
+  await refreshLobbyRooms();
+  startLobbyPolling();
+}
+
 (document.querySelector("#register") as HTMLButtonElement).addEventListener("click", () => {
   register().catch((err) => {
     const message = err?.message || String(err);
@@ -1493,7 +1715,33 @@ async function joinRoom(forceReplace = false) {
 });
 
 (document.querySelector("#join") as HTMLButtonElement).addEventListener("click", () => {
-  joinRoom().catch((err) => log(`Join error: ${err.message || err}`));
+  openLobby().catch((err) => log(`Lobby error: ${err?.message || err}`));
+});
+
+refreshRoomsButton.addEventListener("click", () => {
+  refreshLobbyRooms().catch(() => undefined);
+});
+
+createTableButton.addEventListener("click", () => {
+  const name = tableNameInput.value.trim();
+  joinRoom(false, { mode: "create", tableName: name }).catch((err) => log(`Join error: ${err?.message || err}`));
+});
+
+joinByIdButton.addEventListener("click", () => {
+  const id = joinRoomIdInput.value.trim();
+  joinRoom(false, { mode: "joinById", roomId: id }).catch((err) => log(`Join error: ${err?.message || err}`));
+});
+
+backToAuthButton.addEventListener("click", () => {
+  stopLobbyPolling();
+  setLobbyOverlayVisible(false);
+  setAuthOverlayVisible(true);
+});
+
+tournamentBackToLobbyButton.addEventListener("click", () => {
+  tournamentEnded = false;
+  setTournamentResultVisible(false);
+  openLobby().catch((err) => log(`Lobby error: ${err?.message || err}`));
 });
 
 function requireRoom(): Room | null {

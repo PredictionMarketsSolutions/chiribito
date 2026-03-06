@@ -30,6 +30,7 @@ describe("GameFlow Bug Fixes", () => {
       currentPlayerIndex: 0,
       scheduleDelayed: jest.fn((cb: () => void) => cb()),
       onPlayerBusted: jest.fn(),
+      notifyTournamentEnd: jest.fn(),
       sessionManager: {
         getUserId: jest.fn(),
         getSessionId: jest.fn(),
@@ -167,6 +168,12 @@ describe("GameFlow Bug Fixes", () => {
           }),
         })
       );
+      // Tournament mode: notifyTournamentEnd called with champion so room can send gameResult and close
+      expect(mockRoom.notifyTournamentEnd).toHaveBeenCalledWith({
+        sessionId: "player-1",
+        name: "Player 1",
+        chips: 1000,
+      });
     });
 
     it("should NOT broadcast gameEnded when multiple players have chips > 0", () => {
@@ -215,6 +222,26 @@ describe("GameFlow Bug Fixes", () => {
           champion: expect.objectContaining({ sessionId: "player-1" }),
         })
       );
+      expect(mockRoom.notifyTournamentEnd).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: "player-1", name: "Player 1", chips: 1000 })
+      );
+    });
+
+    it("does not call notifyTournamentEnd when gameEnded is not broadcast (rebuy window)", () => {
+      const player2 = roomState.users.get("player-2") as Player;
+      player2.chips = 0;
+      mockRoom.onHasPlayersInRebuyWindow = () => true;
+      mockRoom.notifyTournamentEnd.mockClear();
+
+      engine["checkGameEnd"]();
+
+      expect(mockRoom.notifyTournamentEnd).not.toHaveBeenCalled();
+    });
+
+    it("does not call notifyTournamentEnd when multiple players have chips", () => {
+      mockRoom.notifyTournamentEnd.mockClear();
+      engine["checkGameEnd"]();
+      expect(mockRoom.notifyTournamentEnd).not.toHaveBeenCalled();
     });
 
     it("should prevent startGame when less than 2 active players", () => {
