@@ -104,7 +104,7 @@ export class GameEngine {
 
     // Auto-play if all remaining players are all-in
     const nonFoldedPlayers = this.utils.getPlayersInHandNonFolded();
-    const allAllIn = nonFoldedPlayers.length > 1 && 
+    const allAllIn = nonFoldedPlayers.length > 1 &&
                      nonFoldedPlayers.every(id => this.room.playersAllIn.has(id));
 
     if (allAllIn) {
@@ -112,6 +112,16 @@ export class GameEngine {
         roomId: this.room.roomId
       });
       this.startAllInShowdownReveal();
+      return;
+    }
+
+    // Sole remaining player wins immediately (no more betting or cards)
+    if (nonFoldedPlayers.length === 1) {
+      logger.info(`Only one player left in hand, wins by fold`, {
+        roomId: this.room.roomId,
+        winner: nonFoldedPlayers[0]
+      });
+      this.endRound(nonFoldedPlayers, "Gana por fold", false);
       return;
     }
 

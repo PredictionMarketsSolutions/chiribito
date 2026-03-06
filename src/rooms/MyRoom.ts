@@ -280,8 +280,18 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       () => Array.from(this.clients),
       (type, message, opts) => this.broadcast(type, message, opts)
     );
+    // StateView: each client sees all players (names, chips, seats) so the table UI works.
+    // Player.hand is @view() so per-client visibility for private cards is handled by the schema.
     client.view = new StateView();
-    client.view.add(player);
+    for (const p of this.state.users.values()) {
+      client.view.add(p);
+    }
+    // Existing clients must see the new player in their view.
+    for (const c of this.clients) {
+      if (c !== client && c.view) {
+        (c.view as StateView).add(player);
+      }
+    }
   }
 
   async onLeave(client: Client, code: number) {

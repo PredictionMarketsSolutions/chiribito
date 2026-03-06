@@ -106,21 +106,28 @@ window.addEventListener("unhandledrejection", (event) => {
 
 document.addEventListener("pointerdown", () => { if (!audio.isUnlocked()) audio.init(); }, { once: true });
 
-// Mobile background handling
+// Only attempt reconnect on visibility when we were actually in a room before backgrounding.
+// Otherwise login-only users would get auto-joined to a table when tab/focus changes.
+let hadRoomWhenBackgrounded = false;
+
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     // App went to background - pause heartbeat to save battery
     log("🔇 App backgrounded, heartbeat paused");
+    hadRoomWhenBackgrounded = connectionState === "connected" && room !== null;
     stopClientHeartbeat();
   } else {
     // App came back to foreground - check connection
     log("🔊 App resumed from background");
-    if (connectionState === "disconnected" && token) {
+    if (connectionState === "disconnected" && token && hadRoomWhenBackgrounded) {
       log("Attempting to reconnect...");
+      hadRoomWhenBackgrounded = false;
       attemptReconnect();
     } else if (connectionState === "connected" && room) {
       log("Resuming heartbeat...");
       startClientHeartbeat();
+    } else {
+      hadRoomWhenBackgrounded = false;
     }
   }
 });
