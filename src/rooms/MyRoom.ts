@@ -49,7 +49,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       const result = client.sessionId === champion.sessionId ? "won" : "lost";
       client.send("gameResult", { result, champion });
     }
-    this.disconnect();
+    // Retrasar disconnect para que todos los clientes reciban gameResult antes de cerrar la conexión
+    this.clock.setTimeout(() => this.disconnect(), 800);
   }
 
   // Managers

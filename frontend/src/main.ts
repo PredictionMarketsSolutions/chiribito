@@ -157,6 +157,7 @@ function showTournamentResult(
   champion?: { sessionId?: string; name?: string; chips?: number }
 ) {
   tournamentEnded = true;
+  hadRoomWhenBackgrounded = false;
   const name = champion?.name ?? "Ganador";
   const chips = champion?.chips ?? 0;
   if (result === "won") {
@@ -595,7 +596,8 @@ function startTokenMonitor() {
           tokenStatus.textContent = "refreshed";
           log("Token refreshed successfully");
         } else {
-          log("Token refresh: malformed response, keeping current tokens");
+          log("Token refresh: malformed or empty tokens, clearing session");
+          clearAuthToken();
         }
       } else {
         // Refresh failed, user needs to login again
@@ -1234,6 +1236,10 @@ function hideRebuyDialog() {
  * Reconnect with exponential backoff
  */
 async function attemptReconnect() {
+  if (tournamentEnded) {
+    log("Mesa cerrada por fin de torneo. No se reconecta.");
+    return;
+  }
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     log("❌ Max reconnection attempts reached. Please refresh and login again.");
     clearAuthToken();
@@ -1373,6 +1379,7 @@ async function joinRoom(
     }
 
     if (tournamentEnded) {
+      hadRoomWhenBackgrounded = false;
       setConnectionState("disconnected");
       room = null;
       if (!tournamentResultOverlay.classList.contains("hidden")) return;
