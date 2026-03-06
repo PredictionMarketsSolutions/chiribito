@@ -587,9 +587,8 @@ function startTokenMonitor() {
         token = data.token;
         refreshToken = data.refreshToken;
         tokenStatus.textContent = "refreshed";
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
-        }
+        if (token) SecureStorage.saveAccessToken(token);
+        if (refreshToken) SecureStorage.saveRefreshToken(refreshToken);
         log("Token refreshed successfully");
       } else {
         // Refresh failed, user needs to login again
@@ -1662,18 +1661,46 @@ function renderLobbyRooms(rooms: AvailableRoom[]) {
   });
 }
 
+/**
+ * Fetch available my_room tables via Colyseus LobbyRoom (Match-maker API).
+ * Join the built-in "lobby" room with filter name "my_room", receive 'rooms' message, then leave.
+ */
 async function refreshLobbyRooms() {
+  let lobbyRoom: Room | null = null;
   try {
     setLobbyMessage("Cargando mesas...", "info");
     const client = getWsClient();
-    const rooms = (await (client as any).getAvailableRooms("my_room")) as unknown as AvailableRoom[];
-    const sorted = [...rooms].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
+    lobbyRoom = await client.join("lobby", {
+      filter: { name: "my_room" }
+    } as any);
+    const roomsPayload = await new Promise<AvailableRoom[]>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error("Lobby timeout")), 10000);
+      lobbyRoom!.onMessage("rooms", (list: any) => {
+        clearTimeout(t);
+        const items = Array.isArray(list) ? list : [];
+        resolve(
+          items
+            .filter((r: any) => r && typeof r?.roomId === "string" && r.roomId.length > 0)
+            .map((r: any) => ({
+              roomId: r.roomId,
+              clients: typeof r.clients === "number" ? r.clients : 0,
+              maxClients: typeof r.maxClients === "number" ? r.maxClients : 6,
+              metadata: r.metadata && typeof r.metadata === "object" ? r.metadata : undefined
+            }))
+        );
+      });
+    });
+    const sorted = [...roomsPayload].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
     renderLobbyRooms(sorted);
     setLobbyMessage("", "info");
   } catch (err: any) {
     setLobbyMessage("No se pudieron cargar las mesas.", "error");
     renderLobbyRooms([]);
     log(`Lobby rooms error: ${err?.message || err}`);
+  } finally {
+    if (lobbyRoom) {
+      await lobbyRoom.leave().catch(() => {});
+    }
   }
 }
 

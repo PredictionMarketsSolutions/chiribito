@@ -63,6 +63,11 @@ module.exports = {
     }],
   },
 
+  // Use CJS mock for rou3 (ESM) so @colyseus/core/better-call loads under Jest
+  moduleNameMapper: {
+    '^rou3$': '<rootDir>/src/__tests__/__mocks__/rou3.cjs',
+  },
+
   // Setup files to run before each test
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
 };
