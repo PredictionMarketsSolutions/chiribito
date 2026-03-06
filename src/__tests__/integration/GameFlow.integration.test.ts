@@ -387,6 +387,86 @@ describe("GameFlow Bug Fixes", () => {
     });
   });
 
+  describe("all-in with one player having chips (must check each street)", () => {
+    it("gives turn to the player with chips after each street instead of auto-showdown", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1"]);
+      mockRoom.dealerIndex = 0;
+      mockRoom.currentPlayerIndex = 1;
+      roomState.phase = "preflop";
+      roomState.communityCards.clear();
+      roomState.currentBet = 0;
+      roomState.currentTurn = "";
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 0;
+      p1.currentBet = 250;
+      p1.isFolded = false;
+      p2.chips = 1000;
+      p2.currentBet = 250;
+      p2.isFolded = false;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(mockRoom.scheduleDelayed).not.toHaveBeenCalled();
+      expect(roomState.currentTurn).toBe("player-2");
+      expect(roomState.communityCards.length).toBe(1);
+    });
+
+    it("after check from player with chips, next street still gives them the turn", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1"]);
+      mockRoom.dealerIndex = 0;
+      mockRoom.currentPlayerIndex = 1;
+      roomState.phase = "card1";
+      roomState.communityCards.clear();
+      roomState.communityCards.push("1O", "7C", "8E");
+      roomState.currentBet = 0;
+      roomState.currentTurn = "player-2";
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 0;
+      p1.currentBet = 0;
+      p1.isFolded = false;
+      p2.chips = 1000;
+      p2.currentBet = 0;
+      p2.isFolded = false;
+
+      const checkClient = { sessionId: "player-2", send: jest.fn() } as any;
+      engine.handleCheck(checkClient);
+
+      expect(roomState.currentTurn).toBe("player-2");
+      expect(roomState.communityCards.length).toBeGreaterThan(3);
+    });
+
+    it("when getNextActiveIndexFrom would return -1, fallback assigns turn to only active player", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1"]);
+      mockRoom.dealerIndex = 1;
+      mockRoom.currentPlayerIndex = 0;
+      roomState.phase = "preflop";
+      roomState.communityCards.clear();
+      roomState.currentBet = 0;
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 0;
+      p1.isFolded = false;
+      p2.chips = 1000;
+      p2.isFolded = false;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(roomState.currentTurn).toBe("player-2");
+      expect(roomState.communityCards.length).toBe(1);
+    });
+  });
+
   describe("all-in showdown card reveal", () => {
     it("reveals community cards progressively and only then broadcasts roundEnded (winner at end)", () => {
       mockRoom.playersInHand = ["player-1", "player-2"];

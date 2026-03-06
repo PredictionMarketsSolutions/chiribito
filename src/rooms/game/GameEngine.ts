@@ -135,6 +135,17 @@ export class GameEngine {
     this.roundManager.dealNextCommunityCard();
     this.room.currentPlayerIndex = this.utils.getNextActiveIndexFrom(this.room.dealerIndex);
 
+    // When not everyone is all-in, there is at least one player with chips who must check this street.
+    // If getNextActiveIndexFrom returned -1 (e.g. edge case), force the turn to the first such player.
+    const activePlayerIds = this.utils.getActivePlayerIds();
+    if (this.room.currentPlayerIndex === -1 && activePlayerIds.length > 0) {
+      const firstActiveId = activePlayerIds[0];
+      const idx = this.room.playersInHand.indexOf(firstActiveId);
+      if (idx !== -1) {
+        this.room.currentPlayerIndex = idx;
+      }
+    }
+
     if (this.room.currentPlayerIndex === -1) {
       this.proceedToNextPhase();
       return;
@@ -249,8 +260,16 @@ export class GameEngine {
       return;
     }
 
-    // Move to next player
+    // Move to next player (e.g. after an all-in, the only player with chips must get the turn to check)
     this.room.currentPlayerIndex = this.utils.getNextActiveIndexFrom(this.room.currentPlayerIndex);
+
+    if (this.room.currentPlayerIndex === -1 && activePlayers.length > 0) {
+      const nextToAct = activePlayers.find(id => !this.room.playersActedThisRound.has(id));
+      if (nextToAct) {
+        const idx = this.room.playersInHand.indexOf(nextToAct);
+        if (idx !== -1) this.room.currentPlayerIndex = idx;
+      }
+    }
 
     if (this.room.currentPlayerIndex === -1) {
       this.proceedToNextPhase();
