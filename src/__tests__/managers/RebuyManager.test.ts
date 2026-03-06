@@ -71,6 +71,10 @@ describe("RebuyManager", () => {
         seatManager
       );
 
+      expect(mockClient.send).toHaveBeenCalledWith("bustedOut", {
+        rebuyCost: 1000,
+        timeoutSeconds: 120
+      });
       expect(mockClient.send).toHaveBeenCalledWith("seatReserved", {
         seatIndex: 2,
         expiresIn: 120000
@@ -94,6 +98,10 @@ describe("RebuyManager", () => {
         seatManager
       );
 
+      expect(mockClient.send).toHaveBeenCalledWith("bustedOut", {
+        rebuyCost: 500,
+        timeoutSeconds: 60
+      });
       expect(mockClient.send).toHaveBeenCalledWith("seatReserved", {
         seatIndex: 1,
         expiresIn: 60000

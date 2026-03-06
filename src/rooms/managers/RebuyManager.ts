@@ -39,7 +39,15 @@ export class RebuyManager {
   ): void {
     seatManager.reserveSeatForRebuy(seatIndex, userId);
 
-    // Notify client of reservation
+    const timeoutSeconds = Math.round(this.config.rebuyTimeoutMs / 1000);
+
+    // Notify client to show rebuy dialog (frontend listens for this)
+    client.send("bustedOut", {
+      rebuyCost: this.config.rebuyAmount,
+      timeoutSeconds
+    });
+
+    // Notify client of reservation (for logging/state)
     client.send("seatReserved", {
       seatIndex,
       expiresIn: this.config.rebuyTimeoutMs

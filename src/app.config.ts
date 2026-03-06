@@ -17,7 +17,7 @@ import { LobbyRoom } from "@colyseus/core";
 
 const server = defineServer({
     rooms: {
-        my_room: defineRoom(MyRoom),
+        my_room: defineRoom(MyRoom).enableRealtimeListing(),
         lobby: defineRoom(LobbyRoom),
     },
 

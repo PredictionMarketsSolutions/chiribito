@@ -144,8 +144,9 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       retryDelayMs: 500,
       requestTimeoutMs: 8000
     });
+    // Rebuy window must be shorter than HEARTBEAT_TIMEOUT (90s) so client isn't disconnected before rebuy expires
     this.rebuyManager = new RebuyManager(this.roomId, {
-      rebuyTimeoutMs: 120000,
+      rebuyTimeoutMs: 60000, // 60s
       rebuyAmount: 1000
     });
     this.seatManager = new SeatManager(this.roomId, this.maxClients, this.rebuyManager.getConfig().rebuyTimeoutMs);
