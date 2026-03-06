@@ -58,6 +58,10 @@ export class GameEngine {
   }
 
   startNewHand(): void {
+    // Always reset game-ended broadcast guard when attempting to start a new hand.
+    // This keeps the flag consistent even if we bail out due to not enough active players.
+    this.gameEndBroadcasted = false;
+
     const playersWithChips = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
     if (playersWithChips.length < 2) {
       this.room.state.roundStarted = false;
@@ -68,7 +72,6 @@ export class GameEngine {
       return;
     }
 
-    this.gameEndBroadcasted = false;
     logger.info(`Starting new hand`, { roomId: this.room.roomId });
     
     this.roundManager.resetForNewHand(this.handContributions);
@@ -326,6 +329,14 @@ export class GameEngine {
    * Client should show each card as it arrives and only show winner on "roundEnded".
    */
   private startAllInShowdownReveal(): void {
+    // Prevent any pending turn-timeout from firing during the reveal sequence.
+    if (this.room.turnTimeout) {
+      clearTimeout(this.room.turnTimeout);
+      this.room.turnTimeout = null;
+    }
+    // There is no "turn" during all-in auto-reveal.
+    this.room.state.currentTurn = "";
+
     if (this.room.state.communityCards.length >= 5) {
       this.endRoundWithWinners(true);
       return;

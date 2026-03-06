@@ -289,6 +289,19 @@ describe("GameFlow Bug Fixes", () => {
       expect(roomState.roundStarted).toBe(false);
       expect(mockRoom.playersInHand.length).toBe(0);
     });
+
+    it("should reset gameEndBroadcasted even when startNewHand bails out (<2 players)", () => {
+      const player2 = roomState.users.get("player-2") as Player;
+      player2.chips = 0;
+
+      (engine as any).gameEndBroadcasted = true;
+      roomState.roundStarted = true;
+
+      engine.startNewHand();
+
+      expect((engine as any).gameEndBroadcasted).toBe(false);
+      expect(roomState.roundStarted).toBe(false);
+    });
   });
 
   describe("rebuy: onPlayerBusted when player has 0 chips after round", () => {
