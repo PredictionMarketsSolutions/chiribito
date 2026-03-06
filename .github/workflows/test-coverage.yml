@@ -29,10 +29,10 @@ jobs:
     - name: Run TypeScript type check
       run: npx tsc --noEmit
 
-    - name: Run tests with coverage
+    - name: Run backend tests with coverage
       run: npm run test:jest -- --coverage
 
-    - name: Upload coverage reports
+    - name: Upload coverage reports (backend)
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage/lcov.info
@@ -71,3 +71,55 @@ jobs:
             repo: context.repo.repo,
             body: comment
           });
+
+  test-frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: "20.x"
+
+    - name: Cache frontend node_modules
+      uses: actions/cache@v4
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-frontend-
+
+    - name: Install frontend dependencies
+      run: cd frontend && npm ci
+
+    - name: Run frontend tests
+      run: cd frontend && npm run test
+
+  test-api:
+    name: API server tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: "20.x"
+
+    - name: Cache API server node_modules
+      uses: actions/cache@v4
+      with:
+        path: api-server/node_modules
+        key: ${{ runner.os }}-api-${{ hashFiles('api-server/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-api-
+
+    - name: Install API server dependencies
+      run: cd api-server && npm ci
+
+    - name: Run API server tests
+      run: cd api-server && npm run test

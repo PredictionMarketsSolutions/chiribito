@@ -547,7 +547,8 @@ function clearAuthToken() {
   tokenStatus.textContent = "none";
   stopTokenMonitor();
   tokenInvalidNotified = false;
-  localStorage.removeItem('refreshToken');
+  SecureStorage.clearAccessToken();
+  SecureStorage.clearRefreshToken();
 }
 
 function stopTokenMonitor() {
@@ -584,12 +585,18 @@ function startTokenMonitor() {
       
       if (response.ok) {
         const data = await response.json();
-        token = data.token;
-        refreshToken = data.refreshToken;
-        tokenStatus.textContent = "refreshed";
-        if (token) SecureStorage.saveAccessToken(token);
-        if (refreshToken) SecureStorage.saveRefreshToken(refreshToken);
-        log("Token refreshed successfully");
+        const newToken = typeof data?.token === "string" && data.token.length > 0 ? data.token : null;
+        const newRefreshToken = typeof data?.refreshToken === "string" && data.refreshToken.length > 0 ? data.refreshToken : null;
+        if (newToken && newRefreshToken) {
+          token = newToken;
+          refreshToken = newRefreshToken;
+          SecureStorage.saveAccessToken(newToken);
+          SecureStorage.saveRefreshToken(newRefreshToken);
+          tokenStatus.textContent = "refreshed";
+          log("Token refreshed successfully");
+        } else {
+          log("Token refresh: malformed response, keeping current tokens");
+        }
       } else {
         // Refresh failed, user needs to login again
         handleTokenInvalidated();
@@ -1663,14 +1670,15 @@ function renderLobbyRooms(rooms: AvailableRoom[]) {
 
 /**
  * Fetch available my_room tables via Colyseus LobbyRoom (Match-maker API).
- * Join the built-in "lobby" room with filter name "my_room", receive 'rooms' message, then leave.
+ * joinOrCreate so a lobby exists; register "rooms" handler then send "filter" to force a fresh list
+ * (initial "rooms" can be sent before our handler is attached).
  */
 async function refreshLobbyRooms() {
   let lobbyRoom: Room | null = null;
   try {
     setLobbyMessage("Cargando mesas...", "info");
     const client = getWsClient();
-    lobbyRoom = await client.join("lobby", {
+    lobbyRoom = await client.joinOrCreate("lobby", {
       filter: { name: "my_room" }
     } as any);
     const roomsPayload = await new Promise<AvailableRoom[]>((resolve, reject) => {
@@ -1689,6 +1697,8 @@ async function refreshLobbyRooms() {
             }))
         );
       });
+      // Request list so we get "rooms" even if the initial send was already delivered
+      lobbyRoom!.send("filter", { name: "my_room" });
     });
     const sorted = [...roomsPayload].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
     renderLobbyRooms(sorted);
