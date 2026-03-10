@@ -18,6 +18,18 @@ export class User {
   @Column({ name: 'token_version', default: 0 })
   tokenVersion!: number;
 
+  @Column({ name: 'games_played', type: 'int', default: 0 })
+  gamesPlayed!: number;
+
+  @Column({ name: 'games_won', type: 'int', default: 0 })
+  gamesWon!: number;
+
+  @Column({ name: 'total_chips_won', type: 'bigint', default: 0 })
+  totalChipsWon!: number;
+
+  @Column({ name: 'last_played_at', type: 'timestamp', nullable: true })
+  lastPlayedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

@@ -21,6 +21,7 @@ import {
   PlayerLifecycleManager
 } from "./managers";
 import { CUSTOM_REBUY_TIMEOUT } from "./close-codes";
+import { reportTournamentGameEnded } from "../services/api-server-stats";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
@@ -49,6 +50,10 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       const result = client.sessionId === champion.sessionId ? "won" : "lost";
       client.send("gameResult", { result, champion });
     }
+
+    // Persist stats in API server (server-to-server, protected by INTERNAL_API_SECRET)
+    void this.reportTournamentStats(champion);
+
     // Retrasar disconnect para que todos los clientes reciban gameResult antes de cerrar la conexión
     this.clock.setTimeout(() => this.disconnect(), 800);
   }
@@ -62,6 +67,34 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   private rebuyManager!: RebuyManager;
   private authService!: AuthenticationService;
   private lifecycleManager!: PlayerLifecycleManager;
+
+  private async reportTournamentStats(champion: { sessionId: string; name: string; chips: number }): Promise<void> {
+    const internalSecret = process.env.INTERNAL_API_SECRET || "";
+    if (!internalSecret) {
+      logger.warn("INTERNAL_API_SECRET missing; tournament stats not persisted", { roomId: this.roomId });
+      return;
+    }
+
+    const championUserId = this.sessionManager.getUserId(champion.sessionId);
+    if (!championUserId) {
+      logger.warn("Champion userId not found; tournament stats not persisted", { roomId: this.roomId });
+      return;
+    }
+
+    const participantUserIds = Array.from(this.state.users.keys())
+      .map((sessionId) => this.sessionManager.getUserId(sessionId))
+      .filter((id): id is number => typeof id === "number" && Number.isFinite(id));
+
+    if (participantUserIds.length === 0) {
+      logger.warn("No participants resolved to userIds; tournament stats not persisted", { roomId: this.roomId });
+      return;
+    }
+
+    await reportTournamentGameEnded(API_URL, internalSecret, {
+      championUserId,
+      participantUserIds,
+    });
+  }
 
   private getNextAvailableSeat(): number {
     return this.seatManager.getNextAvailableSeat() ?? -1;

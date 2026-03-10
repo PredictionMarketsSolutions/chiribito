@@ -36,6 +36,7 @@ const authMessage = dom.authMessage!;
 const lobbyOverlay = dom.lobbyOverlay!;
 const lobbyMessage = dom.lobbyMessage!;
 const roomsList = dom.roomsList!;
+const winnersRankingList = dom.winnersRankingList!;
 const refreshRoomsButton = dom.refreshRoomsButton!;
 const tableNameInput = dom.tableNameInput!;
 const createTableButton = dom.createTableButton!;
@@ -1721,6 +1722,76 @@ async function refreshLobbyRooms() {
   }
 }
 
+type WinnerRankingEntry = {
+  id: number;
+  username: string;
+  gamesPlayed: number;
+  gamesWon: number;
+};
+
+async function refreshWinnersRanking() {
+  try {
+    const res = await fetch(`${API_URL}/api/ranking/top-winners`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as WinnerRankingEntry[] | any;
+    const entries: WinnerRankingEntry[] = Array.isArray(data)
+      ? data
+          .filter(
+            (item: any) =>
+              item &&
+              typeof item.id === "number" &&
+              typeof item.username === "string"
+          )
+          .map((item: any) => ({
+            id: item.id,
+            username: item.username,
+            gamesPlayed: Number(item.gamesPlayed ?? 0),
+            gamesWon: Number(item.gamesWon ?? 0),
+          }))
+      : [];
+
+    winnersRankingList.innerHTML = "";
+    if (entries.length === 0) {
+      const li = document.createElement("li");
+      li.className = "room-item room-item-empty";
+      li.textContent = "Todavía no hay datos de ranking.";
+      winnersRankingList.appendChild(li);
+      return;
+    }
+
+    entries.forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.className = "room-item";
+
+      const rank = document.createElement("span");
+      rank.className = "room-name";
+      rank.textContent = `#${index + 1} ${entry.username}`;
+
+      const meta = document.createElement("span");
+      meta.className = "room-meta";
+      meta.textContent = `${entry.gamesWon} ganadas · ${entry.gamesPlayed} jugadas`;
+
+      li.appendChild(rank);
+      li.appendChild(meta);
+      winnersRankingList.appendChild(li);
+    });
+  } catch (err: any) {
+    winnersRankingList.innerHTML = "";
+    const li = document.createElement("li");
+    li.className = "room-item room-item-empty";
+    li.textContent = "No se pudo cargar el ranking.";
+    winnersRankingList.appendChild(li);
+    log(`Ranking error: ${err?.message || err}`);
+  }
+}
+
 function startLobbyPolling() {
   stopLobbyPolling();
   lobbyPollId = window.setInterval(() => {
@@ -1745,6 +1816,7 @@ async function openLobby() {
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(true);
   await refreshLobbyRooms();
+  await refreshWinnersRanking();
   startLobbyPolling();
 }
 
@@ -1772,6 +1844,7 @@ async function openLobby() {
 
 refreshRoomsButton.addEventListener("click", () => {
   refreshLobbyRooms().catch(() => undefined);
+  refreshWinnersRanking().catch(() => undefined);
 });
 
 createTableButton.addEventListener("click", () => {

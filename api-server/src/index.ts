@@ -13,10 +13,13 @@ import Redis from 'ioredis';
 import { AppDataSource } from './config/database';
 import { AuthController } from './controllers/AuthController';
 import { UserController } from './controllers/UserController';
+import { InternalStatsController } from './controllers/InternalStatsController';
 import { authenticateJWT } from './middleware/auth';
 import { registerValidator, loginValidator } from './middleware/validators';
 import { validateRequest } from './middleware/validateRequest';
 import logger from './config/logger';
+import { User } from './models/User';
+import { getTopWinners } from './services/RankingService';
 
 // Type augmentation for Express Request
 declare global {
@@ -60,6 +63,10 @@ if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
 
 if (!process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
   throw new Error('REDIS_URL must be set in production');
+}
+
+if (!process.env.INTERNAL_API_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('INTERNAL_API_SECRET must be set in production');
 }
 
 const app = express();
@@ -242,6 +249,7 @@ const createLimiter = (windowMs: number, max: number, prefix: string) => {
 
 const authController = new AuthController();
 const userController = new UserController();
+const internalStatsController = new InternalStatsController(redisClient);
 
 const registerRateLimit = createLimiter(15 * 60 * 1000, 5, 'rl:register:');
 const loginRateLimit = createLimiter(15 * 60 * 1000, 10, 'rl:login:');
@@ -259,6 +267,24 @@ app.post('/api/auth/reset-password', resetPasswordRateLimit, (req: Request, res:
 app.get('/api/users/me', authenticateJWT, async (req, res, next) => {
   try {
     await userController.getProfile(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/internal/game-ended', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await internalStatsController.gameEnded(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/ranking/top-winners', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userRepository = AppDataSource.getRepository(User);
+    const payload = await getTopWinners(redisClient, userRepository);
+    return res.json(payload);
   } catch (error) {
     next(error);
   }

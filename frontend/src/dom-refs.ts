@@ -15,6 +15,7 @@ export const dom = {
   lobbyOverlay: getRef<HTMLDivElement>("#lobby-overlay"),
   lobbyMessage: getRef<HTMLDivElement>("#lobby-message"),
   roomsList: getRef<HTMLUListElement>("#rooms-list"),
+  winnersRankingList: getRef<HTMLUListElement>("#winners-ranking"),
   refreshRoomsButton: getRef<HTMLButtonElement>("#refresh-rooms"),
   tableNameInput: getRef<HTMLInputElement>("#table-name"),
   createTableButton: getRef<HTMLButtonElement>("#create-table"),
