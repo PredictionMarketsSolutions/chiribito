@@ -18,6 +18,8 @@ import {
   renderHandHistory
 } from "./hand-history";
 import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
+import { attemptTokenRefresh } from "./auth/token-refresh";
+import { disconnectRoom } from "./auth/room-disconnect";
 
 // Security modules
 import {
@@ -476,6 +478,7 @@ function revealAllInCards(cards: string[], onComplete?: () => void) {
 }
 
 function resetRoomUi(message?: string) {
+  disconnectRoom(room);
   room = null;
   currentSessionId = null;
   lastWinningHand = "-";
@@ -600,39 +603,19 @@ function startTokenMonitor() {
   // Check and refresh token every 50 minutes (10 min before expiry)
   tokenMonitorId = window.setInterval(async () => {
     if (!token || !refreshToken) return;
-    try {
-      // Try to refresh token
-      const response = await fetch(`${API_URL}/api/auth/refresh`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ refreshToken })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const newToken = typeof data?.token === "string" && data.token.length > 0 ? data.token : null;
-        const newRefreshToken = typeof data?.refreshToken === "string" && data.refreshToken.length > 0 ? data.refreshToken : null;
-        if (newToken && newRefreshToken) {
-          token = newToken;
-          refreshToken = newRefreshToken;
-          SecureStorage.saveAccessToken(newToken);
-          SecureStorage.saveRefreshToken(newRefreshToken);
-          tokenStatus.textContent = "refreshed";
-          log("Token refreshed successfully");
-        } else {
-          log("Token refresh: malformed or empty tokens, clearing session");
-          clearAuthToken();
-        }
-      } else {
-        // Refresh failed, user needs to login again
-        handleTokenInvalidated();
-      }
-    } catch (error) {
-      console.error("Token refresh error:", error);
-      // Don't invalidate on network errors, try again next interval
+    const result = await attemptTokenRefresh(API_URL, refreshToken);
+    if (result.ok) {
+      token = result.token;
+      refreshToken = result.refreshToken;
+      SecureStorage.saveAccessToken(result.token);
+      SecureStorage.saveRefreshToken(result.refreshToken);
+      tokenStatus.textContent = "refreshed";
+      log("Token refreshed successfully");
+    } else if (result.reason === "malformed" || result.reason === "not_ok") {
+      log(result.reason === "malformed" ? "Token refresh: malformed or empty tokens, clearing session" : "Token refresh failed, clearing session");
+      handleTokenInvalidated();
     }
+    // On "network" we do nothing; next interval will retry
   }, 50 * 60 * 1000); // 50 minutes
 }
 

@@ -1,0 +1,11 @@
+---
+description: No añadir branding del editor en el código ni en la UI
+globs: 
+alwaysApply: true
+---
+
+# Regla: Sin branding del editor
+
+- **Nunca** añadas en el proyecto texto como "Made with Cursor", "Built with Cursor", "Powered by Cursor" ni ninguna mención o atribución al editor/IDE.
+- No incluyas en footers, README, comentarios, HTML, ni en ningún archivo del repo referencias a Cursor u otras herramientas de desarrollo como autor o crédito en la aplicación.
+- Los créditos y el copyright del producto son del equipo/proyecto (p. ej. "Chiribito"), no del editor.
