@@ -20,6 +20,24 @@ import {
 import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { disconnectRoom } from "./auth/room-disconnect";
+import {
+  schemaArrayToCards,
+  getUserEntries,
+  isPlayerState,
+  startWinnerDisplayPhase as startWinnerDisplayPhaseFn,
+  clearWinnerDisplay,
+  isInWinnerPhase,
+  startTurnTimer as startTurnTimerFn,
+  stopTurnTimer as stopTurnTimerFn,
+  updateTurnTimer as updateTurnTimerFn,
+  renderSeats as renderSeatsFn,
+  renderPlayers as renderPlayersFn,
+  renderState as renderStateFn,
+  updateActionButtons as updateActionButtonsFn,
+  setActionButtonsEnabled as setActionButtonsEnabledFn,
+} from "./game";
+import type { WinnerDisplayState, TurnTimerState } from "./game";
+import type { GameUiRefs, GameUiContext } from "./game/game-ui-types";
 
 // Security modules
 import {
@@ -191,8 +209,6 @@ let wsClient: Client | null = null;
 let lobbyPollId: number | null = null;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
 let tournamentEnded = false;
-let lastWinningHand = "-";
-let lastWinners: string[] = [];
 let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: any = null;
@@ -214,108 +230,96 @@ let connectionQuality: "excellent" | "good" | "degraded" | "poor" = "excellent";
 // Action buffering for offline resilience
 const actionBuffer: BufferedAction[] = [];
 let pixiTableSurface: HTMLDivElement | null = null;
-let previousCommunityCards: string[] = [];
-let previousHandCards: string[] = [];
 let pixiLib: any = null;
-let revealedHands: Record<string, string[]> | null = null;
-let turnTimerId: number | null = null;
-let turnDeadlineMs: number | null = null;
-let lastTurnId: string | null = null;
-let lastTurnTimeoutMs: number | null = null;
-let previousPotValue: number | null = null;
-let previousCurrentBetValue: number | null = null;
 let previousWinnersKey = "";
 let allInAnimationTimeoutId: number | null = null;
 let allInCardIndex = 0;
 let allInRevealStarted = false;
 let allInRevealInProgress = false;
-/** True if server sent communityCardRevealed this round (all-in); then roundEnded only shows winners. */
 let allInCardsRevealedByServer = false;
 let pendingWinners: string[] | null = null;
 let pendingWinningHand: string | null = null;
 let lastRoomState: RoomState | null = null;
-/** Timestamp until which we show winner (no turn). After 5s we clear and return to normal. */
-let winnerDisplayUntil = 0;
-let winnerDisplayTimeoutId: ReturnType<typeof setTimeout> | null = null;
-const latestPlayerNames = new Map<string, string>();
 
-const WINNER_DISPLAY_MS = 5000;
+const winnerDisplayState: WinnerDisplayState = {
+  lastWinners: [],
+  lastWinningHand: "-",
+  winnerDisplayUntil: 0,
+  winnerDisplayTimeoutId: null,
+};
+
+const turnTimerState: TurnTimerState = {
+  turnTimerId: null,
+  turnDeadlineMs: null,
+  lastTurnId: null,
+  lastTurnTimeoutMs: null,
+};
+
+const gameUiContext: GameUiContext = {
+  currentSessionId: null,
+  winnerDisplayState,
+  revealedHands: null,
+  previousCommunityCards: [],
+  previousHandCards: [],
+  previousPotValue: null,
+  previousCurrentBetValue: null,
+  allInRevealInProgress: false,
+  latestPlayerNames: new Map<string, string>(),
+};
+
+let revealedHands: Record<string, string[]> | null = null;
+
+function getGameUiRefs(): GameUiRefs {
+  return {
+    phaseStatus: phaseStatus,
+    turnStatus: turnStatus,
+    yourTurnIndicator: yourTurnIndicator,
+    potStatus: potStatus,
+    betStatus: betStatus,
+    potChip: potChip,
+    phaseChip: phaseChip,
+    turnChip: turnChip,
+    turnTimerChip: turnTimerChip,
+    winningHandStatus: winningHandStatus,
+    winningHandChip: winningHandChip,
+    winnersStatus: winnersStatus,
+    communityStatus: communityStatus,
+    handStatus: handStatus,
+    communityCardsEl: communityCardsEl,
+    handCardsEl: handCardsEl,
+    seatsEl: seatsEl,
+    playersList: playersList,
+    mobileSeatsList: mobileSeatsList,
+    startGameButton: startGameButton,
+    checkButton: checkButton,
+    callButton: callButton,
+    foldButton: foldButton,
+    allInButton: allInButton,
+    betButton: betButton,
+    raiseButton: raiseButton,
+  };
+}
 
 function startWinnerDisplayPhase() {
-  if (winnerDisplayTimeoutId !== null) {
-    clearTimeout(winnerDisplayTimeoutId);
-    winnerDisplayTimeoutId = null;
-  }
-  winnerDisplayUntil = Date.now() + WINNER_DISPLAY_MS;
-  winnerDisplayTimeoutId = setTimeout(() => {
-    winnerDisplayUntil = 0;
-    lastWinners = [];
-    lastWinningHand = "-";
-    winnerDisplayTimeoutId = null;
+  startWinnerDisplayPhaseFn(winnerDisplayState, () => {
     if (lastRoomState) renderState(lastRoomState);
-  }, WINNER_DISPLAY_MS);
+  });
+}
+
+function syncGameUiContext() {
+  gameUiContext.currentSessionId = currentSessionId;
+  gameUiContext.revealedHands = revealedHands;
+  gameUiContext.allInRevealInProgress = allInRevealInProgress;
 }
 
 function renderHandHistoryUi() {
-  renderHandHistory(handHistoryList, (id) => latestPlayerNames.get(id) ?? id);
-}
-
-function isPlayerState(value: unknown): value is PlayerState {
-  if (!value || typeof value !== "object") return false;
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.sessionId === "string" &&
-    typeof record.name === "string" &&
-    typeof record.chips === "number" &&
-    typeof record.currentBet === "number" &&
-    typeof record.isFolded === "boolean" &&
-    typeof record.seatIndex === "number"
-  );
+  renderHandHistory(handHistoryList, (id) => gameUiContext.latestPlayerNames.get(id) ?? id);
 }
 
 function triggerAnimation(element: HTMLElement, className: string) {
   element.classList.remove(className);
   void element.offsetWidth;
   element.classList.add(className);
-}
-
-/** Normalize Colyseus ArraySchema or plain array to string[] (handles toArray(), Array.from, or copy). */
-function schemaArrayToCards(value: unknown): string[] {
-  if (value == null) return [];
-  if (Array.isArray(value)) return value as string[];
-  const raw = value as { toArray?: () => string[]; length?: number; [i: number]: string };
-  if (typeof raw.toArray === "function") return raw.toArray();
-  if (typeof raw.length === "number" && raw.length >= 0) {
-    const out: string[] = [];
-    for (let i = 0; i < raw.length; i++) {
-      if (typeof raw[i] === "string") out.push(raw[i]);
-    }
-    return out;
-  }
-  try {
-    return Array.from(value as Iterable<string>);
-  } catch {
-    return [];
-  }
-}
-
-function getUserEntries(state: RoomState): PlayerState[] {
-  const users = state?.users;
-  if (!users) return [];
-  if (users instanceof Map) return Array.from(users.values());
-  const iterableUsers = users as unknown as { values?: () => Iterable<PlayerState> };
-  if (typeof iterableUsers.values === "function") {
-    return Array.from(iterableUsers.values()).filter(isPlayerState);
-  }
-  const forEachUsers = users as unknown as { forEach?: (cb: (value: PlayerState) => void) => void };
-  if (typeof forEachUsers.forEach === "function") {
-    const results: PlayerState[] = [];
-    forEachUsers.forEach((value) => {
-      if (isPlayerState(value)) results.push(value);
-    });
-    return results;
-  }
-  return Object.values(users).filter(isPlayerState);
 }
 
 async function initPixiLayer() {
@@ -481,22 +485,21 @@ function resetRoomUi(message?: string) {
   disconnectRoom(room);
   room = null;
   currentSessionId = null;
-  lastWinningHand = "-";
-  lastWinners = [];
+  gameUiContext.currentSessionId = null;
+  clearWinnerDisplay(winnerDisplayState);
   revealedHands = null;
-  previousPotValue = null;
-  previousCurrentBetValue = null;
+  gameUiContext.revealedHands = null;
+  gameUiContext.previousPotValue = null;
+  gameUiContext.previousCurrentBetValue = null;
   previousWinnersKey = "";
   allInRevealStarted = false;
   allInRevealInProgress = false;
+  gameUiContext.allInRevealInProgress = false;
   allInCardsRevealedByServer = false;
   pendingWinners = null;
   pendingWinningHand = null;
-  winnerDisplayUntil = 0;
-  if (winnerDisplayTimeoutId !== null) {
-    clearTimeout(winnerDisplayTimeoutId);
-    winnerDisplayTimeoutId = null;
-  }
+  gameUiContext.previousCommunityCards.length = 0;
+  gameUiContext.previousHandCards.length = 0;
   if (allInAnimationTimeoutId !== null) {
     window.clearTimeout(allInAnimationTimeoutId);
     allInAnimationTimeoutId = null;
@@ -508,7 +511,7 @@ function resetRoomUi(message?: string) {
   roomStatus.textContent = message || "not joined";
   phaseStatus.textContent = "waiting";
   turnStatus.textContent = "-";
-  stopTurnTimer();
+  stopTurnTimerFn(turnTimerState, turnTimerChip);
   potStatus.textContent = "0";
   betStatus.textContent = "0";
   communityStatus.textContent = "-";
@@ -523,52 +526,15 @@ function resetRoomUi(message?: string) {
   renderCardRow(communityCardsEl, [], 5);
   renderCardRow(handCardsEl, [], 2);
   playersList.innerHTML = "";
-  renderSeats({ users: new Map(), dealerIndex: -1, currentTurn: "" });
-  updateActionButtons(null);
-}
-
-function stopTurnTimer() {
-  if (turnTimerId !== null) {
-    window.clearInterval(turnTimerId);
-    turnTimerId = null;
-  }
-  turnDeadlineMs = null;
-  lastTurnId = null;
-  lastTurnTimeoutMs = null;
-  turnTimerChip.textContent = "-";
-}
-
-function startTurnTimer(turnId: string, timeoutMs = TURN_TIMEOUT_MS, deadlineMs?: number) {
-  lastTurnId = turnId;
-  lastTurnTimeoutMs = timeoutMs;
-  turnDeadlineMs = typeof deadlineMs === "number" ? deadlineMs : Date.now() + timeoutMs;
-
-  const tick = () => {
-    if (!turnDeadlineMs) return;
-    const remainingMs = turnDeadlineMs - Date.now();
-    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-    turnTimerChip.textContent = `${remainingSeconds}s`;
-  };
-
-  if (turnTimerId !== null) {
-    window.clearInterval(turnTimerId);
-  }
-  tick();
-  turnTimerId = window.setInterval(tick, 250);
+  syncGameUiContext();
+  renderSeatsFn({ users: new Map(), dealerIndex: -1, currentTurn: "" }, getGameUiRefs(), gameUiContext);
+  setActionButtonsEnabledFn(getGameUiRefs(), { canStart: false, canCheck: false, canCall: false, canFold: false, canAllIn: false, canBet: false, canRaise: false });
 }
 
 function updateTurnTimer(state: RoomState) {
   const turnId = state.currentTurn ?? "";
   const roundActive = Boolean(state.roundStarted);
-
-  if (!roundActive || !turnId) {
-    stopTurnTimer();
-    return;
-  }
-
-  if (turnId !== lastTurnId || turnDeadlineMs === null) {
-    startTurnTimer(turnId, lastTurnTimeoutMs ?? TURN_TIMEOUT_MS);
-  }
+  updateTurnTimerFn(turnTimerState, turnId, roundActive, turnTimerChip, TURN_TIMEOUT_MS);
 }
 
 function clearAuthToken() {
@@ -619,280 +585,9 @@ function startTokenMonitor() {
   }, 50 * 60 * 1000); // 50 minutes
 }
 
-function renderSeats(state: RoomState) {
-  const entries = getUserEntries(state).filter(isPlayerState);
-  const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
-  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
-  const currentTurn = inWinnerPhase ? "" : (state?.currentTurn ?? "");
-  const totalSeats = 6;
-  const targetFrontIndex = 3;
-
-  const playersBySeat: Array<PlayerState | undefined> = Array(totalSeats).fill(undefined);
-  entries.forEach((player) => {
-    if (Number.isFinite(player.seatIndex) && player.seatIndex >= 0 && player.seatIndex < totalSeats) {
-      playersBySeat[player.seatIndex] = player;
-    }
-  });
-
-  let seatShift = 0;
-  const myPlayer = entries.find((player) => player.sessionId === currentSessionId);
-  if (myPlayer && Number.isFinite(myPlayer.seatIndex)) {
-    seatShift = (targetFrontIndex - myPlayer.seatIndex + totalSeats) % totalSeats;
-  }
-
-  const visualSeats: Array<PlayerState | undefined> = Array(totalSeats).fill(undefined);
-  const visualSeatNumbers: number[] = Array(totalSeats).fill(0);
-  for (let logicalIndex = 0; logicalIndex < totalSeats; logicalIndex += 1) {
-    const visualIndex = (logicalIndex + seatShift) % totalSeats;
-    visualSeats[visualIndex] = playersBySeat[logicalIndex];
-    visualSeatNumbers[visualIndex] = logicalIndex;
-  }
-
-  const seats = Array.from(seatsEl.querySelectorAll<HTMLDivElement>(".seat"));
-  seats.forEach((seat, index) => {
-    const nameEl = seat.querySelector<HTMLDivElement>(".seat-name");
-    const metaEl = seat.querySelector<HTMLDivElement>(".seat-meta");
-    const badgeEl = seat.querySelector<HTMLDivElement>(".seat-badge");
-    let handEl = seat.querySelector<HTMLDivElement>(".seat-hand");
-    const player = visualSeats[index];
-    const logicalSeatIndex = visualSeatNumbers[index];
-
-    if (!nameEl || !metaEl) return;
-
-    if (!player) {
-      seat.classList.remove("active", "you", "folded");
-      seat.classList.remove("dealer", "turn", "winner");
-      if (badgeEl) badgeEl.textContent = `Seat ${logicalSeatIndex + 1}`;
-      nameEl.textContent = "Libre";
-      metaEl.textContent = "";
-      if (handEl) {
-        handEl.innerHTML = "";
-      }
-      return;
-    }
-
-    const isYou = currentSessionId && player.sessionId === currentSessionId;
-    const isWinner = lastWinners.includes(player.sessionId);
-    seat.classList.toggle("active", true);
-    seat.classList.toggle("you", Boolean(isYou));
-    seat.classList.toggle("folded", Boolean(player.isFolded));
-    seat.classList.toggle("dealer", player.seatIndex === dealerIndex);
-    seat.classList.toggle("turn", player.sessionId === currentTurn);
-    seat.classList.toggle("winner", isWinner);
-    if (badgeEl) badgeEl.textContent = `Seat ${player.seatIndex + 1}`;
-    nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
-
-    metaEl.innerHTML = "";
-    const chipsEl = document.createElement("span");
-    chipsEl.classList.add("seat-chip");
-    chipsEl.textContent = `Fichas ${player.chips}`;
-    const betEl = document.createElement("span");
-    betEl.classList.add("seat-bet");
-    betEl.textContent = `Apuesta ${player.currentBet}`;
-    metaEl.appendChild(chipsEl);
-    metaEl.appendChild(betEl);
-    
-    // Show winning hand if player is winner
-    if (isWinner && lastWinningHand !== "-") {
-      const winningHandEl = document.createElement("div");
-      winningHandEl.classList.add("seat-winning-hand");
-      winningHandEl.textContent = lastWinningHand;
-      metaEl.appendChild(winningHandEl);
-    }
-
-    if (!handEl) {
-      handEl = document.createElement("div");
-      handEl.classList.add("seat-hand");
-      seat.appendChild(handEl);
-    }
-    handEl.innerHTML = "";
-    const cards = revealedHands?.[player.sessionId] ?? [];
-    if (cards.length) {
-      for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
-        const cardEl = createCardElement(cards[i]);
-        cardEl.classList.add("mini");
-        handEl.appendChild(cardEl);
-      }
-    }
-  });
-}
-
-function renderPlayers(state: RoomState) {
-  playersList.innerHTML = "";
-  mobileSeatsList.innerHTML = "";
-  if (!state || !state.users) return;
-
-  const entries = getUserEntries(state).filter(isPlayerState);
-  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
-  const currentTurnId = inWinnerPhase ? "" : (state.currentTurn ?? "");
-
-  entries.sort((a, b) => a.seatIndex - b.seatIndex);
-
-  entries.forEach((player) => {
-    const li = document.createElement("li");
-    const isYou = currentSessionId && player.sessionId === currentSessionId ? " (you)" : "";
-    li.textContent = `${player.name}${isYou} | chips: ${player.chips} | bet: ${player.currentBet}${player.isFolded ? " | folded" : ""}`;
-    playersList.appendChild(li);
-
-    const mobileItem = document.createElement("li");
-    mobileItem.classList.toggle("is-you", Boolean(isYou));
-    mobileItem.classList.toggle("is-folded", Boolean(player.isFolded));
-    mobileItem.classList.toggle("is-turn", player.sessionId === currentTurnId);
-    const nameEl = document.createElement("span");
-    nameEl.classList.add("mobile-seat-name");
-    nameEl.textContent = `${player.name}${isYou}`;
-
-    const metaEl = document.createElement("span");
-    metaEl.classList.add("mobile-seat-meta");
-    metaEl.textContent = `Apuesta ${player.currentBet} · Fichas ${player.chips}`;
-
-    mobileItem.appendChild(nameEl);
-    mobileItem.appendChild(metaEl);
-
-    if (player.sessionId === currentTurnId) {
-      const turnBadge = document.createElement("span");
-      turnBadge.classList.add("mobile-seat-badge");
-      turnBadge.textContent = "Turno";
-      mobileItem.appendChild(turnBadge);
-    }
-    mobileSeatsList.appendChild(mobileItem);
-  });
-}
-
 function renderState(state: RoomState) {
-  if (!state) return;
-  phaseStatus.textContent = state.phase ?? "-";
-  const entries = getUserEntries(state).filter(isPlayerState);
-  latestPlayerNames.clear();
-  entries.forEach((player) => {
-    latestPlayerNames.set(player.sessionId, player.name);
-  });
-  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
-  const currentTurnId = inWinnerPhase ? "" : (state.currentTurn ?? "");
-  const turnPlayer = entries.find((player) => player.sessionId === currentTurnId);
-  turnStatus.textContent = turnPlayer?.name ?? (currentTurnId || "-");
-  
-  // Show/hide "ES TU TURNO" indicator (hidden during winner display)
-  if (currentSessionId && currentTurnId === currentSessionId) {
-    yourTurnIndicator.classList.remove("hidden");
-  } else {
-    yourTurnIndicator.classList.add("hidden");
-  }
-  
-  const potValue = Number(state.pot ?? 0);
-  const currentBetValue = Number(state.currentBet ?? 0);
-  potStatus.textContent = String(potValue);
-  betStatus.textContent = String(currentBetValue);
-  potChip.textContent = String(potValue);
-  phaseChip.textContent = state.phase ?? "waiting";
-  turnChip.textContent = turnPlayer?.name ?? (currentTurnId || "-");
-  previousPotValue = potValue;
-  previousCurrentBetValue = currentBetValue;
-  updateTurnTimer(state);
-  winningHandStatus.textContent = lastWinningHand;
-  winningHandChip.textContent = lastWinningHand;
-  winnersStatus.textContent = lastWinners.join(", ") || "-";
-  const rawCommunity = state.communityCards;
-  const community = schemaArrayToCards(rawCommunity);
-  communityStatus.textContent = community.length ? community.join(" ") : "-";
-  
-  // Check if all active players are all-in (0 chips and not folded)
-  const activePlayers = entries.filter((p: any) => !p.isFolded && p.chips !== undefined);
-  const allPlayersAllIn = activePlayers.length > 1 && activePlayers.every((p: any) => Number(p.chips ?? 0) === 0);
-  
-  // Disable buttons when all-in (BEFORE rendering)
-  updateActionButtons(state, allPlayersAllIn);
-  
-  if (!allInRevealInProgress) {
-    if (!cardsEqual(community, previousCommunityCards)) {
-      renderCardRow(communityCardsEl, community, 5);
-      animateCardDeals(communityCardsEl, community, previousCommunityCards);
-      previousCommunityCards = [...community];
-    }
-  }
-  if (currentSessionId) {
-    const me = entries.find((player: any) => player.sessionId === currentSessionId);
-    // With StateView (backend), only this client's Player has hand synced; others have no hand.
-    const hand = schemaArrayToCards(me?.hand);
-    handStatus.textContent = hand.length ? hand.join(" ") : "-";
-    if (!cardsEqual(hand, previousHandCards)) {
-      renderCardRow(handCardsEl, hand, 2);
-      animateCardDeals(handCardsEl, hand, previousHandCards);
-      previousHandCards = [...hand];
-    }
-  } else {
-    handStatus.textContent = "-";
-    renderCardRow(handCardsEl, [], 2);
-    previousHandCards = [];
-  }
-  renderSeats(state);
-  renderPlayers(state);
-}
-
-function updateActionButtons(state: RoomState | null, isAllIn: boolean = false) {
-  // If all-in or no state, disable all buttons
-  if (isAllIn || !state || !currentSessionId) {
-    setActionButtonsEnabled(false, false, false, false, false, false, false);
-    callButton.textContent = "Call";
-    return;
-  }
-
-  const entries = getUserEntries(state).filter(isPlayerState);
-  const me = entries.find((player) => player.sessionId === currentSessionId);
-  const isMyTurn = Boolean(me) && state.currentTurn === currentSessionId;
-  const isActive = Boolean(me) && !me?.isFolded && Boolean(state.roundStarted);
-  const canAct = isMyTurn && isActive;
-  const currentBet = Number(state.currentBet ?? 0);
-  const myBet = Number(me?.currentBet ?? 0);
-  const myChips = Number(me?.chips ?? 0);
-
-  const canCheck = canAct && currentBet === myBet;
-  const canCall = canAct && currentBet > myBet && myChips > 0;
-  const callAmount = currentBet - myBet;
-  
-  // Update call button text with amount
-  if (canCall) {
-    callButton.textContent = `Call ($${callAmount})`;
-  } else {
-    callButton.textContent = "Call";
-  }
-  
-  const canFold = canAct;
-  const canAllIn = canAct && myChips > 0;
-  const canBet = canAct && currentBet === 0 && myChips > 0;
-  const canRaise = canAct && currentBet > 0 && myChips > 0;
-
-  // Count active players (chips > 0)
-  const activePlayers = entries.filter((p: any) => Number(p.chips ?? 0) > 0).length;
-  const canStart = Boolean(currentSessionId) && !state.roundStarted && activePlayers >= 2;
-
-  setActionButtonsEnabled(
-    canStart,
-    canCheck,
-    canCall,
-    canFold,
-    canAllIn,
-    canBet,
-    canRaise
-  );
-}
-
-function setActionButtonsEnabled(
-  canStart: boolean,
-  canCheck: boolean,
-  canCall: boolean,
-  canFold: boolean,
-  canAllIn: boolean,
-  canBet: boolean,
-  canRaise: boolean
-) {
-  startGameButton.disabled = !canStart;
-  checkButton.disabled = !canCheck;
-  callButton.disabled = !canCall;
-  foldButton.disabled = !canFold;
-  allInButton.disabled = !canAllIn;
-  betButton.disabled = !canBet;
-  raiseButton.disabled = !canRaise;
+  syncGameUiContext();
+  renderStateFn(state, getGameUiRefs(), gameUiContext, updateTurnTimer);
 }
 
 async function register() {
@@ -1354,6 +1049,7 @@ async function joinRoom(
 
   room = joinedRoom;
   currentSessionId = joinedRoom.sessionId;
+  gameUiContext.currentSessionId = currentSessionId;
   tournamentEnded = false;
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(false);
@@ -1361,10 +1057,10 @@ async function joinRoom(
   stopLobbyPolling();
   setConnectionState("connected");
   reconnectAttempts = 0;
-  lastWinningHand = "-";
-  lastWinners = [];
-  winningHandStatus.textContent = lastWinningHand;
-  winningHandChip.textContent = lastWinningHand;
+  winnerDisplayState.lastWinningHand = "-";
+  winnerDisplayState.lastWinners = [];
+  winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
+  winningHandChip.textContent = winnerDisplayState.lastWinningHand;
   winnersStatus.textContent = "-";
   clearHandHistory();
   renderHandHistoryUi();
@@ -1456,13 +1152,7 @@ async function joinRoom(
     revealedHands = null;
     allInCardsRevealedByServer = false;
     // Clear winner display so the new round shows turn/state correctly (avoids stale UI if next hand starts within 5s)
-    lastWinners = [];
-    lastWinningHand = "-";
-    winnerDisplayUntil = 0;
-    if (winnerDisplayTimeoutId !== null) {
-      clearTimeout(winnerDisplayTimeoutId);
-      winnerDisplayTimeoutId = null;
-    }
+    clearWinnerDisplay(winnerDisplayState);
   });
 
   joinedRoom.onMessage(
@@ -1477,7 +1167,7 @@ async function joinRoom(
       const card = typeof payload?.card === "string" ? payload.card : null;
 
       if ((!cards || cards.length === 0) && card) {
-        const next = [...previousCommunityCards];
+        const next = [...gameUiContext.previousCommunityCards];
         const targetIndex = idx ?? next.length;
         while (next.length < targetIndex) next.push("");
         next[targetIndex] = card;
@@ -1487,7 +1177,7 @@ async function joinRoom(
       if (cards.length > 0) {
         allInRevealInProgress = true;
         allInCardsRevealedByServer = true;
-        previousCommunityCards = [...cards];
+        gameUiContext.previousCommunityCards = [...cards];
         renderCardRow(communityCardsEl, cards, 5);
         const shown = cards.filter(Boolean);
         communityStatus.textContent = shown.length ? shown.join(" ") : "-";
@@ -1514,9 +1204,7 @@ async function joinRoom(
     const clientNow = Date.now();
     const offsetMs = serverTime - clientNow;
     const deadlineMs = startedAt - offsetMs + timeoutMs;
-    lastTurnId = turnId;
-    lastTurnTimeoutMs = timeoutMs;
-    startTurnTimer(turnId, timeoutMs, deadlineMs);
+    startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs);
   });
 
   room.onMessage("roundEnded", (payload) => {
@@ -1551,39 +1239,39 @@ async function joinRoom(
       pendingWinningHand = payload?.winningHand ?? "";
 
       const showWinners = () => {
-        lastWinners = pendingWinners ?? [];
-        lastWinningHand = pendingWinningHand ?? "";
-        winnersStatus.textContent = lastWinners.join(", ") || "-";
-        winningHandStatus.textContent = lastWinningHand;
-        winningHandChip.textContent = lastWinningHand;
-        if (currentSessionId && lastWinners.includes(currentSessionId)) {
+        winnerDisplayState.lastWinners = pendingWinners ?? [];
+        winnerDisplayState.lastWinningHand = pendingWinningHand ?? "";
+        winnersStatus.textContent = winnerDisplayState.lastWinners.join(", ") || "-";
+        winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
+        winningHandChip.textContent = winnerDisplayState.lastWinningHand;
+        if (currentSessionId && winnerDisplayState.lastWinners.includes(currentSessionId)) {
           audio.playEffect("win");
         }
         allInRevealInProgress = false;
         pendingWinners = null;
         pendingWinningHand = null;
-        previousCommunityCards = [...communityCards];
+        gameUiContext.previousCommunityCards = [...communityCards];
         startWinnerDisplayPhase();
         if (lastRoomState) renderState(lastRoomState);
       };
 
       if (allInCardsRevealedByServer) {
-        previousCommunityCards = [...communityCards];
+        gameUiContext.previousCommunityCards = [...communityCards];
         showWinners();
       } else {
-        previousCommunityCards = [];
+        gameUiContext.previousCommunityCards = [...communityCards];
         revealAllInCards(communityCards, showWinners);
       }
     } else {
-      previousCommunityCards = [...communityCards];
-      lastWinningHand = payload?.winningHand ?? "";
-      winningHandStatus.textContent = lastWinningHand;
-      winningHandChip.textContent = lastWinningHand;
+      gameUiContext.previousCommunityCards = [...communityCards];
+      winnerDisplayState.lastWinningHand = payload?.winningHand ?? "";
+      winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
+      winningHandChip.textContent = winnerDisplayState.lastWinningHand;
       if (Array.isArray(payload?.winners)) {
-        lastWinners = payload.winners.map((winner: any) => winner.playerId);
-        winnersStatus.textContent = lastWinners.join(", ") || "-";
-        previousWinnersKey = lastWinners.join("|");
-        if (currentSessionId && lastWinners.includes(currentSessionId)) {
+        winnerDisplayState.lastWinners = payload.winners.map((winner: any) => winner.playerId);
+        winnersStatus.textContent = winnerDisplayState.lastWinners.join(", ") || "-";
+        previousWinnersKey = winnerDisplayState.lastWinners.join("|");
+        if (currentSessionId && winnerDisplayState.lastWinners.includes(currentSessionId)) {
           audio.playEffect("win");
         }
         startWinnerDisplayPhase();
