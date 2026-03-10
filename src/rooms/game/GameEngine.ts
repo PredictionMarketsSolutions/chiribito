@@ -103,13 +103,18 @@ export class GameEngine {
 
     this.roundManager.resetBetsForRound();
 
-    // Auto-play if all remaining players are all-in
+    // Showdown cuando no hay más apuestas: todos all-in O solo uno tiene fichas (el resto all-in).
+    // En ambos casos se muestran las cartas y el ganador; el jugador con fichas NO tiene que hacer check en cada calle.
     const nonFoldedPlayers = this.utils.getPlayersInHandNonFolded();
-    const allAllIn = nonFoldedPlayers.length > 1 &&
-                     nonFoldedPlayers.every(id => this.room.playersAllIn.has(id));
+    const countWithChips = nonFoldedPlayers.filter(id => {
+      const p = this.room.state.users.get(id);
+      return p != null && p.chips > 0;
+    }).length;
+    const allInShowdown =
+      nonFoldedPlayers.length > 1 && countWithChips <= 1;
 
-    if (allAllIn) {
-      logger.info(`All players all-in, auto-playing to showdown`, {
+    if (allInShowdown) {
+      logger.info(`All-in showdown (all in or one with chips), auto-playing to reveal`, {
         roomId: this.room.roomId
       });
       this.startAllInShowdownReveal();

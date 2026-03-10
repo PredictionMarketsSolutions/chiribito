@@ -425,82 +425,102 @@ describe("GameFlow Bug Fixes", () => {
     });
   });
 
-  describe("all-in with one player having chips (must check each street)", () => {
-    it("gives turn to the player with chips after each street instead of auto-showdown", () => {
+  describe("all-in showdown: one with chips, rest all-in — show showdown (no check each street)", () => {
+    beforeEach(() => {
+      mockRoom.broadcast.mockClear();
+      mockRoom.scheduleDelayed.mockClear?.();
+    });
+
+    it("when one player has chips and rest are all-in, goes to all-in showdown (reveal cards, no turn)", () => {
       mockRoom.playersInHand = ["player-1", "player-2"];
       mockRoom.playersAllIn = new Set(["player-1"]);
       mockRoom.dealerIndex = 0;
-      mockRoom.currentPlayerIndex = 1;
       roomState.phase = "preflop";
       roomState.communityCards.clear();
       roomState.currentBet = 0;
-      roomState.currentTurn = "";
       mockRoom.playersActedThisRound.clear();
 
       const p1 = roomState.users.get("player-1") as Player;
       const p2 = roomState.users.get("player-2") as Player;
       p1.chips = 0;
-      p1.currentBet = 250;
-      p1.isFolded = false;
       p2.chips = 1000;
-      p2.currentBet = 250;
+      p1.isFolded = false;
+      p2.isFolded = false;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(mockRoom.scheduleDelayed).toHaveBeenCalled();
+      expect(roomState.currentTurn).toBe("");
+    });
+
+    it("when one has chips and rest all-in (wrongly in playersAllIn), still goes to showdown", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
+      roomState.phase = "card1";
+      roomState.communityCards.clear();
+      roomState.communityCards.push("1O", "7C", "8E");
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 0;
+      p2.chips = 500;
+      p1.isFolded = false;
+      p2.isFolded = false;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(mockRoom.scheduleDelayed).toHaveBeenCalled();
+      expect(roomState.currentTurn).toBe("");
+    });
+
+    it("three players: two all-in, one with chips — goes to showdown (no turn for chip holder)", () => {
+      const p3 = new Player("player-3");
+      p3.chips = 800;
+      p3.isFolded = false;
+      p3.currentBet = 0;
+      roomState.users.set("player-3", p3);
+
+      mockRoom.playersInHand = ["player-1", "player-2", "player-3"];
+      mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
+      mockRoom.dealerIndex = 0;
+      roomState.phase = "preflop";
+      roomState.communityCards.clear();
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 0;
+      p2.chips = 0;
+      p1.isFolded = false;
+      p2.isFolded = false;
+
+      (engine as any).proceedToNextPhase();
+
+      expect(mockRoom.scheduleDelayed).toHaveBeenCalled();
+      expect(roomState.currentTurn).toBe("");
+    });
+
+    it("when two or more have chips, normal betting — turn is assigned, no auto-showdown", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set([]);
+      mockRoom.dealerIndex = 0;
+      roomState.phase = "preflop";
+      roomState.communityCards.clear();
+      roomState.currentBet = 0;
+      mockRoom.playersActedThisRound.clear();
+
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.chips = 500;
+      p2.chips = 500;
+      p1.isFolded = false;
       p2.isFolded = false;
 
       (engine as any).proceedToNextPhase();
 
       expect(mockRoom.scheduleDelayed).not.toHaveBeenCalled();
-      expect(roomState.currentTurn).toBe("player-2");
-      expect(roomState.communityCards.length).toBe(1);
-    });
-
-    it("after check from player with chips, next street still gives them the turn", () => {
-      mockRoom.playersInHand = ["player-1", "player-2"];
-      mockRoom.playersAllIn = new Set(["player-1"]);
-      mockRoom.dealerIndex = 0;
-      mockRoom.currentPlayerIndex = 1;
-      roomState.phase = "card1";
-      roomState.communityCards.clear();
-      roomState.communityCards.push("1O", "7C", "8E");
-      roomState.currentBet = 0;
-      roomState.currentTurn = "player-2";
-      mockRoom.playersActedThisRound.clear();
-
-      const p1 = roomState.users.get("player-1") as Player;
-      const p2 = roomState.users.get("player-2") as Player;
-      p1.chips = 0;
-      p1.currentBet = 0;
-      p1.isFolded = false;
-      p2.chips = 1000;
-      p2.currentBet = 0;
-      p2.isFolded = false;
-
-      const checkClient = { sessionId: "player-2", send: jest.fn() } as any;
-      engine.handleCheck(checkClient);
-
-      expect(roomState.currentTurn).toBe("player-2");
-      expect(roomState.communityCards.length).toBeGreaterThan(3);
-    });
-
-    it("when getNextActiveIndexFrom would return -1, fallback assigns turn to only active player", () => {
-      mockRoom.playersInHand = ["player-1", "player-2"];
-      mockRoom.playersAllIn = new Set(["player-1"]);
-      mockRoom.dealerIndex = 1;
-      mockRoom.currentPlayerIndex = 0;
-      roomState.phase = "preflop";
-      roomState.communityCards.clear();
-      roomState.currentBet = 0;
-      mockRoom.playersActedThisRound.clear();
-
-      const p1 = roomState.users.get("player-1") as Player;
-      const p2 = roomState.users.get("player-2") as Player;
-      p1.chips = 0;
-      p1.isFolded = false;
-      p2.chips = 1000;
-      p2.isFolded = false;
-
-      (engine as any).proceedToNextPhase();
-
-      expect(roomState.currentTurn).toBe("player-2");
+      expect(roomState.currentTurn).not.toBe("");
       expect(roomState.communityCards.length).toBe(1);
     });
   });
@@ -516,6 +536,8 @@ describe("GameFlow Bug Fixes", () => {
       const p2 = roomState.users.get("player-2") as Player;
       p1.currentBet = 250;
       p2.currentBet = 250;
+      p1.chips = 0;
+      p2.chips = 0;
 
       (engine as any).proceedToNextPhase();
 
