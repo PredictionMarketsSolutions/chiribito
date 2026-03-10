@@ -1894,6 +1894,47 @@ async function openLobby() {
   openLobby().catch((err) => log(`Lobby error: ${err?.message || err}`));
 });
 
+const authLoginForm = document.querySelector("#auth-login-form") as HTMLElement;
+const forgotPasswordBlock = document.querySelector("#forgot-password-block") as HTMLElement;
+const forgotPasswordLink = document.querySelector("#forgot-password-link") as HTMLAnchorElement;
+const forgotPasswordEmail = document.querySelector("#forgot-password-email") as HTMLInputElement;
+const forgotPasswordSubmit = document.querySelector("#forgot-password-submit") as HTMLButtonElement;
+const forgotPasswordBack = document.querySelector("#forgot-password-back") as HTMLButtonElement;
+
+if (forgotPasswordLink) {
+  forgotPasswordLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (authLoginForm) authLoginForm.classList.add("hidden");
+    if (forgotPasswordBlock) forgotPasswordBlock.classList.remove("hidden");
+    setAuthMessage("", "info");
+  });
+}
+if (forgotPasswordBack) {
+  forgotPasswordBack.addEventListener("click", () => {
+    if (authLoginForm) authLoginForm.classList.remove("hidden");
+    if (forgotPasswordBlock) forgotPasswordBlock.classList.add("hidden");
+    setAuthMessage("", "info");
+  });
+}
+if (forgotPasswordSubmit) {
+  forgotPasswordSubmit.addEventListener("click", async () => {
+    const email = forgotPasswordEmail?.value?.trim() ?? "";
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      setAuthMessage(emailValidation.error ?? "Email no válido", "error");
+      return;
+    }
+    setAuthMessage("Enviando enlace...", "info");
+    try {
+      await request("/api/auth/forgot-password", { email });
+      setAuthMessage("Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja de entrada.", "success");
+    } catch (err) {
+      setAuthMessage("No se pudo enviar el enlace. Inténtalo de nuevo más tarde.", "error");
+      log(`Forgot password error: ${err}`);
+    }
+  });
+}
+
 refreshRoomsButton.addEventListener("click", () => {
   refreshLobbyRooms(true).catch(() => undefined);
   refreshWinnersRanking().catch(() => undefined);

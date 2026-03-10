@@ -687,10 +687,46 @@ h1 {
   box-shadow: 0 0 0 3px rgba(13, 95, 74, 0.1);
 }
 
+.forgot-password-row {
+  margin-top: 4px;
+}
+
+.forgot-password-link {
+  font-size: 13px;
+  color: var(--felt-main, #0d5f4a);
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+.forgot-password-block {
+  margin-top: 16px;
+}
+
+.forgot-password-block .forgot-password-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--gray-700);
+}
+
+.forgot-password-block .field {
+  margin-bottom: 8px;
+}
+
 .button-row {
   display: flex;
   gap: 10px;
   margin-top: 20px;
+}
+
+button.secondary {
+  background: var(--gray-600);
+}
+
+button.secondary:hover:not(:disabled) {
+  background: var(--gray-500);
 }
 
 button {

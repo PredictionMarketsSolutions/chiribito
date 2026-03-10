@@ -19,24 +19,40 @@
         <section class="panel-card">
           <h2>Acceso</h2>
           <div id="auth-message" class="auth-message" role="status"></div>
-          <div class="field-grid">
-            <label class="field">
-              <span>Username</span>
-              <input id="username" type="text" placeholder="test1" />
-            </label>
+          <div id="auth-login-form">
+            <div class="field-grid">
+              <label class="field">
+                <span>Username</span>
+                <input id="username" type="text" placeholder="test1" />
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input id="email" type="email" placeholder="test1@example.com" />
+              </label>
+              <label class="field">
+                <span>Password</span>
+                <input id="password" type="password" placeholder="123456" />
+              </label>
+              <div class="forgot-password-row">
+                <a href="#" id="forgot-password-link" class="forgot-password-link">¿Has olvidado tu contraseña?</a>
+              </div>
+            </div>
+            <div class="button-row">
+              <button id="register">Register</button>
+              <button id="login">Login</button>
+              <button id="join" class="accent">Login</button>
+            </div>
+          </div>
+          <div id="forgot-password-block" class="forgot-password-block hidden">
+            <p class="forgot-password-text">Introduce tu email y te enviaremos un enlace para restablecer la contraseña.</p>
             <label class="field">
               <span>Email</span>
-              <input id="email" type="email" placeholder="test1@example.com" />
+              <input id="forgot-password-email" type="email" placeholder="tu@email.com" />
             </label>
-            <label class="field">
-              <span>Password</span>
-              <input id="password" type="password" placeholder="123456" />
-            </label>
-          </div>
-          <div class="button-row">
-            <button id="register">Register</button>
-            <button id="login">Login</button>
-            <button id="join" class="accent">Login</button>
+            <div class="button-row">
+              <button type="button" id="forgot-password-back" class="secondary">Volver</button>
+              <button type="button" id="forgot-password-submit" class="accent">Enviar enlace</button>
+            </div>
           </div>
         </section>
       </div>
