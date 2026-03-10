@@ -1603,8 +1603,8 @@ async function joinRoom(
         if (currentSessionId && lastWinners.includes(currentSessionId)) {
           audio.playEffect("win");
         }
+        startWinnerDisplayPhase();
       }
-      startWinnerDisplayPhase();
       if (lastRoomState) renderState(lastRoomState);
     }
     
