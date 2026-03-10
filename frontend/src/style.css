@@ -141,6 +141,215 @@ body {
   max-width: 560px;
 }
 
+/* Landing page (lobby + ranking) */
+.landing-page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.landing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.landing-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.landing-title {
+  font-family: "Cinzel", serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+
+.landing-tagline {
+  font-size: 13px;
+  color: var(--gray-400);
+  font-weight: 500;
+}
+
+.landing-logout {
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--gray-300);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.landing-logout:hover {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.landing-hero {
+  font-size: 17px;
+  color: var(--gray-300);
+  margin-bottom: 28px;
+  font-weight: 500;
+}
+
+.landing-main {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .landing-main {
+    grid-template-columns: 320px 1fr;
+    align-items: start;
+  }
+}
+
+.landing-ranking {
+  order: 1;
+}
+
+.landing-lobby {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.landing-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.landing-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray-400);
+  margin-bottom: 16px;
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-list .room-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ranking-list .room-item-empty {
+  color: var(--gray-500);
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.ranking-list .room-name {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.ranking-list .room-meta {
+  color: var(--gray-400);
+  font-size: 13px;
+}
+
+.landing-card .rooms-list .room-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.landing-card .rooms-list .room-item-empty {
+  color: var(--gray-500);
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.landing-card .field input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+}
+
+.landing-card .field input::placeholder {
+  color: var(--gray-500);
+}
+
+.landing-card .field span {
+  color: var(--gray-400);
+}
+
+.landing-card .button-row {
+  margin-top: 16px;
+}
+
+.landing-card button.accent {
+  background: var(--felt-main);
+  color: var(--white);
+}
+
+.landing-card button.accent:hover {
+  background: var(--felt-light);
+}
+
+.landing-card button:not(.accent) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.landing-card button:not(.accent):hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.landing-card .auth-message.visible {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--gray-200);
+}
+
+.landing-card .auth-message.visible.error {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #fca5a5;
+}
+
+.landing-card .auth-message.visible.success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.landing-card .auth-message.visible.info {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
 .lobby-actions {
   display: flex;
   justify-content: flex-end;

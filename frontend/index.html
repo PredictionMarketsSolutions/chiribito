@@ -42,51 +42,56 @@
       </div>
     </div>
     <div id="lobby-overlay" class="auth-overlay hidden">
-      <div class="auth-card lobby-card">
-        <header class="panel-header">
-          <div>
-            <p class="panel-kicker">Casino Control</p>
-            <h1>Lobby</h1>
+      <div class="landing-page">
+        <header class="landing-header">
+          <div class="landing-brand">
+            <h1 class="landing-title">Chiribito</h1>
+            <p class="landing-tagline">Poker · Mesas en vivo</p>
           </div>
-          <div class="panel-pill">Mesas</div>
+          <button id="back-to-auth" type="button" class="landing-logout">Salir</button>
         </header>
-        <section class="panel-card">
-          <h2>Mesas disponibles</h2>
-          <div id="lobby-message" class="auth-message" role="status"></div>
-          <div class="lobby-actions">
-            <button id="refresh-rooms">Refrescar</button>
-          </div>
-          <ul id="rooms-list" class="rooms-list" aria-label="Lista de mesas"></ul>
-        </section>
-        <section class="panel-card">
-          <h2>Ranking de ganadores</h2>
-          <ul id="winners-ranking" class="rooms-list" aria-label="Ranking de jugadores por partidas ganadas"></ul>
-        </section>
-        <section class="panel-card">
-          <h2>Crear mesa</h2>
-          <div class="field-grid">
-            <label class="field">
-              <span>Nombre (opcional)</span>
-              <input id="table-name" type="text" placeholder="Mesa 1" maxlength="32" />
-            </label>
-          </div>
-          <div class="button-row">
-            <button id="create-table" class="accent">Crear y unirme</button>
-            <button id="back-to-auth">Salir</button>
-          </div>
-        </section>
-        <section class="panel-card">
-          <h2>Unirme por ID</h2>
-          <div class="field-grid">
-            <label class="field">
-              <span>Room ID</span>
-              <input id="join-room-id" type="text" placeholder="Vm1j3o6RM" />
-            </label>
-          </div>
-          <div class="button-row">
-            <button id="join-by-id" class="accent">Unirme</button>
-          </div>
-        </section>
+
+        <p class="landing-hero">Elige una mesa o crea la tuya.</p>
+
+        <div class="landing-main">
+          <aside class="landing-ranking">
+            <section class="landing-card">
+              <h2 class="landing-card-title">Ranking de ganadores</h2>
+              <ul id="winners-ranking" class="ranking-list" aria-label="Ranking de jugadores por partidas ganadas"></ul>
+            </section>
+          </aside>
+
+          <main class="landing-lobby">
+            <section class="landing-card">
+              <h2 class="landing-card-title">Mesas disponibles</h2>
+              <div id="lobby-message" class="auth-message" role="status"></div>
+              <div class="lobby-actions">
+                <button id="refresh-rooms" type="button">Refrescar</button>
+              </div>
+              <ul id="rooms-list" class="rooms-list" aria-label="Lista de mesas"></ul>
+            </section>
+            <section class="landing-card">
+              <h2 class="landing-card-title">Crear mesa</h2>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Nombre (opcional)</span>
+                  <input id="table-name" type="text" placeholder="Mesa 1" maxlength="32" />
+                </label>
+              </div>
+              <button id="create-table" type="button" class="accent">Crear y unirme</button>
+            </section>
+            <section class="landing-card">
+              <h2 class="landing-card-title">Unirme por ID</h2>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Room ID</span>
+                  <input id="join-room-id" type="text" placeholder="Vm1j3o6RM" />
+                </label>
+              </div>
+              <button id="join-by-id" type="button" class="accent">Unirme</button>
+            </section>
+          </main>
+        </div>
       </div>
     </div>
     <div id="tournament-result-overlay" class="auth-overlay hidden">
