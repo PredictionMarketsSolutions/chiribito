@@ -552,6 +552,82 @@ describe("GameFlow Bug Fixes", () => {
       expect(roundEndedCalls.length).toBe(1);
       expect(roundEndedCalls[0][1].isAllInShowdown).toBe(true);
     });
+
+    it("roundEnded payload includes winningHand, playerHands and winners for client winner display", () => {
+      mockRoom.playersInHand = ["player-1", "player-2"];
+      mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
+      roomState.communityCards.clear();
+      roomState.phase = "flop";
+      roomState.pot = 500;
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.currentBet = 250;
+      p2.currentBet = 250;
+      p1.chips = 0;
+      p2.chips = 0;
+      p1.hand.push("1O", "1E");
+      p2.hand.push("2C", "2O");
+
+      (engine as any).proceedToNextPhase();
+
+      const roundEndedCalls = (mockRoom.broadcast as jest.Mock).mock.calls.filter(
+        (call: unknown[]) => call[0] === "roundEnded"
+      );
+      expect(roundEndedCalls.length).toBe(1);
+      const payload = roundEndedCalls[0][1];
+      expect(payload).toHaveProperty("winningHand");
+      expect(typeof payload.winningHand).toBe("string");
+      expect(payload).toHaveProperty("playerHands");
+      expect(typeof payload.playerHands).toBe("object");
+      expect(payload.playerHands).toHaveProperty("player-1");
+      expect(payload.playerHands).toHaveProperty("player-2");
+      expect(Array.isArray(payload.playerHands["player-1"])).toBe(true);
+      expect(Array.isArray(payload.playerHands["player-2"])).toBe(true);
+      expect(payload.playerHands["player-1"]).toEqual(["1O", "1E"]);
+      expect(payload.playerHands["player-2"]).toEqual(["2C", "2O"]);
+      expect(payload).toHaveProperty("communityCards");
+      expect(Array.isArray(payload.communityCards)).toBe(true);
+      expect(payload.communityCards.length).toBe(5);
+      expect(payload).toHaveProperty("winners");
+      expect(Array.isArray(payload.winners)).toBe(true);
+      payload.winners.forEach((w: { playerId: string; amount: number }) => {
+        expect(typeof w.playerId).toBe("string");
+        expect(typeof w.amount).toBe("number");
+      });
+    });
+  });
+
+  describe("roundEnded payload (winner display UI)", () => {
+    it("endRound broadcast always sends winningHand and playerHands for every user", () => {
+      roomState.phase = "river";
+      roomState.pot = 300;
+      roomState.communityCards.push("1O", "7C", "8E", "9C", "10O");
+      const p1 = roomState.users.get("player-1") as Player;
+      const p2 = roomState.users.get("player-2") as Player;
+      p1.hand.push("1C", "1E");
+      p2.hand.push("2C", "2E");
+      p1.isFolded = false;
+      p2.isFolded = false;
+      mockRoom.playersInHand = ["player-1", "player-2"];
+
+      (engine as any).endRoundWithWinners(false);
+
+      const roundEndedCalls = (mockRoom.broadcast as jest.Mock).mock.calls.filter(
+        (call: unknown[]) => call[0] === "roundEnded"
+      );
+      expect(roundEndedCalls.length).toBe(1);
+      const payload = roundEndedCalls[0][1];
+      expect(payload.winningHand).toBeDefined();
+      expect(typeof payload.winningHand).toBe("string");
+      expect(payload.playerHands).toBeDefined();
+      expect(Object.keys(payload.playerHands)).toContain("player-1");
+      expect(Object.keys(payload.playerHands)).toContain("player-2");
+      expect(payload.playerHands["player-1"]).toEqual(["1C", "1E"]);
+      expect(payload.playerHands["player-2"]).toEqual(["2C", "2E"]);
+      expect(Array.isArray(payload.winners)).toBe(true);
+      expect(Array.isArray(payload.communityCards)).toBe(true);
+      expect(payload.communityCards.length).toBe(5);
+    });
   });
 
   describe("StateView (per-client hand visibility)", () => {

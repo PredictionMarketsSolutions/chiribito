@@ -232,7 +232,27 @@ let allInCardsRevealedByServer = false;
 let pendingWinners: string[] | null = null;
 let pendingWinningHand: string | null = null;
 let lastRoomState: RoomState | null = null;
+/** Timestamp until which we show winner (no turn). After 5s we clear and return to normal. */
+let winnerDisplayUntil = 0;
+let winnerDisplayTimeoutId: ReturnType<typeof setTimeout> | null = null;
 const latestPlayerNames = new Map<string, string>();
+
+const WINNER_DISPLAY_MS = 5000;
+
+function startWinnerDisplayPhase() {
+  if (winnerDisplayTimeoutId !== null) {
+    clearTimeout(winnerDisplayTimeoutId);
+    winnerDisplayTimeoutId = null;
+  }
+  winnerDisplayUntil = Date.now() + WINNER_DISPLAY_MS;
+  winnerDisplayTimeoutId = setTimeout(() => {
+    winnerDisplayUntil = 0;
+    lastWinners = [];
+    lastWinningHand = "-";
+    winnerDisplayTimeoutId = null;
+    if (lastRoomState) renderState(lastRoomState);
+  }, WINNER_DISPLAY_MS);
+}
 
 function renderHandHistoryUi() {
   renderHandHistory(handHistoryList, (id) => latestPlayerNames.get(id) ?? id);
@@ -469,6 +489,11 @@ function resetRoomUi(message?: string) {
   allInCardsRevealedByServer = false;
   pendingWinners = null;
   pendingWinningHand = null;
+  winnerDisplayUntil = 0;
+  if (winnerDisplayTimeoutId !== null) {
+    clearTimeout(winnerDisplayTimeoutId);
+    winnerDisplayTimeoutId = null;
+  }
   if (allInAnimationTimeoutId !== null) {
     window.clearTimeout(allInAnimationTimeoutId);
     allInAnimationTimeoutId = null;
@@ -614,7 +639,8 @@ function startTokenMonitor() {
 function renderSeats(state: RoomState) {
   const entries = getUserEntries(state).filter(isPlayerState);
   const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
-  const currentTurn = state?.currentTurn ?? "";
+  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
+  const currentTurn = inWinnerPhase ? "" : (state?.currentTurn ?? "");
   const totalSeats = 6;
   const targetFrontIndex = 3;
 
@@ -714,7 +740,8 @@ function renderPlayers(state: RoomState) {
   if (!state || !state.users) return;
 
   const entries = getUserEntries(state).filter(isPlayerState);
-  const currentTurnId = state.currentTurn ?? "";
+  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
+  const currentTurnId = inWinnerPhase ? "" : (state.currentTurn ?? "");
 
   entries.sort((a, b) => a.seatIndex - b.seatIndex);
 
@@ -757,11 +784,12 @@ function renderState(state: RoomState) {
   entries.forEach((player) => {
     latestPlayerNames.set(player.sessionId, player.name);
   });
-  const currentTurnId = state.currentTurn ?? "";
+  const inWinnerPhase = winnerDisplayUntil > 0 && Date.now() < winnerDisplayUntil;
+  const currentTurnId = inWinnerPhase ? "" : (state.currentTurn ?? "");
   const turnPlayer = entries.find((player) => player.sessionId === currentTurnId);
-  turnStatus.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
+  turnStatus.textContent = turnPlayer?.name ?? (currentTurnId || "-");
   
-  // Show/hide "ES TU TURNO" indicator
+  // Show/hide "ES TU TURNO" indicator (hidden during winner display)
   if (currentSessionId && currentTurnId === currentSessionId) {
     yourTurnIndicator.classList.remove("hidden");
   } else {
@@ -774,7 +802,7 @@ function renderState(state: RoomState) {
   betStatus.textContent = String(currentBetValue);
   potChip.textContent = String(potValue);
   phaseChip.textContent = state.phase ?? "waiting";
-  turnChip.textContent = turnPlayer?.name ?? (state.currentTurn ?? "-");
+  turnChip.textContent = turnPlayer?.name ?? (currentTurnId || "-");
   previousPotValue = potValue;
   previousCurrentBetValue = currentBetValue;
   updateTurnTimer(state);
@@ -1444,6 +1472,14 @@ async function joinRoom(
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;
     allInCardsRevealedByServer = false;
+    // Clear winner display so the new round shows turn/state correctly (avoids stale UI if next hand starts within 5s)
+    lastWinners = [];
+    lastWinningHand = "-";
+    winnerDisplayUntil = 0;
+    if (winnerDisplayTimeoutId !== null) {
+      clearTimeout(winnerDisplayTimeoutId);
+      winnerDisplayTimeoutId = null;
+    }
   });
 
   joinedRoom.onMessage(
@@ -1544,6 +1580,7 @@ async function joinRoom(
         pendingWinners = null;
         pendingWinningHand = null;
         previousCommunityCards = [...communityCards];
+        startWinnerDisplayPhase();
         if (lastRoomState) renderState(lastRoomState);
       };
 
@@ -1556,20 +1593,18 @@ async function joinRoom(
       }
     } else {
       previousCommunityCards = [...communityCards];
-      if (payload?.winningHand) {
-        lastWinningHand = payload.winningHand;
-        winningHandStatus.textContent = lastWinningHand;
-        winningHandChip.textContent = lastWinningHand;
-      }
+      lastWinningHand = payload?.winningHand ?? "";
+      winningHandStatus.textContent = lastWinningHand;
+      winningHandChip.textContent = lastWinningHand;
       if (Array.isArray(payload?.winners)) {
         lastWinners = payload.winners.map((winner: any) => winner.playerId);
         winnersStatus.textContent = lastWinners.join(", ") || "-";
-        const winnersKey = lastWinners.join("|");
-        previousWinnersKey = winnersKey;
+        previousWinnersKey = lastWinners.join("|");
         if (currentSessionId && lastWinners.includes(currentSessionId)) {
           audio.playEffect("win");
         }
       }
+      startWinnerDisplayPhase();
       if (lastRoomState) renderState(lastRoomState);
     }
     
