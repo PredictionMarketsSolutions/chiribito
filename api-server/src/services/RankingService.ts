@@ -34,6 +34,7 @@ export async function getTopWinners(
   const topUsers = await userRepository
     .createQueryBuilder("user")
     .select(["user.id", "user.username", "user.gamesPlayed", "user.gamesWon"])
+    .where("user.gamesWon > 0")
     .orderBy("user.gamesWon", "DESC")
     .addOrderBy("user.gamesPlayed", "DESC")
     .limit(10)

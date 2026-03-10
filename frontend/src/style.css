@@ -278,6 +278,42 @@ body {
   font-size: 13px;
 }
 
+.ranking-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: var(--white);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.ranking-pos.gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #1f2937;
+  box-shadow: 0 0 0 2px rgba(244, 196, 48, 0.6);
+}
+
+.ranking-pos.silver {
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  color: #111827;
+}
+
+.ranking-pos.bronze {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #1f2937;
+}
+
 .landing-card .rooms-list .room-item {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);

@@ -30,6 +30,7 @@ describe("RankingService.getTopWinners", () => {
 
     const qb: any = {
       select: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       addOrderBy: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
@@ -50,6 +51,7 @@ describe("RankingService.getTopWinners", () => {
     const result = await getTopWinners(redisClient, userRepository);
 
     expect(userRepository.createQueryBuilder).toHaveBeenCalledWith("user");
+    expect(qb.where).toHaveBeenCalledWith("user.gamesWon > 0");
     expect(redisClient.set).toHaveBeenCalled();
     expect(result).toEqual([{ id: 1, username: "alice", gamesPlayed: 10, gamesWon: 5 }]);
   });

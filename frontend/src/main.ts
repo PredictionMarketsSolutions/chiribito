@@ -1681,10 +1681,12 @@ function renderLobbyRooms(rooms: AvailableRoom[]) {
  * joinOrCreate so a lobby exists; register "rooms" handler then send "filter" to force a fresh list
  * (initial "rooms" can be sent before our handler is attached).
  */
-async function refreshLobbyRooms() {
+async function refreshLobbyRooms(showLoading: boolean = true) {
   let lobbyRoom: Room | null = null;
   try {
-    setLobbyMessage("Cargando mesas...", "info");
+    if (showLoading) {
+      setLobbyMessage("Cargando mesas...", "info");
+    }
     const client = getWsClient();
     lobbyRoom = await client.joinOrCreate("lobby", {
       filter: { name: "my_room" }
@@ -1710,7 +1712,9 @@ async function refreshLobbyRooms() {
     });
     const sorted = [...roomsPayload].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
     renderLobbyRooms(sorted);
-    setLobbyMessage("", "info");
+    if (showLoading) {
+      setLobbyMessage("", "info");
+    }
   } catch (err: any) {
     setLobbyMessage("No se pudieron cargar las mesas.", "error");
     renderLobbyRooms([]);
@@ -1770,15 +1774,28 @@ async function refreshWinnersRanking() {
       const li = document.createElement("li");
       li.className = "room-item";
 
-      const rank = document.createElement("span");
-      rank.className = "room-name";
-      rank.textContent = `#${index + 1} ${entry.username}`;
+      const left = document.createElement("div");
+      left.className = "ranking-left";
+
+      const pos = document.createElement("span");
+      pos.className = "ranking-pos";
+      pos.textContent = String(index + 1);
+      if (index === 0) pos.classList.add("gold");
+      else if (index === 1) pos.classList.add("silver");
+      else if (index === 2) pos.classList.add("bronze");
+
+      const name = document.createElement("span");
+      name.className = "room-name";
+      name.textContent = entry.username;
 
       const meta = document.createElement("span");
       meta.className = "room-meta";
       meta.textContent = `${entry.gamesWon} ganadas · ${entry.gamesPlayed} jugadas`;
 
-      li.appendChild(rank);
+      left.appendChild(pos);
+      left.appendChild(name);
+
+      li.appendChild(left);
       li.appendChild(meta);
       winnersRankingList.appendChild(li);
     });
@@ -1795,7 +1812,7 @@ async function refreshWinnersRanking() {
 function startLobbyPolling() {
   stopLobbyPolling();
   lobbyPollId = window.setInterval(() => {
-    refreshLobbyRooms().catch(() => undefined);
+    refreshLobbyRooms(false).catch(() => undefined);
   }, 5000);
 }
 
@@ -1815,7 +1832,7 @@ async function openLobby() {
   }
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(true);
-  await refreshLobbyRooms();
+  await refreshLobbyRooms(true);
   await refreshWinnersRanking();
   startLobbyPolling();
 }
@@ -1843,7 +1860,7 @@ async function openLobby() {
 });
 
 refreshRoomsButton.addEventListener("click", () => {
-  refreshLobbyRooms().catch(() => undefined);
+  refreshLobbyRooms(true).catch(() => undefined);
   refreshWinnersRanking().catch(() => undefined);
 });
 
