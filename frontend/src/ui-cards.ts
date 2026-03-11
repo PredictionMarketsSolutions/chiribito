@@ -13,7 +13,7 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
 
   if (!card) {
     el.classList.add("card-back");
-    img.src = "/cards/back_logo.png";
+    img.src = "/cards/back.svg";
     img.addEventListener("load", () => el.classList.add("has-image"));
     img.addEventListener("error", () => {
       el.classList.add("back");
@@ -25,7 +25,14 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
 
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  img.src = `/cards/${suit}_${rank}.jpg`;
+  const suitNameMap: Record<string, string> = {
+    O: "ORO",
+    C: "COPAS",
+    E: "ESPADA",
+    B: "BASTOS"
+  };
+  const suitName = suitNameMap[suit] ?? suit;
+  img.src = `/cards/${rank} DE ${suitName}.webp`;
   img.addEventListener("load", () => el.classList.add("has-image"));
   img.addEventListener("error", () => {
     const suitMap: Record<string, { symbol: string; color: string }> = {
@@ -69,10 +76,17 @@ export function cardsEqual(a: string[], b: string[]): boolean {
 export function preloadCardImages(): void {
   const suits = ["O", "C", "E", "B"];
   const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-  const sources = ["/cards/back_logo.png"];
+  const sources = ["/cards/back.svg"];
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
-      sources.push(`/cards/${suit}_${rank}.jpg`);
+      const suitNameMap: Record<string, string> = {
+        O: "ORO",
+        C: "COPAS",
+        E: "ESPADA",
+        B: "BASTOS"
+      };
+      const suitName = suitNameMap[suit] ?? suit;
+      sources.push(`/cards/${rank} DE ${suitName}.webp`);
     });
   });
   sources.forEach((src) => {

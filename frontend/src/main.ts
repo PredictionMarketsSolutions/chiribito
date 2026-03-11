@@ -375,13 +375,20 @@ function getCardTexture(card: string) {
   if (!pixiLib) return null;
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  return pixiLib.Texture.from(`/cards/${suit}_${rank}.jpg`);
+  const suitNameMap: Record<string, string> = {
+    O: "ORO",
+    C: "COPAS",
+    E: "ESPADA",
+    B: "BASTOS"
+  };
+  const suitName = suitNameMap[suit] ?? suit;
+  return pixiLib.Texture.from(`/cards/${rank} DE ${suitName}.webp`);
 }
 
 function createCardSprite(targetEl: HTMLElement) {
   if (!pixiLib) return null;
   const rect = targetEl.getBoundingClientRect();
-  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back_logo.png"));
+  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back.svg"));
   sprite.anchor.set(0.5);
   sprite.width = rect.width;
   sprite.height = rect.height;
