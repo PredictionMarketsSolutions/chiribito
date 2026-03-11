@@ -247,14 +247,19 @@
           </div>
 
           <div class="table-zones">
-            <section class="table-zone">
+            <section class="table-zone table-zone--community">
               <div class="zone-title">Cartas de la comunidad</div>
               <div id="community-cards" class="card-row"></div>
             </section>
-            <section class="table-zone">
+            <section class="table-zone table-zone--your-cards hidden" aria-hidden="true">
               <div class="zone-title">Tus cartas</div>
               <div id="hand-cards" class="card-row"></div>
             </section>
+          </div>
+          <div id="card-popover" class="card-popover hidden" aria-hidden="true" role="tooltip">
+            <div class="card-popover-inner">
+              <div id="card-popover-cards" class="card-row card-popover-cards"></div>
+            </div>
           </div>
 
           <div class="table-footer">

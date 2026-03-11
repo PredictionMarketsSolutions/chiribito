@@ -20,6 +20,7 @@ export function renderSeats(
   const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
   const inWinnerPhase = isInWinnerPhase(ctx.winnerDisplayState);
   const currentTurn = inWinnerPhase ? "" : (state?.currentTurn ?? "");
+  const me = ctx.currentSessionId ? entries.find((p) => p.sessionId === ctx.currentSessionId) : undefined;
 
   const playersBySeat: Array<PlayerState | undefined> = Array(TOTAL_SEATS).fill(undefined);
   entries.forEach((player) => {
@@ -92,10 +93,14 @@ export function renderSeats(
     if (!handEl) {
       handEl = document.createElement("div");
       handEl.classList.add("seat-hand");
-      seat.appendChild(handEl);
+      seat.insertBefore(handEl, seat.firstChild);
     }
     handEl.innerHTML = "";
-    const cards = ctx.revealedHands?.[player.sessionId] ?? [];
+    const cards =
+      player.sessionId === ctx.currentSessionId
+        ? schemaArrayToCards(me?.hand)
+        : (ctx.revealedHands?.[player.sessionId] ?? []);
+    handEl.dataset.cards = JSON.stringify(cards);
     for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
       const cardEl = createCardElement(cards[i]);
       cardEl.classList.add("mini");
@@ -198,16 +203,13 @@ export function renderState(
     const me = entries.find((p: PlayerState) => p.sessionId === ctx.currentSessionId);
     const hand = schemaArrayToCards(me?.hand);
     refs.handStatus.textContent = hand.length ? hand.join(" ") : "-";
-    if (!cardsEqual(hand, ctx.previousHandCards)) {
-      renderCardRow(refs.handCardsEl, hand, 2);
-      ctx.previousHandCards.length = 0;
-      ctx.previousHandCards.push(...hand);
-    }
+    ctx.previousHandCards.length = 0;
+    ctx.previousHandCards.push(...hand);
   } else {
     refs.handStatus.textContent = "-";
-    renderCardRow(refs.handCardsEl, [], 2);
     ctx.previousHandCards.length = 0;
   }
+  renderCardRow(refs.handCardsEl, [], 2);
   renderSeats(state, refs, ctx);
   renderPlayers(state, refs, ctx);
 }

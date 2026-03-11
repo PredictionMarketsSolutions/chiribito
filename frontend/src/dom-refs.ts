@@ -38,6 +38,8 @@ export const dom = {
   winnersStatus: getRef<HTMLSpanElement>("#winners-status"),
   communityCardsEl: getRef<HTMLDivElement>("#community-cards"),
   handCardsEl: getRef<HTMLDivElement>("#hand-cards"),
+  cardPopover: getRef<HTMLDivElement>("#card-popover", false),
+  cardPopoverCards: getRef<HTMLDivElement>("#card-popover-cards", false),
   potChip: getRef<HTMLSpanElement>("#pot-chip"),
   phaseChip: getRef<HTMLSpanElement>("#phase-chip"),
   turnChip: getRef<HTMLSpanElement>("#turn-chip"),

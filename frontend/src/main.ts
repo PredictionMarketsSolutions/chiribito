@@ -127,7 +127,104 @@ const connectionIndicator = dom.connectionIndicator!;
 const rttStatus = dom.rttStatus!;
 const qualityStatus = dom.qualityStatus!;
 const bufferStatus = dom.bufferStatus!;
-const yourTurnIndicator = dom.yourTurnIndicator!;;
+const yourTurnIndicator = dom.yourTurnIndicator!;
+const cardPopover = dom.cardPopover;
+const cardPopoverCards = dom.cardPopoverCards;;
+
+function setupCardPopover() {
+  if (!seatsEl || !cardPopover || !cardPopoverCards) return;
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  seatsEl.addEventListener("mouseenter", (e: MouseEvent) => {
+    const hand = (e.target as HTMLElement).closest<HTMLElement>(".seat-hand");
+    if (!hand || !cardPopover || !cardPopoverCards) return;
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+    const raw = hand.getAttribute("data-cards");
+    let cards: string[] = [];
+    try {
+      cards = raw ? JSON.parse(raw) : [];
+    } catch {
+      /* ignore */
+    }
+    if (cards.length === 0) return;
+    cardPopoverCards.innerHTML = "";
+    cards.forEach((card) => {
+      const el = createCardElement(card);
+      cardPopoverCards.appendChild(el);
+    });
+    cardPopover.classList.remove("hidden");
+    cardPopover.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+      const rect = hand.getBoundingClientRect();
+      const popRect = cardPopover.getBoundingClientRect();
+      const padding = 10;
+      let left = rect.left + rect.width / 2 - popRect.width / 2;
+      let top = rect.top - popRect.height - padding;
+      left = Math.max(padding, Math.min(left, document.documentElement.clientWidth - popRect.width - padding));
+      top = Math.max(padding, Math.min(top, document.documentElement.clientHeight - popRect.height - padding));
+      cardPopover.style.left = `${left}px`;
+      cardPopover.style.top = `${top}px`;
+    });
+  }, true);
+
+  seatsEl.addEventListener("mouseleave", (e: MouseEvent) => {
+    if (!(e.target as HTMLElement).closest(".seat-hand")) return;
+    hideTimeout = setTimeout(() => {
+      if (cardPopover) {
+        cardPopover.classList.add("hidden");
+        cardPopover.setAttribute("aria-hidden", "true");
+      }
+      hideTimeout = null;
+    }, 200);
+  }, true);
+
+  seatsEl.addEventListener("click", (e: MouseEvent) => {
+    const hand = (e.target as HTMLElement).closest<HTMLElement>(".seat-hand");
+    if (!hand || !cardPopover || !cardPopoverCards) return;
+    const raw = hand.getAttribute("data-cards");
+    let cards: string[] = [];
+    try {
+      cards = raw ? JSON.parse(raw) : [];
+    } catch {
+      /* ignore */
+    }
+    if (cards.length === 0) return;
+    if (cardPopover.classList.contains("hidden")) {
+      cardPopoverCards.innerHTML = "";
+      cards.forEach((card) => {
+        const el = createCardElement(card);
+        cardPopoverCards.appendChild(el);
+      });
+      cardPopover.classList.remove("hidden");
+      cardPopover.setAttribute("aria-hidden", "false");
+      requestAnimationFrame(() => {
+        const rect = hand.getBoundingClientRect();
+        const popRect = cardPopover.getBoundingClientRect();
+        const padding = 10;
+        let left = rect.left + rect.width / 2 - popRect.width / 2;
+        let top = rect.top - popRect.height - padding;
+        left = Math.max(padding, Math.min(left, document.documentElement.clientWidth - popRect.width - padding));
+        top = Math.max(padding, Math.min(top, document.documentElement.clientHeight - popRect.height - padding));
+        cardPopover.style.left = `${left}px`;
+        cardPopover.style.top = `${top}px`;
+      });
+    } else {
+      cardPopover.classList.add("hidden");
+      cardPopover.setAttribute("aria-hidden", "true");
+    }
+  }, true);
+
+  document.addEventListener("click", (e: MouseEvent) => {
+    if (!cardPopover || cardPopover.classList.contains("hidden")) return;
+    const target = e.target as Element;
+    if (target.closest(".seat-hand") || target.closest(".card-popover")) return;
+    cardPopover.classList.add("hidden");
+    cardPopover.setAttribute("aria-hidden", "true");
+  });
+}
 
 // Initialize after functions are defined
 document.addEventListener("DOMContentLoaded", () => {
@@ -136,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
   void initPixiLayer();
   setAuthOverlayVisible(true);
   renderHandHistoryUi();
+  setupCardPopover();
 });
 
 window.addEventListener("error", (event) => {
