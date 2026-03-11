@@ -924,6 +924,7 @@ async function joinRoom(
     if (message.includes("SESSION_EXISTS")) {
       const shouldReplace = window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?");
       if (shouldReplace) {
+        joinInProgress = false;
         await joinRoom(true);
       } else {
         setConnectionState("disconnected");
