@@ -50,5 +50,25 @@ describe("MyRoom create room rate limit", () => {
     expect(result).toEqual({ userId: 42 });
     expect(recordCreateRoom).toHaveBeenCalledWith(42);
   });
+
+  it("requestJoin with isNew true sets roomJustCreated so onAuth runs rate limit", async () => {
+    (allowCreateRoom as jest.Mock).mockReturnValue(true);
+
+    const fakeRoom: any = {
+      roomJustCreated: false,
+      roomId: "test-room",
+      authService: {
+        requestJoin: jest.fn().mockResolvedValue(true),
+        authenticate: jest.fn().mockResolvedValue({ authUser: { userId: 99 } }),
+      },
+    };
+
+    await MyRoom.prototype.requestJoin.call(fakeRoom, {}, true);
+    expect(fakeRoom.roomJustCreated).toBe(true);
+
+    const result = await MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {});
+    expect(result).toEqual({ userId: 99 });
+    expect(recordCreateRoom).toHaveBeenCalledWith(99);
+  });
 });
 

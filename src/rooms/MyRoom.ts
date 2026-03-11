@@ -112,10 +112,10 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
    * Returns true if action is allowed, false if rate limited
    */
   private isActionAllowed(sessionId: string, actionType: string): boolean {
-    // Game setup / out-of-round actions: startGame, rejoin, rebuy (busted can rebuy while no hand)
-    const gameSetupActions = new Set(['startGame', 'rejoin', 'rebuy']);
+    // Game setup / out-of-round actions: startGame, rejoin
+    const gameSetupActions = new Set(['startGame', 'rejoin']);
     
-    // Block game actions if round is not active (rebuy allowed so busted player can rebuy)
+    // Block game actions if round is not active
     if (!this.state.roundStarted && !gameSetupActions.has(actionType)) {
       logger.warn(`Action blocked - round not active`, { sessionId, actionType, roomId: this.roomId });
       return false;
@@ -227,6 +227,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
   async requestJoin(options: any, isNew?: boolean) {
+    if (isNew) this.roomJustCreated = true;
     return this.authService.requestJoin(options);
   }
 
