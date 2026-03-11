@@ -330,6 +330,18 @@ body {
   border: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
+.landing-card .rooms-list .room-item {
+  color: var(--gray-100);
+}
+
+.landing-card .rooms-list .room-item strong {
+  color: var(--white);
+}
+
+.landing-card .rooms-list .room-meta small {
+  color: var(--gray-300);
+}
+
 .landing-card .field input {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);

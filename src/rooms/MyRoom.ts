@@ -19,7 +19,7 @@ import {
   AuthenticationService,
   PlayerLifecycleManager
 } from "./managers";
-import { CUSTOM_REBUY_TIMEOUT } from "./close-codes";
+import { CUSTOM_GAME_END } from "./close-codes";
 import { reportTournamentGameEnded } from "../services/api-server-stats";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
@@ -45,8 +45,14 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     // Persist stats in API server (server-to-server, protected by INTERNAL_API_SECRET)
     void this.reportTournamentStats(champion);
 
-    // Retrasar disconnect para que todos los clientes reciban gameResult antes de cerrar la conexión
-    this.clock.setTimeout(() => this.disconnect(), 800);
+    // Cerrar cada cliente con código GAME_END para que el frontend no intente reconectar
+    this.clock.setTimeout(() => {
+      const clients = Array.from(this.clients);
+      for (const client of clients) {
+        client.leave(CUSTOM_GAME_END, "GAME_END");
+      }
+      this.disconnect();
+    }, 800);
   }
 
   // Managers

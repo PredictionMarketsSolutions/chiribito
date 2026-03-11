@@ -1093,6 +1093,21 @@ async function joinRoom(
       return;
     }
 
+    // 4013 = mesa cerrada por fin de partida; no reconectar para evitar unirse a otra mesa
+    if (code === 4013) {
+      tournamentEnded = true;
+      hadRoomWhenBackgrounded = false;
+      setConnectionState("disconnected");
+      room = null;
+      currentSessionId = null;
+      gameUiContext.currentSessionId = null;
+      if (!tournamentResultOverlay.classList.contains("hidden")) return;
+      tournamentResultTitle.textContent = "Fin de la mesa";
+      tournamentResultMessage.textContent = "La mesa se ha cerrado. Puedes volver al lobby para unirte a otra.";
+      tournamentResultOverlay.classList.remove("hidden");
+      return;
+    }
+
     if (tournamentEnded) {
       hadRoomWhenBackgrounded = false;
       setConnectionState("disconnected");
