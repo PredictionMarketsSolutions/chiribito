@@ -40,7 +40,7 @@ export function schemaArrayToCards(value: unknown): string[] {
 export function getUserEntries(state: RoomState): PlayerState[] {
   const users = state?.users;
   if (!users) return [];
-  if (users instanceof Map) return Array.from(users.values());
+  if (users instanceof Map) return Array.from(users.values()).filter(isPlayerState);
   const iterableUsers = users as unknown as { values?: () => Iterable<PlayerState> };
   if (typeof iterableUsers.values === "function") {
     return Array.from(iterableUsers.values()).filter(isPlayerState);
