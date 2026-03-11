@@ -256,7 +256,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       (type, message, opts) => this.broadcast(type, message, opts)
     );
     for (const p of this.state.users.values()) {
-      client.view!.add(p);
+      if (p !== player) client.view!.add(p);
     }
     // Existing clients must see the new player in their view.
     for (const c of this.clients) {
