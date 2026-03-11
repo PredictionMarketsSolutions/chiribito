@@ -80,8 +80,17 @@ const server = defineServer({
          */
         app.use("/playground", playground());
 
-        // Bind auth routes
-        app.use(auth.prefix, auth.routes());
+        // Bind auth routes (@colyseus/auth requires JWT_SECRET for express-jwt middleware)
+        if (!process.env.JWT_SECRET && process.env.NODE_ENV !== "production") {
+            process.env.JWT_SECRET = "dev-secret-change-in-production";
+            logger.warn("JWT_SECRET not set; using dev placeholder. Set JWT_SECRET in production.");
+        }
+        try {
+            app.use(auth.prefix, auth.routes());
+        } catch (err: any) {
+            logger.error("Failed to mount @colyseus/auth routes", { error: err?.message ?? err });
+            throw err;
+        }
     },
 
     /**

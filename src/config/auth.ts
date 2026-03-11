@@ -1,6 +1,11 @@
-import { auth } from "@colyseus/auth";
+import { auth, JWT } from "@colyseus/auth";
 import * as bcrypt from "bcryptjs";
 import logger from "./logger";
+
+// Ensure JWT secret is set before auth.routes() runs (express-jwt requires it)
+if (process.env.JWT_SECRET) {
+  JWT.settings.secret = process.env.JWT_SECRET;
+}
 
 const fakeDb: any[] = [];
 const BCRYPT_ROUNDS = process.env.NODE_ENV === "production" ? 12 : 10;
