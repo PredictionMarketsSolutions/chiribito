@@ -981,6 +981,8 @@ async function joinRoom(
       hadRoomWhenBackgrounded = false;
       setConnectionState("disconnected");
       room = null;
+      currentSessionId = null;
+      gameUiContext.currentSessionId = null;
       if (!overlayRefs.tournamentResultOverlay.classList.contains("hidden")) return;
       showGameEndMessageFn(overlayRefs);
       return;
