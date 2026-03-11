@@ -968,6 +968,7 @@ button.accent:hover:not(:disabled) {
   flex-direction: column;
   align-items: center;
   overflow: visible;
+  pointer-events: auto;
 }
 
 .seat[data-seat="0"] { top: -4%; left: 50%; }
@@ -1080,10 +1081,10 @@ button.accent:hover:not(:disabled) {
   align-items: center;
   margin-bottom: 10px;
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 10px 6px;
   perspective: 120px;
   gap: 0;
-  min-height: 72px;
+  min-height: 88px;
   overflow: visible;
 }
 
@@ -1097,9 +1098,9 @@ button.accent:hover:not(:disabled) {
 }
 
 .seat-hand .card.mini {
-  width: 56px;
-  height: 78px;
-  padding: 4px;
+  width: 70px;
+  height: 98px;
+  padding: 5px;
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1110,7 +1111,7 @@ button.accent:hover:not(:disabled) {
 .seat-hand .card.mini:first-child {
   transform: rotate(-12deg) translateY(-2px);
   z-index: 2;
-  margin-right: -22px;
+  margin-right: -26px;
 }
 
 .seat-hand .card.mini:last-child {
@@ -1138,11 +1139,11 @@ button.accent:hover:not(:disabled) {
 }
 
 .seat-hand .card.mini .rank {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .seat-hand .card.mini .suit {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* Card Zones */
@@ -1189,18 +1190,18 @@ button.accent:hover:not(:disabled) {
 }
 
 .card-row--community .card {
-  width: 160px;
-  height: 224px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  width: 138px;
+  height: 193px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
 }
 
 .card-row--community .card .rank {
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .card-row--community .card .suit {
-  font-size: 26px;
+  font-size: 22px;
 }
 
 .zone-title {
