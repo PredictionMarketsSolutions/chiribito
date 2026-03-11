@@ -76,7 +76,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     }
 
     const championUserId = this.sessionManager.getUserId(champion.sessionId);
-    if (!championUserId) {
+    // userId can be 0; only treat undefined/null as missing
+    if (championUserId === undefined || championUserId === null) {
       logger.warn("Champion userId not found; tournament stats not persisted", { roomId: this.roomId });
       return;
     }
