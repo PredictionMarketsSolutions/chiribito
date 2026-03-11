@@ -13,7 +13,7 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
 
   if (!card) {
     el.classList.add("card-back");
-    img.src = "/cards/back.svg";
+    img.src = "/cards/back_logo.png";
     img.addEventListener("load", () => el.classList.add("has-image"));
     img.addEventListener("error", () => {
       el.classList.add("back");
@@ -76,7 +76,7 @@ export function cardsEqual(a: string[], b: string[]): boolean {
 export function preloadCardImages(): void {
   const suits = ["O", "C", "E", "B"];
   const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-  const sources = ["/cards/back.svg"];
+  const sources = ["/cards/back_logo.png"];
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
       const suitNameMap: Record<string, string> = {

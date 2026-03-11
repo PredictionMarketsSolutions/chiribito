@@ -388,7 +388,7 @@ function getCardTexture(card: string) {
 function createCardSprite(targetEl: HTMLElement) {
   if (!pixiLib) return null;
   const rect = targetEl.getBoundingClientRect();
-  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back.svg"));
+  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back_logo.png"));
   sprite.anchor.set(0.5);
   sprite.width = rect.width;
   sprite.height = rect.height;
