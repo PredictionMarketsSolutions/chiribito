@@ -13,6 +13,7 @@ import logger from "./config/logger";
 
 import { MyRoom } from "./rooms/MyRoom";
 import auth from "./config/auth";
+import { JWT } from "@colyseus/auth";
 import { LobbyRoom } from "@colyseus/core";
 
 const server = defineServer({
@@ -85,6 +86,8 @@ const server = defineServer({
             process.env.JWT_SECRET = "dev-secret-change-in-production";
             logger.warn("JWT_SECRET not set; using dev placeholder. Set JWT_SECRET in production.");
         }
+        // Sync JWT secret now (auth.ts runs at module load when JWT_SECRET may still be unset)
+        JWT.settings.secret = process.env.JWT_SECRET ?? undefined;
         try {
             app.use(auth.prefix, auth.routes());
         } catch (err: any) {
