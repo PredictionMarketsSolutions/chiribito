@@ -1,7 +1,8 @@
 import { Client, Room } from "@colyseus/sdk";
 
 import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_RECONNECT_ATTEMPTS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
-import type { RoomState, PlayerState, HandHistoryWinner, BufferedAction, ConnectionState } from "./types";
+import type { RoomState, PlayerState, HandHistoryWinner, ConnectionState } from "./types";
+import { queueAction as queueActionFn, replayBufferedActions as replayBufferedActionsFn } from "./action-buffer";
 import { audio } from "./audio";
 import { dom } from "./dom-refs";
 import {
@@ -37,6 +38,7 @@ import {
 } from "./hand-history";
 import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
 import { attemptTokenRefresh } from "./auth/token-refresh";
+import { startTokenMonitor as startTokenMonitorFn, stopTokenMonitor as stopTokenMonitorFn } from "./auth/token-monitor";
 import { disconnectRoom } from "./auth/room-disconnect";
 import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
 import {
@@ -210,7 +212,6 @@ let currentSessionId: string | null = null;
 let lobbyPollId: number | null = null;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
 let tournamentEnded = false;
-let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: any = null;
 let pixiLayer: HTMLDivElement | null = null;
@@ -221,8 +222,6 @@ const HEARTBEAT_INTERVAL_MS = 25000;
 const HEARTBEAT_TIMEOUT_MS = 10000;
 let lastHeartbeatSendTime = 0;
 
-// Action buffering for offline resilience
-const actionBuffer: BufferedAction[] = [];
 let pixiTableSurface: HTMLDivElement | null = null;
 let pixiLib: any = null;
 let previousWinnersKey = "";
@@ -542,17 +541,10 @@ function clearAuthToken() {
   token = null;
   refreshToken = null;
   tokenStatus.textContent = "none";
-  stopTokenMonitor();
+  stopTokenMonitorFn();
   tokenInvalidNotified = false;
   SecureStorage.clearAccessToken();
   SecureStorage.clearRefreshToken();
-}
-
-function stopTokenMonitor() {
-  if (tokenMonitorId !== null) {
-    window.clearInterval(tokenMonitorId);
-    tokenMonitorId = null;
-  }
 }
 
 function handleTokenInvalidated() {
@@ -564,26 +556,20 @@ function handleTokenInvalidated() {
 }
 
 function startTokenMonitor() {
-  stopTokenMonitor();
-  if (!token) return;
-  
-  // Check and refresh token every 50 minutes (10 min before expiry)
-  tokenMonitorId = window.setInterval(async () => {
-    if (!token || !refreshToken) return;
-    const result = await attemptTokenRefresh(API_URL, refreshToken);
-    if (result.ok) {
-      token = result.token;
-      refreshToken = result.refreshToken;
-      SecureStorage.saveAccessToken(result.token);
-      SecureStorage.saveRefreshToken(result.refreshToken);
+  startTokenMonitorFn({
+    apiUrl: API_URL,
+    getRefreshToken: () => refreshToken,
+    onSuccess: (t, r) => {
+      token = t;
+      refreshToken = r;
+      SecureStorage.saveAccessToken(t);
+      SecureStorage.saveRefreshToken(r);
       tokenStatus.textContent = "refreshed";
-      log("Token refreshed successfully");
-    } else if (result.reason === "malformed" || result.reason === "not_ok") {
-      log(result.reason === "malformed" ? "Token refresh: malformed or empty tokens, clearing session" : "Token refresh failed, clearing session");
-      handleTokenInvalidated();
-    }
-    // On "network" we do nothing; next interval will retry
-  }, 50 * 60 * 1000); // 50 minutes
+    },
+    onInvalidated: handleTokenInvalidated,
+    log,
+    intervalMs: 50 * 60 * 1000
+  });
 }
 
 function renderState(state: RoomState) {
@@ -713,79 +699,25 @@ function recordRtt(rttMs: number) {
   recordRttFn(rttMs, { rttStatusEl: rttStatus, qualityStatusEl: qualityStatus, log });
 }
 
-/**
- * Queue an action to be sent when connection is available
- * Applies rate limiting to prevent spam
- */
-function queueAction(action: string, data: any) {
-  // Rate limiting check
-  if (!requireCooldown(action)) {
-    return;
-  }
-  
-  if (connectionState !== "connected" || !room) {
-    const buffered: BufferedAction = { action, data, timestamp: Date.now() };
-    if (actionBuffer.length >= ACTION_BUFFER_MAX_SIZE) {
-      actionBuffer.shift(); // Drop oldest if buffer full
-    }
-    actionBuffer.push(buffered);
-    log(`⏱️ ${action} buffered (${actionBuffer.length}/${ACTION_BUFFER_MAX_SIZE})`);
-    bufferStatus.textContent = `${actionBuffer.length}`;
-    bufferStatus.style.color = actionBuffer.length > 10 ? "var(--gold)" : "var(--gray-400)";
-    return;
-  }
-  
-  // Send immediately if connected
-  room.send(action, data);
-  bufferStatus.textContent = "0";
-  bufferStatus.style.color = "var(--gray-400)";
+function getActionBufferDeps() {
+  return {
+    send: (action: string, data: unknown) => room?.send(action, data),
+    isConnected: () => connectionState === "connected" && room !== null,
+    log,
+    bufferStatusEl: bufferStatus,
+    maxBufferSize: ACTION_BUFFER_MAX_SIZE
+  };
 }
 
-
-/**
- * Rate limiting to prevent action spam attacks
- * Only applies to rapid-fire betting actions, not game setup actions
- */
-const actionCooldowns = new Map<string, number>();
-const ACTION_COOLDOWN_MS = 200; // 200ms between actions of same type
-const RAPID_FIRE_ACTIONS = new Set(['bet', 'raise', 'call', 'fold', 'check']); // Only these get cooldown
-
-function requireCooldown(action: string): boolean {
-  // Game setup actions bypass cooldown (server-side validation is sufficient)
-  if (!RAPID_FIRE_ACTIONS.has(action)) {
-    return true;
-  }
-  
-  const now = Date.now();
-  const lastTime = actionCooldowns.get(action) ?? 0;
-  
-  if (now - lastTime < ACTION_COOLDOWN_MS) {
-    log(`⏱️ ${action} on cooldown (${(ACTION_COOLDOWN_MS - (now - lastTime)).toFixed(0)}ms)`);
-    return false;
-  }
-  
-  actionCooldowns.set(action, now);
-  return true;
+function queueAction(action: string, data: unknown) {
+  queueActionFn(action, data, getActionBufferDeps());
 }
 
-/**
- * Replay buffered actions on reconnection
- */
 function replayBufferedActions() {
-  if (actionBuffer.length === 0 || !room) return;
-  
-  log(`↻ Replaying ${actionBuffer.length} buffered actions...`);
-  const actions = [...actionBuffer];
-  actionBuffer.length = 0;
-  
-  // Send with small delays to avoid overwhelming server
-  actions.forEach((action, index) => {
-    setTimeout(() => {
-      if (room && connectionState === "connected") {
-        room.send(action.action, action.data);
-        log(`  ✓ Replayed: ${action.action}`);
-      }
-    }, index * 50); // 50ms between replayed actions
+  replayBufferedActionsFn({
+    send: (action, data) => room?.send(action, data),
+    isConnected: () => connectionState === "connected" && room !== null,
+    log
   });
 }
 
@@ -992,7 +924,7 @@ async function joinRoom(
     clearHeartbeatTimeoutFn();
     if (connectionState !== "connected") {
       setConnectionState("connected");
-      if (actionBuffer.length > 0) replayBufferedActions();
+      replayBufferedActions();
     }
   });
 

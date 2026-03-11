@@ -16,6 +16,7 @@ jest.mock("../../services/api-server-stats", () => ({
 }));
 
 import { MyRoom } from "../../rooms/MyRoom";
+import { CUSTOM_GAME_END } from "../../rooms/close-codes";
 import { reportTournamentGameEnded } from "../../services/api-server-stats";
 
 describe("MyRoom tournament end", () => {
@@ -30,10 +31,11 @@ describe("MyRoom tournament end", () => {
       return 0;
     });
 
+    const leave = jest.fn();
     const fakeRoom: any = {
       clients: [
-        { sessionId: "winner-1", send: sendWinner },
-        { sessionId: "loser-2", send: sendLoser },
+        { sessionId: "winner-1", send: sendWinner, leave },
+        { sessionId: "loser-2", send: sendLoser, leave },
       ],
       disconnect,
       clock: { setTimeout: clockSetTimeout },
@@ -58,11 +60,14 @@ describe("MyRoom tournament end", () => {
 
     if (scheduledCb) scheduledCb();
     expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(leave).toHaveBeenCalledTimes(2);
+    expect(leave).toHaveBeenCalledWith(CUSTOM_GAME_END, "GAME_END");
   });
 
   it("notifyTournamentEnd sends lost to all when single client is not the champion", () => {
     const champion = { sessionId: "absent-winner", name: "Winner", chips: 1000 };
     const send = jest.fn();
+    const leave = jest.fn();
     const disconnect = jest.fn();
     let scheduledCb: (() => void) | null = null;
     const clockSetTimeout = jest.fn((cb: () => void) => {
@@ -71,7 +76,7 @@ describe("MyRoom tournament end", () => {
     });
 
     const fakeRoom: any = {
-      clients: [{ sessionId: "only-player", send }],
+      clients: [{ sessionId: "only-player", send, leave }],
       disconnect,
       clock: { setTimeout: clockSetTimeout },
     };
@@ -111,6 +116,7 @@ describe("MyRoom tournament end", () => {
   it("disconnect is delayed by 800ms so clients can receive gameResult before close", () => {
     const champion = { sessionId: "champ", name: "Champ", chips: 2000 };
     const send = jest.fn();
+    const leave = jest.fn();
     const disconnect = jest.fn();
     const clockSetTimeout = jest.fn((cb: () => void, ms: number) => {
       expect(ms).toBe(800);
@@ -119,8 +125,8 @@ describe("MyRoom tournament end", () => {
 
     const fakeRoom: any = {
       clients: [
-        { sessionId: "champ", send },
-        { sessionId: "other", send },
+        { sessionId: "champ", send, leave },
+        { sessionId: "other", send, leave },
       ],
       disconnect,
       clock: { setTimeout: clockSetTimeout },
