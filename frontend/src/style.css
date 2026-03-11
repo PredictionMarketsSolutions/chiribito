@@ -127,6 +127,11 @@ body {
   display: none;
 }
 
+/* Generic utility: hide any element */
+.hidden {
+  display: none !important;
+}
+
 .auth-card {
   width: 100%;
   max-width: 420px;

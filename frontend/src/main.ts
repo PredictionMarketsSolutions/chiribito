@@ -1571,12 +1571,18 @@ const forgotPasswordLink = document.querySelector("#forgot-password-link") as HT
 const forgotPasswordEmail = document.querySelector("#forgot-password-email") as HTMLInputElement;
 const forgotPasswordSubmit = document.querySelector("#forgot-password-submit") as HTMLButtonElement;
 const forgotPasswordBack = document.querySelector("#forgot-password-back") as HTMLButtonElement;
+const loginEmailInput = document.querySelector("#email") as HTMLInputElement;
 
 if (forgotPasswordLink) {
   forgotPasswordLink.addEventListener("click", (e) => {
     e.preventDefault();
     if (authLoginForm) authLoginForm.classList.add("hidden");
     if (forgotPasswordBlock) forgotPasswordBlock.classList.remove("hidden");
+    // Prefill with email the user already typed (if any)
+    const existingEmail = (loginEmailInput?.value ?? "").trim();
+    if (forgotPasswordEmail && !forgotPasswordEmail.value.trim() && existingEmail) {
+      forgotPasswordEmail.value = existingEmail;
+    }
     setAuthMessage("", "info");
   });
 }

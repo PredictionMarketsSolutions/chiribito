@@ -110,5 +110,6 @@ export function setAuthMessage(message: string, type: "success" | "error" | "inf
   el.textContent = message;
   el.classList.toggle("visible", Boolean(message));
   el.classList.toggle("success", type === "success");
+  el.classList.toggle("info", type === "info");
   el.classList.toggle("error", type === "error");
 }
