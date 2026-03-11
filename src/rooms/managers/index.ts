@@ -5,14 +5,13 @@
 
 export { SessionManager } from "./SessionManager";
 export { ConnectionMonitor, type ConnectionMonitorConfig } from "./ConnectionMonitor";
-export { SeatManager, type SeatReservation } from "./SeatManager";
+export { SeatManager } from "./SeatManager";
 export { RateLimiterService, type RateLimitConfig } from "./RateLimiterService";
 export {
   AnalyticsService,
   type ConnectionStats,
   type AnalyticsSummary
 } from "./AnalyticsService";
-export { RebuyManager, type RebuyConfig } from "./RebuyManager";
 export { 
   AuthenticationService, 
   type AuthConfig, 

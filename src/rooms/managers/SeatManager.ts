@@ -5,24 +5,15 @@
 
 import logger from "../../config/logger";
 
-export interface SeatReservation {
-  userId: number;
-  expiresAt: number;
-}
-
 export class SeatManager {
   private readonly maxSeats: number;
   private occupiedSeats: Set<number> = new Set();
-  private rebuySeatReservations: Map<number, SeatReservation> = new Map();
-  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private roomId: string,
-    maxSeats: number = 6,
-    private reservationTimeoutMs: number = 180000 // 3 minutes
+    maxSeats: number = 6
   ) {
     this.maxSeats = maxSeats;
-    this.startCleanupTask();
   }
 
   /**
@@ -90,139 +81,10 @@ export class SeatManager {
   }
 
   /**
-   * Reserve a seat for rebuy (temporary hold)
-   */
-  reserveSeatForRebuy(seatIndex: number, userId: number): void {
-    const expiresAt = Date.now() + this.reservationTimeoutMs;
-    
-    this.rebuySeatReservations.set(seatIndex, {
-      userId,
-      expiresAt
-    });
-
-    logger.info("Seat reserved for rebuy", {
-      seatIndex,
-      userId,
-      expiresAt,
-      roomId: this.roomId
-    });
-  }
-
-  /**
-   * Check if a seat is reserved for rebuy
-   */
-  isSeatReservedForRebuy(seatIndex: number): boolean {
-    const reservation = this.rebuySeatReservations.get(seatIndex);
-    if (!reservation) return false;
-
-    // Check if expired
-    if (Date.now() > reservation.expiresAt) {
-      this.rebuySeatReservations.delete(seatIndex);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Get reservation for a seat
-   */
-  getReservation(seatIndex: number): SeatReservation | undefined {
-    const reservation = this.rebuySeatReservations.get(seatIndex);
-    if (!reservation) return undefined;
-
-    // Check if expired
-    if (Date.now() > reservation.expiresAt) {
-      this.rebuySeatReservations.delete(seatIndex);
-      return undefined;
-    }
-
-    return reservation;
-  }
-
-  /**
-   * Clear a rebuy reservation
-   */
-  clearReservation(seatIndex: number): void {
-    this.rebuySeatReservations.delete(seatIndex);
-    
-    logger.info("Seat reservation cleared", {
-      seatIndex,
-      roomId: this.roomId
-    });
-  }
-
-  /**
-   * True if there is at least one rebuy reservation still active (not expired).
-   * Used to delay "game ended" until rebuy window expires or player rebuys.
-   */
-  hasActiveRebuyReservations(): boolean {
-    const now = Date.now();
-    for (const reservation of this.rebuySeatReservations.values()) {
-      if (now <= reservation.expiresAt) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Take and remove all expired rebuy reservations.
-   * Returns them so the room can kick the corresponding clients (no rebuy in time).
-   */
-  takeExpiredReservations(): { seatIndex: number; userId: number }[] {
-    const now = Date.now();
-    const expired: { seatIndex: number; userId: number }[] = [];
-
-    for (const [seatIndex, reservation] of this.rebuySeatReservations.entries()) {
-      if (now > reservation.expiresAt) {
-        expired.push({ seatIndex, userId: reservation.userId });
-        this.rebuySeatReservations.delete(seatIndex);
-      }
-    }
-
-    if (expired.length > 0) {
-      logger.info("Expired rebuy reservations taken", {
-        count: expired.length,
-        roomId: this.roomId
-      });
-    }
-
-    return expired;
-  }
-
-  /**
-   * Clean up expired reservations (called periodically)
-   */
-  private cleanupExpiredReservations(): void {
-    this.takeExpiredReservations();
-  }
-
-  /**
-   * Start periodic cleanup task
-   */
-  private startCleanupTask(): void {
-    // Run cleanup every 60 seconds
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupExpiredReservations();
-    }, 60000);
-  }
-
-  /**
-   * Stop cleanup task
-   */
-  private stopCleanupTask(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
-  }
-
-  /**
    * Clear all seats and reservations (on room dispose)
    */
   clearAll(): void {
-    this.stopCleanupTask();
     this.occupiedSeats.clear();
-    this.rebuySeatReservations.clear();
     
     logger.info("SeatManager cleared", { roomId: this.roomId });
   }

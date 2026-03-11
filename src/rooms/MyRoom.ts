@@ -16,7 +16,6 @@ import {
   SeatManager,
   RateLimiterService,
   AnalyticsService,
-  RebuyManager,
   AuthenticationService,
   PlayerLifecycleManager
 } from "./managers";
@@ -24,8 +23,6 @@ import { CUSTOM_REBUY_TIMEOUT } from "./close-codes";
 import { reportTournamentGameEnded } from "../services/api-server-stats";
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
-
-const REBUY_KICK_CHECK_INTERVAL_MS = 15000; // cada 15s revisar reservas de rebuy expiradas
 
 export class MyRoom extends Room<{ state: MyRoomState }> {
   maxClients = 6;
@@ -37,13 +34,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   public playersAllIn: Set<string> = new Set();
   private engine!: GameEngine;
   private reconnectionTimeoutSeconds = 60;
-  private rebuyKickCheckInterval: ReturnType<typeof setInterval> | null = null;
-
-  /** Callback usado por GameEngine cuando un jugador queda con 0 fichas (bust). */
-  public onPlayerBusted?: (sessionId: string, seatIndex: number) => void;
-  /** Callback para retrasar game ended si hay jugadores en ventana de rebuy. */
-  public onHasPlayersInRebuyWindow?: () => boolean;
-
+  
   /** Modo torneo: envía a cada cliente si ganó o perdió y cierra la mesa. */
   public notifyTournamentEnd(champion: { sessionId: string; name: string; chips: number }): void {
     for (const client of this.clients) {
@@ -64,7 +55,6 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   private seatManager!: SeatManager;
   private rateLimiter!: RateLimiterService;
   private analytics!: AnalyticsService;
-  private rebuyManager!: RebuyManager;
   private authService!: AuthenticationService;
   private lifecycleManager!: PlayerLifecycleManager;
 
@@ -102,35 +92,10 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   }
 
   /**
-   * Reserve a seat for a player who busted out (0 chips).
-   * Converts sessionId to userId via sessionManager; seatManager.reserveSeatForRebuy requires userId.
-   */
-  private reserveSeat(sessionId: string, seatIndex: number): void {
-    const userId = this.sessionManager.getUserId(sessionId);
-    if (userId === undefined) return;
-    const client = this.clients.find(c => c.sessionId === sessionId);
-    if (!client) return;
-    this.rebuyManager.reserveSeat(client, seatIndex, userId, this.seatManager);
-  }
-
-  /**
    * Clean up expired seat reservations (no longer needed - handled by SeatManager)
    */
   private cleanupExpiredReservations() {
     // SeatManager handles this automatically
-  }
-
-  /**
-   * Process a rebuy request from a player
-   */
-  private handleRebuy(client: Client): boolean {
-    return this.rebuyManager.handleRebuy(
-      client,
-      this.state,
-      this.seatManager,
-      this.sessionManager,
-      (type, message) => this.broadcast(type, message)
-    );
   }
 
   /**
@@ -179,12 +144,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       retryDelayMs: 500,
       requestTimeoutMs: 8000
     });
-    // Rebuy window must be shorter than HEARTBEAT_TIMEOUT (90s) so client isn't disconnected before rebuy expires
-    this.rebuyManager = new RebuyManager(this.roomId, {
-      rebuyTimeoutMs: 60000, // 60s
-      rebuyAmount: 1000
-    });
-    this.seatManager = new SeatManager(this.roomId, this.maxClients, this.rebuyManager.getConfig().rebuyTimeoutMs);
+    this.seatManager = new SeatManager(this.roomId, this.maxClients);
     this.rateLimiter = new RateLimiterService(this.roomId, {
       defaultCooldownMs: ACTION_COOLDOWN,
       customCooldowns: new Map([
@@ -212,28 +172,6 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
         }
       }
     );
-
-    // Callback para jugadores que quedan con 0 fichas: reservar asiento y ventana de rebuy
-    this.onPlayerBusted = (sessionId: string, seatIndex: number) => {
-      this.reserveSeat(sessionId, seatIndex);
-    };
-    // No declarar game ended mientras haya alguien en ventana de rebuy
-    this.onHasPlayersInRebuyWindow = () => this.seatManager.hasActiveRebuyReservations();
-
-    // Tarea periódica: expulsar clientes que no hicieron rebuy antes de que expire la reserva
-    this.rebuyKickCheckInterval = setInterval(() => {
-      const expired = this.seatManager.takeExpiredReservations();
-      for (const { userId } of expired) {
-        const sessionId = this.sessionManager.getSessionId(userId);
-        if (sessionId) {
-          const client = this.clients.find(c => c.sessionId === sessionId);
-          if (client) {
-            logger.info(`Kicking client for rebuy timeout`, { sessionId, userId, roomId: this.roomId });
-            client.leave(CUSTOM_REBUY_TIMEOUT, "REBUY_TIMEOUT");
-          }
-        }
-      }
-    }, REBUY_KICK_CHECK_INTERVAL_MS);
 
     // Start managers
     this.connectionMonitor.start();
@@ -276,12 +214,6 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       client.send("heartbeat_ack");
     });
 
-    // Rebuy message handler (allowed when round not active so busted can rebuy)
-    this.onMessage("rebuy", (client) => {
-      if (!this.isActionAllowed(client.sessionId, "rebuy")) return;
-      const ok: boolean = this.handleRebuy(client);
-      if (ok === true) this.engine.tryResumeAfterRebuy();
-    });
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
@@ -356,11 +288,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   onDispose() {
     logger.info(`Room disposing`, { roomId: this.roomId });
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
-    if (this.rebuyKickCheckInterval) {
-      clearInterval(this.rebuyKickCheckInterval);
-      this.rebuyKickCheckInterval = null;
-    }
-    
+        
     // Dispose all managers
     this.connectionMonitor?.clearAll();
     this.seatManager?.clearAll();

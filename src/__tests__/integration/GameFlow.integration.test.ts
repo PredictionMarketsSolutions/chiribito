@@ -196,23 +196,9 @@ describe("GameFlow Bug Fixes", () => {
       expect(gameEndedCalls.length).toBe(0);
     });
 
-    it("should NOT broadcast gameEnded when only 1 has chips but players in rebuy window", () => {
+    it("tryGameEnd broadcasts gameEnded when 1 player left", () => {
       const player2 = roomState.users.get("player-2") as Player;
       player2.chips = 0;
-      mockRoom.onHasPlayersInRebuyWindow = () => true;
-
-      engine["checkGameEnd"]();
-
-      const gameEndedCalls = (mockRoom.broadcast as jest.Mock).mock.calls.filter(
-        (call: unknown[]) => call[0] === "gameEnded"
-      );
-      expect(gameEndedCalls.length).toBe(0);
-    });
-
-    it("tryGameEnd broadcasts gameEnded when 1 player left and no rebuy window", () => {
-      const player2 = roomState.users.get("player-2") as Player;
-      player2.chips = 0;
-      mockRoom.onHasPlayersInRebuyWindow = () => false;
 
       engine.tryGameEnd();
 
@@ -225,17 +211,6 @@ describe("GameFlow Bug Fixes", () => {
       expect(mockRoom.notifyTournamentEnd).toHaveBeenCalledWith(
         expect.objectContaining({ sessionId: "player-1", name: "Player 1", chips: 1000 })
       );
-    });
-
-    it("does not call notifyTournamentEnd when gameEnded is not broadcast (rebuy window)", () => {
-      const player2 = roomState.users.get("player-2") as Player;
-      player2.chips = 0;
-      mockRoom.onHasPlayersInRebuyWindow = () => true;
-      mockRoom.notifyTournamentEnd.mockClear();
-
-      engine["checkGameEnd"]();
-
-      expect(mockRoom.notifyTournamentEnd).not.toHaveBeenCalled();
     });
 
     it("does not call notifyTournamentEnd when multiple players have chips", () => {
@@ -331,26 +306,7 @@ describe("GameFlow Bug Fixes", () => {
     });
   });
 
-  describe("rebuy: onPlayerBusted when player has 0 chips after round", () => {
-    it("calls onPlayerBusted for each player with 0 chips and valid seat after endRound", () => {
-      const player2 = roomState.users.get("player-2") as Player;
-      player2.chips = 0;
-      player2.seatIndex = 1;
-
-      engine.endRound(["player-1"], "High Card", false);
-
-      expect(mockRoom.onPlayerBusted).toHaveBeenCalledWith("player-2", 1);
-    });
-
-    it("does not call onPlayerBusted when room has no callback", () => {
-      delete (mockRoom as any).onPlayerBusted;
-      const player2 = roomState.users.get("player-2") as Player;
-      player2.chips = 0;
-      player2.seatIndex = 1;
-
-      expect(() => engine.endRound(["player-1"], "High Card", false)).not.toThrow();
-    });
-  });
+  // Rebuy: onPlayerBusted callback tests removed (feature no longer exists).
 
   describe("playerStatus (server-only transitions)", () => {
     it("sets playerStatus to in_hand when hand starts (dealInitialHands)", () => {
@@ -390,40 +346,7 @@ describe("GameFlow Bug Fixes", () => {
     });
   });
 
-  describe("rebuy: tryResumeAfterRebuy and hands with 2+ players", () => {
-    it("tryResumeAfterRebuy starts new hand when round not started and 2+ players with chips", () => {
-      roomState.roundStarted = false;
-      const p1 = roomState.users.get("player-1") as Player;
-      const p2 = roomState.users.get("player-2") as Player;
-      p1.chips = 1000;
-      p2.chips = 500;
-
-      engine.tryResumeAfterRebuy();
-
-      expect(roomState.roundStarted).toBe(true);
-      expect(mockRoom.playersInHand.length).toBe(2);
-    });
-
-    it("tryResumeAfterRebuy does nothing when round already started", () => {
-      roomState.roundStarted = true;
-      mockRoom.playersInHand = ["player-1"];
-      const before = mockRoom.playersInHand.length;
-
-      engine.tryResumeAfterRebuy();
-
-      expect(mockRoom.playersInHand.length).toBe(before);
-    });
-
-    it("tryResumeAfterRebuy does nothing when only 1 player with chips", () => {
-      roomState.roundStarted = false;
-      const p2 = roomState.users.get("player-2") as Player;
-      p2.chips = 0;
-
-      engine.tryResumeAfterRebuy();
-
-      expect(roomState.roundStarted).toBe(false);
-    });
-  });
+  // Rebuy: tryResumeAfterRebuy tests removed (feature no longer exists).
 
   describe("all-in showdown: one with chips, rest all-in — show showdown (no check each street)", () => {
     beforeEach(() => {

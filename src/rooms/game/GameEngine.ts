@@ -336,14 +336,7 @@ export class GameEngine {
 
     this.winnerDeterminator.logRoundEnd(winners, winningHand, isAllInShowdown, this.room.state.pot);
 
-    // Reservar asiento y ventana de rebuy para jugadores que quedaron con 0 fichas (bust)
-    for (const [, player] of this.room.state.users) {
-      if (player.chips === 0 && player.seatIndex >= 0 && this.room.onPlayerBusted) {
-        this.room.onPlayerBusted(player.sessionId, player.seatIndex);
-      }
-    }
-
-    // Estado "seated" entre manos para todos los de la mesa (incl. rebuy). Solo el servidor actualiza (seguridad).
+    // Estado "seated" entre manos para todos los de la mesa. Solo el servidor actualiza (seguridad).
     for (const [, player] of this.room.state.users) {
       player.playerStatus = PLAYER_STATUS.SEATED;
     }
@@ -409,17 +402,10 @@ export class GameEngine {
 
   /**
    * Check if game should end (only 1 player with chips remaining).
-   * If there are players in rebuy window, do not end yet — wait for rebuy or timeout.
    */
   private checkGameEnd(): void {
     const activePlayers = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
     if (activePlayers.length !== 1) return;
-
-    const inRebuyWindow = this.room.onHasPlayersInRebuyWindow?.();
-    if (inRebuyWindow) {
-      logger.info(`Game not ended: players in rebuy window`, { roomId: this.room.roomId });
-      return;
-    }
 
     if (this.gameEndBroadcasted) return;
 
@@ -448,22 +434,10 @@ export class GameEngine {
   }
 
   /**
-   * Call after a player leaves so we can broadcast game ended if only 1 remains (e.g. after rebuy timeout kick).
+   * Call after a player leaves so we can broadcast game ended if only 1 remains.
    */
   tryGameEnd(): void {
     this.checkGameEnd();
-  }
-
-  /**
-   * Call after a successful rebuy: if we were waiting (no round) and now have 2+ players with chips, start a new hand.
-   */
-  tryResumeAfterRebuy(): void {
-    if (this.room.state.roundStarted) return;
-    const playersWithChips = Array.from(this.room.state.users.values()).filter(p => p.chips > 0);
-    if (playersWithChips.length >= 2) {
-      this.room.state.roundStarted = true;
-      this.startNewHand();
-    }
   }
 
   // ============ Betting Helpers ============
