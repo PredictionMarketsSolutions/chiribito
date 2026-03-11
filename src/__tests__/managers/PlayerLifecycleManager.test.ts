@@ -40,7 +40,7 @@ describe("PlayerLifecycleManager", () => {
   beforeEach(() => {
     manager = new PlayerLifecycleManager("test-room", { reconnectionTimeoutSeconds: 60 });
     sessionManager = new SessionManager("test-room", 60);
-    seatManager = new SeatManager("test-room", 6, 120000);
+    seatManager = new SeatManager("test-room", 6);
     connectionMonitor = new ConnectionMonitor("test-room", {
       heartbeatIntervalMs: 30000,
       heartbeatTimeoutMs: 60000

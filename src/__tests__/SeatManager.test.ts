@@ -12,7 +12,7 @@ describe("SeatManager", () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
-    seatManager = new SeatManager(roomId, maxSeats, 180000);
+    seatManager = new SeatManager(roomId, maxSeats);
   });
 
   afterEach(() => {
@@ -124,29 +124,13 @@ describe("SeatManager", () => {
     });
   });
 
-  // Rebuy-related behaviour has been removed from SeatManager; remaining
-  // tests focus on seat occupation, freeing, counting and clearAll behaviour.
-
   describe("Clear All", () => {
-    it("should clear all seats and reservations", () => {
+    it("should clear all seats", () => {
       seatManager.occupySeat(0, 1);
       seatManager.occupySeat(1, 2);
-      seatManager.reserveSeatForRebuy(3, 3);
 
       seatManager.clearAll();
 
-      expect(seatManager.getOccupiedCount()).toBe(0);
-      expect(seatManager.isSeatReservedForRebuy(3)).toBe(false);
-    });
-
-    it("should stop cleanup task", () => {
-      seatManager.clearAll();
-      
-      // Advance time and verify no cleanup happens
-      jest.advanceTimersByTime(60000);
-      
-      // If cleanup was running, it would throw or log
-      // This is a smoke test to ensure no errors
       expect(seatManager.getOccupiedCount()).toBe(0);
     });
   });
@@ -161,44 +145,6 @@ describe("SeatManager", () => {
       const lastSeat = maxSeats - 1;
       seatManager.occupySeat(lastSeat, 1);
       expect(seatManager.isSeatOccupied(lastSeat)).toBe(true);
-    });
-
-    it("should handle overwriting reservation", () => {
-      const seatIndex = 2;
-
-      seatManager.reserveSeatForRebuy(seatIndex, 1);
-      seatManager.reserveSeatForRebuy(seatIndex, 2);
-
-      const reservation = seatManager.getReservation(seatIndex);
-      expect(reservation?.userId).toBe(2);
-    });
-
-    it("should handle reservation check for non-existent reservation", () => {
-      expect(seatManager.isSeatReservedForRebuy(99)).toBe(false);
-    });
-  });
-
-  describe("Integration: Occupation + Reservation", () => {
-    it("should allow occupying a reserved seat", () => {
-      const seatIndex = 2;
-
-      seatManager.reserveSeatForRebuy(seatIndex, 1);
-      seatManager.occupySeat(seatIndex, 1);
-
-      expect(seatManager.isSeatOccupied(seatIndex)).toBe(true);
-      // Reservation is independent of occupation
-      expect(seatManager.isSeatReservedForRebuy(seatIndex)).toBe(true);
-    });
-
-    it("should allow freeing an occupied seat with reservation", () => {
-      const seatIndex = 2;
-
-      seatManager.occupySeat(seatIndex, 1);
-      seatManager.reserveSeatForRebuy(seatIndex, 1);
-      seatManager.freeSeat(seatIndex);
-
-      expect(seatManager.isSeatOccupied(seatIndex)).toBe(false);
-      expect(seatManager.isSeatReservedForRebuy(seatIndex)).toBe(true);
     });
   });
 });
