@@ -13,6 +13,24 @@ import {
   setAuthMessage
 } from "./auth-helpers";
 import {
+  setLobbyOverlayVisible as setLobbyOverlayVisibleFn,
+  setLobbyMessage as setLobbyMessageFn,
+  showTournamentResult as showTournamentResultFn,
+  setTournamentResultVisible as setTournamentResultVisibleFn,
+  showGameEndMessage as showGameEndMessageFn,
+  type OverlayRefs
+} from "./overlays";
+import {
+  getWsClient as getWsClientFromConnection,
+  startClientHeartbeat as startClientHeartbeatFn,
+  stopClientHeartbeat as stopClientHeartbeatFn,
+  clearHeartbeatTimeout as clearHeartbeatTimeoutFn,
+  recordRtt as recordRttFn,
+  getRttInfo,
+  updateConnectionIndicator as updateConnectionIndicatorFn,
+  attemptReconnect as attemptReconnectFn
+} from "./connection";
+import {
   addHandHistoryEntry,
   clearHandHistory,
   renderHandHistory
@@ -20,6 +38,7 @@ import {
 import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { disconnectRoom } from "./auth/room-disconnect";
+import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
 import {
   schemaArrayToCards,
   getUserEntries,
@@ -56,6 +75,14 @@ const authMessage = dom.authMessage!;
 const lobbyOverlay = dom.lobbyOverlay!;
 const lobbyMessage = dom.lobbyMessage!;
 const roomsList = dom.roomsList!;
+
+const overlayRefs: OverlayRefs = {
+  lobbyOverlay,
+  lobbyMessage,
+  tournamentResultOverlay: dom.tournamentResultOverlay!,
+  tournamentResultTitle: dom.tournamentResultTitle!,
+  tournamentResultMessage: dom.tournamentResultMessage!
+};
 const winnersRankingList = dom.winnersRankingList!;
 const refreshRoomsButton = dom.refreshRoomsButton!;
 const tableNameInput = dom.tableNameInput!;
@@ -63,9 +90,6 @@ const createTableButton = dom.createTableButton!;
 const backToAuthButton = dom.backToAuthButton!;
 const joinRoomIdInput = dom.joinRoomIdInput!;
 const joinByIdButton = dom.joinByIdButton!;
-const tournamentResultOverlay = dom.tournamentResultOverlay!;
-const tournamentResultTitle = dom.tournamentResultTitle!;
-const tournamentResultMessage = dom.tournamentResultMessage!;
 const tournamentBackToLobbyButton = dom.tournamentBackToLobbyButton!;
 const tokenStatus = dom.tokenStatus!;
 const roomStatus = dom.roomStatus!;
@@ -159,18 +183,11 @@ function log(message: string) {
 }
 
 function setLobbyOverlayVisible(visible: boolean) {
-  if (visible) {
-    lobbyOverlay.classList.remove("hidden");
-  } else {
-    lobbyOverlay.classList.add("hidden");
-  }
+  setLobbyOverlayVisibleFn(overlayRefs, visible);
 }
 
 function setLobbyMessage(message: string, type: "success" | "error" | "info" = "info") {
-  lobbyMessage.textContent = message;
-  lobbyMessage.classList.remove("success", "error", "info", "visible");
-  if (!message) return;
-  lobbyMessage.classList.add("visible", type);
+  setLobbyMessageFn(overlayRefs, message, type);
 }
 
 function showTournamentResult(
@@ -179,33 +196,17 @@ function showTournamentResult(
 ) {
   tournamentEnded = true;
   hadRoomWhenBackgrounded = false;
-  const name = champion?.name ?? "Ganador";
-  const chips = champion?.chips ?? 0;
-  if (result === "won") {
-    tournamentResultTitle.textContent = "¡Has ganado!";
-    tournamentResultMessage.textContent = `Eres el campeón de la mesa con ${chips} fichas. La mesa se ha cerrado.`;
-  } else {
-    tournamentResultTitle.textContent = "Has perdido";
-    tournamentResultMessage.textContent = `${name} ha ganado la mesa con ${chips} fichas. La mesa se ha cerrado.`;
-  }
-  tournamentResultOverlay.classList.remove("hidden");
-  setAuthOverlayVisible(false);
-  setLobbyOverlayVisible(false);
+  showTournamentResultFn(overlayRefs, setAuthOverlayVisible, result, champion);
 }
 
 function setTournamentResultVisible(visible: boolean) {
-  if (visible) {
-    tournamentResultOverlay.classList.remove("hidden");
-  } else {
-    tournamentResultOverlay.classList.add("hidden");
-  }
+  setTournamentResultVisibleFn(overlayRefs, visible);
 }
 
 let token: string | null = null;
 let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
-let wsClient: Client | null = null;
 let lobbyPollId: number | null = null;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
 let tournamentEnded = false;
@@ -213,19 +214,12 @@ let tokenMonitorId: number | null = null;
 let tokenInvalidNotified = false;
 let pixiApp: any = null;
 let pixiLayer: HTMLDivElement | null = null;
-// Connection monitoring
+// Connection monitoring (state owned here; heartbeat/RTT in connection.ts)
 let connectionState: ConnectionState = "disconnected";
 let reconnectAttempts = 0;
-let heartbeatTimeoutId: number | null = null;
-let clientHeartbeatId: number | null = null;
 const HEARTBEAT_INTERVAL_MS = 25000;
 const HEARTBEAT_TIMEOUT_MS = 10000;
-
-// Connection metrics (RTT tracking)
 let lastHeartbeatSendTime = 0;
-const rttSamples: number[] = [];
-let averageRtt = 0;
-let connectionQuality: "excellent" | "good" | "degraded" | "poor" = "excellent";
 
 // Action buffering for offline resilience
 const actionBuffer: BufferedAction[] = [];
@@ -685,93 +679,38 @@ async function login() {
   }
 }
 
-/**
- * Start sending heartbeat to server to keep connection alive
- * Also tracks RTT (Round-Trip Time) for connection quality monitoring
- */
 function startClientHeartbeat() {
-  stopClientHeartbeat();
-  
-  clientHeartbeatId = window.setInterval(() => {
-    if (!room) return;
-    
-    // Record when heartbeat is sent for RTT calculation
-    lastHeartbeatSendTime = Date.now();
-    // Send heartbeat with client timestamp for server to measure RTT
-    room.send("heartbeat", lastHeartbeatSendTime);
-    
-    // Wait for ack with timeout
-    heartbeatTimeoutId = window.setTimeout(() => {
-      log("[HEARTBEAT] No ACK received, server not responding");
-      if (room) {
-        room.leave();
-      }
-    }, HEARTBEAT_TIMEOUT_MS);
-  }, HEARTBEAT_INTERVAL_MS);
+  if (!room) return;
+  startClientHeartbeatFn(room, {
+    intervalMs: HEARTBEAT_INTERVAL_MS,
+    timeoutMs: HEARTBEAT_TIMEOUT_MS,
+    log,
+    onTimeout: () => { if (room) room.leave(); },
+    onSend: (t) => { lastHeartbeatSendTime = t; }
+  });
 }
 
-/**
- * Stop sending heartbeat
- */
 function stopClientHeartbeat() {
-  if (clientHeartbeatId !== null) {
-    clearInterval(clientHeartbeatId);
-    clientHeartbeatId = null;
-  }
-  if (heartbeatTimeoutId !== null) {
-    clearTimeout(heartbeatTimeoutId);
-    heartbeatTimeoutId = null;
-  }
+  stopClientHeartbeatFn();
 }
 
-/**
- * Update connection state and log
- */
-function setConnectionState(state: "disconnected" | "connecting" | "connected") {
+function setConnectionState(state: ConnectionState) {
   connectionState = state;
-  const stateEmojis = {
-    disconnected: "⚫",
-    connecting: "🟡",
-    connected: "🟢"
-  };
+  const stateEmojis = { disconnected: "⚫", connecting: "🟡", connected: "🟢" };
   log(`[${stateEmojis[state]}] Connection: ${state}`);
-  updateConnectionIndicator();
+  const { averageRtt, connectionQuality } = getRttInfo();
+  updateConnectionIndicatorFn({
+    connectionState,
+    reconnectAttempts,
+    maxAttempts: MAX_RECONNECT_ATTEMPTS,
+    connectionIndicatorEl: connectionIndicator,
+    averageRtt,
+    connectionQuality
+  });
 }
 
-/**
- * Record RTT (Round-Trip Time) and update connection quality metrics
- */
 function recordRtt(rttMs: number) {
-  rttSamples.push(rttMs);
-  if (rttSamples.length > 20) rttSamples.shift(); // Keep last 20 samples
-  
-  averageRtt = rttSamples.reduce((a, b) => a + b, 0) / rttSamples.length;
-  
-  // Classify connection quality based on RTT
-  if (averageRtt < 100) {
-    connectionQuality = "excellent";
-  } else if (averageRtt < 300) {
-    connectionQuality = "good";
-  } else if (averageRtt < 1000) {
-    connectionQuality = "degraded";
-  } else {
-    connectionQuality = "poor";
-  }
-  
-  // Update UI
-  rttStatus.textContent = `${averageRtt.toFixed(0)}ms`;
-  qualityStatus.textContent = connectionQuality.toUpperCase();
-  
-  // Color code quality
-  qualityStatus.style.color = 
-    connectionQuality === "excellent" ? "var(--felt-main)" :
-    connectionQuality === "good" ? "var(--felt-light)" :
-    connectionQuality === "degraded" ? "var(--gold)" :
-    "#ff4444";
-  
-  if (connectionQuality !== "excellent" && rttSamples.length % 5 === 0) {
-    log(`⚠️ Connection degraded: ${averageRtt.toFixed(0)}ms RTT (${connectionQuality})`);
-  }
+  recordRttFn(rttMs, { rttStatusEl: rttStatus, qualityStatusEl: qualityStatus, log });
 }
 
 /**
@@ -802,21 +741,6 @@ function queueAction(action: string, data: any) {
   bufferStatus.style.color = "var(--gray-400)";
 }
 
-/**
- * Update visual connection indicator based on current state and quality
- */
-function updateConnectionIndicator() {
-  if (connectionState === "connected") {
-    connectionIndicator.style.backgroundColor = "var(--felt-main)";
-    connectionIndicator.title = `Connected (${averageRtt.toFixed(0)}ms, ${connectionQuality})`;
-  } else if (connectionState === "connecting") {
-    connectionIndicator.style.backgroundColor = "var(--gold)";
-    connectionIndicator.title = `Connecting (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`;
-  } else {
-    connectionIndicator.style.backgroundColor = "#ff4444";
-    connectionIndicator.title = "Disconnected";
-  }
-}
 
 /**
  * Rate limiting to prevent action spam attacks
@@ -865,120 +789,37 @@ function replayBufferedActions() {
   });
 }
 
-/**
- * Show rebuy dialog when player has 0 chips
- */
-let rebuyDialog: HTMLDivElement | null = null;
-let rebuyTimeoutMs = 0;
-let rebuyCountdownInterval: ReturnType<typeof setInterval> | null = null;
-
-function showRebuyDialog(cost: number, timeoutSeconds: number) {
-  rebuyTimeoutMs = timeoutSeconds * 1000;
-  
-  // Remove existing dialog if any
-  hideRebuyDialog();
-  
-  // Create dialog
-  rebuyDialog = document.createElement("div");
-  rebuyDialog.className = "rebuy-dialog-overlay";
-  rebuyDialog.innerHTML = `
-    <div class="rebuy-dialog">
-      <div class="rebuy-icon">🪦</div>
-      <h2>¡Te has quedado sin fichas!</h2>
-      <p>¿Quieres re-comprar <strong>${cost} fichas</strong>?</p>
-      <div class="rebuy-timer">
-        <p>Tienen <span id="rebuy-countdown">${timeoutSeconds}</span>s para decidir</p>
-      </div>
-      <div class="rebuy-buttons">
-        <button id="rebuy-accept" class="btn btn-primary">✓ Aceptar Re-compra</button>
-        <button id="rebuy-decline" class="btn btn-secondary">✗ Declinar</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(rebuyDialog);
-  
-  // Start countdown
-  const countdownEl = document.getElementById("rebuy-countdown")!;
-  let remaining = timeoutSeconds;
-  
-  rebuyCountdownInterval = setInterval(() => {
-    remaining--;
-    countdownEl.textContent = String(remaining);
-    
-    if (remaining <= 0) {
-      clearInterval(rebuyCountdownInterval!);
-      rebuyCountdownInterval = null;
-      hideRebuyDialog();
-    }
-  }, 1000);
-  
-  // Accept button
-  document.getElementById("rebuy-accept")!.addEventListener("click", () => {
-    hideRebuyDialog();
-    if (room) {
-      room.send("rebuy", undefined);
-      log("✅ Enviando solicitud de re-compra...");
-    }
+function attemptReconnect() {
+  return attemptReconnectFn({
+    getToken: () => token,
+    getConnectionState: () => connectionState,
+    getTournamentEnded: () => tournamentEnded,
+    getReconnectAttempts: () => reconnectAttempts,
+    setReconnectAttempts: (n) => { reconnectAttempts = n; },
+    joinRoom: (forceReplace) => joinRoom(forceReplace),
+    maxAttempts: MAX_RECONNECT_ATTEMPTS,
+    clearAuthToken,
+    log
   });
-  
-  // Decline button
-  document.getElementById("rebuy-decline")!.addEventListener("click", () => {
-    hideRebuyDialog();
-    log("❌ Re-compra declinada");
-  });
-  
-  log(`💰 Dialog de re-compra mostrado (${timeoutSeconds}s)`);
-}
-
-/**
- * Hide rebuy dialog
- */
-function hideRebuyDialog() {
-  if (rebuyCountdownInterval) {
-    clearInterval(rebuyCountdownInterval);
-    rebuyCountdownInterval = null;
-  }
-  
-  if (rebuyDialog) {
-    rebuyDialog.remove();
-    rebuyDialog = null;
-  }
-}
-
-/**
- * Reconnect with exponential backoff
- */
-async function attemptReconnect() {
-  if (tournamentEnded) {
-    log("Mesa cerrada por fin de torneo. No se reconecta.");
-    return;
-  }
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    log("❌ Max reconnection attempts reached. Please refresh and login again.");
-    clearAuthToken();
-    return;
-  }
-
-  reconnectAttempts++;
-  const baseDelayMs = 1000;
-  const delayMs = baseDelayMs * Math.pow(2, reconnectAttempts - 1);
-  
-  log(`🔄 Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delayMs}ms...`);
-  
-  await new Promise(resolve => setTimeout(resolve, delayMs));
-  
-  if (token && connectionState === "disconnected") {
-    await joinRoom(true);
-  }
 }
 
 function getWsClient(): Client {
-  if (!wsClient) wsClient = new Client(WS_URL);
-  return wsClient;
+  return getWsClientFromConnection(WS_URL);
 }
 
 type JoinMode = "joinOrCreate" | "create" | "joinById";
+
+const getLobbyDeps: LobbyDepsFactory = () => ({
+  getWsClient,
+  setLobbyMessage,
+  log,
+  roomsList,
+  onJoinRoom: (roomId: string) => {
+    joinRoom(false, { mode: "joinById", roomId }).catch((err) => {
+      log(`Join error: ${err?.message || err}`);
+    });
+  }
+});
 
 async function joinRoom(
   forceReplace = false,
@@ -1101,10 +942,8 @@ async function joinRoom(
       room = null;
       currentSessionId = null;
       gameUiContext.currentSessionId = null;
-      if (!tournamentResultOverlay.classList.contains("hidden")) return;
-      tournamentResultTitle.textContent = "Fin de la mesa";
-      tournamentResultMessage.textContent = "La mesa se ha cerrado. Puedes volver al lobby para unirte a otra.";
-      tournamentResultOverlay.classList.remove("hidden");
+      if (!overlayRefs.tournamentResultOverlay.classList.contains("hidden")) return;
+      showGameEndMessageFn(overlayRefs);
       return;
     }
 
@@ -1112,10 +951,8 @@ async function joinRoom(
       hadRoomWhenBackgrounded = false;
       setConnectionState("disconnected");
       room = null;
-      if (!tournamentResultOverlay.classList.contains("hidden")) return;
-      tournamentResultTitle.textContent = "Fin de la mesa";
-      tournamentResultMessage.textContent = "La mesa se ha cerrado. Puedes volver al lobby para unirte a otra.";
-      tournamentResultOverlay.classList.remove("hidden");
+      if (!overlayRefs.tournamentResultOverlay.classList.contains("hidden")) return;
+      showGameEndMessageFn(overlayRefs);
       return;
     }
     
@@ -1149,23 +986,13 @@ async function joinRoom(
   });
 
   joinedRoom.onMessage("heartbeat_ack", () => {
-    // Record RTT for connection quality monitoring
     if (lastHeartbeatSendTime > 0) {
-      const rttMs = Date.now() - lastHeartbeatSendTime;
-      recordRtt(rttMs);
+      recordRtt(Date.now() - lastHeartbeatSendTime);
     }
-    
-    // Reset heartbeat timeout when ACK is received
-    if (heartbeatTimeoutId !== null) {
-      clearTimeout(heartbeatTimeoutId);
-      heartbeatTimeoutId = null;
-    }
+    clearHeartbeatTimeoutFn();
     if (connectionState !== "connected") {
       setConnectionState("connected");
-      // Replay any buffered actions on reconnection
-      if (actionBuffer.length > 0) {
-        replayBufferedActions();
-      }
+      if (actionBuffer.length > 0) replayBufferedActions();
     }
   });
 
@@ -1320,139 +1147,13 @@ async function joinRoom(
     log(`Server error: ${JSON.stringify(payload)}`);
   });
 
-  // Rebuy system messages
-  room.onMessage("bustedOut", (payload: any) => {
-    log(`🪦 Te han desplumado! Chips: 0`);
-    showRebuyDialog(payload.rebuyCost, payload.timeoutSeconds);
-  });
-
-  room.onMessage("seatReserved", (payload: any) => {
-    log(`💺 Seat ${payload.seatIndex} reserved. Expires in ${payload.expiresIn}ms`);
-  });
-
-  room.onMessage("reservationExpired", (payload: any) => {
-    log(`⏰ Seat reservation expired: ${payload.reason}`);
-    hideRebuyDialog();
-  });
-
-  room.onMessage("rebuySuccess", (payload: any) => {
-    log(`✅ Rebuy successful! New chips: ${payload.chips}`);
-    hideRebuyDialog();
-  });
-
-  room.onMessage("playerBustedOut", (payload: any) => {
-    log(`🪦 ${payload.playerName} busted out!`);
-  });
-
-  room.onMessage("playerRebuyed", (payload: any) => {
-    log(`💰 ${payload.playerName} rebuyed with ${payload.newChips} chips!`);
-  });
-
   room.onStateChange((state) => {
     lastRoomState = state;
     renderState(state);
   });
 }
 
-type AvailableRoom = {
-  roomId: string;
-  clients: number;
-  maxClients: number;
-  metadata?: Record<string, unknown>;
-};
-
-function renderLobbyRooms(rooms: AvailableRoom[]) {
-  roomsList.innerHTML = "";
-  if (!rooms || rooms.length === 0) {
-    const empty = document.createElement("li");
-    empty.className = "room-item room-item-empty";
-    empty.textContent = "No hay mesas disponibles ahora mismo.";
-    roomsList.appendChild(empty);
-    return;
-  }
-
-  rooms.forEach((r) => {
-    const li = document.createElement("li");
-    li.className = "room-item";
-
-    const meta = document.createElement("div");
-    meta.className = "room-meta";
-
-    const name = document.createElement("strong");
-    const tableName = typeof r?.metadata?.name === "string" ? (r.metadata.name as string) : "";
-    name.textContent = tableName || `Mesa ${r.roomId.slice(0, 6)}`;
-
-    const sub = document.createElement("small");
-    sub.textContent = `${r.clients}/${r.maxClients} jugadores · id ${r.roomId}`;
-
-    meta.appendChild(name);
-    meta.appendChild(sub);
-
-    const btn = document.createElement("button");
-    btn.className = "accent";
-    btn.textContent = "Unirme";
-    btn.disabled = r.clients >= r.maxClients;
-    btn.addEventListener("click", () => {
-      joinRoom(false, { mode: "joinById", roomId: r.roomId }).catch((err) => {
-        log(`Join error: ${err?.message || err}`);
-      });
-    });
-
-    li.appendChild(meta);
-    li.appendChild(btn);
-    roomsList.appendChild(li);
-  });
-}
-
-/**
- * Fetch available my_room tables via Colyseus LobbyRoom (Match-maker API).
- * joinOrCreate so a lobby exists; register "rooms" handler then send "filter" to force a fresh list
- * (initial "rooms" can be sent before our handler is attached).
- */
-async function refreshLobbyRooms(showLoading: boolean = true) {
-  let lobbyRoom: Room | null = null;
-  try {
-    if (showLoading) {
-      setLobbyMessage("Cargando mesas...", "info");
-    }
-    const client = getWsClient();
-    lobbyRoom = await client.joinOrCreate("lobby", {
-      filter: { name: "my_room" }
-    } as any);
-    const roomsPayload = await new Promise<AvailableRoom[]>((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error("Lobby timeout")), 10000);
-      lobbyRoom!.onMessage("rooms", (list: any) => {
-        clearTimeout(t);
-        const items = Array.isArray(list) ? list : [];
-        resolve(
-          items
-            .filter((r: any) => r && typeof r?.roomId === "string" && r.roomId.length > 0)
-            .map((r: any) => ({
-              roomId: r.roomId,
-              clients: typeof r.clients === "number" ? r.clients : 0,
-              maxClients: typeof r.maxClients === "number" ? r.maxClients : 6,
-              metadata: r.metadata && typeof r.metadata === "object" ? r.metadata : undefined
-            }))
-        );
-      });
-      // Request list so we get "rooms" even if the initial send was already delivered
-      lobbyRoom!.send("filter", { name: "my_room" });
-    });
-    const sorted = [...roomsPayload].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
-    renderLobbyRooms(sorted);
-    if (showLoading) {
-      setLobbyMessage("", "info");
-    }
-  } catch (err: any) {
-    setLobbyMessage("No se pudieron cargar las mesas.", "error");
-    renderLobbyRooms([]);
-    log(`Lobby rooms error: ${err?.message || err}`);
-  } finally {
-    if (lobbyRoom) {
-      await lobbyRoom.leave().catch(() => {});
-    }
-  }
-}
+type LobbyDepsFactory = () => LobbyDeps;
 
 type WinnerRankingEntry = {
   id: number;
@@ -1540,7 +1241,7 @@ async function refreshWinnersRanking() {
 function startLobbyPolling() {
   stopLobbyPolling();
   lobbyPollId = window.setInterval(() => {
-    refreshLobbyRooms(false).catch(() => undefined);
+    refreshLobbyRooms(getLobbyDeps(), false).catch(() => undefined);
   }, 5000);
 }
 
@@ -1560,7 +1261,7 @@ async function openLobby() {
   }
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(true);
-  await refreshLobbyRooms(true);
+  await refreshLobbyRooms(getLobbyDeps(), true);
   await refreshWinnersRanking();
   startLobbyPolling();
 }
@@ -1635,7 +1336,7 @@ if (forgotPasswordSubmit) {
 }
 
 refreshRoomsButton.addEventListener("click", () => {
-  refreshLobbyRooms(true).catch(() => undefined);
+  refreshLobbyRooms(getLobbyDeps(), true).catch(() => undefined);
   refreshWinnersRanking().catch(() => undefined);
 });
 
