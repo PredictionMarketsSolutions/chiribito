@@ -36,8 +36,7 @@ export function startTokenMonitor(deps: TokenMonitorDeps): void {
       );
       deps.onInvalidated();
     } else if (result.reason === "network") {
-      deps.log("Token refresh: network error, clearing session");
-      deps.onInvalidated();
+      deps.log("Token refresh: network error, will retry on next interval");
     }
   }, deps.intervalMs);
 }

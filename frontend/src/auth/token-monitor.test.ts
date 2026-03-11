@@ -33,15 +33,15 @@ describe("token-monitor", () => {
     vi.clearAllMocks();
   });
 
-  it("calls onInvalidated and log when refresh returns reason network", async () => {
+  it("does not call onInvalidated on network error, only logs and retries next interval", async () => {
     vi.mocked(attemptTokenRefresh).mockResolvedValue({ ok: false, reason: "network" });
 
     startTokenMonitor(deps);
     vi.advanceTimersByTime(1000);
     await Promise.resolve();
 
-    expect(deps.onInvalidated).toHaveBeenCalledTimes(1);
-    expect(deps.log).toHaveBeenCalledWith("Token refresh: network error, clearing session");
+    expect(deps.onInvalidated).not.toHaveBeenCalled();
+    expect(deps.log).toHaveBeenCalledWith("Token refresh: network error, will retry on next interval");
   });
 
   it("calls onInvalidated when refresh returns reason malformed", async () => {
