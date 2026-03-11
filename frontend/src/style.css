@@ -1075,26 +1075,53 @@ button.accent:hover:not(:disabled) {
 
 .seat-hand {
   display: flex;
-  gap: 6px;
   justify-content: center;
   align-items: center;
   margin-bottom: 8px;
   cursor: pointer;
-  padding: 4px 0;
-  border-radius: 8px;
-  transition: background 0.2s, transform 0.15s;
+  padding: 6px 0;
+  perspective: 120px;
+  gap: 0;
 }
 
 .seat-hand:hover {
-  background: rgba(244, 196, 48, 0.12);
-  transform: scale(1.02);
+  background: rgba(244, 196, 48, 0.1);
+  border-radius: 8px;
 }
 
 .seat-hand .card.mini {
-  width: 40px;
-  height: 56px;
+  width: 44px;
+  height: 62px;
   padding: 3px;
-  border-radius: 4px;
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.seat-hand .card.mini:first-child {
+  transform: rotate(-14deg) translateY(-2px);
+  z-index: 2;
+  margin-right: -18px;
+}
+
+.seat-hand .card.mini:last-child {
+  transform: rotate(10deg) translateY(-2px);
+  z-index: 1;
+}
+
+.seat-hand .card.mini:only-child {
+  transform: none;
+  margin-right: 0;
+}
+
+.seat-hand:hover .card.mini:first-child {
+  transform: rotate(-12deg) translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.seat-hand:hover .card.mini:last-child {
+  transform: rotate(10deg) translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
 }
 
 .seat-hand .card.mini img {
@@ -1127,6 +1154,35 @@ button.accent:hover:not(:disabled) {
 
 .table-zone--your-cards {
   display: none;
+}
+
+.table-zone--community {
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  padding: 16px 0;
+}
+
+.table-zone--community .zone-title {
+  display: none;
+}
+
+.card-row--community {
+  gap: 14px;
+}
+
+.card-row--community .card {
+  width: 130px;
+  height: 182px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.card-row--community .card .rank {
+  font-size: 24px;
+}
+
+.card-row--community .card .suit {
+  font-size: 22px;
 }
 
 .zone-title {
