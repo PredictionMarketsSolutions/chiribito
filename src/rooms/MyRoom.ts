@@ -240,6 +240,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   }
 
   onJoin(client: Client, options: any) {
+    // Initialize view before handleJoin so the client always has a view even if handleJoin throws.
+    client.view = new StateView();
     const player = this.lifecycleManager.handleJoin(
       client,
       options,
@@ -253,11 +255,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       () => Array.from(this.clients),
       (type, message, opts) => this.broadcast(type, message, opts)
     );
-    // StateView: each client sees all players (names, chips, seats) so the table UI works.
-    // Player.hand is @view() so per-client visibility for private cards is handled by the schema.
-    client.view = new StateView();
     for (const p of this.state.users.values()) {
-      client.view.add(p);
+      client.view!.add(p);
     }
     // Existing clients must see the new player in their view.
     for (const c of this.clients) {
