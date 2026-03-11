@@ -839,6 +839,16 @@ function getWsClient(): Client {
 
 type JoinMode = "joinOrCreate" | "create" | "joinById";
 
+/** Cooldown after "Crear mesa" to prevent double-clicks and spam. */
+const CREATE_TABLE_COOLDOWN_MS = 2000;
+
+let joinInProgress = false;
+
+function setLobbyJoinButtonsEnabled(enabled: boolean): void {
+  createTableButton.disabled = !enabled;
+  joinByIdButton.disabled = !enabled;
+}
+
 const getLobbyDeps: LobbyDepsFactory = () => ({
   getWsClient,
   setLobbyMessage,
@@ -861,23 +871,35 @@ async function joinRoom(
     return;
   }
 
-  const { username } = getFormValues();
-  setConnectionState("connecting");
-  log("Connecting to Colyseus...");
+  const mode: JoinMode = opts?.mode ?? "joinOrCreate";
+  if (mode === "joinById") {
+    const roomId = (opts?.roomId ?? "").trim();
+    if (!roomId) {
+      setConnectionState("disconnected");
+      log("Room ID vacío.");
+      return;
+    }
+  }
 
-  const client = getWsClient();
-  
-  let joinedRoom: Room;
+  if (joinInProgress) {
+    log("Ya hay una conexión en curso.");
+    return;
+  }
+  joinInProgress = true;
+  setLobbyJoinButtonsEnabled(false);
+
   try {
-    const mode: JoinMode = opts?.mode ?? "joinOrCreate";
-    if (mode === "joinById") {
-      const roomId = (opts?.roomId ?? "").trim();
-      if (!roomId) {
-        setConnectionState("disconnected");
-        log("Room ID vacío.");
-        return;
-      }
-      joinedRoom = await client.joinById(roomId, {
+    const { username } = getFormValues();
+    setConnectionState("connecting");
+    log("Connecting to Colyseus...");
+
+    const client = getWsClient();
+
+    let joinedRoom: Room;
+    try {
+      if (mode === "joinById") {
+        const roomId = (opts?.roomId ?? "").trim();
+        joinedRoom = await client.joinById(roomId, {
         auth: { token },
         name: username,
         forceReplace
@@ -918,6 +940,12 @@ async function joinRoom(
       log("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.");
       setAuthMessage("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.", "error");
       setAuthOverlayVisible(true);
+      return;
+    }
+    if (message.includes("CREATE_ROOM_RATE_LIMIT")) {
+      setConnectionState("disconnected");
+      log("Espera un minuto antes de crear otra mesa.");
+      setLobbyMessage("Espera un minuto antes de crear otra mesa.", "error");
       return;
     }
     log(`Join error: ${message}`);
@@ -1183,6 +1211,15 @@ async function joinRoom(
     lastRoomState = state;
     renderState(state);
   });
+  } finally {
+    joinInProgress = false;
+    joinByIdButton.disabled = false;
+    if (mode === "create") {
+      setTimeout(() => { createTableButton.disabled = false; }, CREATE_TABLE_COOLDOWN_MS);
+    } else {
+      createTableButton.disabled = false;
+    }
+  }
 }
 
 type LobbyDepsFactory = () => LobbyDeps;
@@ -1293,6 +1330,8 @@ async function openLobby() {
   }
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(true);
+  joinInProgress = false;
+  setLobbyJoinButtonsEnabled(true);
   await refreshLobbyRooms(getLobbyDeps(), true);
   await refreshWinnersRanking();
   startLobbyPolling();

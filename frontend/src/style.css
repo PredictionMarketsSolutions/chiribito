@@ -967,6 +967,7 @@ button.accent:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: visible;
 }
 
 .seat[data-seat="0"] { top: -4%; left: 50%; }
@@ -1077,31 +1078,39 @@ button.accent:hover:not(:disabled) {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   cursor: pointer;
-  padding: 6px 0;
+  padding: 8px 4px;
   perspective: 120px;
   gap: 0;
+  min-height: 72px;
+  overflow: visible;
+}
+
+.seat:hover .seat-hand {
+  visibility: visible;
 }
 
 .seat-hand:hover {
-  background: rgba(244, 196, 48, 0.1);
+  background: rgba(244, 196, 48, 0.15);
   border-radius: 8px;
 }
 
 .seat-hand .card.mini {
-  width: 44px;
-  height: 62px;
-  padding: 3px;
-  border-radius: 5px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  width: 56px;
+  height: 78px;
+  padding: 4px;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .seat-hand .card.mini:first-child {
-  transform: rotate(-14deg) translateY(-2px);
+  transform: rotate(-12deg) translateY(-2px);
   z-index: 2;
-  margin-right: -18px;
+  margin-right: -22px;
 }
 
 .seat-hand .card.mini:last-child {
@@ -1115,25 +1124,25 @@ button.accent:hover:not(:disabled) {
 }
 
 .seat-hand:hover .card.mini:first-child {
-  transform: rotate(-12deg) translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transform: rotate(-10deg) translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .seat-hand:hover .card.mini:last-child {
-  transform: rotate(10deg) translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transform: rotate(8deg) translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .seat-hand .card.mini img {
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .seat-hand .card.mini .rank {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .seat-hand .card.mini .suit {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 /* Card Zones */
@@ -1160,7 +1169,11 @@ button.accent:hover:not(:disabled) {
   background: transparent;
   border: none;
   backdrop-filter: none;
-  padding: 16px 0;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .table-zone--community .zone-title {
@@ -1168,21 +1181,26 @@ button.accent:hover:not(:disabled) {
 }
 
 .card-row--community {
-  gap: 14px;
+  gap: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .card-row--community .card {
-  width: 130px;
-  height: 182px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  width: 160px;
+  height: 224px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
 }
 
 .card-row--community .card .rank {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .card-row--community .card .suit {
-  font-size: 22px;
+  font-size: 26px;
 }
 
 .zone-title {

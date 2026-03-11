@@ -1,6 +1,7 @@
 /**
  * MyRoom.onJoin.test.ts
- * Ensures the joining client is not added to their own StateView (so hole cards stay private).
+ * Ensures the joining client's StateView includes all players (including themselves)
+ * so the client can see their own seat and hole cards.
  */
 
 jest.mock("@colyseus/core", () => ({
@@ -14,7 +15,7 @@ import { MyRoom } from "../../rooms/MyRoom";
 import { Player, MyRoomState } from "../../rooms/schema/MyRoomState";
 
 describe("MyRoom onJoin StateView", () => {
-  it("does not add the joining client's player to their own view", () => {
+  it("adds all players including the joining client to their view so they see their hand", () => {
     const state = new MyRoomState();
     const ownPlayer = new Player("session-joining");
     ownPlayer.name = "Joining";
@@ -41,7 +42,7 @@ describe("MyRoom onJoin StateView", () => {
     MyRoom.prototype.onJoin.call(fakeRoom, client as any, {});
 
     expect(client.view).toBeInstanceOf(StateView);
-    expect(client.view!.has(ownPlayer)).toBe(false);
+    expect(client.view!.has(ownPlayer)).toBe(true);
     expect(client.view!.has(otherPlayer)).toBe(true);
   });
 });

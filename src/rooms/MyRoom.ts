@@ -8,6 +8,7 @@ import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/c
 // Security audit logging
 import { gameAuditLog } from "../security/game-audit";
 import { gameActionRateLimiter } from "../security/game-action-rate-limit";
+import { allowCreateRoom, recordCreateRoom } from "../security/create-room-rate-limit";
 
 // Room managers
 import {
@@ -26,6 +27,8 @@ const API_URL = process.env.API_URL || "http://localhost:3000";
 
 export class MyRoom extends Room<{ state: MyRoomState }> {
   maxClients = 6;
+  /** True when the room was just created (client.create); used to rate-limit create-room in onAuth. */
+  private roomJustCreated = false;
   public turnTimeout: NodeJS.Timeout | null = null;
   public dealerIndex: number = 0;
   public currentPlayerIndex: number = 0;
@@ -229,13 +232,26 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
 
   async onAuth(client: Client, options: any) {
     const result = await this.authService.authenticate(client, options, this.sessionManager);
-    
+
+    // Rate-limit creating new rooms (first client joining a just-created room)
+    if (this.roomJustCreated) {
+      this.roomJustCreated = false;
+      const userId = result.authUser?.userId;
+      if (userId != null && typeof userId === "number") {
+        if (!allowCreateRoom(userId)) {
+          logger.warn("Create room rate limited", { userId, roomId: this.roomId });
+          throw new Error("CREATE_ROOM_RATE_LIMIT");
+        }
+        recordCreateRoom(userId);
+      }
+    }
+
     // Store results in options for onJoin
     options.authUser = result.authUser;
     if (result.replaceSessionId) {
       options.replaceSessionId = result.replaceSessionId;
     }
-    
+
     return options.authUser;
   }
 
@@ -256,7 +272,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       (type, message, opts) => this.broadcast(type, message, opts)
     );
     for (const p of this.state.users.values()) {
-      if (p !== player) client.view!.add(p);
+      client.view!.add(p);
     }
     // Existing clients must see the new player in their view.
     for (const c of this.clients) {
