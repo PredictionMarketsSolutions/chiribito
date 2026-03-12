@@ -39,6 +39,7 @@ import {
 import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { startTokenMonitor as startTokenMonitorFn, stopTokenMonitor as stopTokenMonitorFn } from "./auth/token-monitor";
+import { runPostLoginAutoRejoin } from "./auth/login-auto-rejoin";
 import { disconnectRoom } from "./auth/room-disconnect";
 import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
 import {
@@ -757,7 +758,13 @@ async function login() {
     tokenInvalidNotified = false;
     startTokenMonitor();
     log("Logged in and token received.");
-    setAuthMessage("Login correcto. Puedes unirte a la mesa.", "success");
+    runPostLoginAutoRejoin({
+      getLastRoomId: () => SecureStorage.getLastRoomId(),
+      joinRoom: (forceReplace, opts) => joinRoom(forceReplace, opts),
+      clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+      setAuthMessage,
+      log,
+    });
   } catch (error) {
     const message = mapAuthError(error instanceof Error ? error.message : String(error), "login");
     setAuthMessage(message, "error");
@@ -983,6 +990,7 @@ async function joinRoom(
     ?? (joinedRoom as { roomId?: string }).roomId
     ?? "joined";
   roomStatus.textContent = roomId;
+  SecureStorage.saveLastRoomId(roomId);
   log("Joined room successfully.");
   
   // Start client-side heartbeat to monitor connection
@@ -995,6 +1003,7 @@ async function joinRoom(
     if (code === 4011) {
       alert("Tu sesion fue reemplazada por otro ingreso.");
       shouldAutoReconnect = false;
+      SecureStorage.clearLastRoomId();
       clearAuthToken();
       resetRoomUi("replaced");
       setConnectionState("disconnected");
@@ -1006,6 +1015,7 @@ async function joinRoom(
       tournamentEnded = true;
       hadRoomWhenBackgrounded = false;
        shouldAutoReconnect = false;
+      SecureStorage.clearLastRoomId();
       setConnectionState("disconnected");
       room = null;
       currentSessionId = null;
@@ -1018,6 +1028,7 @@ async function joinRoom(
     if (tournamentEnded) {
       hadRoomWhenBackgrounded = false;
       shouldAutoReconnect = false;
+      SecureStorage.clearLastRoomId();
       setConnectionState("disconnected");
       room = null;
       currentSessionId = null;
@@ -1343,6 +1354,7 @@ async function openLobby() {
   setLobbyOverlayVisible(true);
   // El usuario está explícitamente en el lobby: no queremos reconexiones automáticas a mesas antiguas.
   shouldAutoReconnect = false;
+  SecureStorage.clearLastRoomId();
   joinInProgress = false;
   setLobbyJoinButtonsEnabled(true);
   await refreshLobbyRooms(getLobbyDeps(), true);

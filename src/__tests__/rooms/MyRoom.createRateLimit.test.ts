@@ -24,6 +24,7 @@ describe("MyRoom create room rate limit", () => {
     const fakeRoom: any = {
       roomJustCreated: true,
       roomId: "test-room",
+      tournamentParticipantUserIds: new Set<number>(),
       authService: {
         authenticate: jest.fn().mockResolvedValue({ authUser: { userId: 42 } }),
       },
@@ -40,6 +41,7 @@ describe("MyRoom create room rate limit", () => {
     const fakeRoom: any = {
       roomJustCreated: true,
       roomId: "test-room",
+      tournamentParticipantUserIds: new Set<number>(),
       authService: {
         authenticate: jest.fn().mockResolvedValue({ authUser: { userId: 42 } }),
       },
@@ -57,6 +59,7 @@ describe("MyRoom create room rate limit", () => {
     const fakeRoom: any = {
       roomJustCreated: false,
       roomId: "test-room",
+      tournamentParticipantUserIds: new Set<number>(),
       authService: {
         requestJoin: jest.fn().mockResolvedValue(true),
         authenticate: jest.fn().mockResolvedValue({ authUser: { userId: 99 } }),

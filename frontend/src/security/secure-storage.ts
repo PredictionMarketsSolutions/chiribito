@@ -44,6 +44,7 @@ export class SecureStorage {
   private static readonly STORAGE_KEY = 'chiri_auth_token';
   private static readonly REFRESH_KEY = 'chiri_refresh_token';
   private static readonly EXPIRY_KEY = 'chiri_token_expiry';
+  private static readonly LAST_ROOM_KEY = 'chiri_last_room_id';
 
   /**
    * Save access token to memory/storage
@@ -162,6 +163,36 @@ export class SecureStorage {
     this.clearAccessToken();
     this.clearRefreshToken();
     console.log('[STORAGE] All tokens cleared');
+  }
+
+  /**
+   * Persist last joined room id so we can auto-rejoin after login.
+   */
+  static saveLastRoomId(roomId: string): void {
+    try {
+      localStorage.setItem(this.LAST_ROOM_KEY, roomId);
+      console.log('[STORAGE] Last room id saved');
+    } catch (error) {
+      console.error('[STORAGE] Failed to save last room id:', error);
+    }
+  }
+
+  static getLastRoomId(): string | null {
+    try {
+      return localStorage.getItem(this.LAST_ROOM_KEY);
+    } catch (error) {
+      console.error('[STORAGE] Failed to get last room id:', error);
+      return null;
+    }
+  }
+
+  static clearLastRoomId(): void {
+    try {
+      localStorage.removeItem(this.LAST_ROOM_KEY);
+      console.log('[STORAGE] Last room id cleared');
+    } catch (error) {
+      console.error('[STORAGE] Failed to clear last room id:', error);
+    }
   }
 
   /**

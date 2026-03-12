@@ -76,4 +76,34 @@ describe("SecureStorage", () => {
       expect(sessionStorage.getItem(AUTH_KEY)).toBeNull();
     });
   });
+
+  const LAST_ROOM_KEY = "chiri_last_room_id";
+
+  describe("lastRoomId (auto-rejoin after login)", () => {
+    it("saveLastRoomId stores and getLastRoomId returns it", () => {
+      expect(SecureStorage.getLastRoomId()).toBeNull();
+      SecureStorage.saveLastRoomId("abc123");
+      expect(SecureStorage.getLastRoomId()).toBe("abc123");
+      expect(localStorage.getItem(LAST_ROOM_KEY)).toBe("abc123");
+    });
+
+    it("clearLastRoomId removes value saved by saveLastRoomId", () => {
+      SecureStorage.saveLastRoomId("room-xyz");
+      expect(SecureStorage.getLastRoomId()).toBe("room-xyz");
+      SecureStorage.clearLastRoomId();
+      expect(SecureStorage.getLastRoomId()).toBeNull();
+      expect(localStorage.getItem(LAST_ROOM_KEY)).toBeNull();
+    });
+
+    it("getLastRoomId returns null when never set", () => {
+      expect(SecureStorage.getLastRoomId()).toBeNull();
+    });
+
+    it("clearLastRoomId is idempotent", () => {
+      SecureStorage.saveLastRoomId("r1");
+      SecureStorage.clearLastRoomId();
+      SecureStorage.clearLastRoomId();
+      expect(SecureStorage.getLastRoomId()).toBeNull();
+    });
+  });
 });
