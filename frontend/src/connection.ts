@@ -5,8 +5,9 @@
 import { Client, type Room } from "@colyseus/sdk";
 
 let wsClient: Client | null = null;
-let clientHeartbeatId: ReturnType<typeof setInterval> | null = null;
-let heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
+// In the browser, window.setInterval / setTimeout return number, not NodeJS.Timeout.
+let clientHeartbeatId: ReturnType<typeof window.setInterval> | null = null;
+let heartbeatTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
 
 const rttSamples: number[] = [];
 let averageRtt = 0;

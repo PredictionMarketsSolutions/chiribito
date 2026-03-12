@@ -307,6 +307,8 @@ let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
 let lobbyPollId: number | null = null;
+/** Solo reconectar automáticamente a una mesa si el usuario estaba jugando (no en lobby) y no ha terminado el torneo. */
+let shouldAutoReconnect = false;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
 let tournamentEnded = false;
 let tokenInvalidNotified = false;
@@ -637,6 +639,7 @@ function updateTurnTimer(state: RoomState) {
 function clearAuthToken() {
   token = null;
   refreshToken = null;
+  shouldAutoReconnect = false;
   tokenStatus.textContent = "none";
   stopTokenMonitorFn();
   tokenInvalidNotified = false;
@@ -819,6 +822,10 @@ function replayBufferedActions() {
 }
 
 function attemptReconnect() {
+  if (!shouldAutoReconnect) {
+    log("Auto-reconnect disabled; staying in lobby.");
+    return;
+  }
   return attemptReconnectFn({
     getToken: () => token,
     getConnectionState: () => connectionState,
@@ -956,6 +963,7 @@ async function joinRoom(
   room = joinedRoom;
   currentSessionId = joinedRoom.sessionId;
   gameUiContext.currentSessionId = currentSessionId;
+  shouldAutoReconnect = true;
   tournamentEnded = false;
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(false);
@@ -986,6 +994,7 @@ async function joinRoom(
     // 4011 = app custom: session replaced by another login
     if (code === 4011) {
       alert("Tu sesion fue reemplazada por otro ingreso.");
+      shouldAutoReconnect = false;
       clearAuthToken();
       resetRoomUi("replaced");
       setConnectionState("disconnected");
@@ -996,6 +1005,7 @@ async function joinRoom(
     if (code === 4013) {
       tournamentEnded = true;
       hadRoomWhenBackgrounded = false;
+       shouldAutoReconnect = false;
       setConnectionState("disconnected");
       room = null;
       currentSessionId = null;
@@ -1007,6 +1017,7 @@ async function joinRoom(
 
     if (tournamentEnded) {
       hadRoomWhenBackgrounded = false;
+      shouldAutoReconnect = false;
       setConnectionState("disconnected");
       room = null;
       currentSessionId = null;
@@ -1330,6 +1341,8 @@ async function openLobby() {
   }
   setAuthOverlayVisible(false);
   setLobbyOverlayVisible(true);
+  // El usuario está explícitamente en el lobby: no queremos reconexiones automáticas a mesas antiguas.
+  shouldAutoReconnect = false;
   joinInProgress = false;
   setLobbyJoinButtonsEnabled(true);
   await refreshLobbyRooms(getLobbyDeps(), true);
