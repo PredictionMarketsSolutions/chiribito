@@ -1,8 +1,8 @@
 /**
- * Winner display phase (5s after round end). State is owned by caller.
+ * Winner display phase (3s after round end). State is owned by caller.
  */
-
-export const WINNER_DISPLAY_MS = 5000;
+ 
+export const WINNER_DISPLAY_MS = 3000;
 
 export type WinnerDisplayState = {
   lastWinners: string[];

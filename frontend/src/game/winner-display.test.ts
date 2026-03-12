@@ -1,5 +1,5 @@
 /**
- * Tests for winner display phase (5s after round end).
+ * Tests for winner display phase (3s after round end, then UI reset).
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
@@ -18,6 +18,12 @@ describe("winner-display", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  describe("WINNER_DISPLAY_MS", () => {
+    it("is 3000 so winner is shown for 3 seconds before UI reset", () => {
+      expect(WINNER_DISPLAY_MS).toBe(3000);
+    });
   });
 
   describe("startWinnerDisplayPhase", () => {
@@ -62,6 +68,30 @@ describe("winner-display", () => {
       vi.advanceTimersByTime(WINNER_DISPLAY_MS);
       expect(onTimeout).toHaveBeenCalledTimes(1);
     });
+
+    it("keeps winner phase active for full WINNER_DISPLAY_MS then resets state and calls onTimeout", () => {
+      const state: WinnerDisplayState = {
+        lastWinners: ["s1"],
+        lastWinningHand: "Pareja",
+        winnerDisplayUntil: 0,
+        winnerDisplayTimeoutId: null,
+      };
+      const now = 5000;
+      vi.setSystemTime(now);
+      const onTimeout = vi.fn();
+      startWinnerDisplayPhase(state, onTimeout);
+      expect(isInWinnerPhase(state)).toBe(true);
+      vi.advanceTimersByTime(WINNER_DISPLAY_MS - 1);
+      expect(isInWinnerPhase(state)).toBe(true);
+      expect(onTimeout).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(state.winnerDisplayUntil).toBe(0);
+      expect(state.lastWinners).toEqual([]);
+      expect(state.lastWinningHand).toBe("-");
+      expect(state.winnerDisplayTimeoutId).toBeNull();
+      expect(onTimeout).toHaveBeenCalledTimes(1);
+      expect(isInWinnerPhase(state)).toBe(false);
+    });
   });
 
   describe("clearWinnerDisplay", () => {
@@ -69,8 +99,8 @@ describe("winner-display", () => {
       const state: WinnerDisplayState = {
         lastWinners: ["p1"],
         lastWinningHand: "Pareja",
-        winnerDisplayUntil: Date.now() + 5000,
-        winnerDisplayTimeoutId: setTimeout(() => {}, 5000),
+        winnerDisplayUntil: Date.now() + WINNER_DISPLAY_MS,
+        winnerDisplayTimeoutId: setTimeout(() => {}, WINNER_DISPLAY_MS),
       };
 
       clearWinnerDisplay(state);

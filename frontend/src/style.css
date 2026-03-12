@@ -553,6 +553,41 @@ body {
   }
 }
 
+.idle-timeout-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.85));
+  z-index: 250;
+}
+
+.idle-timeout-modal.hidden {
+  display: none;
+}
+
+.idle-timeout-content {
+  max-width: 360px;
+  width: 90%;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.idle-timeout-content h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.idle-timeout-content p {
+  font-size: 14px;
+  color: var(--gray-200);
+  margin-bottom: 16px;
+}
+
 @keyframes pulse-winner {
   0%, 100% {
     border-color: var(--gold);

@@ -62,5 +62,7 @@ export const dom = {
   rttStatus: getRef<HTMLSpanElement>("#rtt-status"),
   qualityStatus: getRef<HTMLSpanElement>("#quality-status"),
   bufferStatus: getRef<HTMLSpanElement>("#buffer-status"),
-  yourTurnIndicator: getRef<HTMLDivElement>("#your-turn-indicator")
+  yourTurnIndicator: getRef<HTMLDivElement>("#your-turn-indicator"),
+  idleTimeoutModal: getRef<HTMLDivElement>("#idle-timeout-modal", false),
+  idleTimeoutContinueButton: getRef<HTMLButtonElement>("#idle-timeout-continue", false),
 } as const;

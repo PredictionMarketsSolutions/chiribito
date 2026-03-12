@@ -60,6 +60,7 @@ import {
 } from "./game";
 import type { WinnerDisplayState, TurnTimerState } from "./game";
 import type { GameUiRefs, GameUiContext } from "./game/game-ui-types";
+import { getWinnerDisplayFromRoundEnd } from "./game/round-end-winner";
 
 // Security modules
 import {
@@ -318,8 +319,8 @@ let pixiLayer: HTMLDivElement | null = null;
 // Connection monitoring (state owned here; heartbeat/RTT in connection.ts)
 let connectionState: ConnectionState = "disconnected";
 let reconnectAttempts = 0;
-const HEARTBEAT_INTERVAL_MS = 25000;
-const HEARTBEAT_TIMEOUT_MS = 10000;
+const HEARTBEAT_INTERVAL_MS = 30000;
+const HEARTBEAT_TIMEOUT_MS = 180000;
 let lastHeartbeatSendTime = 0;
 
 let pixiTableSurface: HTMLDivElement | null = null;
@@ -778,7 +779,12 @@ function startClientHeartbeat() {
     intervalMs: HEARTBEAT_INTERVAL_MS,
     timeoutMs: HEARTBEAT_TIMEOUT_MS,
     log,
-    onTimeout: () => { if (room) room.leave(); },
+    onTimeout: () => {
+      log("[HEARTBEAT] Timeout alcanzado, mostrando popup de inactividad");
+      if (dom.idleTimeoutModal) {
+        dom.idleTimeoutModal.classList.remove("hidden");
+      }
+    },
     onSend: (t) => { lastHeartbeatSendTime = t; }
   });
 }
@@ -1082,8 +1088,6 @@ async function joinRoom(
     log(`Betting round: ${JSON.stringify(payload)}`);
     revealedHands = null;
     allInCardsRevealedByServer = false;
-    // Clear winner display so the new round shows turn/state correctly (avoids stale UI if next hand starts within 5s)
-    clearWinnerDisplay(winnerDisplayState);
   });
 
   joinedRoom.onMessage(
@@ -1195,17 +1199,20 @@ async function joinRoom(
       }
     } else {
       gameUiContext.previousCommunityCards = [...communityCards];
-      winnerDisplayState.lastWinningHand = payload?.winningHand ?? "";
+      const winnerDisplay = getWinnerDisplayFromRoundEnd(payload);
+      winnerDisplayState.lastWinningHand = winnerDisplay.winningHand || (payload?.winningHand ?? "");
       winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
       winningHandChip.textContent = winnerDisplayState.lastWinningHand;
-      if (Array.isArray(payload?.winners)) {
-        winnerDisplayState.lastWinners = payload.winners.map((winner: any) => winner.playerId);
+      if (winnerDisplay.winnerIds.length > 0) {
+        winnerDisplayState.lastWinners = winnerDisplay.winnerIds;
         winnersStatus.textContent = winnerDisplayState.lastWinners.join(", ") || "-";
         previousWinnersKey = winnerDisplayState.lastWinners.join("|");
         if (currentSessionId && winnerDisplayState.lastWinners.includes(currentSessionId)) {
           audio.playEffect("win");
         }
-        startWinnerDisplayPhase();
+        if (winnerDisplay.startPhaseNow) {
+          startWinnerDisplayPhase();
+        }
       }
       if (lastRoomState) renderState(lastRoomState);
     }
@@ -1513,3 +1520,9 @@ function getBetAmount() {
   const app = document.querySelector("#app");
   app?.classList.toggle("panel-collapsed");
 });
+
+if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
+  dom.idleTimeoutContinueButton.addEventListener("click", () => {
+    dom.idleTimeoutModal!.classList.add("hidden");
+  });
+}
