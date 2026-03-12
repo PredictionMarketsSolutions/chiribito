@@ -29,6 +29,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   maxClients = 6;
   /** True when the room was just created (client.create); used to rate-limit create-room in onAuth. */
   private roomJustCreated = false;
+  /** All users that ever joined this table (by userId), used for tournament stats even if they disconnect. */
+  private tournamentParticipantUserIds: Set<number> = new Set();
   public turnTimeout: NodeJS.Timeout | null = null;
   public dealerIndex: number = 0;
   public currentPlayerIndex: number = 0;
@@ -81,8 +83,9 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       return;
     }
 
-    const participantUserIds = Array.from(this.state.users.keys())
-      .map((sessionId) => this.sessionManager.getUserId(sessionId))
+    // Use the full set of participants (all users that have ever been authenticated in this room),
+    // not just the current this.state.users (which no longer includes disconnected players).
+    const participantUserIds = Array.from(this.tournamentParticipantUserIds)
       .filter((id): id is number => typeof id === "number" && Number.isFinite(id));
 
     if (participantUserIds.length === 0) {
@@ -233,6 +236,12 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
 
   async onAuth(client: Client, options: any) {
     const result = await this.authService.authenticate(client, options, this.sessionManager);
+
+    // Track every authenticated user as a tournament participant (by stable userId).
+    const participantUserId = result.authUser?.userId;
+    if (participantUserId != null && typeof participantUserId === "number") {
+      this.tournamentParticipantUserIds.add(participantUserId);
+    }
 
     // Rate-limit creating new rooms (first client joining a just-created room)
     if (this.roomJustCreated) {

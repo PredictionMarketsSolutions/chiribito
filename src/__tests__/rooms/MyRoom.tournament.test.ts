@@ -159,16 +159,14 @@ describe("MyRoom tournament end", () => {
       expect(reportTournamentGameEnded).not.toHaveBeenCalled();
     });
 
-    it("reports champion and participants when secret and userIds are available", async () => {
+    it("reports champion and all participants (including disconnected ones) when secret and userIds are available", async () => {
       process.env.INTERNAL_API_SECRET = "test-secret";
       const champion = { sessionId: "s1", name: "Champ", chips: 1000 };
       const fakeRoom: any = {
         roomId: "room-1",
+        // state.users may only contain currently connected players (e.g. champion)
         state: {
-          users: new Map<string, any>([
-            ["s1", {}],
-            ["s2", {}],
-          ]),
+          users: new Map<string, any>([["s1", {}]]),
         },
         sessionManager: {
           getUserId: (sessionId: string) => {
@@ -177,6 +175,8 @@ describe("MyRoom tournament end", () => {
             return undefined;
           },
         },
+        // tournamentParticipantUserIds tracks all authenticated users in this room
+        tournamentParticipantUserIds: new Set<number>([10, 11]),
       };
 
       await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
