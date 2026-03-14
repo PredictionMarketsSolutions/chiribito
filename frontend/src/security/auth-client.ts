@@ -128,11 +128,11 @@ export class AuthClient {
     try {
       // Validate inputs
       if (!email || !password) {
-        return { error: 'Email and password required' };
+        return { error: 'El correo y la contraseña son obligatorios' };
       }
 
       if (!this.isValidEmail(email)) {
-        return { error: 'Invalid email format' };
+        return { error: 'Formato de correo no válido' };
       }
 
       console.log('[AUTH] Attempting login for', email);
@@ -189,15 +189,15 @@ export class AuthClient {
     try {
       // Validate inputs
       if (!email || !username || !password) {
-        return { error: 'Email, username, and password required' };
+        return { error: 'El correo, el usuario y la contraseña son obligatorios' };
       }
 
       if (!this.isValidEmail(email)) {
-        return { error: 'Invalid email format' };
+        return { error: 'Formato de correo no válido' };
       }
 
       if (password.length < 8) {
-        return { error: 'Password must be at least 8 characters' };
+        return { error: 'La contraseña debe tener al menos 8 caracteres' };
       }
 
       console.log('[AUTH] Attempting registration for', email);

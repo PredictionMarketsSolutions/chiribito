@@ -17,8 +17,8 @@ export const registerValidator = [
     .withMessage('Email must not exceed 100 characters'),
   
   body('password')
-    .isLength({ min: 6, max: 128 })
-    .withMessage('Password must be between 6 and 128 characters')
+    .isLength({ min: 8, max: 128 })
+    .withMessage('Password must be between 8 and 128 characters')
     .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
     .withMessage('Password must contain at least one letter and one number')
 ];

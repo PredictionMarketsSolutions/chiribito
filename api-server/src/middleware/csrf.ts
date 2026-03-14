@@ -74,6 +74,7 @@ export function csrfProtection(
 /**
  * Augment Express Response with csrfToken method
  */
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {

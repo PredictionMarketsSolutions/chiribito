@@ -22,6 +22,7 @@ import { User } from './models/User';
 import { getTopWinners } from './services/RankingService';
 
 // Type augmentation for Express Request
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {

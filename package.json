@@ -5,6 +5,10 @@
   "description": "npm init template for bootstrapping an empty Colyseus project",
   "main": "dist/index.js",
   "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"api-server/src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"api-server/src/**/*.ts\"",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "start:prod": "cross-env NODE_ENV=production node dist/index.js",
@@ -39,6 +43,7 @@
   },
   "homepage": "https://github.com/colyseus/create-colyseus#readme",
   "devDependencies": {
+    "@eslint/js": "^9.15.0",
     "@colyseus/loadtest": "^0.17.8",
     "@colyseus/testing": "^0.17.11",
     "@types/cors": "^2.8.18",
@@ -53,7 +58,11 @@
     "ts-node": "^10.9.2",
     "tsx": "^3.12.7",
     "typescript": "^5.8.3",
-    "vite": "^5.4.11"
+    "typescript-eslint": "^8.15.0",
+    "vite": "^5.4.11",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2"
   },
   "dependencies": {
     "@colyseus/auth": "^0.17.6",

@@ -38,20 +38,20 @@ export function validateEmail(email: string): ValidationResult {
  */
 export function validatePassword(password: string): ValidationResult {
   if (!password) {
-    return { valid: false, error: 'Password is required' };
+    return { valid: false, error: 'La contraseña es obligatoria' };
   }
 
   if (password.length < 8) {
-    return { valid: false, error: 'Password must be at least 8 characters' };
+    return { valid: false, error: 'La contraseña debe tener al menos 8 caracteres' };
   }
 
   if (password.length > 128) {
-    return { valid: false, error: 'Password is too long' };
+    return { valid: false, error: 'La contraseña es demasiado larga' };
   }
 
   // Check for common weak patterns
   if (password === 'password' || password === '12345678') {
-    return { valid: false, error: 'Password is too common' };
+    return { valid: false, error: 'La contraseña es demasiado común' };
   }
 
   return { valid: true, sanitized: password };

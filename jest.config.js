@@ -59,6 +59,7 @@ module.exports = {
     'lcov',
     'html',
     'json',
+    'json-summary', // Para CI: coverage/coverage-summary.json (comentario en PR)
   ],
   
   transform: {

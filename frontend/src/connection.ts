@@ -34,6 +34,7 @@ export function startClientHeartbeat(room: Room, opts: HeartbeatOpts): void {
   const { intervalMs, timeoutMs, log, onTimeout, onSend } = opts;
   clientHeartbeatId = window.setInterval(() => {
     if (!room) return;
+    clearHeartbeatTimeout();
     const sendTime = Date.now();
     onSend?.(sendTime);
     room.send("heartbeat", sendTime);

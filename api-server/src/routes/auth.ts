@@ -13,7 +13,7 @@ router.post(
   [
     body('username').isString().isLength({ min: 3, max: 50 }),
     body('email').isEmail(),
-    body('password').isLength({ min: 6 })
+    body('password').isLength({ min: 8, max: 128 })
   ],
   validateRequest,
   authController.register.bind(authController)

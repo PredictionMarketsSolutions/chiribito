@@ -1,4 +1,5 @@
 import logger from '../config/logger';
+import * as jsonwebtoken from 'jsonwebtoken';
 
 /**
  * JWT Authentication for Colyseus game server
@@ -16,10 +17,10 @@ export interface PlayerJWTPayload {
 /**
  * Verify JWT token from client
  */
+
 export function verifyPlayerToken(token: string, secret: string): { valid: boolean; payload?: PlayerJWTPayload; error?: string } {
   try {
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, secret) as PlayerJWTPayload;
+    const decoded = jsonwebtoken.verify(token, secret) as PlayerJWTPayload;
     
     // Validate required fields
     if (!decoded.id || !decoded.email || !decoded.username) {

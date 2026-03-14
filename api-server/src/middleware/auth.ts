@@ -5,6 +5,7 @@ import { User } from '../models/User';
 import logger from '../config/logger';
 
 // Extend Express Request type to include user information
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {

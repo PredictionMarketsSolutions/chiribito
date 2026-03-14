@@ -95,7 +95,7 @@ export class AuthController {
   }
 
   async register(
-    req: Request<{}, {}, RegisterRequest>,
+    req: Request<object, object, RegisterRequest>,
     res: Response<AuthResponse | { error: string }>
   ): Promise<void> {
     try {
@@ -106,11 +106,15 @@ export class AuthController {
         return;
       }
 
-      if (password.length < 6) {
-        res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      if (password.length < 8) {
+        res.status(400).json({ error: 'Password must be at least 8 characters long' });
         return;
       }
-      
+      if (password.length > 128) {
+        res.status(400).json({ error: 'Password must not exceed 128 characters' });
+        return;
+      }
+
       const existingUser = await this.userRepository.findOne({ 
         where: [{ email }, { username }] 
       });
@@ -169,7 +173,7 @@ export class AuthController {
   }
 
   async login(
-    req: Request<{}, {}, LoginRequest>,
+    req: Request<object, object, LoginRequest>,
     res: Response<AuthResponse | { error: string }>
   ): Promise<void> {
     try {
@@ -449,8 +453,12 @@ export class AuthController {
         return;
       }
 
-      if (newPassword.length < 6) {
-        res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      if (newPassword.length < 8) {
+        res.status(400).json({ error: 'Password must be at least 8 characters long' });
+        return;
+      }
+      if (newPassword.length > 128) {
+        res.status(400).json({ error: 'Password must not exceed 128 characters' });
         return;
       }
 
