@@ -7,6 +7,7 @@ import * as jwt from "jsonwebtoken";
 import { Client } from "@colyseus/core";
 import logger from "../../config/logger";
 import { SessionManager } from "./SessionManager";
+import type { AuthUser, JoinOptionsFromClient } from "../../types/room-options";
 
 export interface AuthConfig {
   apiUrl: string;
@@ -17,7 +18,7 @@ export interface AuthConfig {
 }
 
 export interface AuthResult {
-  authUser: any;
+  authUser: AuthUser;
   replaceSessionId?: string;
 }
 
@@ -40,11 +41,11 @@ export class AuthenticationService {
   /**
    * Extract JWT token from options
    */
-  private extractToken(options: any): string | null {
-    return options?.token || 
-           options?.auth?.token ||
-           (options?.headers && typeof options.headers.authorization === 'string'
-             ? options.headers.authorization.split(' ')[1]
+  private extractToken(options: JoinOptionsFromClient): string | null {
+    return options?.token ??
+           options?.auth?.token ??
+           (options?.headers && typeof options.headers.authorization === "string"
+             ? options.headers.authorization.split(" ")[1]
              : null);
   }
 
@@ -52,7 +53,7 @@ export class AuthenticationService {
    * Validate JWT before allowing join
    * Called by Colyseus when a client tries to join
    */
-  async requestJoin(options: any): Promise<boolean> {
+  async requestJoin(options: JoinOptionsFromClient & { authUser?: AuthUser }): Promise<boolean> {
     if (!options?.authUser) {
       logger.warn("Request join without authUser", { roomId: this.roomId });
       return false;
@@ -66,7 +67,7 @@ export class AuthenticationService {
    */
   async authenticate(
     client: Client,
-    options: any,
+    options: JoinOptionsFromClient & { authUser?: AuthUser },
     sessionManager: SessionManager
   ): Promise<AuthResult> {
     const token = this.extractToken(options);
@@ -81,7 +82,7 @@ export class AuthenticationService {
     }
 
     // Verify JWT signature
-    const decoded = jwt.verify(token, this.config.jwtSecret) as any;
+    const decoded = jwt.verify(token, this.config.jwtSecret) as AuthUser;
     
     // Validate token remotely with API server
     await this.validateTokenRemote(token);

@@ -61,12 +61,7 @@ function makeRoom(): jest.Mocked<IGameRoom> {
   state.currentTurn = "p1";
   state.currentBet = 0;
   state.pot = 0;
-
-  // Minimal communityCards shape used by GameEngine
-  (state as any).communityCards = {
-    length: 0,
-    toArray: () => [],
-  };
+  state.communityCards.clear();
 
   const p1 = new Player("p1");
   p1.name = "P1";
@@ -158,7 +153,8 @@ describe("GameEngine flow", () => {
   it("proceedToNextPhase: reaches showdown when 5 community cards and not preflop", () => {
     const room = makeRoom();
     room.state.phase = "turn" as any;
-    (room.state as any).communityCards = { length: 5, toArray: () => ["a", "b", "c", "d", "e"] };
+    room.state.communityCards.clear();
+    room.state.communityCards.push("a", "b", "c", "d", "e");
     const engine = new GameEngine(room);
     const utils: any = (engine as any).utils;
     utils.getPlayersInHandNonFolded.mockReturnValue(["p1", "p2"]);
@@ -250,7 +246,8 @@ describe("GameEngine flow", () => {
 
   it("startAllInShowdownReveal: when already 5 cards, ends round with winners immediately", () => {
     const room = makeRoom();
-    (room.state as any).communityCards = { length: 5, toArray: () => ["a", "b", "c", "d", "e"] };
+    room.state.communityCards.clear();
+    room.state.communityCards.push("a", "b", "c", "d", "e");
     const engine = new GameEngine(room);
 
     const endRoundWithWinnersSpy = jest.spyOn(engine as any, "endRoundWithWinners").mockImplementation(() => {});
@@ -264,8 +261,8 @@ describe("GameEngine flow", () => {
   it("startAllInShowdownReveal: reveals cards and schedules winner at the end", () => {
     const room = makeRoom();
     // Start with 4 cards so we reveal one and then end.
-    let cards = ["a", "b", "c", "d"];
-    (room.state as any).communityCards = { length: cards.length, toArray: () => cards };
+    room.state.communityCards.clear();
+    room.state.communityCards.push("a", "b", "c", "d");
     const engine = new GameEngine(room);
 
     const roundManager: any = (engine as any).roundManager;
@@ -273,9 +270,7 @@ describe("GameEngine flow", () => {
     const endRoundWithWinnersSpy = jest.spyOn(engine as any, "endRoundWithWinners").mockImplementation(() => {});
 
     roundManager.dealNextCommunityCard.mockImplementation(() => {
-      cards = [...cards, "e"];
-      (room.state as any).communityCards.length = cards.length;
-      (room.state as any).communityCards.toArray = () => cards;
+      room.state.communityCards.push("e");
     });
 
     (engine as any).startAllInShowdownReveal();

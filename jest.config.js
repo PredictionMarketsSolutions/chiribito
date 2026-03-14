@@ -8,9 +8,6 @@ module.exports = {
    // Increase timeout for tests
   testTimeout: 10000,
   
-  // Un solo proceso: evita el mensaje "A worker process has failed to exit gracefully"
-  // (el handle abierto suele ser el servidor Colyseus en App.colyseus.test).
-  runInBand: true,
   // Salida forzada si algo mantiene el event loop activo (Colyseus, Winston, etc.)
   forceExit: true,
   // Para depurar leaks: npm run test:jest -- --detectOpenHandles

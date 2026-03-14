@@ -6,6 +6,7 @@ import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 import logger from "./config/logger";
+import { JWT_SECRET as ENV_JWT_SECRET } from "./config/env";
 
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
@@ -59,7 +60,7 @@ const server = defineServer({
         // Configure express-session
         app.use(session({
             store: sessionStore,
-            secret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+            secret: ENV_JWT_SECRET || "dev-secret-change-in-production",
             resave: false,
             saveUninitialized: false,
             cookie: {
@@ -82,12 +83,11 @@ const server = defineServer({
         app.use("/playground", playground());
 
         // Bind auth routes (@colyseus/auth requires JWT_SECRET for express-jwt middleware)
-        if (!process.env.JWT_SECRET && process.env.NODE_ENV !== "production") {
-            process.env.JWT_SECRET = "dev-secret-change-in-production";
+        const jwtSecret = ENV_JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dev-secret-change-in-production" : "");
+        if (!ENV_JWT_SECRET && process.env.NODE_ENV !== "production") {
             logger.warn("JWT_SECRET not set; using dev placeholder. Set JWT_SECRET in production.");
         }
-        // Sync JWT secret now (auth.ts runs at module load when JWT_SECRET may still be unset)
-        JWT.settings.secret = process.env.JWT_SECRET ?? undefined;
+        JWT.settings.secret = jwtSecret || undefined;
         try {
             app.use(auth.prefix, auth.routes());
         } catch (err: any) {

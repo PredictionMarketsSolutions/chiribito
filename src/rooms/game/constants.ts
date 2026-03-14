@@ -1,8 +1,20 @@
-// Timeouts configurables via environment variables
-export const TURN_TIMEOUT = parseInt(process.env.TURN_TIMEOUT_MS || '60000', 10);
-export const HEARTBEAT_INTERVAL = parseInt(process.env.HEARTBEAT_INTERVAL_MS || '30000', 10);
-export const HEARTBEAT_TIMEOUT = parseInt(process.env.HEARTBEAT_TIMEOUT_MS || '90000', 10);
-export const ACTION_COOLDOWN = parseInt(process.env.ACTION_COOLDOWN_MS || '200', 10);
+/**
+ * Constantes de tiempo del juego.
+ * Valores leídos desde config/env (centralizado).
+ */
+
+import {
+  TURN_TIMEOUT_MS,
+  HEARTBEAT_INTERVAL_MS,
+  HEARTBEAT_TIMEOUT_MS,
+  ACTION_COOLDOWN_MS,
+  ALLIN_REVEAL_DELAY_MS as ALLIN_REVEAL_MS_FROM_ENV,
+} from "../../config/env";
+
+export const TURN_TIMEOUT = TURN_TIMEOUT_MS;
+export const HEARTBEAT_INTERVAL = HEARTBEAT_INTERVAL_MS;
+export const HEARTBEAT_TIMEOUT = HEARTBEAT_TIMEOUT_MS;
+export const ACTION_COOLDOWN = ACTION_COOLDOWN_MS;
 
 /** Delay between revealing each community card in all-in showdown (ms). */
-export const ALLIN_REVEAL_DELAY_MS = parseInt(process.env.ALLIN_REVEAL_DELAY_MS || '1000', 10);
+export const ALLIN_REVEAL_DELAY_MS = ALLIN_REVEAL_MS_FROM_ENV;

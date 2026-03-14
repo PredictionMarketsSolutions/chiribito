@@ -2,6 +2,15 @@ import { Client, Room } from "@colyseus/sdk";
 
 import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_RECONNECT_ATTEMPTS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
 import type { RoomState, PlayerState, HandHistoryWinner, ConnectionState } from "./types";
+import type {
+  GameResultPayload,
+  RoundEndedPayload,
+  CommunityCardRevealedPayload,
+  PlayerActionPayload,
+  TurnTimerPayload,
+  PlayerDisconnectedPayload,
+  ErrorPayload,
+} from "./types/room-messages";
 import { queueAction as queueActionFn, replayBufferedActions as replayBufferedActionsFn } from "./action-buffer";
 import { audio } from "./audio";
 import { dom } from "./dom-refs";
@@ -1050,7 +1059,7 @@ async function joinRoom(
     attemptReconnect();
   });
 
-  joinedRoom.onMessage("gameResult", (payload: { result?: string; champion?: { sessionId?: string; name?: string; chips?: number } }) => {
+  joinedRoom.onMessage("gameResult", (payload: GameResultPayload) => {
     const result = payload?.result === "won" ? "won" : "lost";
     showTournamentResult(result, payload?.champion);
     log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
@@ -1068,7 +1077,7 @@ async function joinRoom(
     log(`Player left: ${JSON.stringify(payload)}`);
   });
 
-  joinedRoom.onMessage("playerDisconnected", (payload: any) => {
+  joinedRoom.onMessage("playerDisconnected", (payload: PlayerDisconnectedPayload) => {
     console.log("Player disconnected", payload);
     log(`${payload.playerName} se ha desconectado${payload.wasCurrentTurn ? ' (era su turno)' : ''}`);
   });
@@ -1090,9 +1099,7 @@ async function joinRoom(
     allInCardsRevealedByServer = false;
   });
 
-  joinedRoom.onMessage(
-    "communityCardRevealed",
-    (payload: { communityCards?: unknown; index?: number; card?: string }) => {
+  joinedRoom.onMessage("communityCardRevealed", (payload: CommunityCardRevealedPayload) => {
       // Compatible with both payload shapes:
       // - { communityCards: string[] }
       // - { index: number, card: string } (older backend builds / dist)
@@ -1120,14 +1127,14 @@ async function joinRoom(
     }
   );
 
-  joinedRoom.onMessage("playerAction", (payload) => {
+  joinedRoom.onMessage("playerAction", (payload: PlayerActionPayload) => {
     log(`Player action: ${JSON.stringify(payload)}`);
     if (payload?.action && typeof payload.action === "string") {
       audio.playActionSound(payload.action);
     }
   });
 
-  joinedRoom.onMessage("turnTimer", (payload) => {
+  joinedRoom.onMessage("turnTimer", (payload: TurnTimerPayload) => {
     if (!payload || typeof payload !== "object") return;
     const record = payload as Record<string, unknown>;
     const turnId = typeof record.currentTurn === "string" ? record.currentTurn : "";
@@ -1142,7 +1149,7 @@ async function joinRoom(
     startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs);
   });
 
-  room.onMessage("roundEnded", (payload) => {
+  room.onMessage("roundEnded", (payload: RoundEndedPayload) => {
     const winnersPayload = Array.isArray(payload?.winners) ? payload.winners : [];
     const winnersForHistory: HandHistoryWinner[] = winnersPayload
       .filter((winner: any) => winner && typeof winner.playerId === "string")
@@ -1232,7 +1239,7 @@ async function joinRoom(
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("error", (payload) => {
+  room.onMessage("error", (payload: ErrorPayload) => {
     log(`Server error: ${JSON.stringify(payload)}`);
   });
 

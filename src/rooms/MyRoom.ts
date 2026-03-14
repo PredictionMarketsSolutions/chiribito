@@ -22,8 +22,8 @@ import {
 } from "./managers";
 import { CUSTOM_GAME_END } from "./close-codes";
 import { reportTournamentGameEnded } from "../services/api-server-stats";
-
-const API_URL = process.env.API_URL || "http://localhost:3000";
+import { API_URL, JWT_SECRET, AUTH_REQUEST_TIMEOUT_MS } from "../config/env";
+import type { RoomOptions, JoinOptionsFromClient, JoinOptionsWithAuth } from "../types/room-options";
 
 export class MyRoom extends Room<{ state: MyRoomState }> {
   maxClients = 6;
@@ -133,7 +133,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     return true;
   }
 
-  onCreate(options: any) {
+  onCreate(options: RoomOptions = {}) {
     this.setState(new MyRoomState());
     this.autoDispose = false;
 
@@ -151,10 +151,10 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     this.sessionManager = new SessionManager(this.roomId, this.reconnectionTimeoutSeconds);
     this.authService = new AuthenticationService(this.roomId, {
       apiUrl: API_URL,
-      jwtSecret: process.env.JWT_SECRET || "",
+      jwtSecret: JWT_SECRET,
       maxRetries: 3,
       retryDelayMs: 500,
-      requestTimeoutMs: 8000
+      requestTimeoutMs: AUTH_REQUEST_TIMEOUT_MS,
     });
     this.seatManager = new SeatManager(this.roomId, this.maxClients);
     this.rateLimiter = new RateLimiterService(this.roomId, {
@@ -229,12 +229,12 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   }
 
   // Validate JWT before allowing join. Colyseus calls `requestJoin` when a client tries to join.
-  async requestJoin(options: any, isNew?: boolean) {
+  async requestJoin(options: JoinOptionsFromClient, isNew?: boolean) {
     if (isNew) this.roomJustCreated = true;
     return this.authService.requestJoin(options);
   }
 
-  async onAuth(client: Client, options: any) {
+  async onAuth(client: Client, options: JoinOptionsWithAuth) {
     const result = await this.authService.authenticate(client, options, this.sessionManager);
 
     // Track every authenticated user as a tournament participant (by stable userId).
@@ -265,7 +265,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     return options.authUser;
   }
 
-  onJoin(client: Client, options: any) {
+  onJoin(client: Client, options: JoinOptionsWithAuth) {
     // Initialize view before handleJoin so the client always has a view even if handleJoin throws.
     client.view = new StateView();
     const player = this.lifecycleManager.handleJoin(
