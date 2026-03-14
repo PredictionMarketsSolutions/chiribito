@@ -95,7 +95,7 @@ export class AuthController {
   }
 
   async register(
-    req: Request<object, object, RegisterRequest>,
+    req: Request<Record<string, string>, object, RegisterRequest>,
     res: Response<AuthResponse | { error: string }>
   ): Promise<void> {
     try {
@@ -173,7 +173,7 @@ export class AuthController {
   }
 
   async login(
-    req: Request<object, object, LoginRequest>,
+    req: Request<Record<string, string>, object, LoginRequest>,
     res: Response<AuthResponse | { error: string }>
   ): Promise<void> {
     try {
