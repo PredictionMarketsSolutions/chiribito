@@ -8,9 +8,9 @@ module.exports = {
    // Increase timeout for tests
   testTimeout: 10000,
   
-  // Salida forzada si algo mantiene el event loop activo (Colyseus, Winston, etc.)
+  // Fuerza la salida si el event loop sigue activo (Colyseus, Winston, timers).
+  // El aviso "Force exiting Jest" es esperado; para localizar handles: npm run test:jest:debug
   forceExit: true,
-  // Para depurar leaks: npm run test:jest -- --detectOpenHandles
   detectOpenHandles: false,
   collectCoverageFrom: [
     'src/**/*.ts',

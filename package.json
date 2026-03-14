@@ -30,6 +30,7 @@
     "test:jest": "jest --runInBand",
     "test:jest:watch": "jest --watch",
     "test:jest:coverage": "jest --coverage --runInBand",
+    "test:jest:debug": "jest --runInBand --detectOpenHandles",
     "logs": "node scripts/view-logs.js all",
     "logs:error": "node scripts/view-logs.js error",
     "logs:watch": "node scripts/view-logs.js watch",
