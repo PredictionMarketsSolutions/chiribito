@@ -38,5 +38,31 @@ describe("reportTournamentGameEnded", () => {
       }),
     }));
   });
+
+  it("logs warn and returns when response is not ok (reads body text best-effort)", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => "boom",
+    }) as any;
+
+    await reportTournamentGameEnded("http://api", "secret", {
+      championUserId: 10,
+      participantUserIds: [10, 11],
+    });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles fetch throwing (logs warn and does not throw)", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("network down")) as any;
+
+    await expect(
+      reportTournamentGameEnded("http://api", "secret", {
+        championUserId: 10,
+        participantUserIds: [10, 11],
+      })
+    ).resolves.toBeUndefined();
+  });
 });
 

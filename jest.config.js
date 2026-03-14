@@ -8,10 +8,12 @@ module.exports = {
    // Increase timeout for tests
   testTimeout: 10000,
   
-  // Force Jest to exit after tests complete
-  forceExit: false,
-  
-  // Close all handles and free resources
+  // Un solo proceso: evita el mensaje "A worker process has failed to exit gracefully"
+  // (el handle abierto suele ser el servidor Colyseus en App.colyseus.test).
+  runInBand: true,
+  // Salida forzada si algo mantiene el event loop activo (Colyseus, Winston, etc.)
+  forceExit: true,
+  // Para depurar leaks: npm run test:jest -- --detectOpenHandles
   detectOpenHandles: false,
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -22,7 +24,6 @@ module.exports = {
     '!src/**/schema/**',
     '!src/app.config.ts',
     '!src/config/**',
-    '!src/rooms/MyRoom.ts',
     '!src/security/**',
   ],
   coveragePathIgnorePatterns: [
@@ -35,6 +36,12 @@ module.exports = {
       functions: 80,
       lines: 80,
       statements: 80,
+    },
+    './src/rooms/MyRoom.ts': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
     },
     './src/rooms/game/GameEngine.ts': {
       branches: 40,

@@ -73,5 +73,39 @@ describe("MyRoom create room rate limit", () => {
     expect(result).toEqual({ userId: 99 });
     expect(recordCreateRoom).toHaveBeenCalledWith(99);
   });
+
+  it("onAuth sets options.replaceSessionId when authenticate returns replaceSessionId", async () => {
+    (allowCreateRoom as jest.Mock).mockReturnValue(true);
+
+    const options: any = {};
+    const fakeRoom: any = {
+      roomJustCreated: false,
+      roomId: "test-room",
+      tournamentParticipantUserIds: new Set<number>(),
+      authService: {
+        authenticate: jest.fn().mockResolvedValue({
+          authUser: { userId: 10 },
+          replaceSessionId: "old-session-123",
+        }),
+      },
+    };
+
+    const result = await MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, options);
+
+    expect(result).toEqual({ userId: 10 });
+    expect(options.replaceSessionId).toBe("old-session-123");
+  });
+
+  it("requestJoin delegates to authService.requestJoin", async () => {
+    const requestJoinMock = jest.fn().mockResolvedValue(false);
+    const fakeRoom: any = {
+      roomJustCreated: false,
+      authService: { requestJoin: requestJoinMock },
+    };
+
+    await MyRoom.prototype.requestJoin.call(fakeRoom, { token: "jwt" }, false);
+
+    expect(requestJoinMock).toHaveBeenCalledWith({ token: "jwt" });
+  });
 });
 

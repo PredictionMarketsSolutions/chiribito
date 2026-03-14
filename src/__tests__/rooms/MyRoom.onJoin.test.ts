@@ -45,4 +45,69 @@ describe("MyRoom onJoin StateView", () => {
     expect(client.view!.has(ownPlayer)).toBe(true);
     expect(client.view!.has(otherPlayer)).toBe(true);
   });
+
+  it("adds new player to existing clients' views so they see the new seat", () => {
+    const state = new MyRoomState();
+    const existingPlayer = new Player("session-existing");
+    existingPlayer.name = "Existing";
+    state.users.set("session-existing", existingPlayer);
+    const joiningPlayer = new Player("session-joining");
+    joiningPlayer.name = "Joining";
+    state.users.set("session-joining", joiningPlayer);
+
+    const existingClient = { view: new StateView() } as any;
+    existingClient.view.add(existingPlayer);
+    const joiningClient = { view: null as StateView | null };
+    const handleJoin = jest.fn().mockReturnValue(joiningPlayer);
+
+    const fakeRoom: any = {
+      state,
+      lifecycleManager: { handleJoin },
+      sessionManager: {},
+      seatManager: {},
+      connectionMonitor: {},
+      analytics: {},
+      clients: [existingClient, joiningClient],
+      broadcast: jest.fn(),
+    };
+
+    MyRoom.prototype.onJoin.call(fakeRoom, joiningClient as any, {});
+
+    expect(joiningClient.view).toBeInstanceOf(StateView);
+    expect(existingClient.view.has(joiningPlayer)).toBe(true);
+  });
+
+  it("passes getClients and broadcast to handleJoin so lifecycle can use them", () => {
+    const state = new MyRoomState();
+    const player = new Player("session-1");
+    state.users.set("session-1", player);
+    const client = { view: null as StateView | null };
+    const broadcast = jest.fn();
+    let getClientsRef: (() => unknown[]) | null = null;
+    let broadcastRef: ((type: string, message: unknown, opts?: unknown) => void) | null = null;
+    const handleJoin = jest.fn().mockImplementation((_client: unknown, _options: unknown, _state: unknown, _deps: unknown, getClients: () => unknown[], broadcastCb: (type: string, message: unknown, opts?: unknown) => void) => {
+      getClientsRef = getClients;
+      broadcastRef = broadcastCb;
+      return player;
+    });
+
+    const fakeRoom: any = {
+      state,
+      lifecycleManager: { handleJoin },
+      sessionManager: {},
+      seatManager: {},
+      connectionMonitor: {},
+      analytics: {},
+      clients: [client],
+      broadcast,
+    };
+
+    MyRoom.prototype.onJoin.call(fakeRoom, client as any, {});
+
+    expect(getClientsRef).not.toBeNull();
+    expect(getClientsRef!()).toEqual([client]);
+    expect(broadcastRef).not.toBeNull();
+    broadcastRef!("testMessage", {});
+    expect(broadcast).toHaveBeenCalledWith("testMessage", {}, undefined);
+  });
 });

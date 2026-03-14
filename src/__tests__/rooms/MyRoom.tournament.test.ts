@@ -190,5 +190,50 @@ describe("MyRoom tournament end", () => {
         }),
       );
     });
+
+    it("does nothing when champion userId is undefined", async () => {
+      process.env.INTERNAL_API_SECRET = "test-secret";
+      const champion = { sessionId: "s1", name: "Champ", chips: 1000 };
+      const fakeRoom: any = {
+        roomId: "room-1",
+        state: { users: new Map() },
+        sessionManager: { getUserId: (): number | undefined => undefined },
+        tournamentParticipantUserIds: new Set<number>([10]),
+      };
+
+      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+
+      expect(reportTournamentGameEnded).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when champion userId is null", async () => {
+      process.env.INTERNAL_API_SECRET = "test-secret";
+      const champion = { sessionId: "s1", name: "Champ", chips: 1000 };
+      const fakeRoom: any = {
+        roomId: "room-1",
+        state: { users: new Map() },
+        sessionManager: { getUserId: (): number | null => null },
+        tournamentParticipantUserIds: new Set<number>([10]),
+      };
+
+      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+
+      expect(reportTournamentGameEnded).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when no participants resolve to userIds", async () => {
+      process.env.INTERNAL_API_SECRET = "test-secret";
+      const champion = { sessionId: "s1", name: "Champ", chips: 1000 };
+      const fakeRoom: any = {
+        roomId: "room-1",
+        state: { users: new Map() },
+        sessionManager: { getUserId: () => 10 },
+        tournamentParticipantUserIds: new Set<number>(),
+      };
+
+      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+
+      expect(reportTournamentGameEnded).not.toHaveBeenCalled();
+    });
   });
 });

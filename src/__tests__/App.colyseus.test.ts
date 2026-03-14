@@ -27,12 +27,18 @@ describe("Colyseus app (my_room)", () => {
     process.env.JWT_SECRET = JWT_SECRET;
     process.env.DISABLE_ENV_VALIDATION = "true";
     process.env.API_URL = process.env.API_URL || "http://localhost:3000";
+    // Evitar cliente Redis en tests (evita ECONNREFUSED y handles que impiden salida limpia)
+    delete process.env.REDIS_URL;
     const { default: server } = await import("../app.config");
     colyseus = await boot(server);
   }, 25000);
 
   afterAll(async () => {
-    if (colyseus) await colyseus.shutdown();
+    if (colyseus) {
+      await colyseus.shutdown();
+      // Dar tiempo a que el servidor cierre sockets y no deje handles abiertos
+      await new Promise((r) => setTimeout(r, 100));
+    }
   });
 
   beforeEach(async () => {
