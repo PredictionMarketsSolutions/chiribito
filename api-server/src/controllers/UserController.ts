@@ -3,14 +3,21 @@ import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
 import logger from '../config/logger';
 
+/** Request with user set by auth middleware */
+interface AuthenticatedRequest extends Request {
+  user?: { userId: number; username: string; email: string };
+}
+
 export class UserController {
   private userRepository = AppDataSource.getRepository(User);
 
   async deleteUser(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user.userId; // Get user ID from auth middleware
-      
-      // Find the user to be deleted
+      const userId = (req as AuthenticatedRequest).user?.userId;
+      if (userId == null) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
       const user = await this.userRepository.findOne({ where: { id: userId } });
       
       if (!user) {
@@ -34,8 +41,11 @@ export class UserController {
 
   async getProfile(req: Request, res: Response): Promise<void> {
     try {
-      // User ID is set by the auth middleware
-      const userId = (req as any).user.userId;
+      const userId = (req as AuthenticatedRequest).user?.userId;
+      if (userId == null) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
       const user = await this.userRepository.findOne({ 
         where: { id: userId },
         select: ['id', 'username', 'email', 'createdAt'] 

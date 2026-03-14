@@ -94,8 +94,12 @@ export class PlayerLifecycleManager {
       sessionManager.registerSession(userId, client.sessionId);
     }
 
-    // Mark seat as occupied
+    // Mark seat as occupied. When replacing a session, the seat is still marked occupied in SeatManager
+    // by the old session; free it first so we can occupy it for the new session.
     if (player.seatIndex >= 0) {
+      if (replaceSessionId) {
+        seatManager.freeSeat(player.seatIndex);
+      }
       seatManager.occupySeat(player.seatIndex, userId);
     }
 

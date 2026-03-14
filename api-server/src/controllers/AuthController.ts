@@ -29,6 +29,11 @@ interface AuthResponse {
   refreshToken: string;
 }
 
+/** Request with user set by auth middleware */
+interface AuthenticatedRequest extends Request {
+  user?: { userId: number; username: string; email: string };
+}
+
 export class AuthController {
   private userRepository = AppDataSource.getRepository(User);
   private refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
@@ -234,7 +239,7 @@ export class AuthController {
   ): Promise<void> {
     try {
       // User ID is set by the auth middleware
-      const userId = (req as any).user?.userId;
+      const userId = (req as AuthenticatedRequest).user?.userId;
       
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -372,7 +377,7 @@ export class AuthController {
 
         res.json({ token: newToken, refreshToken: newRefreshTokenStr });
         logger.info('Token refreshed successfully', { userId: user.id });
-      } catch (jwtError) {
+      } catch {
         res.status(401).json({ error: 'Invalid refresh token signature' });
       }
     } catch (error) {

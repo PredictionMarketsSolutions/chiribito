@@ -290,6 +290,26 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
         (c.view as StateView).add(player);
       }
     }
+    // Replaced session: point room state at the new sessionId so turn/actions work.
+    const replaceSessionId = options.replaceSessionId;
+    if (replaceSessionId && typeof replaceSessionId === "string") {
+      const newSessionId = client.sessionId;
+      if (this.state.currentTurn === replaceSessionId) {
+        this.state.currentTurn = newSessionId;
+      }
+      const idx = this.playersInHand.indexOf(replaceSessionId);
+      if (idx >= 0) {
+        this.playersInHand[idx] = newSessionId;
+      }
+      if (this.playersActedThisRound.has(replaceSessionId)) {
+        this.playersActedThisRound.delete(replaceSessionId);
+        this.playersActedThisRound.add(newSessionId);
+      }
+      if (this.playersAllIn.has(replaceSessionId)) {
+        this.playersAllIn.delete(replaceSessionId);
+        this.playersAllIn.add(newSessionId);
+      }
+    }
   }
 
   async onLeave(client: Client, code: number) {

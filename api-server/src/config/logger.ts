@@ -1,7 +1,6 @@
 import winston from 'winston';
 
 const isProduction = process.env.NODE_ENV === 'production';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Custom format for development (colored and readable)
 const devFormat = winston.format.combine(
@@ -49,12 +48,11 @@ if (isProduction) {
 }
 
 // Convenience wrappers matching console API
+/* eslint-disable @typescript-eslint/no-explicit-any -- meta varies (plain objects, unknown from catch); strict type breaks examples/audit */
 export default {
   debug: (message: string, meta?: any) => logger.debug(message, meta),
   info: (message: string, meta?: any) => logger.info(message, meta),
   warn: (message: string, meta?: any) => logger.warn(message, meta),
   error: (message: string, meta?: any) => logger.error(message, meta),
-  
-  // Keep console for backwards compatibility during migration
   log: (message: string, meta?: any) => logger.info(message, meta),
 };
