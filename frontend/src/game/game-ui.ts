@@ -90,6 +90,17 @@ export function renderSeats(
       wh.textContent = ctx.winnerDisplayState.lastWinningHand;
       metaEl.appendChild(wh);
     }
+    if (isYou) {
+      const hole = schemaArrayToCards(player.hand);
+      const community = schemaArrayToCards(state?.communityCards);
+      const currentHandName = getCurrentHandName(hole, community);
+      if (currentHandName) {
+        const chEl = document.createElement("div");
+        chEl.classList.add("seat-current-hand");
+        chEl.textContent = currentHandName;
+        metaEl.appendChild(chEl);
+      }
+    }
 
     if (!handEl) {
       handEl = document.createElement("div");
