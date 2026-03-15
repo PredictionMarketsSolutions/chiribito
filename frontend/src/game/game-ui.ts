@@ -92,12 +92,12 @@ export function renderSeats(
     }
     if (isYou) {
       const hole = schemaArrayToCards(player.hand);
-      const community = schemaArrayToCards(state?.communityCards);
-      const currentHandName = getCurrentHandName(hole, community);
-      if (currentHandName) {
+      if (hole.length >= 2) {
+        const community = schemaArrayToCards(state?.communityCards);
+        const currentHandName = getCurrentHandName(hole, community);
         const chEl = document.createElement("div");
         chEl.classList.add("seat-current-hand");
-        chEl.textContent = currentHandName;
+        chEl.textContent = currentHandName || "Tus cartas";
         metaEl.appendChild(chEl);
       }
     }
@@ -222,10 +222,10 @@ export function renderState(
     const me = entries.find((p: PlayerState) => p.sessionId === ctx.currentSessionId);
     const hand = schemaArrayToCards(me?.hand);
     const handName = getCurrentHandName(hand, community);
-    if (hand.length > 0) {
-      refs.handStatus.textContent = handName ? `${hand.join(" ")} · ${handName}` : hand.join(" ");
+    if (hand.length >= 2) {
+      refs.handStatus.textContent = `${hand.join(" ")} · ${handName || "Tus cartas"}`;
     } else {
-      refs.handStatus.textContent = "-";
+      refs.handStatus.textContent = hand.length > 0 ? hand.join(" ") : "-";
     }
     ctx.previousHandCards.length = 0;
     ctx.previousHandCards.push(...hand);

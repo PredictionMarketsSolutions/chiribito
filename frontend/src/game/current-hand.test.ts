@@ -9,9 +9,9 @@ describe("current-hand", () => {
     expect(getCurrentHandName(["1C"], ["7O", "8E", "9C"])).toBe("");
   });
 
-  it("returns empty when community has less than 3 cards", () => {
-    expect(getCurrentHandName(["1C", "1E"], [])).toBe("");
-    expect(getCurrentHandName(["1C", "1E"], ["7O", "8E"])).toBe("");
+  it("returns Tus cartas when community has less than 3 cards (from start)", () => {
+    expect(getCurrentHandName(["1C", "1E"], [])).toBe("Tus cartas");
+    expect(getCurrentHandName(["1C", "1E"], ["7O", "8E"])).toBe("Tus cartas");
   });
 
   it("returns Perla when hole is 10J suited", () => {

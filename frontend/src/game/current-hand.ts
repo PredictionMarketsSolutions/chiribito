@@ -151,7 +151,7 @@ function compareHands(a: HandScore, b: HandScore): number {
 
 /**
  * Devuelve el nombre de la mejor mano posible del jugador con sus hole cards + community.
- * Si no hay 5 cartas para evaluar, devuelve "".
+ * Desde que tienes 2 cartas devuelve algo: "Perla" si aplica, "Tus cartas" en preflop, o la mano evaluada con 3+ comunitarias.
  */
 export function getCurrentHandName(hole: string[], community: string[]): string {
   if (hole.length < 2) return "";
@@ -160,7 +160,7 @@ export function getCurrentHandName(hole: string[], community: string[]): string 
   if (validHole.length < 2) return "";
 
   if (validCommunity.length < 3) {
-    return isPerla(validHole) ? "Perla" : "";
+    return isPerla(validHole) ? "Perla" : "Tus cartas";
   }
 
   const combos = getCommunityCombos(validCommunity);
