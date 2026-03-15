@@ -26,8 +26,8 @@ export const TURN_TIMEOUT_MS = getEnvInt("TURN_TIMEOUT_MS", 60_000);
 /** Intervalo de heartbeat en ms. */
 export const HEARTBEAT_INTERVAL_MS = getEnvInt("HEARTBEAT_INTERVAL_MS", 30_000);
 
-/** Timeout de heartbeat en ms (desconectar si no responde). */
-export const HEARTBEAT_TIMEOUT_MS = getEnvInt("HEARTBEAT_TIMEOUT_MS", 90_000);
+/** Timeout de heartbeat en ms (desconectar si no responde). Por defecto 3 min. */
+export const HEARTBEAT_TIMEOUT_MS = getEnvInt("HEARTBEAT_TIMEOUT_MS", 180_000);
 
 /** Cooldown por defecto entre acciones en ms. */
 export const ACTION_COOLDOWN_MS = getEnvInt("ACTION_COOLDOWN_MS", 200);

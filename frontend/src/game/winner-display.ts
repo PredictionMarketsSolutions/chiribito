@@ -1,7 +1,7 @@
 /**
- * Winner display phase (3s after round end). State is owned by caller.
+ * Winner display phase: 3 seconds after every round end (normal hand and final hand).
+ * State is owned by caller.
  */
- 
 export const WINNER_DISPLAY_MS = 3000;
 
 export type WinnerDisplayState = {

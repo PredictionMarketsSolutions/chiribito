@@ -351,6 +351,9 @@ const winnerDisplayState: WinnerDisplayState = {
   winnerDisplayTimeoutId: null,
 };
 
+/** Si llega gameResult mientras la pantalla de ganador está 3s, mostramos el resultado de torneo al acabar. */
+let deferredTournamentResult: { result: "won" | "lost"; champion?: GameResultPayload["champion"] } | null = null;
+
 const turnTimerState: TurnTimerState = {
   turnTimerId: null,
   turnDeadlineMs: null,
@@ -406,6 +409,10 @@ function getGameUiRefs(): GameUiRefs {
 function startWinnerDisplayPhase() {
   startWinnerDisplayPhaseFn(winnerDisplayState, () => {
     if (lastRoomState) renderState(lastRoomState);
+    if (deferredTournamentResult) {
+      showTournamentResult(deferredTournamentResult.result, deferredTournamentResult.champion);
+      deferredTournamentResult = null;
+    }
   });
 }
 
@@ -597,6 +604,7 @@ function resetRoomUi(message?: string) {
   currentSessionId = null;
   gameUiContext.currentSessionId = null;
   clearWinnerDisplay(winnerDisplayState);
+  deferredTournamentResult = null;
   revealedHands = null;
   gameUiContext.revealedHands = null;
   gameUiContext.previousPotValue = null;
@@ -995,6 +1003,7 @@ async function joinRoom(
   reconnectAttempts = 0;
   winnerDisplayState.lastWinningHand = "-";
   winnerDisplayState.lastWinners = [];
+  deferredTournamentResult = null;
   winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
   winningHandChip.textContent = winnerDisplayState.lastWinningHand;
   winnersStatus.textContent = "-";
@@ -1061,6 +1070,11 @@ async function joinRoom(
 
   joinedRoom.onMessage("gameResult", (payload: GameResultPayload) => {
     const result = payload?.result === "won" ? "won" : "lost";
+    if (isInWinnerPhase(winnerDisplayState)) {
+      deferredTournamentResult = { result, champion: payload?.champion };
+      log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
+      return;
+    }
     showTournamentResult(result, payload?.champion);
     log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
   });

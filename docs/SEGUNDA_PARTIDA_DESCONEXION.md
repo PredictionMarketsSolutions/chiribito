@@ -21,7 +21,7 @@ Es decir: algo cierra la conexión; el usuario no hace nada; la app abre otra co
 ## Posibles causas de que la conexión se cierre (siempre en 2.ª partida)
 
 1. **Timeout de heartbeat del servidor**  
-   Si no llegan mensajes `heartbeat` del cliente durante `HEARTBEAT_TIMEOUT_MS` (por defecto 90 s), el servidor hace `client.leave(4000, "Heartbeat timeout")`.  
+   Si no llegan mensajes `heartbeat` del cliente durante `HEARTBEAT_TIMEOUT_MS` (por defecto 3 min), el servidor hace `client.leave(4000, "Heartbeat timeout")`.  
    En logs deberías ver **"Forcing disconnect for unresponsive client"** justo antes.  
    Si **no** aparece ese log, el cierre no viene de nuestro timeout.
 
@@ -49,7 +49,7 @@ Con eso, aunque se produzca esa desconexión + reconexión en la 2.ª partida, l
    Si ves **"Forcing disconnect for unresponsive client"** justo antes del "Session removed", el cierre lo hace nuestro heartbeat. Si no lo ves, el cierre viene de fuera (Render, Colyseus o red).
 
 2. **Heartbeat del servidor (si somos nosotros quienes cerramos)**  
-   En producción puedes subir `HEARTBEAT_TIMEOUT_MS` (por ejemplo 120000 o 180000 ms) para ser menos estrictos y no expulsar por unos segundos de retraso.
+   El valor por defecto es 180000 ms (3 min). Puedes ajustar `HEARTBEAT_TIMEOUT_MS` en entorno si necesitas más margen.
 
 3. **Timeout de Render / WebSockets**  
    Revisar en la documentación de Render si hay timeout de conexiones WebSocket o de idle y a cuántos segundos; si es ~60 s, intentar que haya tráfico (por ejemplo heartbeat + heartbeat_ack) con intervalo menor a 60 s (ya mandáis cada 30 s; confirmar que el servidor responde con `heartbeat_ack`).

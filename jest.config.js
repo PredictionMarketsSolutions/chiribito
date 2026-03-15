@@ -41,10 +41,10 @@ module.exports = {
       statements: 80,
     },
     './src/rooms/game/GameEngine.ts': {
-      branches: 40,
-      functions: 40,
-      lines: 40,
-      statements: 40,
+      branches: 75,
+      functions: 90,
+      lines: 90,
+      statements: 90,
     },
     './src/rooms/managers/': {
       branches: 30,

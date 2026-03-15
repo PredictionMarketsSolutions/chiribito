@@ -7,6 +7,7 @@ import type { GameUiRefs, GameUiContext, ActionButtonsEnabled } from "./game-ui-
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "./room-state";
 import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
+import { getCurrentHandName } from "./current-hand";
 
 const TOTAL_SEATS = 6;
 const TARGET_FRONT_INDEX = 3;
@@ -96,10 +97,17 @@ export function renderSeats(
       seat.insertBefore(handEl, seat.firstChild);
     }
     handEl.innerHTML = "";
-    const cards =
+    let cards: string[] =
       player.sessionId === ctx.currentSessionId
         ? schemaArrayToCards(me?.hand)
         : (ctx.revealedHands?.[player.sessionId] ?? []);
+    if (
+      player.sessionId !== ctx.currentSessionId &&
+      ctx.winnerDisplayState.lastWinners.includes(player.sessionId) &&
+      ctx.winnerDisplayState.lastWinningHand === "Gana por fold"
+    ) {
+      cards = [];
+    }
     handEl.dataset.cards = JSON.stringify(cards);
     for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
       const cardEl = createCardElement(cards[i]);
@@ -202,7 +210,12 @@ export function renderState(
   if (ctx.currentSessionId) {
     const me = entries.find((p: PlayerState) => p.sessionId === ctx.currentSessionId);
     const hand = schemaArrayToCards(me?.hand);
-    refs.handStatus.textContent = hand.length ? hand.join(" ") : "-";
+    const handName = getCurrentHandName(hand, community);
+    if (hand.length > 0) {
+      refs.handStatus.textContent = handName ? `${hand.join(" ")} · ${handName}` : hand.join(" ");
+    } else {
+      refs.handStatus.textContent = "-";
+    }
     ctx.previousHandCards.length = 0;
     ctx.previousHandCards.push(...hand);
   } else {
