@@ -58,6 +58,7 @@ import {
   startWinnerDisplayPhase as startWinnerDisplayPhaseFn,
   clearWinnerDisplay,
   isInWinnerPhase,
+  WINNER_DISPLAY_MS,
   startTurnTimer as startTurnTimerFn,
   stopTurnTimer as stopTurnTimerFn,
   updateTurnTimer as updateTurnTimerFn,
@@ -353,6 +354,8 @@ const winnerDisplayState: WinnerDisplayState = {
 
 /** Si llega gameResult mientras la pantalla de ganador está 3s, mostramos el resultado de torneo al acabar. */
 let deferredTournamentResult: { result: "won" | "lost"; champion?: GameResultPayload["champion"] } | null = null;
+/** Timer para mostrar resultado de torneo 3s después cuando gameResult llega sin fase ganador activa (p. ej. mano final). */
+let deferredTournamentTimerId: ReturnType<typeof setTimeout> | null = null;
 
 const turnTimerState: TurnTimerState = {
   turnTimerId: null,
@@ -605,6 +608,10 @@ function resetRoomUi(message?: string) {
   gameUiContext.currentSessionId = null;
   clearWinnerDisplay(winnerDisplayState);
   deferredTournamentResult = null;
+  if (deferredTournamentTimerId !== null) {
+    clearTimeout(deferredTournamentTimerId);
+    deferredTournamentTimerId = null;
+  }
   revealedHands = null;
   gameUiContext.revealedHands = null;
   gameUiContext.previousPotValue = null;
@@ -1004,6 +1011,10 @@ async function joinRoom(
   winnerDisplayState.lastWinningHand = "-";
   winnerDisplayState.lastWinners = [];
   deferredTournamentResult = null;
+  if (deferredTournamentTimerId !== null) {
+    clearTimeout(deferredTournamentTimerId);
+    deferredTournamentTimerId = null;
+  }
   winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
   winningHandChip.textContent = winnerDisplayState.lastWinningHand;
   winnersStatus.textContent = "-";
@@ -1070,13 +1081,20 @@ async function joinRoom(
 
   joinedRoom.onMessage("gameResult", (payload: GameResultPayload) => {
     const result = payload?.result === "won" ? "won" : "lost";
+    deferredTournamentResult = { result, champion: payload?.champion };
+    log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
     if (isInWinnerPhase(winnerDisplayState)) {
-      deferredTournamentResult = { result, champion: payload?.champion };
-      log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
       return;
     }
-    showTournamentResult(result, payload?.champion);
-    log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
+    if (deferredTournamentTimerId !== null) clearTimeout(deferredTournamentTimerId);
+    deferredTournamentTimerId = setTimeout(() => {
+      deferredTournamentTimerId = null;
+      if (deferredTournamentResult) {
+        showTournamentResult(deferredTournamentResult.result, deferredTournamentResult.champion);
+        deferredTournamentResult = null;
+      }
+      if (lastRoomState) renderState(lastRoomState);
+    }, WINNER_DISPLAY_MS);
   });
 
   joinedRoom.onMessage("joined", (payload) => {
@@ -1259,7 +1277,9 @@ async function joinRoom(
 
   room.onStateChange((state) => {
     lastRoomState = state;
-    renderState(state);
+    if (!isInWinnerPhase(winnerDisplayState)) {
+      renderState(state);
+    }
   });
   } finally {
     joinInProgress = false;
