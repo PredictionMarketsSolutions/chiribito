@@ -176,11 +176,11 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
         heartbeatTimeoutMs: HEARTBEAT_TIMEOUT
       },
       (sessionId) => {
-        // Handle timeout: disconnect client
+        // Solo aviso: desconexión por heartbeat desactivada por ahora
         const client = this.clients.find(c => c.sessionId === sessionId);
         if (client) {
-          logger.info(`Forcing disconnect for unresponsive client`, { sessionId, roomId: this.roomId });
-          client.leave(4000, "Heartbeat timeout");
+          logger.warn(`Client unresponsive (heartbeat timeout) — desconexión desactivada`, { sessionId, roomId: this.roomId });
+          // client.leave(4000, "Heartbeat timeout"); // Desactivado temporalmente
         }
       }
     );

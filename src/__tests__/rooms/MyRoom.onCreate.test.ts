@@ -200,7 +200,7 @@ describe("MyRoom onCreate and message handlers", () => {
   });
 
   describe("connectionMonitor timeout callback", () => {
-    it("finds client by sessionId and calls leave with 4000 when client present", () => {
+    it("runs timeout callback without disconnecting client (desconexión por heartbeat desactivada)", () => {
       const fakeRoom: any = {
         setState: jest.fn(),
         setMetadata: jest.fn(),
@@ -221,7 +221,7 @@ describe("MyRoom onCreate and message handlers", () => {
 
       connectionMonitorTimeoutCallback!("s1");
 
-      expect(leave).toHaveBeenCalledWith(4000, "Heartbeat timeout");
+      expect(leave).not.toHaveBeenCalled();
     });
 
     it("does not throw when client not found for sessionId", () => {
