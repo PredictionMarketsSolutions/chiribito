@@ -218,9 +218,11 @@ export function renderState(
       ctx.previousCommunityCards.push(...community);
     }
   }
+  let handForZone: string[] = [];
   if (ctx.currentSessionId) {
     const me = entries.find((p: PlayerState) => p.sessionId === ctx.currentSessionId);
     const hand = schemaArrayToCards(me?.hand);
+    handForZone = hand;
     const handName = getCurrentHandName(hand, community);
     if (hand.length >= 2) {
       refs.handStatus.textContent = `${hand.join(" ")} · ${handName || "Tus cartas"}`;
@@ -233,7 +235,7 @@ export function renderState(
     refs.handStatus.textContent = "-";
     ctx.previousHandCards.length = 0;
   }
-  renderCardRow(refs.handCardsEl, [], 2);
+  renderCardRow(refs.handCardsEl, handForZone, 2);
   renderSeats(state, refs, ctx);
   renderPlayers(state, refs, ctx);
 }
