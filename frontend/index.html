@@ -187,17 +187,17 @@
         </div>
         <div class="table-surface">
           <div class="table-header">
-            <div>
-              <div class="table-title">Chiribito</div>
+            <div class="table-header-row table-header-row--pot">
+              <div class="badge badge-pot">Pot <span id="pot-chip">0</span></div>
             </div>
-            <div class="table-badges">
-              <span class="badge">Pot <span id="pot-chip">0</span></span>
-              <span class="badge">Phase <span id="phase-chip">waiting</span></span>
-              <span class="badge">Turn <span id="turn-chip">-</span></span>
-              <span class="badge timer">Reloj <span id="turn-timer">-</span></span>
-              <span class="badge">Jugada <span id="winning-hand-chip">-</span></span>
+            <div class="table-header-row table-header-row--meta">
+              <span class="badge badge-meta">Phase <span id="phase-chip">waiting</span></span>
+              <span class="badge badge-meta">Turn <span id="turn-chip">-</span></span>
+              <span class="badge badge-meta timer">Reloj <span id="turn-timer">-</span></span>
+              <span class="badge badge-meta">Jugada <span id="winning-hand-chip">-</span></span>
             </div>
           </div>
+          <div id="winner-banner" class="winner-banner hidden" aria-live="polite"></div>
           <div id="seats" class="seats">
             <div class="seat" data-seat="0">
               <div class="seat-badge">Seat 1</div>

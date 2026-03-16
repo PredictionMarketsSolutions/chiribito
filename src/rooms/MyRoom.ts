@@ -314,9 +314,16 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
 
   async onLeave(client: Client, code: number) {
     const consented = code === CloseCode.CONSENTED;
+    const reason =
+      code === CloseCode.CONSENTED
+        ? "client_left_voluntarily"
+        : code === CUSTOM_GAME_END
+          ? "game_ended"
+          : `disconnected_code_${code}`;
     await this.lifecycleManager.handleLeave(
       client,
       consented,
+      reason,
       this.state,
       {
         sessionManager: this.sessionManager,

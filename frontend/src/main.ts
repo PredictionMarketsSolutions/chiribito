@@ -377,6 +377,7 @@ const gameUiContext: GameUiContext = {
 };
 
 let revealedHands: Record<string, string[]> | null = null;
+let winnerBannerTimeoutId: number | null = null;
 
 function getGameUiRefs(): GameUiRefs {
   return {
@@ -427,6 +428,24 @@ function syncGameUiContext() {
 
 function renderHandHistoryUi() {
   renderHandHistory(handHistoryList, (id) => gameUiContext.latestPlayerNames.get(id) ?? id);
+}
+
+function showWinnerBanner(text: string) {
+  const banner = document.querySelector<HTMLDivElement>("#winner-banner");
+  if (!banner) return;
+  banner.textContent = text;
+  banner.classList.remove("hidden");
+  banner.classList.add("visible");
+  if (winnerBannerTimeoutId !== null) {
+    window.clearTimeout(winnerBannerTimeoutId);
+  }
+  winnerBannerTimeoutId = window.setTimeout(() => {
+    banner.classList.remove("visible");
+    winnerBannerTimeoutId = window.setTimeout(() => {
+      banner.classList.add("hidden");
+      winnerBannerTimeoutId = null;
+    }, 250);
+  }, 2600);
 }
 
 function triggerAnimation(element: HTMLElement, className: string) {
@@ -1227,6 +1246,14 @@ async function joinRoom(
         gameUiContext.previousCommunityCards = [...communityCards];
         startWinnerDisplayPhase();
         if (lastRoomState) renderState(lastRoomState);
+        // Mensaje flotante central con jugada + primer ganador
+        const firstWinnerId = winnerDisplayState.lastWinners[0];
+        const firstWinnerName = firstWinnerId
+          ? gameUiContext.latestPlayerNames.get(firstWinnerId) ?? firstWinnerId
+          : "";
+        if (winnerDisplayState.lastWinningHand && firstWinnerName) {
+          showWinnerBanner(`${winnerDisplayState.lastWinningHand} para ${firstWinnerName}`);
+        }
       };
 
       if (allInCardsRevealedByServer) {
@@ -1251,6 +1278,14 @@ async function joinRoom(
         }
         if (winnerDisplay.startPhaseNow) {
           startWinnerDisplayPhase();
+        }
+        // Mensaje flotante central con jugada + primer ganador (no all-in auto)
+        const firstWinnerId = winnerDisplayState.lastWinners[0];
+        const firstWinnerName = firstWinnerId
+          ? gameUiContext.latestPlayerNames.get(firstWinnerId) ?? firstWinnerId
+          : "";
+        if (winnerDisplayState.lastWinningHand && firstWinnerName) {
+          showWinnerBanner(`${winnerDisplayState.lastWinningHand} para ${firstWinnerName}`);
         }
       }
       if (lastRoomState) renderState(lastRoomState);

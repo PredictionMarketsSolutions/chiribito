@@ -141,6 +141,7 @@ export class PlayerLifecycleManager {
   async handleLeave(
     client: Client,
     consented: boolean,
+    reason: string,
     state: MyRoomState,
     dependencies: LifecycleDependencies,
     playersInHand: string[],
@@ -163,7 +164,7 @@ export class PlayerLifecycleManager {
       }
     }
 
-    this.handleLeaveCleanup(client, state, playersInHand, dependencies, engine, broadcastFn);
+    this.handleLeaveCleanup(client, state, playersInHand, dependencies, engine, broadcastFn, reason);
   }
 
   /**
@@ -220,7 +221,8 @@ export class PlayerLifecycleManager {
     playersInHand: string[],
     dependencies: LifecycleDependencies,
     engine: GameEngine,
-    broadcastFn: (type: string, message: any, opts?: any) => void
+    broadcastFn: (type: string, message: any, opts?: any) => void,
+    reason: string
   ): void {
     const { sessionManager, seatManager, connectionMonitor, analytics } = dependencies;
     const player = state.users.get(client.sessionId);
@@ -268,7 +270,8 @@ export class PlayerLifecycleManager {
     logger.info(`Player left`, {
       sessionId: client.sessionId,
       roomId: this.roomId,
-      playerName: player?.name
+      playerName: player?.name,
+      reason
     });
   }
 
