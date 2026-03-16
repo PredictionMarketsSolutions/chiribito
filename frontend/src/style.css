@@ -1579,6 +1579,14 @@ button.accent:hover:not(:disabled) {
 }
 
 @media (max-width: 768px) {
+  #ui {
+    display: none;
+  }
+
+  .panel-toggle {
+    display: none;
+  }
+
   #table {
     padding: 20px;
   }
@@ -1738,28 +1746,6 @@ button.accent:hover:not(:disabled) {
 @media (max-width: 520px) {
   #app {
     grid-template-columns: 1fr;
-  }
-  
-  #ui {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100vh;
-    max-height: 100vh;
-    z-index: 999;
-    box-shadow: var(--shadow-2xl);
-  }
-  
-  #app.panel-collapsed #ui {
-    transform: translateX(-100%);
-  }
-  
-  .panel-toggle {
-    position: fixed !important;
-    top: 16px;
-    left: 16px;
-    z-index: 1000;
   }
   
   .table-title {
