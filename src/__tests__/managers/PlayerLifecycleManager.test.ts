@@ -589,6 +589,7 @@ describe("PlayerLifecycleManager", () => {
       await manager.handleLeave(
         client,
         true,
+        "test_reason",
         mockState,
         dependencies(),
         playersInHand,
@@ -610,6 +611,7 @@ describe("PlayerLifecycleManager", () => {
       await manager.handleLeave(
         client,
         true,
+        "test_reason",
         mockState,
         dependencies(),
         playersInHand,
