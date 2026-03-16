@@ -91,7 +91,7 @@ export class PlayerLifecycleManager {
 
     // Register session
     if (Number.isFinite(userId)) {
-      sessionManager.registerSession(userId, client.sessionId);
+      sessionManager.registerSession(userId, client.sessionId, player.name);
     }
 
     // Mark seat as occupied. When replacing a session, the seat is still marked occupied in SeatManager
@@ -100,7 +100,7 @@ export class PlayerLifecycleManager {
       if (replaceSessionId) {
         seatManager.freeSeat(player.seatIndex);
       }
-      seatManager.occupySeat(player.seatIndex, userId);
+      seatManager.occupySeat(player.seatIndex, userId, player.name);
     }
 
     // Track analytics
@@ -267,7 +267,8 @@ export class PlayerLifecycleManager {
 
     logger.info(`Player left`, {
       sessionId: client.sessionId,
-      roomId: this.roomId
+      roomId: this.roomId,
+      playerName: player?.name
     });
   }
 

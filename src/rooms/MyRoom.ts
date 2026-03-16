@@ -221,7 +221,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
 
     // Heartbeat message handler
     this.onMessage("heartbeat", (client) => {
-      this.connectionMonitor.recordHeartbeat(client.sessionId);
+      this.connectionMonitor.recordHeartbeat(client.sessionId, this.state.users.get(client.sessionId)?.name);
       this.analytics.recordMessageReceived(client.sessionId);
       client.send("heartbeat_ack");
     });

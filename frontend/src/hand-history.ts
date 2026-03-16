@@ -68,7 +68,11 @@ export function renderHandHistory(
     bodyEl.classList.add("history-body");
 
     const handEl = document.createElement("div");
-    handEl.textContent = `Winning hand: ${entry.winningHand || "-"}`;
+    const hasWinningCards = Array.isArray(entry.winningCards) && entry.winningCards.length > 0;
+    const baseText = `Winning hand: ${entry.winningHand || "-"}`;
+    handEl.textContent = hasWinningCards
+      ? `${baseText} ${entry.winningCards!.join(" ")}`
+      : baseText;
     bodyEl.appendChild(handEl);
 
     const communityEl = document.createElement("div");

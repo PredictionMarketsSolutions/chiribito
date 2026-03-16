@@ -31,7 +31,7 @@ export class SeatManager {
   /**
    * Occupy a seat
    */
-  occupySeat(seatIndex: number, userId: number): void {
+  occupySeat(seatIndex: number, userId: number, playerName?: string): void {
     if (seatIndex < 0 || seatIndex >= this.maxSeats) {
       throw new Error(`Invalid seat index: ${seatIndex}`);
     }
@@ -40,7 +40,8 @@ export class SeatManager {
       logger.warn("Attempted to occupy already taken seat", {
         seatIndex,
         userId,
-        roomId: this.roomId
+        roomId: this.roomId,
+        playerName
       });
       return;
     }
@@ -50,7 +51,8 @@ export class SeatManager {
     logger.info("Seat occupied", {
       seatIndex,
       userId,
-      roomId: this.roomId
+      roomId: this.roomId,
+      playerName
     });
   }
 

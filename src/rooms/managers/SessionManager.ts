@@ -12,6 +12,9 @@ export class SessionManager {
   
   // sessionId -> userId mapping (reverse lookup)
   private sessionUsers: Map<string, number> = new Map();
+
+  // userId -> playerName mapping (for richer logging)
+  private userNames: Map<number, string> = new Map();
   
   // Users in the process of joining (prevents double joins)
   private pendingUsers: Set<number> = new Set();
@@ -59,15 +62,20 @@ export class SessionManager {
   /**
    * Register a new session
    */
-  registerSession(userId: number, sessionId: string): void {
+  registerSession(userId: number, sessionId: string, playerName?: string): void {
     this.activeUsers.set(userId, sessionId);
     this.sessionUsers.set(sessionId, userId);
     this.pendingUsers.delete(userId);
 
+    if (playerName) {
+      this.userNames.set(userId, playerName);
+    }
+
     logger.info("Session registered", {
       userId,
       sessionId,
-      roomId: this.roomId
+      roomId: this.roomId,
+      playerName: playerName ?? this.userNames.get(userId)
     });
   }
 
@@ -77,13 +85,16 @@ export class SessionManager {
   removeSession(sessionId: string): void {
     const userId = this.sessionUsers.get(sessionId);
     if (userId !== undefined) {
+      const playerName = this.userNames.get(userId);
       this.activeUsers.delete(userId);
       this.sessionUsers.delete(sessionId);
+      this.userNames.delete(userId);
       
       logger.info("Session removed", {
         userId,
         sessionId,
-        roomId: this.roomId
+        roomId: this.roomId,
+        playerName
       });
     }
   }
@@ -110,7 +121,8 @@ export class SessionManager {
       userId,
       oldSessionId,
       newSessionId,
-      roomId: this.roomId
+      roomId: this.roomId,
+      playerName: this.userNames.get(userId)
     });
   }
 
@@ -121,6 +133,7 @@ export class SessionManager {
     this.activeUsers.clear();
     this.sessionUsers.clear();
     this.pendingUsers.clear();
+    this.userNames.clear();
     
     logger.info("All sessions cleared", { roomId: this.roomId });
   }

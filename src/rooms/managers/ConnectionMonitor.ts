@@ -12,6 +12,7 @@ export interface ConnectionMonitorConfig {
 
 export class ConnectionMonitor {
   private heartbeats: Map<string, number> = new Map();
+  private clientNames: Map<string, string> = new Map();
   private monitorInterval: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
 
@@ -57,8 +58,11 @@ export class ConnectionMonitor {
   /**
    * Register or update a client heartbeat
    */
-  recordHeartbeat(sessionId: string): void {
+  recordHeartbeat(sessionId: string, playerName?: string): void {
     this.heartbeats.set(sessionId, Date.now());
+    if (playerName) {
+      this.clientNames.set(sessionId, playerName);
+    }
   }
 
   /**
@@ -66,6 +70,7 @@ export class ConnectionMonitor {
    */
   removeClient(sessionId: string): void {
     this.heartbeats.delete(sessionId);
+    this.clientNames.delete(sessionId);
   }
 
   /**
@@ -82,11 +87,13 @@ export class ConnectionMonitor {
         logger.warn("Client heartbeat timeout", {
           sessionId,
           roomId: this.roomId,
+          playerName: this.clientNames.get(sessionId),
           timeSinceLastMs: timeSinceLastHeartbeat,
           timeoutMs
         });
 
         this.heartbeats.delete(sessionId);
+        this.clientNames.delete(sessionId);
         this.onClientTimeout(sessionId);
       }
     }
@@ -121,6 +128,7 @@ export class ConnectionMonitor {
   clearAll(): void {
     this.stop();
     this.heartbeats.clear();
+    this.clientNames.clear();
     
     logger.info("ConnectionMonitor cleared", { roomId: this.roomId });
   }

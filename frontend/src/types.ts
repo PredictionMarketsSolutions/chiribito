@@ -32,6 +32,8 @@ export type HandHistoryEntry = {
   timestamp: number;
   winners: HandHistoryWinner[];
   winningHand: string;
+  /** Cartas privadas del primer ganador (para mostrar junto al nombre de la jugada). */
+  winningCards?: string[];
   communityCards: string[];
   pot: number;
   yourHand?: string[];

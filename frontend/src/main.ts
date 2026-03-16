@@ -1256,11 +1256,22 @@ async function joinRoom(
       if (lastRoomState) renderState(lastRoomState);
     }
     
+    // Cartas de la mano ganadora (tomamos las hole cards del primer ganador para historial).
+    let winningCards: string[] | undefined;
+    if (payload?.playerHands && typeof payload.playerHands === "object" && winnersForHistory.length > 0) {
+      const firstWinnerId = winnersForHistory[0].playerId;
+      const cards = payload.playerHands[firstWinnerId];
+      if (Array.isArray(cards) && cards.length > 0) {
+        winningCards = cards;
+      }
+    }
+
     addHandHistoryEntry(
       {
         timestamp: Date.now(),
         winners: winnersForHistory,
         winningHand: payload?.winningHand ?? "-",
+        winningCards,
         communityCards,
         pot: potValue,
         yourHand
