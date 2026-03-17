@@ -178,7 +178,10 @@ describe("MyRoom onCreate and message handlers", () => {
   describe("heartbeat handler", () => {
     it("records heartbeat, records message in analytics, sends heartbeat_ack", () => {
       const fakeRoom: any = {
-        setState: jest.fn(),
+        state: new MyRoomState(),
+        setState: jest.fn((s: MyRoomState) => {
+          fakeRoom.state = s;
+        }),
         setMetadata: jest.fn(),
         onMessage: mockRoomMessage,
         roomId: "r1",
@@ -193,7 +196,7 @@ describe("MyRoom onCreate and message handlers", () => {
       const client = { sessionId: "s1", send: jest.fn() };
       messageHandlers["heartbeat"]!.call(fakeRoom, client);
 
-      expect(mockConnectionMonitor.recordHeartbeat).toHaveBeenCalledWith("s1");
+      expect(mockConnectionMonitor.recordHeartbeat).toHaveBeenCalledWith("s1", undefined);
       expect(fakeRoom.analytics.recordMessageReceived).toHaveBeenCalledWith("s1");
       expect(client.send).toHaveBeenCalledWith("heartbeat_ack");
     });

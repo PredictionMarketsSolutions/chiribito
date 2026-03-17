@@ -37,6 +37,7 @@ describe("MyRoom lifecycle", () => {
       expect(handleLeave).toHaveBeenCalledWith(
         client,
         false,
+        "disconnected_code_1000",
         fakeRoom.state,
         expect.any(Object),
         fakeRoom.playersInHand,
@@ -70,19 +71,35 @@ describe("MyRoom lifecycle", () => {
       expect(handleLeave).toHaveBeenCalledWith(
         client,
         true,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything()
+        "client_left_voluntarily",
+        fakeRoom.state,
+        expect.objectContaining({
+          sessionManager: fakeRoom.sessionManager,
+          seatManager: fakeRoom.seatManager,
+          connectionMonitor: fakeRoom.connectionMonitor,
+          analytics: fakeRoom.analytics,
+        }),
+        fakeRoom.playersInHand,
+        fakeRoom.engine,
+        expect.any(Function),
+        expect.any(Function)
       );
     });
 
     it("passes broadcast callback to handleLeave so lifecycle can broadcast", async () => {
       const broadcast = jest.fn();
       let captureBroadcast: ((type: string, message: unknown, opts?: unknown) => void) | null = null;
-      const handleLeave = jest.fn().mockImplementation((_client: unknown, _consented: boolean, _state: unknown, _deps: unknown, _playersInHand: unknown, _engine: unknown, _allowReconnection: unknown, broadcastCb: (type: string, message: unknown, opts?: unknown) => void) => {
+      const handleLeave = jest.fn().mockImplementation((
+        _client: unknown,
+        _consented: boolean,
+        _reason: string,
+        _state: unknown,
+        _deps: unknown,
+        _playersInHand: unknown,
+        _engine: unknown,
+        _allowReconnection: unknown,
+        broadcastCb: (type: string, message: unknown, opts?: unknown) => void
+      ) => {
         captureBroadcast = broadcastCb;
         return Promise.resolve();
       });
