@@ -1205,13 +1205,12 @@ button.accent:hover:not(:disabled) {
 .seat-hand .card.mini {
   width: 70px;
   height: 98px;
-  padding: 5px;
+  padding: 0;
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
-  box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .seat-hand .card.mini:first-child {
@@ -1272,6 +1271,11 @@ button.accent:hover:not(:disabled) {
   display: none;
 }
 
+.table-zone--your-cards .card {
+  padding: 0;
+  overflow: hidden;
+}
+
 .table-zone--community {
   background: transparent;
   border: none;
@@ -1300,6 +1304,8 @@ button.accent:hover:not(:disabled) {
   height: 193px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .card-row--community .card .rank {
@@ -1338,7 +1344,6 @@ button.accent:hover:not(:disabled) {
   flex-direction: column;
   justify-content: space-between;
   padding: 6px;
-  box-sizing: border-box;
   transition: transform 0.2s;
   flex-shrink: 0;
 }
@@ -1350,11 +1355,16 @@ button.accent:hover:not(:disabled) {
 
 .card img {
   display: block;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
-  margin: -6px;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   border-radius: 4px;
+}
+
+.card-row--community .card img,
+.table-zone--your-cards .card img,
+.seat-hand .card.mini img {
+  border-radius: inherit;
 }
 
 .card.card-back {
@@ -1726,6 +1736,8 @@ button.accent:hover:not(:disabled) {
     width: 72px;
     height: 102px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    padding: 0;
+    overflow: hidden;
   }
 
   .card-row--community .card .rank {
@@ -1772,6 +1784,8 @@ button.accent:hover:not(:disabled) {
     height: 114px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
     border: 2px solid var(--gold);
+    padding: 0;
+    overflow: hidden;
   }
 
   .table-zone--your-cards .card .rank {
