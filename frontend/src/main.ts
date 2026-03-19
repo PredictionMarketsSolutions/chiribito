@@ -1,15 +1,12 @@
 import { Client, Room } from "@colyseus/sdk";
 
 import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_RECONNECT_ATTEMPTS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
-import type { RoomState, PlayerState, HandHistoryWinner, ConnectionState } from "./types";
+import type { RoomState, PlayerState, ConnectionState } from "./types";
 import type {
   GameResultPayload,
   RoundEndedPayload,
   CommunityCardRevealedPayload,
-  PlayerActionPayload,
-  TurnTimerPayload,
   PlayerDisconnectedPayload,
-  ErrorPayload,
 } from "./types/room-messages";
 import { queueAction as queueActionFn, replayBufferedActions as replayBufferedActionsFn } from "./action-buffer";
 import { audio } from "./audio";
@@ -71,6 +68,28 @@ import {
 import type { WinnerDisplayState, TurnTimerState } from "./game";
 import type { GameUiRefs, GameUiContext } from "./game/game-ui-types";
 import { getWinnerDisplayFromRoundEnd } from "./game/round-end-winner";
+import { refreshWinnersRanking as refreshWinnersRankingFn } from "./app/winners-ranking";
+import { createLobbyPollingController } from "./app/lobby-polling";
+import { bindGameActionButtons } from "./app/game-action-bindings";
+import { bindForgotPasswordUi } from "./app/forgot-password-ui";
+import { openLobbyFlow } from "./app/lobby-controller";
+import { bindAuthEntryButtons } from "./app/auth-entry-bindings";
+import {
+  validateJoinRequest,
+  handleJoinError,
+  type JoinMode,
+} from "./app/room-join";
+import { handleRoomLeave } from "./app/room-leave-handler";
+import {
+  handleGameResultMessage,
+  handlePlayerDisconnectedMessage,
+  handleHeartbeatAckMessage,
+} from "./app/room-message-handlers";
+import { buildRoundEndedHistoryData } from "./app/round-ended-history";
+import { applyWinnerUiState } from "./app/round-ended-winner-ui";
+import { applyAllInShowdownOutcome, applyStandardRoundOutcome } from "./app/round-ended-outcome";
+import { bindCoreRoomEvents } from "./app/room-event-bindings";
+import { applyPostJoinSetup, finalizeJoinAttempt } from "./app/join-room-lifecycle";
 
 // Security modules
 import {
@@ -318,7 +337,6 @@ let token: string | null = null;
 let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
-let lobbyPollId: number | null = null;
 /** Solo reconectar automáticamente a una mesa si el usuario estaba jugando (no en lobby) y no ha terminado el torneo. */
 let shouldAutoReconnect = false;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */
@@ -899,8 +917,6 @@ function getWsClient(): Client {
   return getWsClientFromConnection(WS_URL);
 }
 
-type JoinMode = "joinOrCreate" | "create" | "joinById";
-
 /** Cooldown after "Crear mesa" to prevent double-clicks and spam. */
 const CREATE_TABLE_COOLDOWN_MS = 2000;
 
@@ -927,20 +943,16 @@ async function joinRoom(
   forceReplace = false,
   opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
 ) {
-  if (!token) {
-    log("No token. Login or register first.");
-    setConnectionState("disconnected");
-    return;
-  }
-
   const mode: JoinMode = opts?.mode ?? "joinOrCreate";
-  if (mode === "joinById") {
-    const roomId = (opts?.roomId ?? "").trim();
-    if (!roomId) {
-      setConnectionState("disconnected");
-      log("Room ID vacío.");
-      return;
-    }
+  const validation = validateJoinRequest({
+    hasToken: Boolean(token),
+    mode,
+    roomId: opts?.roomId,
+    setConnectionState,
+    log,
+  });
+  if (!validation.ok) {
+    return;
   }
 
   if (joinInProgress) {
@@ -960,8 +972,7 @@ async function joinRoom(
     let joinedRoom: Room;
     try {
       if (mode === "joinById") {
-        const roomId = (opts?.roomId ?? "").trim();
-        joinedRoom = await client.joinById(roomId, {
+        joinedRoom = await client.joinById(validation.normalizedRoomId!, {
         auth: { token },
         name: username,
         forceReplace
@@ -982,166 +993,166 @@ async function joinRoom(
       } as any);
     }
   } catch (err: any) {
-    const message = err?.message || String(err);
-    if (message.includes("SESSION_EXISTS")) {
-      const shouldReplace = window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?");
-      if (shouldReplace) {
+    await handleJoinError({
+      error: err,
+      confirmSessionReplace: () =>
+        window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?"),
+      onSessionReplaceConfirmed: async () => {
         joinInProgress = false;
         await joinRoom(true);
-      } else {
+      },
+      onSessionReplaceRejected: () => {
         setConnectionState("disconnected");
-      }
-      return;
-    }
-    if (message.includes("INVALID_TOKEN")) {
-      setConnectionState("disconnected");
-      handleTokenInvalidated();
-      return;
-    }
-    if (message === "AUTH_TIMEOUT" || message === "AUTH_UNAVAILABLE") {
-      setConnectionState("disconnected");
-      log("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.");
-      setAuthMessage("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.", "error");
-      setAuthOverlayVisible(true);
-      return;
-    }
-    if (message.includes("CREATE_ROOM_RATE_LIMIT")) {
-      setConnectionState("disconnected");
-      log("Espera un minuto antes de crear otra mesa.");
-      setLobbyMessage("Espera un minuto antes de crear otra mesa.", "error");
-      return;
-    }
-    log(`Join error: ${message}`);
-    setConnectionState("disconnected");
+      },
+      onInvalidToken: () => {
+        setConnectionState("disconnected");
+        handleTokenInvalidated();
+      },
+      onAuthUnavailable: () => {
+        setConnectionState("disconnected");
+        log("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.");
+        setAuthMessage("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.", "error");
+        setAuthOverlayVisible(true);
+      },
+      onCreateRateLimit: () => {
+        setConnectionState("disconnected");
+        log("Espera un minuto antes de crear otra mesa.");
+        setLobbyMessage("Espera un minuto antes de crear otra mesa.", "error");
+      },
+      onGeneric: (message) => {
+        log(`Join error: ${message}`);
+        setConnectionState("disconnected");
+      },
+    });
     return;
   }
 
-  room = joinedRoom;
-  currentSessionId = joinedRoom.sessionId;
-  gameUiContext.currentSessionId = currentSessionId;
-  shouldAutoReconnect = true;
-  tournamentEnded = false;
-  setAuthOverlayVisible(false);
-  setLobbyOverlayVisible(false);
-  setTournamentResultVisible(false);
-  stopLobbyPolling();
-  setConnectionState("connected");
-  reconnectAttempts = 0;
-  winnerDisplayState.lastWinningHand = "-";
-  winnerDisplayState.lastWinners = [];
-  deferredTournamentResult = null;
-  if (deferredTournamentTimerId !== null) {
-    clearTimeout(deferredTournamentTimerId);
-    deferredTournamentTimerId = null;
-  }
-  winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
-  winningHandChip.textContent = winnerDisplayState.lastWinningHand;
-  winnersStatus.textContent = "-";
-  clearHandHistory();
-  renderHandHistoryUi();
-  preloadCardImages();
-  const roomId = (joinedRoom as { id?: string; roomId?: string }).id
-    ?? (joinedRoom as { roomId?: string }).roomId
-    ?? "joined";
-  roomStatus.textContent = roomId;
-  SecureStorage.saveLastRoomId(roomId);
-  log("Joined room successfully.");
+  applyPostJoinSetup({
+    joinedRoom,
+    setRoom: (value) => {
+      room = value;
+    },
+    setCurrentSessionId: (sessionId) => {
+      currentSessionId = sessionId;
+      gameUiContext.currentSessionId = sessionId;
+    },
+    setShouldAutoReconnect: (value) => {
+      shouldAutoReconnect = value;
+    },
+    setTournamentEnded: (value) => {
+      tournamentEnded = value;
+    },
+    setAuthOverlayVisible,
+    setLobbyOverlayVisible,
+    setTournamentResultVisible,
+    stopLobbyPolling: () => lobbyPolling.stop(),
+    setConnectionState,
+    setReconnectAttempts: (value) => {
+      reconnectAttempts = value;
+    },
+    winnerDisplayState,
+    clearDeferredTournamentTimer: () => {
+      deferredTournamentResult = null;
+      if (deferredTournamentTimerId !== null) {
+        clearTimeout(deferredTournamentTimerId);
+        deferredTournamentTimerId = null;
+      }
+    },
+    winningHandStatusEl: winningHandStatus,
+    winningHandChipEl: winningHandChip,
+    winnersStatusEl: winnersStatus,
+    clearHandHistory,
+    renderHandHistoryUi,
+    preloadCardImages,
+    setRoomStatusText: (text) => {
+      roomStatus.textContent = text;
+    },
+    saveLastRoomId: (roomId) => {
+      SecureStorage.saveLastRoomId(roomId);
+    },
+    log,
+  });
   
   // Start client-side heartbeat to monitor connection
   startClientHeartbeat();
 
   joinedRoom.onLeave((code: number) => {
     stopClientHeartbeat();
-    
-    // 4011 = app custom: session replaced by another login
-    if (code === 4011) {
-      alert("Tu sesion fue reemplazada por otro ingreso.");
-      shouldAutoReconnect = false;
-      SecureStorage.clearLastRoomId();
-      clearAuthToken();
-      resetRoomUi("replaced");
-      setConnectionState("disconnected");
-      return;
-    }
 
-    // 4013 = mesa cerrada por fin de partida; no reconectar para evitar unirse a otra mesa
-    if (code === 4013) {
-      tournamentEnded = true;
-      hadRoomWhenBackgrounded = false;
-       shouldAutoReconnect = false;
-      SecureStorage.clearLastRoomId();
-      setConnectionState("disconnected");
-      room = null;
-      currentSessionId = null;
-      gameUiContext.currentSessionId = null;
-      if (!overlayRefs.tournamentResultOverlay.classList.contains("hidden")) return;
-      showGameEndMessageFn(overlayRefs);
-      return;
-    }
-
-    if (tournamentEnded) {
-      hadRoomWhenBackgrounded = false;
-      shouldAutoReconnect = false;
-      SecureStorage.clearLastRoomId();
-      setConnectionState("disconnected");
-      room = null;
-      currentSessionId = null;
-      gameUiContext.currentSessionId = null;
-      if (!overlayRefs.tournamentResultOverlay.classList.contains("hidden")) return;
-      showGameEndMessageFn(overlayRefs);
-      return;
-    }
-    
-    // Unexpected disconnect - attempt to reconnect
-    log(`Disconnected from room (code: ${code}). Attempting to reconnect...`);
-    setConnectionState("disconnected");
-    attemptReconnect();
+    handleRoomLeave({
+      code,
+      isTournamentEnded: () => tournamentEnded,
+      setTournamentEnded: (value) => {
+        tournamentEnded = value;
+      },
+      setHadRoomWhenBackgrounded: (value) => {
+        hadRoomWhenBackgrounded = value;
+      },
+      setShouldAutoReconnect: (value) => {
+        shouldAutoReconnect = value;
+      },
+      clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+      clearAuthToken,
+      resetRoomUi,
+      setConnectionState,
+      clearCurrentRoomRefs: () => {
+        room = null;
+        currentSessionId = null;
+        gameUiContext.currentSessionId = null;
+      },
+      isTournamentResultOverlayHidden: () => overlayRefs.tournamentResultOverlay.classList.contains("hidden"),
+      showGameEndMessage: () => showGameEndMessageFn(overlayRefs),
+      log,
+      attemptReconnect,
+      alertUser: (message) => alert(message),
+    });
   });
 
   joinedRoom.onMessage("gameResult", (payload: GameResultPayload) => {
-    const result = payload?.result === "won" ? "won" : "lost";
-    deferredTournamentResult = { result, champion: payload?.champion };
-    log(result === "won" ? "¡Has ganado la mesa!" : "Has perdido. La mesa se ha cerrado.");
-    if (isInWinnerPhase(winnerDisplayState)) {
-      return;
-    }
-    if (deferredTournamentTimerId !== null) clearTimeout(deferredTournamentTimerId);
-    deferredTournamentTimerId = setTimeout(() => {
-      deferredTournamentTimerId = null;
-      if (deferredTournamentResult) {
-        showTournamentResult(deferredTournamentResult.result, deferredTournamentResult.champion);
-        deferredTournamentResult = null;
-      }
-      if (lastRoomState) renderState(lastRoomState);
-    }, WINNER_DISPLAY_MS);
-  });
-
-  joinedRoom.onMessage("joined", (payload) => {
-    log(`Joined payload: ${JSON.stringify(payload)}`);
-  });
-
-  joinedRoom.onMessage("playerJoined", (payload) => {
-    log(`Player joined: ${JSON.stringify(payload)}`);
-  });
-
-  joinedRoom.onMessage("playerLeft", (payload) => {
-    log(`Player left: ${JSON.stringify(payload)}`);
+    handleGameResultMessage({
+      payload,
+      isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
+      setDeferredTournamentResult: (value) => {
+        deferredTournamentResult = value;
+      },
+      getDeferredTournamentResult: () => deferredTournamentResult,
+      clearDeferredTimer: () => {
+        if (deferredTournamentTimerId !== null) {
+          clearTimeout(deferredTournamentTimerId);
+          deferredTournamentTimerId = null;
+        }
+      },
+      scheduleDeferredTimer: (callback, delayMs) => {
+        deferredTournamentTimerId = setTimeout(() => {
+          deferredTournamentTimerId = null;
+          callback();
+        }, delayMs);
+      },
+      winnerDisplayMs: WINNER_DISPLAY_MS,
+      showTournamentResult,
+      renderLastState: () => {
+        if (lastRoomState) renderState(lastRoomState);
+      },
+      log,
+    });
   });
 
   joinedRoom.onMessage("playerDisconnected", (payload: PlayerDisconnectedPayload) => {
-    console.log("Player disconnected", payload);
-    log(`${payload.playerName} se ha desconectado${payload.wasCurrentTurn ? ' (era su turno)' : ''}`);
+    handlePlayerDisconnectedMessage(payload, log);
   });
 
   joinedRoom.onMessage("heartbeat_ack", () => {
-    if (lastHeartbeatSendTime > 0) {
-      recordRtt(Date.now() - lastHeartbeatSendTime);
-    }
-    clearHeartbeatTimeoutFn();
-    if (connectionState !== "connected") {
-      setConnectionState("connected");
-      replayBufferedActions();
-    }
+    handleHeartbeatAckMessage({
+      lastHeartbeatSendTime,
+      nowMs: Date.now(),
+      recordRtt,
+      clearHeartbeatTimeout: clearHeartbeatTimeoutFn,
+      isConnected: () => connectionState === "connected",
+      setConnected: () => {
+        setConnectionState("connected");
+      },
+      replayBufferedActions,
+    });
   });
 
   joinedRoom.onMessage("bettingRoundStarted", (payload) => {
@@ -1178,41 +1189,31 @@ async function joinRoom(
     }
   );
 
-  joinedRoom.onMessage("playerAction", (payload: PlayerActionPayload) => {
-    log(`Player action: ${JSON.stringify(payload)}`);
-    if (payload?.action && typeof payload.action === "string") {
-      audio.playActionSound(payload.action);
-    }
+  bindCoreRoomEvents({
+    room: joinedRoom as unknown as {
+      onMessage: (type: string, handler: (payload: any) => void) => void;
+      onStateChange: (handler: (state: RoomState) => void) => void;
+    },
+    log,
+    playActionSound: (action) => audio.playActionSound(action),
+    startTurnTimer: (turnId, timeoutMs, deadlineMs) =>
+      startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
+    turnTimeoutMs: TURN_TIMEOUT_MS,
+    setLastRoomState: (state) => {
+      lastRoomState = state;
+    },
+    isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
+    renderState,
   });
 
-  joinedRoom.onMessage("turnTimer", (payload: TurnTimerPayload) => {
-    if (!payload || typeof payload !== "object") return;
-    const record = payload as Record<string, unknown>;
-    const turnId = typeof record.currentTurn === "string" ? record.currentTurn : "";
-    const startedAt = typeof record.startedAt === "number" ? record.startedAt : null;
-    const timeoutMs = typeof record.timeoutMs === "number" ? record.timeoutMs : TURN_TIMEOUT_MS;
-    const serverTime = typeof record.serverTime === "number" ? record.serverTime : null;
-    if (!turnId || startedAt === null || serverTime === null) return;
-
-    const clientNow = Date.now();
-    const offsetMs = serverTime - clientNow;
-    const deadlineMs = startedAt - offsetMs + timeoutMs;
-    startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs);
-  });
-
-  room.onMessage("roundEnded", (payload: RoundEndedPayload) => {
+  joinedRoom.onMessage("roundEnded", (payload: RoundEndedPayload) => {
+    const historyData = buildRoundEndedHistoryData(payload, {
+      currentSessionId,
+      potText: potStatus.textContent,
+      schemaArrayToCards,
+    });
     const winnersPayload = Array.isArray(payload?.winners) ? payload.winners : [];
-    const winnersForHistory: HandHistoryWinner[] = winnersPayload
-      .filter((winner: any) => winner && typeof winner.playerId === "string")
-      .map((winner: any) => ({
-        playerId: winner.playerId,
-        amount: typeof winner.amount === "number" ? winner.amount : undefined
-      }));
-    const potValue = Number(potStatus.textContent ?? 0);
-    const communityCards = schemaArrayToCards(payload?.communityCards);
-    const yourHand = currentSessionId && payload?.playerHands?.[currentSessionId]
-      ? payload.playerHands[currentSessionId]
-      : undefined;
+    const { winnersForHistory, potValue, communityCards, yourHand } = historyData;
     const isAllInShowdown = Boolean(payload?.isAllInShowdown);
 
     if (isAllInShowdown) {
@@ -1230,83 +1231,79 @@ async function joinRoom(
         .map((w: any) => w.playerId);
       pendingWinners = winnerIds;
       pendingWinningHand = payload?.winningHand ?? "";
-
-      const showWinners = () => {
-        winnerDisplayState.lastWinners = pendingWinners ?? [];
-        winnerDisplayState.lastWinningHand = pendingWinningHand ?? "";
-        winnersStatus.textContent = winnerDisplayState.lastWinners.join(", ") || "-";
-        winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
-        winningHandChip.textContent = winnerDisplayState.lastWinningHand;
-        if (currentSessionId && winnerDisplayState.lastWinners.includes(currentSessionId)) {
-          audio.playEffect("win");
-        }
-        allInRevealInProgress = false;
-        pendingWinners = null;
-        pendingWinningHand = null;
-        gameUiContext.previousCommunityCards = [...communityCards];
-        startWinnerDisplayPhase();
-        if (lastRoomState) renderState(lastRoomState);
-        // Mensaje flotante central con jugada + primer ganador
-        const firstWinnerId = winnerDisplayState.lastWinners[0];
-        const firstWinnerName = firstWinnerId
-          ? gameUiContext.latestPlayerNames.get(firstWinnerId) ?? firstWinnerId
-          : "";
-        if (winnerDisplayState.lastWinningHand && firstWinnerName) {
-          showWinnerBanner(`${winnerDisplayState.lastWinningHand} para ${firstWinnerName}`);
-        }
-      };
-
-      if (allInCardsRevealedByServer) {
-        gameUiContext.previousCommunityCards = [...communityCards];
-        showWinners();
-      } else {
-        gameUiContext.previousCommunityCards = [...communityCards];
-        revealAllInCards(communityCards, showWinners);
-      }
+      applyAllInShowdownOutcome({
+        winnerDisplayState,
+        currentSessionId,
+        latestPlayerNames: gameUiContext.latestPlayerNames,
+        applyWinnerUi: (winnerIds, winningHand) => {
+          applyWinnerUiState(winnerDisplayState, {
+            winnerIds,
+            winningHand,
+            winnersStatusEl: winnersStatus,
+            winningHandStatusEl: winningHandStatus,
+            winningHandChipEl: winningHandChip,
+          });
+        },
+        playWinEffect: () => audio.playEffect("win"),
+        startWinnerDisplayPhase,
+        renderLastState: () => {
+          if (lastRoomState) renderState(lastRoomState);
+        },
+        showWinnerBanner,
+        setPreviousCommunityCards: (cards) => {
+          gameUiContext.previousCommunityCards = [...cards];
+        },
+        winnerIds: pendingWinners ?? [],
+        winningHand: pendingWinningHand ?? "",
+        communityCards,
+        allInCardsRevealedByServer,
+        setAllInRevealInProgress: (value) => {
+          allInRevealInProgress = value;
+          if (!value) {
+            pendingWinners = null;
+            pendingWinningHand = null;
+          }
+        },
+        revealAllInCards,
+      });
     } else {
       gameUiContext.previousCommunityCards = [...communityCards];
       const winnerDisplay = getWinnerDisplayFromRoundEnd(payload);
-      winnerDisplayState.lastWinningHand = winnerDisplay.winningHand || (payload?.winningHand ?? "");
-      winningHandStatus.textContent = winnerDisplayState.lastWinningHand;
-      winningHandChip.textContent = winnerDisplayState.lastWinningHand;
-      if (winnerDisplay.winnerIds.length > 0) {
-        winnerDisplayState.lastWinners = winnerDisplay.winnerIds;
-        winnersStatus.textContent = winnerDisplayState.lastWinners.join(", ") || "-";
-        previousWinnersKey = winnerDisplayState.lastWinners.join("|");
-        if (currentSessionId && winnerDisplayState.lastWinners.includes(currentSessionId)) {
-          audio.playEffect("win");
-        }
-        if (winnerDisplay.startPhaseNow) {
-          startWinnerDisplayPhase();
-        }
-        // Mensaje flotante central con jugada + primer ganador (no all-in auto)
-        const firstWinnerId = winnerDisplayState.lastWinners[0];
-        const firstWinnerName = firstWinnerId
-          ? gameUiContext.latestPlayerNames.get(firstWinnerId) ?? firstWinnerId
-          : "";
-        if (winnerDisplayState.lastWinningHand && firstWinnerName) {
-          showWinnerBanner(`${winnerDisplayState.lastWinningHand} para ${firstWinnerName}`);
-        }
-      }
-      if (lastRoomState) renderState(lastRoomState);
+      applyStandardRoundOutcome({
+        winnerDisplayState,
+        currentSessionId,
+        latestPlayerNames: gameUiContext.latestPlayerNames,
+        applyWinnerUi: (winnerIds, winningHand) => {
+          applyWinnerUiState(winnerDisplayState, {
+            winnerIds,
+            winningHand,
+            winnersStatusEl: winnersStatus,
+            winningHandStatusEl: winningHandStatus,
+            winningHandChipEl: winningHandChip,
+          });
+        },
+        playWinEffect: () => audio.playEffect("win"),
+        startWinnerDisplayPhase,
+        renderLastState: () => {
+          if (lastRoomState) renderState(lastRoomState);
+        },
+        showWinnerBanner,
+        setPreviousCommunityCards: () => undefined,
+        winnerDisplay,
+        fallbackWinningHand: payload?.winningHand ?? "",
+        setPreviousWinnersKey: (key) => {
+          previousWinnersKey = key;
+        },
+      });
     }
     
     // Cartas de la mano ganadora (tomamos las hole cards del primer ganador para historial).
-    let winningCards: string[] | undefined;
-    if (payload?.playerHands && typeof payload.playerHands === "object" && winnersForHistory.length > 0) {
-      const firstWinnerId = winnersForHistory[0].playerId;
-      const cards = payload.playerHands[firstWinnerId];
-      if (Array.isArray(cards) && cards.length > 0) {
-        winningCards = cards;
-      }
-    }
-
     addHandHistoryEntry(
       {
         timestamp: Date.now(),
         winners: winnersForHistory,
         winningHand: payload?.winningHand ?? "-",
-        winningCards,
+        winningCards: historyData.winningCards,
         communityCards,
         pot: potValue,
         yourHand
@@ -1317,165 +1314,71 @@ async function joinRoom(
     log(`Round ended: ${JSON.stringify(payload)}`);
   });
 
-  room.onMessage("error", (payload: ErrorPayload) => {
-    log(`Server error: ${JSON.stringify(payload)}`);
-  });
-
-  room.onStateChange((state) => {
-    lastRoomState = state;
-    if (!isInWinnerPhase(winnerDisplayState)) {
-      renderState(state);
-    }
-  });
   } finally {
-    joinInProgress = false;
-    joinByIdButton.disabled = false;
-    if (mode === "create") {
-      setTimeout(() => { createTableButton.disabled = false; }, CREATE_TABLE_COOLDOWN_MS);
-    } else {
-      createTableButton.disabled = false;
-    }
+    finalizeJoinAttempt(mode, {
+      setJoinInProgress: (value) => {
+        joinInProgress = value;
+      },
+      setJoinByIdEnabled: (enabled) => {
+        joinByIdButton.disabled = !enabled;
+      },
+      setCreateTableEnabled: (enabled) => {
+        createTableButton.disabled = !enabled;
+      },
+      schedule: (callback, delayMs) => {
+        setTimeout(callback, delayMs);
+      },
+      createCooldownMs: CREATE_TABLE_COOLDOWN_MS,
+    });
   }
 }
 
 type LobbyDepsFactory = () => LobbyDeps;
+const refreshWinnersRanking = () =>
+  refreshWinnersRankingFn({
+    apiUrl: API_URL,
+    listEl: winnersRankingList,
+    fetchFn: fetch.bind(window),
+    log,
+  });
 
-type WinnerRankingEntry = {
-  id: number;
-  username: string;
-  gamesPlayed: number;
-  gamesWon: number;
-};
-
-async function refreshWinnersRanking() {
-  try {
-    const res = await fetch(`${API_URL}/api/ranking/top-winners`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const data = (await res.json()) as WinnerRankingEntry[] | any;
-    const entries: WinnerRankingEntry[] = Array.isArray(data)
-      ? data
-          .filter(
-            (item: any) =>
-              item &&
-              typeof item.id === "number" &&
-              typeof item.username === "string"
-          )
-          .map((item: any) => ({
-            id: item.id,
-            username: item.username,
-            gamesPlayed: Number(item.gamesPlayed ?? 0),
-            gamesWon: Number(item.gamesWon ?? 0),
-          }))
-      : [];
-
-    winnersRankingList.innerHTML = "";
-    if (entries.length === 0) {
-      const li = document.createElement("li");
-      li.className = "room-item room-item-empty";
-      li.textContent = "Todavía no hay datos de ranking.";
-      winnersRankingList.appendChild(li);
-      return;
-    }
-
-    entries.forEach((entry, index) => {
-      const li = document.createElement("li");
-      li.className = "room-item";
-
-      const left = document.createElement("div");
-      left.className = "ranking-left";
-
-      const pos = document.createElement("span");
-      pos.className = "ranking-pos";
-      pos.textContent = String(index + 1);
-      if (index === 0) pos.classList.add("gold");
-      else if (index === 1) pos.classList.add("silver");
-      else if (index === 2) pos.classList.add("bronze");
-
-      const name = document.createElement("span");
-      name.className = "room-name";
-      name.textContent = entry.username;
-
-      const meta = document.createElement("span");
-      meta.className = "room-meta";
-      meta.textContent = `${entry.gamesWon} ganadas · ${entry.gamesPlayed} jugadas`;
-
-      left.appendChild(pos);
-      left.appendChild(name);
-
-      li.appendChild(left);
-      li.appendChild(meta);
-      winnersRankingList.appendChild(li);
-    });
-  } catch (err: any) {
-    winnersRankingList.innerHTML = "";
-    const li = document.createElement("li");
-    li.className = "room-item room-item-empty";
-    li.textContent = "No se pudo cargar el ranking.";
-    winnersRankingList.appendChild(li);
-    log(`Ranking error: ${err?.message || err}`);
-  }
-}
-
-function startLobbyPolling() {
-  stopLobbyPolling();
-  lobbyPollId = window.setInterval(() => {
-    refreshLobbyRooms(getLobbyDeps(), false).catch(() => undefined);
-  }, 5000);
-}
-
-function stopLobbyPolling() {
-  if (lobbyPollId !== null) {
-    clearInterval(lobbyPollId);
-    lobbyPollId = null;
-  }
-}
+const lobbyPolling = createLobbyPollingController({
+  refresh: () => refreshLobbyRooms(getLobbyDeps(), false),
+});
 
 async function openLobby() {
-  if (!token) {
-    setAuthOverlayVisible(true);
-    setLobbyOverlayVisible(false);
-    log("No token. Login o registro requerido.");
-    return;
-  }
-  setAuthOverlayVisible(false);
-  setLobbyOverlayVisible(true);
-  // El usuario está explícitamente en el lobby: no queremos reconexiones automáticas a mesas antiguas.
-  shouldAutoReconnect = false;
-  SecureStorage.clearLastRoomId();
-  joinInProgress = false;
-  setLobbyJoinButtonsEnabled(true);
-  await refreshLobbyRooms(getLobbyDeps(), true);
-  await refreshWinnersRanking();
-  startLobbyPolling();
+  await openLobbyFlow({
+    hasToken: () => Boolean(token),
+    setAuthOverlayVisible,
+    setLobbyOverlayVisible,
+    log,
+    onEnterLobby: () => {
+      // El usuario está explícitamente en el lobby: no queremos reconexiones automáticas a mesas antiguas.
+      shouldAutoReconnect = false;
+      SecureStorage.clearLastRoomId();
+    },
+    setJoinInProgress: (value) => {
+      joinInProgress = value;
+    },
+    setLobbyJoinButtonsEnabled,
+    refreshLobbyRooms: () => refreshLobbyRooms(getLobbyDeps(), true),
+    refreshWinnersRanking,
+    startLobbyPolling: () => lobbyPolling.start(),
+  });
 }
 
-(document.querySelector("#register") as HTMLButtonElement).addEventListener("click", () => {
-  register().catch((err) => {
-    const message = err?.message || String(err);
-    const mapped = mapAuthError(message, "register");
-    setAuthMessage(mapped, "error");
-    log(`Register error: ${message}`);
-  });
-});
-
-(document.querySelector("#login") as HTMLButtonElement).addEventListener("click", () => {
-  login().catch((err) => {
-    const message = err?.message || String(err);
-    const mapped = mapAuthError(message, "login");
-    setAuthMessage(mapped, "error");
-    log(`Login error: ${message}`);
-  });
-});
-
-(document.querySelector("#join") as HTMLButtonElement).addEventListener("click", () => {
-  openLobby().catch((err) => log(`Lobby error: ${err?.message || err}`));
+bindAuthEntryButtons({
+  refs: {
+    registerButton: document.querySelector("#register") as HTMLButtonElement,
+    loginButton: document.querySelector("#login") as HTMLButtonElement,
+    joinButton: document.querySelector("#join") as HTMLButtonElement,
+  },
+  register,
+  login,
+  openLobby,
+  mapAuthError,
+  setAuthMessage,
+  log,
 });
 
 const authLoginForm = document.querySelector("#auth-login-form") as HTMLElement;
@@ -1486,44 +1389,21 @@ const forgotPasswordSubmit = document.querySelector("#forgot-password-submit") a
 const forgotPasswordBack = document.querySelector("#forgot-password-back") as HTMLButtonElement;
 const loginEmailInput = document.querySelector("#email") as HTMLInputElement;
 
-if (forgotPasswordLink) {
-  forgotPasswordLink.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (authLoginForm) authLoginForm.classList.add("hidden");
-    if (forgotPasswordBlock) forgotPasswordBlock.classList.remove("hidden");
-    // Prefill with email the user already typed (if any)
-    const existingEmail = (loginEmailInput?.value ?? "").trim();
-    if (forgotPasswordEmail && !forgotPasswordEmail.value.trim() && existingEmail) {
-      forgotPasswordEmail.value = existingEmail;
-    }
-    setAuthMessage("", "info");
-  });
-}
-if (forgotPasswordBack) {
-  forgotPasswordBack.addEventListener("click", () => {
-    if (authLoginForm) authLoginForm.classList.remove("hidden");
-    if (forgotPasswordBlock) forgotPasswordBlock.classList.add("hidden");
-    setAuthMessage("", "info");
-  });
-}
-if (forgotPasswordSubmit) {
-  forgotPasswordSubmit.addEventListener("click", async () => {
-    const email = forgotPasswordEmail?.value?.trim() ?? "";
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.valid) {
-      setAuthMessage(emailValidation.error ?? "Email no válido", "error");
-      return;
-    }
-    setAuthMessage("Enviando enlace...", "info");
-    try {
-      await request("/api/auth/forgot-password", { email });
-      setAuthMessage("Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja de entrada.", "success");
-    } catch (err) {
-      setAuthMessage("No se pudo enviar el enlace. Inténtalo de nuevo más tarde.", "error");
-      log(`Forgot password error: ${err}`);
-    }
-  });
-}
+bindForgotPasswordUi({
+  refs: {
+    authLoginForm,
+    forgotPasswordBlock,
+    forgotPasswordLink,
+    forgotPasswordEmail,
+    forgotPasswordSubmit,
+    forgotPasswordBack,
+    loginEmailInput,
+  },
+  setAuthMessage,
+  request,
+  validateEmail,
+  log,
+});
 
 refreshRoomsButton.addEventListener("click", () => {
   refreshLobbyRooms(getLobbyDeps(), true).catch(() => undefined);
@@ -1541,7 +1421,7 @@ joinByIdButton.addEventListener("click", () => {
 });
 
 backToAuthButton.addEventListener("click", () => {
-  stopLobbyPolling();
+  lobbyPolling.stop();
   setLobbyOverlayVisible(false);
   setAuthOverlayVisible(true);
 });
@@ -1560,48 +1440,20 @@ function requireRoom(): Room | null {
   return room;
 }
 
-(document.querySelector("#start-game") as HTMLButtonElement).addEventListener("click", () => {
-  queueAction("startGame", undefined);
-});
-
-(document.querySelector("#check") as HTMLButtonElement).addEventListener("click", () => {
-  queueAction("check", undefined);
-});
-
-(document.querySelector("#call") as HTMLButtonElement).addEventListener("click", () => {
-  queueAction("call", undefined);
-});
-
-(document.querySelector("#fold") as HTMLButtonElement).addEventListener("click", () => {
-  queueAction("fold", undefined);
-});
-
-(document.querySelector("#all-in") as HTMLButtonElement).addEventListener("click", () => {
-  queueAction("allIn", undefined);
-});
-
-function getBetAmount() {
-  const amount = parseInt((document.querySelector("#bet-amount") as HTMLInputElement).value, 10);
-  return Number.isFinite(amount) ? amount : 0;
-}
-
-(document.querySelector("#bet") as HTMLButtonElement).addEventListener("click", () => {
-  const amount = getBetAmount();
-  if (amount <= 0) {
-    log("Invalid bet amount.");
-    return;
-  }
-  queueAction("bet", amount);
-});
-
-(document.querySelector("#raise") as HTMLButtonElement).addEventListener("click", () => {
-  const amount = getBetAmount();
-  if (amount <= 0) {
-    log("Invalid raise amount.");
-    return;
-  }
-  queueAction("raise", amount);
-});
+bindGameActionButtons(
+  {
+    startGameButton: document.querySelector("#start-game") as HTMLButtonElement,
+    checkButton: document.querySelector("#check") as HTMLButtonElement,
+    callButton: document.querySelector("#call") as HTMLButtonElement,
+    foldButton: document.querySelector("#fold") as HTMLButtonElement,
+    allInButton: document.querySelector("#all-in") as HTMLButtonElement,
+    betButton: document.querySelector("#bet") as HTMLButtonElement,
+    raiseButton: document.querySelector("#raise") as HTMLButtonElement,
+    betAmountInput: document.querySelector("#bet-amount") as HTMLInputElement,
+  },
+  queueAction,
+  log
+);
 
 (document.querySelector("#toggle-panel") as HTMLButtonElement).addEventListener("click", () => {
   const app = document.querySelector("#app");
