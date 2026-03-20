@@ -42,9 +42,8 @@ import {
   clearHandHistory,
   renderHandHistory
 } from "./hand-history";
-import { createCardElement, renderCardRow, cardsEqual, preloadCardImages } from "./ui-cards";
+import { renderCardRow, preloadCardImages } from "./ui-cards";
 import { attemptTokenRefresh } from "./auth/token-refresh";
-import { startTokenMonitor as startTokenMonitorFn, stopTokenMonitor as stopTokenMonitorFn } from "./auth/token-monitor";
 import { runPostLoginAutoRejoin } from "./auth/login-auto-rejoin";
 import { disconnectRoom } from "./auth/room-disconnect";
 import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
@@ -74,6 +73,7 @@ import { bindGameActionButtons } from "./app/game-action-bindings";
 import { bindForgotPasswordUi } from "./app/forgot-password-ui";
 import { openLobbyFlow } from "./app/lobby-controller";
 import { bindAuthEntryButtons } from "./app/auth-entry-bindings";
+import { createRoomSessionController } from "./app/room-session-controller";
 import {
   validateJoinRequest,
   handleJoinError,
@@ -90,6 +90,11 @@ import { applyWinnerUiState } from "./app/round-ended-winner-ui";
 import { applyAllInShowdownOutcome, applyStandardRoundOutcome } from "./app/round-ended-outcome";
 import { bindCoreRoomEvents } from "./app/room-event-bindings";
 import { applyPostJoinSetup, finalizeJoinAttempt } from "./app/join-room-lifecycle";
+import { setupCardPopover } from "./app/card-popover";
+import { registerFlow, loginFlow } from "./app/auth-flows";
+import { clearAuthSession, handleTokenInvalidated as handleTokenInvalidatedFn, startTokenMonitor as startTokenMonitorApp } from "./app/auth-session";
+import { resetRoomUi as resetRoomUiFn } from "./app/room-ui-reset";
+import { registerGlobalLifecycle } from "./app/global-lifecycle";
 
 // Security modules
 import {
@@ -160,157 +165,41 @@ const qualityStatus = dom.qualityStatus!;
 const bufferStatus = dom.bufferStatus!;
 const yourTurnIndicator = dom.yourTurnIndicator!;
 const cardPopover = dom.cardPopover;
-const cardPopoverCards = dom.cardPopoverCards;;
-
-function setupCardPopover() {
-  if (!seatsEl || !cardPopover || !cardPopoverCards) return;
-  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-  let popoverPinned = false;
-
-  function showPopover(hand: HTMLElement) {
-    if (!cardPopover || !cardPopoverCards) return;
-    const raw = hand.getAttribute("data-cards");
-    let cards: string[] = [];
-    try {
-      cards = raw ? JSON.parse(raw) : [];
-    } catch {
-      /* ignore */
-    }
-    if (cards.length === 0) return;
-    cardPopoverCards.innerHTML = "";
-    cards.forEach((card) => {
-      const el = createCardElement(card);
-      cardPopoverCards.appendChild(el);
-    });
-    cardPopover.classList.remove("hidden");
-    cardPopover.setAttribute("aria-hidden", "false");
-    requestAnimationFrame(() => {
-      if (!cardPopover) return;
-      const rect = hand.getBoundingClientRect();
-      const popRect = cardPopover.getBoundingClientRect();
-      const padding = 12;
-      let left = rect.left + rect.width / 2 - popRect.width / 2;
-      let top = rect.top - popRect.height - padding;
-      left = Math.max(padding, Math.min(left, document.documentElement.clientWidth - popRect.width - padding));
-      top = Math.max(padding, Math.min(top, document.documentElement.clientHeight - popRect.height - padding));
-      cardPopover.style.left = `${left}px`;
-      cardPopover.style.top = `${top}px`;
-    });
-  }
-
-  function hidePopover() {
-    if (cardPopover) {
-      cardPopover.classList.add("hidden");
-      cardPopover.setAttribute("aria-hidden", "true");
-    }
-    popoverPinned = false;
-  }
-
-  seatsEl.addEventListener("mouseenter", (e: MouseEvent) => {
-    const hand = (e.target as HTMLElement).closest<HTMLElement>(".seat-hand");
-    if (!hand || !cardPopover || !cardPopoverCards) return;
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-      hideTimeout = null;
-    }
-    showPopover(hand);
-  }, true);
-
-  seatsEl.addEventListener("mouseleave", (e: MouseEvent) => {
-    if (!(e.target as HTMLElement).closest(".seat-hand")) return;
-    if (popoverPinned) return;
-    hideTimeout = setTimeout(() => {
-      hidePopover();
-      hideTimeout = null;
-    }, 200);
-  }, true);
-
-  seatsEl.addEventListener("click", (e: MouseEvent) => {
-    const hand = (e.target as HTMLElement).closest<HTMLElement>(".seat-hand");
-    if (!hand || !cardPopover || !cardPopoverCards) return;
-    e.stopPropagation();
-    const raw = hand.getAttribute("data-cards");
-    let cards: string[] = [];
-    try {
-      cards = raw ? JSON.parse(raw) : [];
-    } catch {
-      /* ignore */
-    }
-    if (cards.length === 0) return;
-    if (cardPopover.classList.contains("hidden")) {
-      showPopover(hand);
-      popoverPinned = true;
-    } else {
-      hidePopover();
-    }
-  }, true);
-
-  cardPopover.addEventListener("click", (e: MouseEvent) => {
-    e.stopPropagation();
-    if (popoverPinned) hidePopover();
-  });
-
-  document.addEventListener("click", () => {
-    if (!cardPopover || cardPopover.classList.contains("hidden")) return;
-    if (popoverPinned) hidePopover();
-  });
-}
-
-// Initialize after functions are defined
-document.addEventListener("DOMContentLoaded", () => {
-  apiUrlEl.textContent = API_URL;
-  wsUrlEl.textContent = WS_URL;
-  void initPixiLayer();
-  setAuthOverlayVisible(true);
-  renderHandHistoryUi();
-  setupCardPopover();
-});
-
-window.addEventListener("error", (event) => {
-  const message = event.error?.message || event.message || "Unknown client error";
-  setAuthMessage(`Error: ${message}`, "error");
-  log(`Client error: ${message}`);
-});
-
-window.addEventListener("unhandledrejection", (event) => {
-  const reason = event.reason as { message?: string } | string | undefined;
-  const message = typeof reason === "string" ? reason : reason?.message || "Unhandled rejection";
-  setAuthMessage(`Error: ${message}`, "error");
-  log(`Unhandled rejection: ${message}`);
-});
-
-document.addEventListener("pointerdown", () => { if (!audio.isUnlocked()) audio.init(); }, { once: true });
+const cardPopoverCards = dom.cardPopoverCards;
 
 // Only attempt reconnect on visibility when we were actually in a room before backgrounding.
 // Otherwise login-only users would get auto-joined to a table when tab/focus changes.
 let hadRoomWhenBackgrounded = false;
 
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    // App went to background - pause heartbeat to save battery
-    log("🔇 App backgrounded, heartbeat paused");
-    hadRoomWhenBackgrounded = connectionState === "connected" && room !== null;
-    stopClientHeartbeat();
-  } else {
-    // App came back to foreground - check connection
-    log("🔊 App resumed from background");
-    if (connectionState === "disconnected" && token && hadRoomWhenBackgrounded) {
-      log("Attempting to reconnect...");
-      hadRoomWhenBackgrounded = false;
-      attemptReconnect();
-    } else if (connectionState === "connected" && room) {
-      log("Resuming heartbeat...");
-      startClientHeartbeat();
-    } else {
-      hadRoomWhenBackgrounded = false;
-    }
-  }
-});
-
 function log(message: string) {
   const ts = new Date().toLocaleTimeString();
   logEl.textContent = `[${ts}] ${message}\n` + logEl.textContent;
 }
+
+registerGlobalLifecycle({
+  apiUrlEl,
+  wsUrlEl,
+  apiUrl: API_URL,
+  wsUrl: WS_URL,
+  initPixiLayer,
+  setAuthOverlayVisible,
+  renderHandHistoryUi,
+  setupCardPopover: () => setupCardPopover({ seatsEl, cardPopover, cardPopoverCards }),
+  setAuthMessage,
+  log,
+  isAudioUnlocked: () => audio.isUnlocked(),
+  initAudio: () => audio.init(),
+  getConnectionState: () => connectionState,
+  hasRoom: () => room !== null,
+  hasToken: () => Boolean(token),
+  getHadRoomWhenBackgrounded: () => hadRoomWhenBackgrounded,
+  setHadRoomWhenBackgrounded: (value) => {
+    hadRoomWhenBackgrounded = value;
+  },
+  stopClientHeartbeat,
+  startClientHeartbeat,
+  attemptReconnect,
+});
 
 function setLobbyOverlayVisible(visible: boolean) {
   setLobbyOverlayVisibleFn(overlayRefs, visible);
@@ -466,12 +355,6 @@ function showWinnerBanner(text: string) {
   }, 2600);
 }
 
-function triggerAnimation(element: HTMLElement, className: string) {
-  element.classList.remove(className);
-  void element.offsetWidth;
-  element.classList.add(className);
-}
-
 async function initPixiLayer() {
   pixiTableSurface = document.querySelector<HTMLDivElement>(".table-surface");
   if (!pixiTableSurface) return;
@@ -501,110 +384,6 @@ async function initPixiLayer() {
     if (!pixiApp || !pixiTableSurface) return;
     pixiApp.renderer.resize(pixiTableSurface.clientWidth, pixiTableSurface.clientHeight);
   });
-}
-
-function getElementCenterInTable(element: HTMLElement) {
-  if (!pixiTableSurface) return { x: 0, y: 0 };
-  const tableRect = pixiTableSurface.getBoundingClientRect();
-  const rect = element.getBoundingClientRect();
-  return {
-    x: rect.left - tableRect.left + rect.width / 2,
-    y: rect.top - tableRect.top + rect.height / 2
-  };
-}
-
-function getDeckPosition() {
-  if (!pixiTableSurface) return { x: 0, y: 0 };
-  return {
-    x: pixiTableSurface.clientWidth / 2,
-    y: 80
-  };
-}
-
-function getCardTexture(card: string) {
-  if (!pixiLib) return null;
-  const suit = card.slice(-1);
-  const rank = card.slice(0, -1);
-  const suitNameMap: Record<string, string> = {
-    O: "ORO",
-    C: "COPAS",
-    E: "ESPADA",
-    B: "BASTOS"
-  };
-  const suitName = suitNameMap[suit] ?? suit;
-  return pixiLib.Texture.from(`/cards/${rank} DE ${suitName}.webp`);
-}
-
-function createCardSprite(targetEl: HTMLElement) {
-  if (!pixiLib) return null;
-  const rect = targetEl.getBoundingClientRect();
-  const sprite = new pixiLib.Sprite(pixiLib.Texture.from("/cards/back_logo.png"));
-  sprite.anchor.set(0.5);
-  sprite.width = rect.width;
-  sprite.height = rect.height;
-  return sprite;
-}
-
-function tweenSprite(
-  sprite: any,
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  durationMs: number,
-  delayMs: number,
-  onComplete?: () => void
-) {
-  if (!pixiApp) return;
-  const startAt = performance.now() + delayMs;
-  const endAt = startAt + durationMs;
-  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-
-  const update = () => {
-    const now = performance.now();
-    if (now < startAt) return;
-    const t = Math.min((now - startAt) / durationMs, 1);
-    const eased = easeOut(t);
-    sprite.x = from.x + (to.x - from.x) * eased;
-    sprite.y = from.y + (to.y - from.y) * eased;
-    if (t >= 1) {
-      pixiApp?.ticker.remove(update);
-      onComplete?.();
-    }
-  };
-
-  pixiApp.ticker.add(update);
-}
-
-function flipSprite(sprite: any, frontTexture: any, durationMs = 280) {
-  if (!pixiApp) return;
-  const half = durationMs / 2;
-  const startAt = performance.now();
-  const update = () => {
-    const now = performance.now();
-    const elapsed = now - startAt;
-    if (elapsed <= half) {
-      const t = Math.min(elapsed / half, 1);
-      sprite.scale.x = 1 - t;
-    } else {
-      if (sprite.texture !== frontTexture) {
-        sprite.texture = frontTexture;
-      }
-      const t = Math.min((elapsed - half) / half, 1);
-      sprite.scale.x = t;
-      if (t >= 1) {
-        pixiApp?.ticker.remove(update);
-      }
-    }
-  };
-  pixiApp.ticker.add(update);
-}
-
-function animateCardDeals(
-  containerEl: HTMLElement,
-  cards: string[],
-  previousCards: string[]
-) {
-  // Animation disabled - just show cards immediately
-  return;
 }
 
 function revealAllInCards(cards: string[], onComplete?: () => void) {
@@ -639,58 +418,80 @@ function revealAllInCards(cards: string[], onComplete?: () => void) {
 }
 
 function resetRoomUi(message?: string) {
-  disconnectRoom(room);
-  room = null;
-  currentSessionId = null;
-  gameUiContext.currentSessionId = null;
-  clearWinnerDisplay(winnerDisplayState);
-  deferredTournamentResult = null;
-  if (deferredTournamentTimerId !== null) {
-    clearTimeout(deferredTournamentTimerId);
-    deferredTournamentTimerId = null;
-  }
-  revealedHands = null;
-  gameUiContext.revealedHands = null;
-  gameUiContext.previousPotValue = null;
-  gameUiContext.previousCurrentBetValue = null;
-  previousWinnersKey = "";
-  allInRevealStarted = false;
-  allInRevealInProgress = false;
-  gameUiContext.allInRevealInProgress = false;
-  allInCardsRevealedByServer = false;
-  pendingWinners = null;
-  pendingWinningHand = null;
-  gameUiContext.previousCommunityCards.length = 0;
-  gameUiContext.previousHandCards.length = 0;
-  if (allInAnimationTimeoutId !== null) {
-    window.clearTimeout(allInAnimationTimeoutId);
-    allInAnimationTimeoutId = null;
-  }
-  clearHandHistory();
-  renderHandHistoryUi();
-  setAuthOverlayVisible(true);
-  setAuthMessage("", "info");
-  roomStatus.textContent = message || "not joined";
-  phaseStatus.textContent = "waiting";
-  turnStatus.textContent = "-";
-  stopTurnTimerFn(turnTimerState, turnTimerChip);
-  potStatus.textContent = "0";
-  betStatus.textContent = "0";
-  communityStatus.textContent = "-";
-  handStatus.textContent = "-";
-  winningHandStatus.textContent = "-";
-  winnersStatus.textContent = "-";
-  potChip.textContent = "0";
-  phaseChip.textContent = "waiting";
-  turnChip.textContent = "-";
-  turnTimerChip.textContent = "-";
-  winningHandChip.textContent = "-";
-  renderCardRow(communityCardsEl, [], 5);
-  renderCardRow(handCardsEl, [], 2);
-  playersList.innerHTML = "";
-  syncGameUiContext();
-  renderSeatsFn({ users: new Map(), dealerIndex: -1, currentTurn: "" }, getGameUiRefs(), gameUiContext);
-  setActionButtonsEnabledFn(getGameUiRefs(), { canStart: false, canCheck: false, canCall: false, canFold: false, canAllIn: false, canBet: false, canRaise: false });
+  resetRoomUiFn(
+    {
+      getRoom: () => room,
+      disconnectRoom,
+      setRoom: (value) => {
+        room = value;
+      },
+      setCurrentSessionId: (sessionId) => {
+        currentSessionId = sessionId;
+        gameUiContext.currentSessionId = sessionId;
+      },
+      clearWinnerDisplay,
+      winnerDisplayState,
+      clearDeferredTournamentTimer: () => {
+        deferredTournamentResult = null;
+        if (deferredTournamentTimerId !== null) {
+          clearTimeout(deferredTournamentTimerId);
+          deferredTournamentTimerId = null;
+        }
+      },
+      setRevealedHands: (hands) => {
+        revealedHands = hands;
+      },
+      gameUiContext,
+      resetPreviousWinnersKey: () => {
+        previousWinnersKey = "";
+      },
+      resetAllInState: () => {
+        allInRevealStarted = false;
+        allInRevealInProgress = false;
+        allInCardsRevealedByServer = false;
+        pendingWinners = null;
+        pendingWinningHand = null;
+      },
+      clearAllInAnimationTimeout: () => {
+        if (allInAnimationTimeoutId !== null) {
+          window.clearTimeout(allInAnimationTimeoutId);
+          allInAnimationTimeoutId = null;
+        }
+      },
+      clearHandHistory,
+      renderHandHistoryUi,
+      setAuthOverlayVisible,
+      setAuthMessage,
+      roomStatusEl: roomStatus,
+      phaseStatusEl: phaseStatus,
+      turnStatusEl: turnStatus,
+      stopTurnTimer: stopTurnTimerFn,
+      turnTimerState,
+      turnTimerChipEl: turnTimerChip,
+      potStatusEl: potStatus,
+      betStatusEl: betStatus,
+      communityStatusEl: communityStatus,
+      handStatusEl: handStatus,
+      winningHandStatusEl: winningHandStatus,
+      winnersStatusEl: winnersStatus,
+      potChipEl: potChip,
+      phaseChipEl: phaseChip,
+      turnChipEl: turnChip,
+      winningHandChipEl: winningHandChip,
+      renderCardRow,
+      communityCardsEl,
+      handCardsEl,
+      playersListEl: playersList,
+      syncGameUiContext,
+      renderSeats: () => {
+        renderSeatsFn({ users: new Map(), dealerIndex: -1, currentTurn: "" }, getGameUiRefs(), gameUiContext);
+      },
+      setActionButtonsEnabled: (flags) => {
+        setActionButtonsEnabledFn(getGameUiRefs(), flags);
+      },
+    },
+    message
+  );
 }
 
 function updateTurnTimer(state: RoomState) {
@@ -700,38 +501,50 @@ function updateTurnTimer(state: RoomState) {
 }
 
 function clearAuthToken() {
-  token = null;
-  refreshToken = null;
-  shouldAutoReconnect = false;
-  tokenStatus.textContent = "none";
-  stopTokenMonitorFn();
-  tokenInvalidNotified = false;
-  SecureStorage.clearAccessToken();
-  SecureStorage.clearRefreshToken();
+  clearAuthSession({
+    setToken: (value) => {
+      token = value;
+    },
+    setRefreshToken: (value) => {
+      refreshToken = value;
+    },
+    setShouldAutoReconnect: (value) => {
+      shouldAutoReconnect = value;
+    },
+    tokenStatusEl: tokenStatus,
+    setTokenInvalidNotified: (value) => {
+      tokenInvalidNotified = value;
+    },
+    clearAccessToken: () => SecureStorage.clearAccessToken(),
+    clearRefreshToken: () => SecureStorage.clearRefreshToken(),
+  });
 }
 
 function handleTokenInvalidated() {
-  if (tokenInvalidNotified) return;
-  tokenInvalidNotified = true;
-  clearAuthToken();
-  resetRoomUi("logged out");
-  alert("Se ha iniciado sesion en otro dispositivo. Por favor, vuelve a iniciar sesion.");
+  handleTokenInvalidatedFn({
+    getTokenInvalidNotified: () => tokenInvalidNotified,
+    setTokenInvalidNotified: (value) => {
+      tokenInvalidNotified = value;
+    },
+    clearAuthSession: clearAuthToken,
+    resetRoomUi,
+    alertUser: (message) => alert(message),
+  });
 }
 
 function startTokenMonitor() {
-  startTokenMonitorFn({
+  startTokenMonitorApp({
     apiUrl: API_URL,
     getRefreshToken: () => refreshToken,
-    onSuccess: (t, r) => {
-      token = t;
-      refreshToken = r;
-      SecureStorage.saveAccessToken(t);
-      SecureStorage.saveRefreshToken(r);
+    onSuccess: (tokenValue, refreshTokenValue) => {
+      token = tokenValue;
+      refreshToken = refreshTokenValue;
+      SecureStorage.saveAccessToken(tokenValue);
+      SecureStorage.saveRefreshToken(refreshTokenValue);
       tokenStatus.textContent = "refreshed";
     },
-    onInvalidated: handleTokenInvalidated,
+    onInvalidated: () => handleTokenInvalidated(),
     log,
-    intervalMs: 50 * 60 * 1000
   });
 }
 
@@ -741,97 +554,60 @@ function renderState(state: RoomState) {
 }
 
 async function register() {
-  const { username, email, password } = getFormValues();
-  
-  // Validate inputs before submitting
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.valid) {
-    setAuthMessage(emailValidation.error!, "error");
-    return;
-  }
-  
-  const passwordValidation = validatePassword(password);
-  if (!passwordValidation.valid) {
-    setAuthMessage(passwordValidation.error!, "error");
-    return;
-  }
-  
-  const usernameValidation = validateUsername(username);
-  if (!usernameValidation.valid) {
-    setAuthMessage(usernameValidation.error!, "error");
-    return;
-  }
-  
-  log("Registering with secure client...");
-  setAuthMessage("Creando cuenta...", "info");
-  
-  try {
-    const data = await request("/api/auth/register", { username, email, password });
-    token = typeof data.token === "string" ? data.token : null;
-    refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
-    if (refreshToken) {
-      SecureStorage.saveRefreshToken(refreshToken);
-    }
-    if (token) {
-      SecureStorage.saveAccessToken(token);
-    }
-    tokenStatus.textContent = token ? "set" : "none";
-    tokenInvalidNotified = false;
-    startTokenMonitor();
-    log("Registered and token received.");
-    setAuthMessage("Registro correcto. Puedes unirte a la mesa.", "success");
-  } catch (error) {
-    const message = mapAuthError(error instanceof Error ? error.message : String(error), "register");
-    setAuthMessage(message, "error");
-    log(`Registration error: ${message}`);
-  }
+  await registerFlow({
+    getFormValues,
+    validateEmail,
+    validatePassword,
+    validateUsername,
+    setAuthMessage,
+    log,
+    request,
+    mapAuthError,
+    persistTokens: (nextToken, nextRefreshToken) => {
+      token = nextToken;
+      refreshToken = nextRefreshToken;
+      if (refreshToken) SecureStorage.saveRefreshToken(refreshToken);
+      if (token) SecureStorage.saveAccessToken(token);
+      tokenStatus.textContent = token ? "set" : "none";
+    },
+    onAuthSuccess: () => {
+      tokenInvalidNotified = false;
+      startTokenMonitor();
+    },
+  });
 }
 
 async function login() {
-  const { email, password } = getLoginValues();
-  
-  // Validate inputs before submitting
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.valid) {
-    setAuthMessage(emailValidation.error!, "error");
-    return;
-  }
-  
-  const passwordValidation = validatePassword(password);
-  if (!passwordValidation.valid) {
-    setAuthMessage(passwordValidation.error!, "error");
-    return;
-  }
-  
-  log("Logging in with secure client...");
-  setAuthMessage("Verificando credenciales...", "info");
-  
-  try {
-    const data = await request("/api/auth/login", { email, password });
-    token = typeof data.token === "string" ? data.token : null;
-    refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
-    if (refreshToken) {
-      SecureStorage.saveRefreshToken(refreshToken);
-    }
-    if (token) {
-      SecureStorage.saveAccessToken(token);
-    }
-    tokenStatus.textContent = token ? "set" : "none";
-    tokenInvalidNotified = false;
-    startTokenMonitor();
-    log("Logged in and token received.");
-    runPostLoginAutoRejoin({
-      getLastRoomId: () => SecureStorage.getLastRoomId(),
-      joinRoom: (forceReplace, opts) => joinRoom(forceReplace, opts),
-      clearLastRoomId: () => SecureStorage.clearLastRoomId(),
-      setAuthMessage,
-      log,
-    });
-  } catch (error) {
-    const message = mapAuthError(error instanceof Error ? error.message : String(error), "login");
-    setAuthMessage(message, "error");
-    log(`Login error: ${message}`);
-  }
+  await loginFlow({
+    getLoginValues,
+    validateEmail,
+    validatePassword,
+    setAuthMessage,
+    log,
+    request,
+    mapAuthError,
+    persistTokens: (nextToken, nextRefreshToken) => {
+      token = nextToken;
+      refreshToken = nextRefreshToken;
+      if (refreshToken) SecureStorage.saveRefreshToken(refreshToken);
+      if (token) SecureStorage.saveAccessToken(token);
+      tokenStatus.textContent = token ? "set" : "none";
+    },
+    onAuthSuccess: () => {
+      tokenInvalidNotified = false;
+      startTokenMonitor();
+    },
+    runAutoRejoin: (joinRoomFn) => {
+      runPostLoginAutoRejoin({
+        getLastRoomId: () => SecureStorage.getLastRoomId(),
+        joinRoom: (forceReplace, opts) => joinRoomFn(forceReplace, opts),
+        clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+        setAuthMessage,
+        log,
+      });
+    },
+    joinRoom,
+  });
 }
 
 function startClientHeartbeat() {
@@ -939,398 +715,52 @@ const getLobbyDeps: LobbyDepsFactory = () => ({
   }
 });
 
+const roomSessionController = createRoomSessionController({
+  getToken: () => token, getJoinInProgress: () => joinInProgress,
+  setJoinInProgress: (v) => { joinInProgress = v; }, setLobbyJoinButtonsEnabled,
+  setJoinByIdEnabled: (e) => { joinByIdButton.disabled = !e; }, setCreateTableEnabled: (e) => { createTableButton.disabled = !e; },
+  createTableCooldownMs: CREATE_TABLE_COOLDOWN_MS, setConnectionState, log,
+  getWsClient, getFormValues, setAuthOverlayVisible, setLobbyOverlayVisible, setTournamentResultVisible, setAuthMessage, setLobbyMessage, handleTokenInvalidated,
+  setRoom: (v) => { room = v; }, setCurrentSessionId: (id) => { currentSessionId = id; gameUiContext.currentSessionId = id; },
+  setShouldAutoReconnect: (v) => { shouldAutoReconnect = v; }, setTournamentEnded: (v) => { tournamentEnded = v; }, getTournamentEnded: () => tournamentEnded,
+  setHadRoomWhenBackgrounded: (v) => { hadRoomWhenBackgrounded = v; }, setReconnectAttempts: (n) => { reconnectAttempts = n; },
+  clearCurrentRoomRefs: () => { room = null; currentSessionId = null; gameUiContext.currentSessionId = null; },
+  stopClientHeartbeat, startClientHeartbeat, attemptReconnect, clearAuthToken, resetRoomUi,
+  stopLobbyPolling: () => lobbyPolling.stop(),
+  showGameEndMessage: () => showGameEndMessageFn(overlayRefs),
+  isTournamentResultOverlayHidden: () => overlayRefs.tournamentResultOverlay.classList.contains("hidden"),
+  clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+  winnerDisplayState, gameUiContext,
+  renderState, isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
+  startWinnerDisplayPhase, showTournamentResult,
+  winningHandStatusEl: winningHandStatus, winningHandChipEl: winningHandChip, winnersStatusEl: winnersStatus,
+  roomStatusEl: roomStatus, communityStatusEl: communityStatus, potStatusEl: potStatus, communityCardsEl: communityCardsEl, turnTimerChipEl: turnTimerChip,
+  schemaArrayToCards, renderCardRow, preloadCardImages,
+  clearHandHistory, renderHandHistoryUi, addHandHistoryEntry,
+  saveLastRoomId: (id) => { SecureStorage.saveLastRoomId(id); },
+  showWinnerBanner, revealAllInCards,
+  getLastHeartbeatSendTime: () => lastHeartbeatSendTime,
+  recordRtt, clearHeartbeatTimeout: clearHeartbeatTimeoutFn,
+  getConnectionState: () => connectionState, replayBufferedActions,
+  getDeferredTournamentResult: () => deferredTournamentResult, setDeferredTournamentResult: (v) => { deferredTournamentResult = v; },
+  getDeferredTournamentTimerId: () => deferredTournamentTimerId, setDeferredTournamentTimerId: (id) => { deferredTournamentTimerId = id; },
+  setRevealedHands: (h) => { revealedHands = h; },
+  getAllInCardsRevealedByServer: () => allInCardsRevealedByServer, setAllInCardsRevealedByServer: (v) => { allInCardsRevealedByServer = v; },
+  setAllInRevealInProgress: (v) => { allInRevealInProgress = v; },
+  getPendingWinners: () => pendingWinners, setPendingWinners: (v) => { pendingWinners = v; },
+  getPendingWinningHand: () => pendingWinningHand, setPendingWinningHand: (v) => { pendingWinningHand = v; },
+  setPreviousWinnersKey: (k) => { previousWinnersKey = k; },
+  getLastRoomState: () => lastRoomState, setLastRoomState: (s) => { lastRoomState = s; },
+  startTurnTimer: (turnId, timeoutMs, deadlineMs) => startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
+  playActionSound: (a) => audio.playActionSound(a),
+  playWinEffect: () => audio.playEffect("win"),
+});
+
 async function joinRoom(
   forceReplace = false,
   opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
 ) {
-  const mode: JoinMode = opts?.mode ?? "joinOrCreate";
-  const validation = validateJoinRequest({
-    hasToken: Boolean(token),
-    mode,
-    roomId: opts?.roomId,
-    setConnectionState,
-    log,
-  });
-  if (!validation.ok) {
-    return;
-  }
-
-  if (joinInProgress) {
-    log("Ya hay una conexión en curso.");
-    return;
-  }
-  joinInProgress = true;
-  setLobbyJoinButtonsEnabled(false);
-
-  try {
-    const { username } = getFormValues();
-    setConnectionState("connecting");
-    log("Connecting to Colyseus...");
-
-    const client = getWsClient();
-
-    let joinedRoom: Room;
-    try {
-      if (mode === "joinById") {
-        joinedRoom = await client.joinById(validation.normalizedRoomId!, {
-        auth: { token },
-        name: username,
-        forceReplace
-      } as any);
-    } else if (mode === "create") {
-      const tableName = (opts?.tableName ?? "").trim();
-      joinedRoom = await client.create("my_room", {
-        auth: { token },
-        name: username,
-        tableName,
-        forceReplace
-      } as any);
-    } else {
-      joinedRoom = await client.joinOrCreate("my_room", {
-        auth: { token },
-        name: username,
-        forceReplace
-      } as any);
-    }
-  } catch (err: any) {
-    await handleJoinError({
-      error: err,
-      confirmSessionReplace: () =>
-        window.confirm("Ya hay una sesion activa en la mesa con este usuario. Quieres reemplazarla?"),
-      onSessionReplaceConfirmed: async () => {
-        joinInProgress = false;
-        await joinRoom(true);
-      },
-      onSessionReplaceRejected: () => {
-        setConnectionState("disconnected");
-      },
-      onInvalidToken: () => {
-        setConnectionState("disconnected");
-        handleTokenInvalidated();
-      },
-      onAuthUnavailable: () => {
-        setConnectionState("disconnected");
-        log("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.");
-        setAuthMessage("Sesión expirada o servidor no disponible. Inicia sesión de nuevo.", "error");
-        setAuthOverlayVisible(true);
-      },
-      onCreateRateLimit: () => {
-        setConnectionState("disconnected");
-        log("Espera un minuto antes de crear otra mesa.");
-        setLobbyMessage("Espera un minuto antes de crear otra mesa.", "error");
-      },
-      onGeneric: (message) => {
-        log(`Join error: ${message}`);
-        setConnectionState("disconnected");
-      },
-    });
-    return;
-  }
-
-  applyPostJoinSetup({
-    joinedRoom,
-    setRoom: (value) => {
-      room = value;
-    },
-    setCurrentSessionId: (sessionId) => {
-      currentSessionId = sessionId;
-      gameUiContext.currentSessionId = sessionId;
-    },
-    setShouldAutoReconnect: (value) => {
-      shouldAutoReconnect = value;
-    },
-    setTournamentEnded: (value) => {
-      tournamentEnded = value;
-    },
-    setAuthOverlayVisible,
-    setLobbyOverlayVisible,
-    setTournamentResultVisible,
-    stopLobbyPolling: () => lobbyPolling.stop(),
-    setConnectionState,
-    setReconnectAttempts: (value) => {
-      reconnectAttempts = value;
-    },
-    winnerDisplayState,
-    clearDeferredTournamentTimer: () => {
-      deferredTournamentResult = null;
-      if (deferredTournamentTimerId !== null) {
-        clearTimeout(deferredTournamentTimerId);
-        deferredTournamentTimerId = null;
-      }
-    },
-    winningHandStatusEl: winningHandStatus,
-    winningHandChipEl: winningHandChip,
-    winnersStatusEl: winnersStatus,
-    clearHandHistory,
-    renderHandHistoryUi,
-    preloadCardImages,
-    setRoomStatusText: (text) => {
-      roomStatus.textContent = text;
-    },
-    saveLastRoomId: (roomId) => {
-      SecureStorage.saveLastRoomId(roomId);
-    },
-    log,
-  });
-  
-  // Start client-side heartbeat to monitor connection
-  startClientHeartbeat();
-
-  joinedRoom.onLeave((code: number) => {
-    stopClientHeartbeat();
-
-    handleRoomLeave({
-      code,
-      isTournamentEnded: () => tournamentEnded,
-      setTournamentEnded: (value) => {
-        tournamentEnded = value;
-      },
-      setHadRoomWhenBackgrounded: (value) => {
-        hadRoomWhenBackgrounded = value;
-      },
-      setShouldAutoReconnect: (value) => {
-        shouldAutoReconnect = value;
-      },
-      clearLastRoomId: () => SecureStorage.clearLastRoomId(),
-      clearAuthToken,
-      resetRoomUi,
-      setConnectionState,
-      clearCurrentRoomRefs: () => {
-        room = null;
-        currentSessionId = null;
-        gameUiContext.currentSessionId = null;
-      },
-      isTournamentResultOverlayHidden: () => overlayRefs.tournamentResultOverlay.classList.contains("hidden"),
-      showGameEndMessage: () => showGameEndMessageFn(overlayRefs),
-      log,
-      attemptReconnect,
-      alertUser: (message) => alert(message),
-    });
-  });
-
-  joinedRoom.onMessage("gameResult", (payload: GameResultPayload) => {
-    handleGameResultMessage({
-      payload,
-      isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
-      setDeferredTournamentResult: (value) => {
-        deferredTournamentResult = value;
-      },
-      getDeferredTournamentResult: () => deferredTournamentResult,
-      clearDeferredTimer: () => {
-        if (deferredTournamentTimerId !== null) {
-          clearTimeout(deferredTournamentTimerId);
-          deferredTournamentTimerId = null;
-        }
-      },
-      scheduleDeferredTimer: (callback, delayMs) => {
-        deferredTournamentTimerId = setTimeout(() => {
-          deferredTournamentTimerId = null;
-          callback();
-        }, delayMs);
-      },
-      winnerDisplayMs: WINNER_DISPLAY_MS,
-      showTournamentResult,
-      renderLastState: () => {
-        if (lastRoomState) renderState(lastRoomState);
-      },
-      log,
-    });
-  });
-
-  joinedRoom.onMessage("playerDisconnected", (payload: PlayerDisconnectedPayload) => {
-    handlePlayerDisconnectedMessage(payload, log);
-  });
-
-  joinedRoom.onMessage("heartbeat_ack", () => {
-    handleHeartbeatAckMessage({
-      lastHeartbeatSendTime,
-      nowMs: Date.now(),
-      recordRtt,
-      clearHeartbeatTimeout: clearHeartbeatTimeoutFn,
-      isConnected: () => connectionState === "connected",
-      setConnected: () => {
-        setConnectionState("connected");
-      },
-      replayBufferedActions,
-    });
-  });
-
-  joinedRoom.onMessage("bettingRoundStarted", (payload) => {
-    log(`Betting round: ${JSON.stringify(payload)}`);
-    revealedHands = null;
-    allInCardsRevealedByServer = false;
-  });
-
-  joinedRoom.onMessage("communityCardRevealed", (payload: CommunityCardRevealedPayload) => {
-      // Compatible with both payload shapes:
-      // - { communityCards: string[] }
-      // - { index: number, card: string } (older backend builds / dist)
-      let cards = schemaArrayToCards(payload?.communityCards);
-
-      const idx = typeof payload?.index === "number" ? payload.index : null;
-      const card = typeof payload?.card === "string" ? payload.card : null;
-
-      if ((!cards || cards.length === 0) && card) {
-        const next = [...gameUiContext.previousCommunityCards];
-        const targetIndex = idx ?? next.length;
-        while (next.length < targetIndex) next.push("");
-        next[targetIndex] = card;
-        cards = next;
-      }
-
-      if (cards.length > 0) {
-        allInRevealInProgress = true;
-        allInCardsRevealedByServer = true;
-        gameUiContext.previousCommunityCards = [...cards];
-        renderCardRow(communityCardsEl, cards, 5);
-        const shown = cards.filter(Boolean);
-        communityStatus.textContent = shown.length ? shown.join(" ") : "-";
-      }
-    }
-  );
-
-  bindCoreRoomEvents({
-    room: joinedRoom as unknown as {
-      onMessage: (type: string, handler: (payload: any) => void) => void;
-      onStateChange: (handler: (state: RoomState) => void) => void;
-    },
-    log,
-    playActionSound: (action) => audio.playActionSound(action),
-    startTurnTimer: (turnId, timeoutMs, deadlineMs) =>
-      startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
-    turnTimeoutMs: TURN_TIMEOUT_MS,
-    setLastRoomState: (state) => {
-      lastRoomState = state;
-    },
-    isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
-    renderState,
-  });
-
-  joinedRoom.onMessage("roundEnded", (payload: RoundEndedPayload) => {
-    const historyData = buildRoundEndedHistoryData(payload, {
-      currentSessionId,
-      potText: potStatus.textContent,
-      schemaArrayToCards,
-    });
-    const winnersPayload = Array.isArray(payload?.winners) ? payload.winners : [];
-    const { winnersForHistory, potValue, communityCards, yourHand } = historyData;
-    const isAllInShowdown = Boolean(payload?.isAllInShowdown);
-
-    if (isAllInShowdown) {
-      log("Showdown: all-in (auto reveal)");
-    }
-    
-    if (payload?.playerHands && typeof payload.playerHands === "object") {
-      revealedHands = payload.playerHands as Record<string, string[]>;
-    }
-    
-    // If all players went all-in, show cards (if not already revealed by server) then winners
-    if (isAllInShowdown && communityCards.length === 5) {
-      const winnerIds = winnersPayload
-        .filter((w: any) => w && typeof w.playerId === "string")
-        .map((w: any) => w.playerId);
-      pendingWinners = winnerIds;
-      pendingWinningHand = payload?.winningHand ?? "";
-      applyAllInShowdownOutcome({
-        winnerDisplayState,
-        currentSessionId,
-        latestPlayerNames: gameUiContext.latestPlayerNames,
-        applyWinnerUi: (winnerIds, winningHand) => {
-          applyWinnerUiState(winnerDisplayState, {
-            winnerIds,
-            winningHand,
-            winnersStatusEl: winnersStatus,
-            winningHandStatusEl: winningHandStatus,
-            winningHandChipEl: winningHandChip,
-          });
-        },
-        playWinEffect: () => audio.playEffect("win"),
-        startWinnerDisplayPhase,
-        renderLastState: () => {
-          if (lastRoomState) renderState(lastRoomState);
-        },
-        showWinnerBanner,
-        setPreviousCommunityCards: (cards) => {
-          gameUiContext.previousCommunityCards = [...cards];
-        },
-        winnerIds: pendingWinners ?? [],
-        winningHand: pendingWinningHand ?? "",
-        communityCards,
-        allInCardsRevealedByServer,
-        setAllInRevealInProgress: (value) => {
-          allInRevealInProgress = value;
-          if (!value) {
-            pendingWinners = null;
-            pendingWinningHand = null;
-          }
-        },
-        revealAllInCards,
-      });
-    } else {
-      gameUiContext.previousCommunityCards = [...communityCards];
-      const winnerDisplay = getWinnerDisplayFromRoundEnd(payload);
-      applyStandardRoundOutcome({
-        winnerDisplayState,
-        currentSessionId,
-        latestPlayerNames: gameUiContext.latestPlayerNames,
-        applyWinnerUi: (winnerIds, winningHand) => {
-          applyWinnerUiState(winnerDisplayState, {
-            winnerIds,
-            winningHand,
-            winnersStatusEl: winnersStatus,
-            winningHandStatusEl: winningHandStatus,
-            winningHandChipEl: winningHandChip,
-          });
-        },
-        playWinEffect: () => audio.playEffect("win"),
-        startWinnerDisplayPhase,
-        renderLastState: () => {
-          if (lastRoomState) renderState(lastRoomState);
-        },
-        showWinnerBanner,
-        setPreviousCommunityCards: () => undefined,
-        winnerDisplay,
-        fallbackWinningHand: payload?.winningHand ?? "",
-        setPreviousWinnersKey: (key) => {
-          previousWinnersKey = key;
-        },
-      });
-    }
-    
-    // Cartas de la mano ganadora (tomamos las hole cards del primer ganador para historial).
-    addHandHistoryEntry(
-      {
-        timestamp: Date.now(),
-        winners: winnersForHistory,
-        winningHand: payload?.winningHand ?? "-",
-        winningCards: historyData.winningCards,
-        communityCards,
-        pot: potValue,
-        yourHand
-      },
-      MAX_HAND_HISTORY
-    );
-    renderHandHistoryUi();
-    log(`Round ended: ${JSON.stringify(payload)}`);
-  });
-
-  } finally {
-    finalizeJoinAttempt(mode, {
-      setJoinInProgress: (value) => {
-        joinInProgress = value;
-      },
-      setJoinByIdEnabled: (enabled) => {
-        joinByIdButton.disabled = !enabled;
-      },
-      setCreateTableEnabled: (enabled) => {
-        createTableButton.disabled = !enabled;
-      },
-      schedule: (callback, delayMs) => {
-        setTimeout(callback, delayMs);
-      },
-      createCooldownMs: CREATE_TABLE_COOLDOWN_MS,
-    });
-  }
+  await roomSessionController.joinRoom(forceReplace, opts);
 }
 
 type LobbyDepsFactory = () => LobbyDeps;
@@ -1431,14 +861,6 @@ tournamentBackToLobbyButton.addEventListener("click", () => {
   setTournamentResultVisible(false);
   openLobby().catch((err) => log(`Lobby error: ${err?.message || err}`));
 });
-
-function requireRoom(): Room | null {
-  if (!room) {
-    log("Not joined. Join a room first.");
-    return null;
-  }
-  return room;
-}
 
 bindGameActionButtons(
   {
