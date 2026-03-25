@@ -52,6 +52,8 @@ export type ResetRoomUiDeps = {
   syncGameUiContext: () => void;
   renderSeats: () => void;
   setActionButtonsEnabled: (flags: ActionButtonsFlags) => void;
+  /** Clear Pixi table layer when leaving room (optional). */
+  disarmTableScene?: () => void;
 };
 
 export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
@@ -62,6 +64,8 @@ export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
   deps.clearDeferredTournamentTimer();
   deps.setRevealedHands(null);
   deps.gameUiContext.revealedHands = null;
+  deps.gameUiContext.tableScene = null;
+  deps.disarmTableScene?.();
   deps.gameUiContext.previousPotValue = null;
   deps.gameUiContext.previousCurrentBetValue = null;
   deps.resetPreviousWinnersKey();

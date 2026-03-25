@@ -23,6 +23,7 @@ describe("room-ui-reset", () => {
         previousCurrentBetValue: null,
         allInRevealInProgress: false,
         latestPlayerNames: new Map<string, string>(),
+        tableScene: null,
       },
       resetPreviousWinnersKey: vi.fn(),
       resetAllInState: vi.fn(),

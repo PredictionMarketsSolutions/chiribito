@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@colyseus/sdk": "^0.17.26",
+    "gsap": "^3.12.5",
     "pixi.js": "^7.4.0"
   },
   "devDependencies": {

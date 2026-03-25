@@ -66,6 +66,7 @@ import {
 } from "./game";
 import type { WinnerDisplayState, TurnTimerState } from "./game";
 import type { GameUiRefs, GameUiContext } from "./game/game-ui-types";
+import { TableScene } from "./game/table/TableScene";
 import { getWinnerDisplayFromRoundEnd } from "./game/round-end-winner";
 import { refreshWinnersRanking as refreshWinnersRankingFn } from "./app/winners-ranking";
 import { createLobbyPollingController } from "./app/lobby-polling";
@@ -242,6 +243,7 @@ let lastHeartbeatSendTime = 0;
 
 let pixiTableSurface: HTMLDivElement | null = null;
 let pixiLib: any = null;
+let tableSceneRef: TableScene | null = null;
 let previousWinnersKey = "";
 let allInAnimationTimeoutId: number | null = null;
 let allInCardIndex = 0;
@@ -281,6 +283,7 @@ const gameUiContext: GameUiContext = {
   previousCurrentBetValue: null,
   allInRevealInProgress: false,
   latestPlayerNames: new Map<string, string>(),
+  tableScene: null,
 };
 
 let revealedHands: Record<string, string[]> | null = null;
@@ -355,6 +358,16 @@ function showWinnerBanner(text: string) {
   }, 2600);
 }
 
+function armTableScene(): void {
+  if (!tableSceneRef) return;
+  tableSceneRef.setActive(true);
+  gameUiContext.tableScene = tableSceneRef;
+}
+
+function disarmTableScene(): void {
+  tableSceneRef?.setActive(false);
+}
+
 async function initPixiLayer() {
   pixiTableSurface = document.querySelector<HTMLDivElement>(".table-surface");
   if (!pixiTableSurface) return;
@@ -380,6 +393,19 @@ async function initPixiLayer() {
     pixiLayer.appendChild(canvas);
   }
 
+  const seatsRoot = dom.seatsEl;
+  if (seatsRoot && pixiApp) {
+    tableSceneRef = new TableScene({
+      app: pixiApp as import("pixi.js").Application,
+      surfaceEl: pixiTableSurface,
+      seatsEl: seatsRoot,
+    });
+    pixiTableSurface.classList.add("table-surface--pixi-cards");
+    if (room) {
+      armTableScene();
+    }
+  }
+
   window.addEventListener("resize", () => {
     if (!pixiApp || !pixiTableSurface) return;
     pixiApp.renderer.resize(pixiTableSurface.clientWidth, pixiTableSurface.clientHeight);
@@ -387,18 +413,28 @@ async function initPixiLayer() {
 }
 
 function revealAllInCards(cards: string[], onComplete?: () => void) {
-  // Clear any existing animation
   if (allInAnimationTimeoutId !== null) {
     window.clearTimeout(allInAnimationTimeoutId);
+    allInAnimationTimeoutId = null;
   }
+  gameUiContext.tableScene?.cancelAllInReveal();
+
   allInCardIndex = 0;
   allInRevealStarted = true;
   allInRevealInProgress = true;
-  
-  // Show cards one by one, every 2 seconds
+
+  const ts = gameUiContext.tableScene;
+  if (ts?.isActive()) {
+    ts.revealAllInSequential(cards, () => {
+      allInRevealStarted = false;
+      allInRevealInProgress = false;
+      onComplete?.();
+    });
+    return;
+  }
+
   const revealNext = () => {
     if (allInCardIndex < cards.length) {
-      // Show cards up to current index
       const cardsToShow = cards.slice(0, allInCardIndex + 1);
       renderCardRow(communityCardsEl, cardsToShow, 5);
       allInCardIndex++;
@@ -409,11 +445,9 @@ function revealAllInCards(cards: string[], onComplete?: () => void) {
     allInRevealStarted = false;
     allInRevealInProgress = false;
     allInAnimationTimeoutId = null;
-    if (onComplete) {
-      onComplete();
-    }
+    onComplete?.();
   };
-  
+
   revealNext();
 }
 
@@ -489,6 +523,7 @@ function resetRoomUi(message?: string) {
       setActionButtonsEnabled: (flags) => {
         setActionButtonsEnabledFn(getGameUiRefs(), flags);
       },
+      disarmTableScene,
     },
     message
   );
@@ -754,6 +789,18 @@ const roomSessionController = createRoomSessionController({
   startTurnTimer: (turnId, timeoutMs, deadlineMs) => startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
   playActionSound: (a) => audio.playActionSound(a),
   playWinEffect: () => audio.playEffect("win"),
+  runTableRoundEndAnimation: (done) => {
+    const ts = gameUiContext.tableScene;
+    if (ts?.isActive()) {
+      ts.playRoundEndCollectThen(done);
+    } else {
+      done();
+    }
+  },
+  syncTableCommunityCards: (cards) => {
+    gameUiContext.tableScene?.syncCommunityFromServer(cards);
+  },
+  armTableScene,
 });
 
 async function joinRoom(

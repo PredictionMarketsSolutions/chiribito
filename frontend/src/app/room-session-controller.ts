@@ -146,6 +146,12 @@ export type JoinRoomSessionControllerDeps = {
   getLastRoomState: () => RoomState | null;
   setLastRoomState: (state: RoomState) => void;
 
+  /** After standard round end: collect cards in Pixi, then invoke `done`. */
+  runTableRoundEndAnimation?: (done: () => void) => void;
+  /** Sync community row when server sends communityCardRevealed (Pixi path). */
+  syncTableCommunityCards?: (cards: string[]) => void;
+  armTableScene?: () => void;
+
   // Audio
   playActionSound: (action: string) => void;
   playWinEffect: () => void;
@@ -274,6 +280,8 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
         log: deps.log,
       });
 
+      deps.armTableScene?.();
+
       deps.startClientHeartbeat();
 
       joinedRoom.onLeave((code: number) => {
@@ -366,7 +374,10 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           deps.setAllInRevealInProgress(true);
           deps.setAllInCardsRevealedByServer(true);
           deps.gameUiContext.previousCommunityCards = [...cards];
-          deps.renderCardRow(deps.communityCardsEl, cards, 5);
+          if (!deps.gameUiContext.tableScene?.isActive()) {
+            deps.renderCardRow(deps.communityCardsEl, cards, 5);
+          }
+          deps.syncTableCommunityCards?.(cards);
           const shown = cards.filter(Boolean);
           deps.communityStatusEl.textContent = shown.length ? shown.join(" ") : "-";
         }
@@ -449,31 +460,39 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           deps.gameUiContext.previousCommunityCards = [...communityCards];
           const winnerDisplay = getWinnerDisplayFromRoundEnd(payload);
 
-          applyStandardRoundOutcome({
-            winnerDisplayState: deps.winnerDisplayState,
-            currentSessionId: deps.gameUiContext.currentSessionId,
-            latestPlayerNames: deps.gameUiContext.latestPlayerNames,
-            applyWinnerUi: (winnerIds, winningHand) => {
-              applyWinnerUiState(deps.winnerDisplayState, {
-                winnerIds,
-                winningHand,
-                winnersStatusEl: deps.winnersStatusEl,
-                winningHandStatusEl: deps.winningHandStatusEl,
-                winningHandChipEl: deps.winningHandChipEl,
-              });
-            },
-            playWinEffect: deps.playWinEffect,
-            startWinnerDisplayPhase: deps.startWinnerDisplayPhase,
-            renderLastState: () => {
-              const last = deps.getLastRoomState();
-              if (last) deps.renderState(last);
-            },
-            showWinnerBanner: deps.showWinnerBanner,
-            setPreviousCommunityCards: () => undefined,
-            winnerDisplay,
-            fallbackWinningHand: (payload as any)?.winningHand ?? "",
-            setPreviousWinnersKey: deps.setPreviousWinnersKey,
-          });
+          const runStandardOutcome = () => {
+            applyStandardRoundOutcome({
+              winnerDisplayState: deps.winnerDisplayState,
+              currentSessionId: deps.gameUiContext.currentSessionId,
+              latestPlayerNames: deps.gameUiContext.latestPlayerNames,
+              applyWinnerUi: (winnerIds, winningHand) => {
+                applyWinnerUiState(deps.winnerDisplayState, {
+                  winnerIds,
+                  winningHand,
+                  winnersStatusEl: deps.winnersStatusEl,
+                  winningHandStatusEl: deps.winningHandStatusEl,
+                  winningHandChipEl: deps.winningHandChipEl,
+                });
+              },
+              playWinEffect: deps.playWinEffect,
+              startWinnerDisplayPhase: deps.startWinnerDisplayPhase,
+              renderLastState: () => {
+                const last = deps.getLastRoomState();
+                if (last) deps.renderState(last);
+              },
+              showWinnerBanner: deps.showWinnerBanner,
+              setPreviousCommunityCards: () => undefined,
+              winnerDisplay,
+              fallbackWinningHand: (payload as any)?.winningHand ?? "",
+              setPreviousWinnersKey: deps.setPreviousWinnersKey,
+            });
+          };
+
+          if (deps.runTableRoundEndAnimation) {
+            deps.runTableRoundEndAnimation(runStandardOutcome);
+          } else {
+            runStandardOutcome();
+          }
         }
 
         deps.addHandHistoryEntry(

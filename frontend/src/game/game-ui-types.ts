@@ -5,6 +5,31 @@
 import type { RoomState } from "../types";
 import type { WinnerDisplayState } from "./winner-display";
 
+/** Subset passed to TableScene.syncFromState (avoids circular refs with GameUiContext). */
+export type GameUiTableSyncContext = {
+  currentSessionId: string | null;
+  winnerDisplayState: WinnerDisplayState;
+  revealedHands: Record<string, string[]> | null;
+  allInRevealInProgress: boolean;
+  previousCommunityCards: string[];
+};
+
+export type TableSceneController = {
+  isActive: () => boolean;
+  syncFromState: (state: RoomState, ctx: GameUiTableSyncContext) => void;
+  /** Server-driven community update (e.g. communityCardRevealed) while state patch may lag. */
+  syncCommunityFromServer: (cards: string[]) => void;
+  updatePotDisplay: (value: number, previous: number | null) => void;
+  playRoundEndCollectThen: (onComplete: () => void) => void;
+  /**
+   * Progressive board reveal for all-in showdown (replaces setTimeout + renderCardRow).
+   * @param stepMs delay between revealing each new card (default 2000 to match legacy).
+   */
+  revealAllInSequential: (cards: string[], onComplete?: () => void, stepMs?: number) => void;
+  cancelAllInReveal: () => void;
+  reset: () => void;
+};
+
 export type GameUiRefs = {
   phaseStatus: HTMLSpanElement;
   turnStatus: HTMLSpanElement;
@@ -44,6 +69,7 @@ export type GameUiContext = {
   previousCurrentBetValue: number | null;
   allInRevealInProgress: boolean;
   latestPlayerNames: Map<string, string>;
+  tableScene: TableSceneController | null;
 };
 
 export type ActionButtonsEnabled = {

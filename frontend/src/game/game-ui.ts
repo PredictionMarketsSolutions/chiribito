@@ -3,14 +3,16 @@
  */
 
 import type { RoomState, PlayerState } from "../types";
-import type { GameUiRefs, GameUiContext, ActionButtonsEnabled } from "./game-ui-types";
+import type { GameUiRefs, GameUiContext, ActionButtonsEnabled, GameUiTableSyncContext } from "./game-ui-types";
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "./room-state";
 import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
 import { getCurrentHandName } from "./current-hand";
+import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
 
-const TOTAL_SEATS = 6;
-const TARGET_FRONT_INDEX = 3;
+function usePixiTableCards(ctx: GameUiContext): boolean {
+  return Boolean(ctx.tableScene?.isActive());
+}
 
 export function renderSeats(
   state: RoomState,
@@ -18,31 +20,10 @@ export function renderSeats(
   ctx: GameUiContext
 ): void {
   const entries = getUserEntries(state).filter(isPlayerState);
-  const dealerIndex = typeof state?.dealerIndex === "number" ? state.dealerIndex : -1;
+  const { visualSeats, visualSeatNumbers, dealerIndex } = computeVisualSeatLayout(state, ctx.currentSessionId);
   const inWinnerPhase = isInWinnerPhase(ctx.winnerDisplayState);
   const currentTurn = inWinnerPhase ? "" : (state?.currentTurn ?? "");
   const me = ctx.currentSessionId ? entries.find((p) => p.sessionId === ctx.currentSessionId) : undefined;
-
-  const playersBySeat: Array<PlayerState | undefined> = Array(TOTAL_SEATS).fill(undefined);
-  entries.forEach((player) => {
-    if (Number.isFinite(player.seatIndex) && player.seatIndex >= 0 && player.seatIndex < TOTAL_SEATS) {
-      playersBySeat[player.seatIndex] = player;
-    }
-  });
-
-  let seatShift = 0;
-  const myPlayer = entries.find((p) => p.sessionId === ctx.currentSessionId);
-  if (myPlayer && Number.isFinite(myPlayer.seatIndex)) {
-    seatShift = (TARGET_FRONT_INDEX - myPlayer.seatIndex + TOTAL_SEATS) % TOTAL_SEATS;
-  }
-
-  const visualSeats: Array<PlayerState | undefined> = Array(TOTAL_SEATS).fill(undefined);
-  const visualSeatNumbers: number[] = Array(TOTAL_SEATS).fill(0);
-  for (let logicalIndex = 0; logicalIndex < TOTAL_SEATS; logicalIndex += 1) {
-    const visualIndex = (logicalIndex + seatShift) % TOTAL_SEATS;
-    visualSeats[visualIndex] = playersBySeat[logicalIndex];
-    visualSeatNumbers[visualIndex] = logicalIndex;
-  }
 
   const seats = Array.from(refs.seatsEl.querySelectorAll<HTMLDivElement>(".seat"));
   seats.forEach((seat, index) => {
@@ -120,10 +101,12 @@ export function renderSeats(
       cards = [];
     }
     handEl.dataset.cards = JSON.stringify(cards);
-    for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
-      const cardEl = createCardElement(cards[i]);
-      cardEl.classList.add("mini");
-      handEl.appendChild(cardEl);
+    if (!usePixiTableCards(ctx)) {
+      for (let i = 0; i < Math.min(cards.length, 2); i += 1) {
+        const cardEl = createCardElement(cards[i]);
+        cardEl.classList.add("mini");
+        handEl.appendChild(cardEl);
+      }
     }
   });
 }
@@ -191,12 +174,12 @@ export function renderState(
 
   const potValue = Number(state.pot ?? 0);
   const currentBetValue = Number(state.currentBet ?? 0);
+  const prevPotForTween = ctx.previousPotValue;
   refs.potStatus.textContent = String(potValue);
   refs.betStatus.textContent = String(currentBetValue);
   refs.potChip.textContent = String(potValue);
   refs.phaseChip.textContent = state.phase ?? "waiting";
   refs.turnChip.textContent = turnPlayer?.name ?? (currentTurnId || "-");
-  ctx.previousPotValue = potValue;
   ctx.previousCurrentBetValue = currentBetValue;
   onUpdateTurnTimer(state);
 
@@ -211,9 +194,12 @@ export function renderState(
   const allPlayersAllIn = activePlayers.length > 1 && activePlayers.every((p: PlayerState) => Number(p.chips ?? 0) === 0);
   updateActionButtons(state, refs, ctx, allPlayersAllIn);
 
+  const pixiCards = usePixiTableCards(ctx);
   if (!ctx.allInRevealInProgress) {
     if (!cardsEqual(community, ctx.previousCommunityCards)) {
-      renderCardRow(refs.communityCardsEl, community, 5);
+      if (!pixiCards) {
+        renderCardRow(refs.communityCardsEl, community, 5);
+      }
       ctx.previousCommunityCards.length = 0;
       ctx.previousCommunityCards.push(...community);
     }
@@ -235,9 +221,25 @@ export function renderState(
     refs.handStatus.textContent = "-";
     ctx.previousHandCards.length = 0;
   }
-  renderCardRow(refs.handCardsEl, handForZone, 2);
+  if (!pixiCards) {
+    renderCardRow(refs.handCardsEl, handForZone, 2);
+  }
   renderSeats(state, refs, ctx);
   renderPlayers(state, refs, ctx);
+
+  const table = ctx.tableScene;
+  if (table?.isActive()) {
+    table.updatePotDisplay(potValue, prevPotForTween);
+    const syncCtx: GameUiTableSyncContext = {
+      currentSessionId: ctx.currentSessionId,
+      winnerDisplayState: ctx.winnerDisplayState,
+      revealedHands: ctx.revealedHands,
+      allInRevealInProgress: ctx.allInRevealInProgress,
+      previousCommunityCards: ctx.previousCommunityCards,
+    };
+    table.syncFromState(state, syncCtx);
+  }
+  ctx.previousPotValue = potValue;
 }
 
 export function updateActionButtons(

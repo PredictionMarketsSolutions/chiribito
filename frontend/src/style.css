@@ -930,6 +930,17 @@ button.accent:hover:not(:disabled) {
   height: 100%;
 }
 
+/* Pixi dibuja cartas; mantener .seat-hand como hit area para el popover */
+.table-surface--pixi-cards .card-row .card,
+.table-surface--pixi-cards .seat-hand .card {
+  visibility: hidden;
+}
+
+.table-surface--pixi-cards .seat-hand {
+  min-width: 72px;
+  min-height: 52px;
+}
+
 .table-header {
   position: relative;
   z-index: 5;

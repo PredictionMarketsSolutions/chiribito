@@ -2,6 +2,8 @@
  * Card DOM utilities: create card elements, render rows, compare card arrays.
  */
 
+import { CARD_BACK_URL, getCardTextureUrl, listAllCardImageUrls } from "./card-texture-url";
+
 export function createCardElement(card: string | undefined): HTMLDivElement {
   const el = document.createElement("div");
   el.classList.add("card");
@@ -13,7 +15,7 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
 
   if (!card) {
     el.classList.add("card-back");
-    img.src = "/cards/back_logo.png";
+    img.src = CARD_BACK_URL;
     img.addEventListener("load", () => el.classList.add("has-image"));
     img.addEventListener("error", () => {
       el.classList.add("back");
@@ -25,14 +27,7 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
 
   const suit = card.slice(-1);
   const rank = card.slice(0, -1);
-  const suitNameMap: Record<string, string> = {
-    O: "ORO",
-    C: "COPAS",
-    E: "ESPADA",
-    B: "BASTOS"
-  };
-  const suitName = suitNameMap[suit] ?? suit;
-  img.src = `/cards/${rank} DE ${suitName}.webp`;
+  img.src = getCardTextureUrl(card);
   img.addEventListener("load", () => el.classList.add("has-image"));
   img.addEventListener("error", () => {
     const suitMap: Record<string, { symbol: string; color: string }> = {
@@ -74,21 +69,7 @@ export function cardsEqual(a: string[], b: string[]): boolean {
 }
 
 export function preloadCardImages(): void {
-  const suits = ["O", "C", "E", "B"];
-  const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-  const sources = ["/cards/back_logo.png"];
-  suits.forEach((suit) => {
-    ranks.forEach((rank) => {
-      const suitNameMap: Record<string, string> = {
-        O: "ORO",
-        C: "COPAS",
-        E: "ESPADA",
-        B: "BASTOS"
-      };
-      const suitName = suitNameMap[suit] ?? suit;
-      sources.push(`/cards/${rank} DE ${suitName}.webp`);
-    });
-  });
+  const sources = listAllCardImageUrls();
   sources.forEach((src) => {
     const img = new Image();
     img.decoding = "async";
