@@ -31,6 +31,6 @@ describe("round-ended-winner-ui", () => {
   it("getWinnerBannerText returns empty when winning hand or winners missing", () => {
     const names = new Map<string, string>();
     expect(getWinnerBannerText("", ["p1"], names)).toBe("");
-    expect(getWinnerBannerText("Trio", [], names)).toBe("");
+    expect(getWinnerBannerText("Trío", [], names)).toBe("");
   });
 });

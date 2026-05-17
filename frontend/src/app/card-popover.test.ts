@@ -5,7 +5,7 @@ describe("card-popover", () => {
   beforeEach(() => {
     document.body.innerHTML = `
       <div id="seats">
-        <div class="seat-hand" data-cards='["1O","2O"]'></div>
+        <div class="seat-hand" data-cards='["1O","10O"]'></div>
       </div>
       <div id="popover" class="hidden" aria-hidden="true"></div>
       <div id="cards"></div>

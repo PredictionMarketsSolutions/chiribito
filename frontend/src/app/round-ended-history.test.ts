@@ -34,13 +34,15 @@ describe("round-ended-history", () => {
   });
 
   it("builds history data with normalized fields", () => {
+    // Fixture cards belong to the canonical Chiribito deck only:
+    // ranks 5, 6, 7, 10 (Sota), 11 (Caballo), 12 (Rey), 1 (As).
     const data = buildRoundEndedHistoryData(
       {
         winners: [{ playerId: "a1", amount: 10 }],
-        communityCards: ["1O", "2O"],
+        communityCards: ["1O", "5O"],
         playerHands: {
-          a1: ["3O", "4O"],
-          me: ["5O", "6O"],
+          a1: ["7O", "6O"],
+          me: ["10O", "11O"],
         },
       } as any,
       {
@@ -51,10 +53,10 @@ describe("round-ended-history", () => {
     );
 
     expect(data.winnersForHistory).toEqual([{ playerId: "a1", amount: 10 }]);
-    expect(data.communityCards).toEqual(["1O", "2O"]);
-    expect(data.yourHand).toEqual(["5O", "6O"]);
+    expect(data.communityCards).toEqual(["1O", "5O"]);
+    expect(data.yourHand).toEqual(["10O", "11O"]);
     expect(data.potValue).toBe(250);
-    expect(data.winningCards).toEqual(["3O", "4O"]);
+    expect(data.winningCards).toEqual(["7O", "6O"]);
   });
 
   it("shouldRenderLastRoomState depends on state + winner phase", () => {

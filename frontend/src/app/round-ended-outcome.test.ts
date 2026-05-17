@@ -30,7 +30,7 @@ describe("round-ended-outcome", () => {
       setPreviousCommunityCards: vi.fn(),
       winnerIds: ["w1", "me"],
       winningHand: "Escalera",
-      communityCards: ["1O", "2O", "3O", "4O", "5O"],
+      communityCards: ["1O", "5C", "6E", "7B", "10O"],
       allInCardsRevealedByServer: true,
       setAllInRevealInProgress: vi.fn(),
       revealAllInCards: vi.fn(),
@@ -65,7 +65,7 @@ describe("round-ended-outcome", () => {
       setPreviousCommunityCards: vi.fn(),
       winnerIds: ["w1"],
       winningHand: "Pareja",
-      communityCards: ["1O", "2O", "3O", "4O", "5O"],
+      communityCards: ["1O", "5C", "6E", "7B", "10O"],
       allInCardsRevealedByServer: false,
       setAllInRevealInProgress: vi.fn(),
       revealAllInCards,
@@ -96,15 +96,15 @@ describe("round-ended-outcome", () => {
       setPreviousCommunityCards: vi.fn(),
       winnerDisplay: {
         winnerIds: ["me"],
-        winningHand: "Trio",
+        winningHand: "Trío",
         startPhaseNow: true,
       },
       fallbackWinningHand: "-",
       setPreviousWinnersKey,
     });
 
-    expect(applyWinnerUi).toHaveBeenCalledWith([], "Trio");
-    expect(applyWinnerUi).toHaveBeenCalledWith(["me"], "Trio");
+    expect(applyWinnerUi).toHaveBeenCalledWith([], "Trío");
+    expect(applyWinnerUi).toHaveBeenCalledWith(["me"], "Trío");
     expect(setPreviousWinnersKey).toHaveBeenCalledWith("me");
     expect(playWinEffect).toHaveBeenCalled();
   });

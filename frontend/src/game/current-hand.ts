@@ -1,6 +1,9 @@
 /**
  * Evalúa la mejor mano del jugador (sus 2 cartas + comunitarias) para mostrar
- * "Pareja", "Carta alta", etc. Debe coincidir con el backend CardEvaluator.
+ * "Pareja", "Carta alta", etc. Hand-side mirror del backend CardEvaluator —
+ * cualquier cambio de regla aquí debe coincidir con
+ * `src/rooms/game/utils/CardEvaluator.ts` y con
+ * `src/rooms/game/glossary.ts`.
  */
 
 export type CardRankOrder = Record<string, number>;
@@ -10,14 +13,20 @@ interface HandScore {
   tiebreaker: number[];
 }
 
+/**
+ * Canonical Chiribito rank order — mirror of `RANK_ORDER` in
+ * `src/rooms/game/glossary.ts`. The ranks 8 and 9 do NOT exist in the
+ * Spanish deck; the order goes 5 < 6 < 7 < Sota (10) < Caballo (11) <
+ * Rey (12) < As (1).
+ */
 const RANK_ORDER: CardRankOrder = {
-  "7": 0,
-  "8": 1,
-  "9": 2,
-  "10": 3,
-  "11": 4,
-  "12": 5,
-  "1": 6,
+  "5": 0,
+  "6": 1,
+  "7": 2,
+  "10": 3, // Sota
+  "11": 4, // Caballo
+  "12": 5, // Rey
+  "1": 6,  // As
 };
 
 function parseCard(card: string): { rank: string; suit: string } {
@@ -26,13 +35,18 @@ function parseCard(card: string): { rank: string; suit: string } {
   return { rank, suit };
 }
 
+/**
+ * The Perla — strongest hole-card combination in Chiribito.
+ * Sota (10) + 7 of the same suit (J + 10 suited in the French deck).
+ * NOT Sota + Caballo — that was the heredado mistake.
+ */
 function isPerla(hole: string[]): boolean {
   if (hole.length < 2) return false;
   const first = parseCard(hole[0]);
   const second = parseCard(hole[1]);
-  const sameSuit = first.suit === second.suit;
-  const ranks = [first.rank, second.rank].sort();
-  return sameSuit && ranks[0] === "10" && ranks[1] === "11";
+  if (first.suit !== second.suit) return false;
+  const ranks = new Set([first.rank, second.rank]);
+  return ranks.has("10") && ranks.has("7");
 }
 
 function isStraight(ranks: string[], rankOrder: CardRankOrder): { isStraight: boolean; high: number } {
@@ -101,6 +115,12 @@ function evaluateHand(cards: string[], rankOrder: CardRankOrder): HandScore {
   return { category: 0, tiebreaker: highCards };
 }
 
+/**
+ * Mirror of `CardEvaluator.getHandName` (server). Castizo Spanish with
+ * proper accents. If you add a category or rename one here, update the
+ * server file too — the live game broadcasts `winningHand` strings
+ * formed by the server, so consistency matters when comparing.
+ */
 function getHandName(category: number): string {
   switch (category) {
     case 9:
@@ -108,7 +128,7 @@ function getHandName(category: number): string {
     case 8:
       return "Escalera de color";
     case 7:
-      return "Poker";
+      return "Póker";
     case 6:
       return "Color";
     case 5:
@@ -116,7 +136,7 @@ function getHandName(category: number): string {
     case 4:
       return "Escalera";
     case 3:
-      return "Trio";
+      return "Trío";
     case 2:
       return "Doble pareja";
     case 1:

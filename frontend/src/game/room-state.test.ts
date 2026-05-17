@@ -49,8 +49,9 @@ describe("room-state", () => {
     });
 
     it("uses toArray() when present", () => {
-      const schema = { toArray: () => ["2C", "2O"] };
-      expect(schemaArrayToCards(schema)).toEqual(["2C", "2O"]);
+      // Canonical Chiribito cards only (no rank 2 — doesn't exist in deck).
+      const schema = { toArray: () => ["12C", "12O"] };
+      expect(schemaArrayToCards(schema)).toEqual(["12C", "12O"]);
     });
 
     it("iterates by length when no toArray", () => {
