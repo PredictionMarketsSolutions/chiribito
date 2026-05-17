@@ -15,9 +15,11 @@ dist/
 coverage/
 .nyc_output/
 
+# Generated codegen artifacts
+generated-schema/
+
 # Tooling artifacts
 *.zip
-render.zip
 
 # Logs
 logs/

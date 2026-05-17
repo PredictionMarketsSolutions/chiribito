@@ -5,9 +5,6 @@ import { GameEngine } from "./game/GameEngine";
 import logger from "../config/logger";
 import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/constants";
 
-// Security audit logging
-import { gameAuditLog } from "../security/game-audit";
-import { gameActionRateLimiter } from "../security/game-action-rate-limit";
 import { allowCreateRoom, recordCreateRoom } from "../security/create-room-rate-limit";
 
 // Room managers
