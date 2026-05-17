@@ -39,7 +39,20 @@ export type HandHistoryEntry = {
   yourHand?: string[];
 };
 
-export type SoundEffect = "bet" | "call" | "raise" | "check" | "fold" | "allIn" | "win";
+export type SoundEffect =
+  | "bet"
+  | "call"
+  | "raise"
+  | "check"
+  | "fold"
+  | "allIn"
+  | "win"
+  | "deal"
+  | "reveal"
+  | "click"
+  | "hover"
+  | "yourTurn"
+  | "perlaArrive";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";
 

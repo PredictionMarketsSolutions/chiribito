@@ -43,6 +43,7 @@ import {
   renderHandHistory
 } from "./hand-history";
 import { renderCardRow, preloadCardImages } from "./ui-cards";
+import { installFeedback } from "./feedback";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { runPostLoginAutoRejoin } from "./auth/login-auto-rejoin";
 import { disconnectRoom } from "./auth/room-disconnect";
@@ -107,6 +108,9 @@ import {
   validateUsername,
   stateGuard
 } from "./security";
+
+// Install audio + motion feedback observers (auto-trigger sounds on UI state changes)
+installFeedback();
 
 const logEl = dom.log!;
 const authOverlay = dom.authOverlay!;

@@ -52,7 +52,14 @@ export async function handleJoinError(deps: JoinErrorHandlerDeps): Promise<void>
     return;
   }
 
-  if (message.includes("INVALID_TOKEN")) {
+  if (
+    message.includes("INVALID_TOKEN")
+    || message.includes("NO_TOKEN")
+    || /jwt (malformed|expired|signature|not active|must be provided)/i.test(message)
+    || /invalid signature/i.test(message)
+    || message.includes("TokenExpiredError")
+    || message.includes("JsonWebTokenError")
+  ) {
     deps.onInvalidToken();
     return;
   }

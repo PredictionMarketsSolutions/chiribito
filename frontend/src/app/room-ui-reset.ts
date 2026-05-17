@@ -95,6 +95,7 @@ export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
   deps.winningHandChipEl.textContent = "-";
   deps.renderCardRow(deps.communityCardsEl, [], 5);
   deps.renderCardRow(deps.handCardsEl, [], 2);
+  deps.handCardsEl.classList.remove("has-perla");
   deps.playersListEl.innerHTML = "";
   deps.syncGameUiContext();
   deps.renderSeats();

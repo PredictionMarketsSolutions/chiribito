@@ -7,6 +7,7 @@ import type { GameUiRefs, GameUiContext, ActionButtonsEnabled, GameUiTableSyncCo
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "./room-state";
 import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
+import { markPerlaIfApplicable } from "./perla";
 import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
 import { renderPhaseIndicator } from "./phase-indicator";
@@ -267,6 +268,7 @@ export function renderState(
   if (!pixiCards) {
     renderCardRow(refs.handCardsEl, handForZone, 2);
   }
+  markPerlaIfApplicable(refs.handCardsEl, handForZone);
   renderSeats(state, refs, ctx);
   renderPlayers(state, refs, ctx);
 

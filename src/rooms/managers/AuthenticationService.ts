@@ -83,8 +83,17 @@ export class AuthenticationService {
       throw new Error("SERVER_CONFIG");
     }
 
-    // Verify JWT signature
-    const decoded = jwt.verify(token, this.config.jwtSecret) as AuthUser;
+    // Verify JWT signature — normalize all JWT errors to INVALID_TOKEN so the
+    // client can react with a single error code (was: leaking "jwt malformed"
+    // strings that fell through to generic error handling).
+    let decoded: AuthUser;
+    try {
+      decoded = jwt.verify(token, this.config.jwtSecret) as AuthUser;
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      logger.warn("JWT verify failed", { roomId: this.roomId, reason });
+      throw new Error("INVALID_TOKEN");
+    }
 
     const userId = Number(decoded?.userId);
     if (!Number.isFinite(userId)) {
