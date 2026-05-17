@@ -1,375 +1,240 @@
-# 🎰 Chiri Backend - Poker Game Server
+# Chiribito
 
-[![Tests](https://img.shields.io/badge/Tests-342%20passed-brightgreen?style=flat-square&logo=jest)](./TESTING.md)
-[![Coverage](https://img.shields.io/badge/Coverage-50.93%25-brightgreen?style=flat-square&logo=codecov)](./TESTING.md)
-[![Node](https://img.shields.io/badge/Node-18%2B%20%7C%2020%2B-0DB7ED?style=flat-square&logo=node.js)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/License-UNLICENSED-red?style=flat-square)](#)
+> A revival of Spanish synthetic poker — from the underground card rooms of Madrid to your screen.
+>
+> Revival del **póker sintético español** — de las timbas del Madrid clandestino a tu pantalla.
 
-A **production-ready**, modular Texas Hold'em poker game server with real-time multiplayer support, JWT authentication, and comprehensive test coverage.
-
-**Built with**: Colyseus • TypeScript • Node.js • Jest • PostgreSQL
+[![Status](https://img.shields.io/badge/status-work%20in%20progress-orange?style=flat-square)](#status)
+[![Node](https://img.shields.io/badge/node-20%20LTS-339933?style=flat-square&logo=node.js)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-UNLICENSED-lightgrey?style=flat-square)](#license)
 
 ---
 
-## 🚀 Quick Start
+## 🇬🇧 English
+
+**Chiribito** is an online multiplayer card game that rescues a poker variant born in Madrid in the 1950s and played in the back rooms of the **Círculo de Bellas Artes**, the **Tiro de Pichón de Somontes** and dozens of clandestine card rooms until it was eventually buried by Texas Hold'em around the year 2000.
+
+This project is a social, casual, web-based revival of that game — built with care, with personality, and with a working multiplayer engine. **It is not** a Texas Hold'em clone, **it is not** a real-money gambling site, and **it has no intention of competing with PokerStars**. It is its own thing.
+
+> The Spanish term *chiribito* also means *spark* in old Madrid slang. Fitting.
+
+### The game in 60 seconds
+
+- **Deck**: 28 cards, Spanish suits (**Oros**, **Copas**, **Espadas**, **Bastos**), ranks `5–6–7–Sota–Caballo–Rey–As`. Equivalent to `8–9–10–J–Q–K–A` in the French deck.
+- **Hand**: 2 hole cards dealt right-to-left, 5 community cards revealed **one at a time** with a betting round between each → **6 betting rounds total**.
+- **Must use both hole cards** to form your hand.
+- **No blinds.** No-Limit. All-in at any moment.
+- **Colour beats Full House** (yes, on purpose).
+- **The Perla** (`Sota + 7`, same suit — `J/10s` in the French deck) is the strongest hand — the only one that completes every possible straight.
+
+### Status
+
+| Component | State |
+|---|---|
+| Game engine (Colyseus, server-authoritative) | ✅ working — bet/raise/call/fold/all-in/sidepots covered by tests |
+| Hand evaluator | ✅ working — Colour > Full, Perla detection, 7-card best hand |
+| Auth + user accounts (Express + PostgreSQL) | ✅ working — JWT + refresh tokens + password reset |
+| Real Chiribito rules in deck/rounds | ⏳ pending Phase 2 — current deck uses placeholder ranks |
+| Identity rename (`MyRoom` → `ChiribitoRoom`, glossary) | ⏳ Sprint 1.4 |
+| Card assets at sane sizes | ⏳ Sprint 1.5 (currently 74 MB of WebP, will drop to <3 MB) |
+| Production deploy | ⚪ not active — Render targets exist, secrets pending rotation |
+
+We do not claim "production ready". Anything that says so somewhere else in this repo is a leftover and you can ignore it.
+
+### Tech stack
+
+```
+Game server      Colyseus 0.17 + TypeScript on Node 20
+API server       Express 4 + TypeORM + PostgreSQL + Redis (ioredis)
+Frontend         Vite + PixiJS 7 + GSAP
+Auth             JWT (jsonwebtoken) + bcryptjs + Resend (transactional email)
+Hosting          Render.com (3 services: chiri-colyseus, chiri-api, chiri-frontend)
+CI               GitHub Actions (build, lint, jest, vitest) + Dependabot
+```
+
+### Quick start (local development)
+
+Requirements: Node 20, npm 10, PostgreSQL 14+, Redis (optional in dev).
 
 ```bash
-# Install dependencies
+# 1. Install
 npm install
+cd api-server && npm install && cd ..
+cd frontend  && npm install && cd ..
 
-# Start development server
-npm run dev
+# 2. Configure
+cp .env.example .env
+cp api-server/.env.example api-server/.env
+cp frontend/.env.example  frontend/.env
+# Fill in JWT_SECRET, DB_*, RESEND_API_KEY etc.
 
-# Start API server
-npm run dev:api
+# 3. Initialise the database
+cd api-server && npm run init-db && npm run migration:run && cd ..
 
-# Run tests
-npm run test:jest
-
-# Run tests with coverage
-npm run test:jest:coverage
+# 4. Run the three services in separate terminals
+npm run dev:api       # API server   :3000
+npm run dev           # Game server  :2567
+cd frontend && npm run dev   # Frontend :5173
 ```
 
-## 📈 Latest Achievements (March 2026)
-
-| Achievement | Details |
-|------------|---------|
-| ✅ **Bug Fix: Sidepot Chip Loss** | Fixed critical chip conservation bug - all 342 tests passing |
-| ✅ **Manager Extraction** | 8 specialized managers extracted from MyRoom with 100% test coverage |
-| ✅ **Test Suite** | 342+ tests across 14 suites (GameEngine, Managers, Integration tests) |
-| ✅ **Code Quality** | 50.93% line coverage, 44.64% branch coverage on GameEngine |
-| ✅ **Architecture** | Modular design with clear separation of concerns & dependency injection |
-| ✅ **CI/CD Automation** | GitHub Actions pipelines for testing & coverage reporting |
-
-[📖 See Full Testing Results](./TESTING.md)
-
-## 🏗️ Architecture Overview
-
-### Game Engine & Utilities
+### Repository layout
 
 ```
-MyRoom (Colyseus Room Handler)
-  │
-  ├─→ 🎮 GameEngine (Main Orchestrator)
-  │     ├─→ 🃏 CardEvaluator (Hand evaluation)
-  │     ├─→ 📢 GameBroadcaster (Event streaming)
-  │     ├─→ 👥 GameUtils (Player management)
-  │     ├─→ 🔄 RoundManager (Betting rounds)
-  │     ├─→ 💰 WinnerDeterminator (Pot distribution)
-  │     └─→ ⚡ PlayerActions (Fold/Check handlers)
-  │
-  └─→ 📦 Manager Modules
-        ├─→ 🔐 AuthenticationService (JWT validation)
-        ├─→ 👤 PlayerLifecycleManager (Join/Leave)
-        ├─→ 💳 RebuyManager (Rebuy logic)
-        ├─→ 📍 SeatManager (Seat assignments)
-        ├─→ 🔗 ConnectionMonitor (Connection tracking)
-        ├─→ ⏱️ RateLimiterService (Rate limiting)
-        ├─→ 📊 AnalyticsService (Event tracking)
-        └─→ 📋 SessionManager (Session management)
+chiri-app/
+├── src/                    Game server (Colyseus)
+│   ├── rooms/              ChiribitoRoom + GameEngine + 8 managers
+│   ├── security/           Real, used security primitives only
+│   ├── services/           Server-to-server (game → api)
+│   └── config/             env, auth, logger
+├── api-server/             Auth & user REST API (Express + TypeORM)
+├── frontend/               Vite + PixiJS client
+├── docs/                   ARCHITECTURE.md, CI.md
+├── scripts/                One-off scripts (sidepot fuzz, etc.)
+└── .github/workflows/      build.yml + test-coverage.yml
 ```
 
-### Core Modules
+### Architecture
 
-| Module | Lines | Purpose |
-|--------|-------|---------|
-| **GameEngine** | ~250 | Main orchestrator, delegates to utilities |
-| **CardEvaluator** | ~170 | Pure poker hand evaluation (7-card best hand) |
-| **GameBroadcaster** | ~50 | Centralized event broadcasting to clients |
-| **GameUtils** | ~120 | Player utilities with O(k) optimizations |
-| **RoundManager** | ~90 | Round progression & betting management |
-| **WinnerDeterminator** | ~140 | Winner & sidepot calculation with chip conservation |
-| **PlayerActions** | ~80 | Check/fold action handlers |
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). One paragraph: three services (game, API, frontend) talking over WebSocket and HTTP. The game server is the source of truth for the deck and the cards, the API server is the source of truth for users and stats, and the frontend is just a renderer. Nothing important is trusted to the client.
 
-### Extracted Manager Modules
+### Security posture (honest version)
 
-| Manager | Tests | Status | Purpose |
-|---------|-------|--------|---------|
-| **AuthenticationService** | 12 | ✅ 100% passing | JWT token validation & remote verification |
-| **PlayerLifecycleManager** | 28 | ✅ 100% passing | Player join/leave/bust lifecycle |
-| **RebuyManager** | 15 | ✅ 100% passing | Rebuy logic & chip management |
-| **SeatManager** | 8 | ✅ 100% passing | Seat assignments & position tracking |
-| **ConnectionMonitor** | 6 | ✅ 100% passing | WebSocket connection monitoring |
-| **RateLimiterService** | 4 | ✅ 100% passing | Action rate limiting |
-| **AnalyticsService** | 5 | ✅ 100% passing | Event analytics & tracking |
-| **SessionManager** | 18 | ✅ 100% passing | Session lifecycle management |
+- JWT signing secrets and Colyseus monitor credentials are required in production. The server refuses to boot without them — no insecure fallback.
+- The deck is shuffled with `crypto.randomInt` (Fisher–Yates) and is **never** sent to clients.
+- The Colyseus monitor (`/colyseus`) is gated behind basic-auth in production; the playground (`/playground`) is fully disabled there.
+- A CI guard fails any pull request that commits a real `.env` file.
+- 0 critical / 0 high / 0 moderate npm advisories. Remaining low-severity advisories live in dev-only chains (Colyseus playground) and are accepted because the playground is never exposed in production.
 
-## 🧪 Testing & Quality Assurance
+### Contributing
 
-### Test Coverage Summary
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md). Short version: branch per sprint, commit semantically, build + lint + tests green before push, no `Co-Authored-By` machine signatures.
+
+### License
+
+`UNLICENSED` — private project. If you want to use any of this, ask first.
+
+---
+
+## 🇪🇸 Español
+
+**Chiribito** es un juego de cartas multijugador online que rescata una variante de póker nacida en Madrid en los años 50 y jugada en los reservados del **Círculo de Bellas Artes**, el **Tiro de Pichón de Somontes** y decenas de garitos clandestinos hasta que el Texas Hold'em la enterró hacia el año 2000.
+
+Este proyecto es un revival social, casual y web de aquel juego — hecho con cariño, con personalidad, y con un motor multijugador que funciona. **No es** un clon de Texas Hold'em, **no es** una sala de apuestas reales, y **no pretende competir con PokerStars**. Es su propia cosa.
+
+> En la jerga madrileña antigua, *chiribito* también significa *chispa*. Le va bien.
+
+### El juego en 60 segundos
+
+- **Baraja**: 28 cartas, baraja española (**Oros**, **Copas**, **Espadas**, **Bastos**), rangos `5–6–7–Sota–Caballo–Rey–As`. Equivalencia francesa: `8–9–10–J–Q–K–A`.
+- **Mano**: 2 cartas tapadas repartidas de derecha a izquierda, 5 comunitarias reveladas **una por una** con ronda de apuesta entre cada una → **6 rondas de apuestas**.
+- **Obligatorio usar las dos cartas** de la mano.
+- **No hay ciegas.** No-Limit. *Envidarse* (ir al all-in) en cualquier momento.
+- **Color gana a Full** (sí, así).
+- **La Perla** (`Sota + 7` del mismo palo — `J + 10` en baraja francesa) es la mejor mano: la única que liga todas las escaleras posibles.
+
+### Estado real
+
+| Componente | Estado |
+|---|---|
+| Motor de juego (Colyseus, lógica en servidor) | ✅ funciona — apuesta/subida/igualar/pasar/envido/sidepots cubiertos con tests |
+| Evaluador de manos | ✅ funciona — Color > Full, detección de Perla, mejor mano de 7 cartas |
+| Auth + cuentas (Express + PostgreSQL) | ✅ funciona — JWT + refresh tokens + reset de contraseña |
+| Reglas reales del Chiribito en la baraja/rondas | ⏳ Fase 2 — la baraja actual usa rangos placeholder heredados |
+| Renombrado a identidad propia (`ChiribitoRoom`, glosario) | ⏳ Sprint 1.4 |
+| Assets de cartas en tamaños decentes | ⏳ Sprint 1.5 (hoy 74 MB en WebP, bajarán a <3 MB) |
+| Deploy de producción | ⚪ inactivo — los servicios Render existen pero los secretos están pendientes de rotación |
+
+No decimos "production ready". Si algún rincón del repo lo dice, es restos del proyecto heredado y se va a limpiar.
+
+### Stack técnico
 
 ```
-Test Suites:    14 passed, 14 total
-Tests:          342 passing ✅
-Snapshots:      0
-Time:           ~6.4s estimated
-Coverage:       50.93% lines | 44.64% branches (GameEngine)
+Servidor de juego   Colyseus 0.17 + TypeScript sobre Node 20
+Servidor API        Express 4 + TypeORM + PostgreSQL + Redis (ioredis)
+Frontend            Vite + PixiJS 7 + GSAP
+Auth                JWT (jsonwebtoken) + bcryptjs + Resend (email transaccional)
+Hosting             Render.com (3 servicios: chiri-colyseus, chiri-api, chiri-frontend)
+CI                  GitHub Actions (build, lint, jest, vitest) + Dependabot
 ```
 
-### Test Distribution by Module
+### Arranque rápido (desarrollo local)
 
-| Module | Tests | Coverage | Type |
-|--------|-------|----------|------|
-| **GameEngine** | 55+ | 50.93% | Unit, Behavior |
-| **Card Evaluation** | 28 | High | Unit |
-| **Sidepot Calculation** | 6 | 100% | Unit, Property |
-| **Player Lifecycle** | 28 | 100% | Unit |
-| **Authentication** | 12 | High | Unit |
-| **Game Flow** | 11 | High | Integration |
-| **Managers** | 96 | 100% | Unit |
-| **Utilities & Helpers** | 106+ | Variable | Unit |
-
-### Running Tests
+Requisitos: Node 20, npm 10, PostgreSQL 14+, Redis (opcional en dev).
 
 ```bash
-# Run all tests with real-time feedback
-npm run test:jest
+# 1. Instalar
+npm install
+cd api-server && npm install && cd ..
+cd frontend  && npm install && cd ..
 
-# Generate coverage report
-npm run test:jest:coverage
+# 2. Configurar
+cp .env.example .env
+cp api-server/.env.example api-server/.env
+cp frontend/.env.example  frontend/.env
+# Rellena JWT_SECRET, DB_*, RESEND_API_KEY, etc.
 
-# Run specific test file
-npm run test:jest -- GameEngine.test.ts
+# 3. Inicializar la base de datos
+cd api-server && npm run init-db && npm run migration:run && cd ..
 
-# Watch mode during development
-npm run test:jest -- --watch
+# 4. Lanzar los tres servicios en terminales separadas
+npm run dev:api       # API server   :3000
+npm run dev           # Game server  :2567
+cd frontend && npm run dev   # Frontend :5173
 ```
 
-[📖 Detailed Testing Guide](./TESTING.md)
+### Estructura del repo
 
-## � CI/CD & Automation
+```
+chiri-app/
+├── src/                    Servidor de juego (Colyseus)
+│   ├── rooms/              ChiribitoRoom + GameEngine + 8 managers
+│   ├── security/           Primitivas de seguridad reales y usadas
+│   ├── services/           Servidor a servidor (game → api)
+│   └── config/             env, auth, logger
+├── api-server/             API REST de auth y usuarios (Express + TypeORM)
+├── frontend/               Cliente Vite + PixiJS
+├── docs/                   ARCHITECTURE.md, CI.md
+├── scripts/                Scripts puntuales (fuzz de sidepots, etc.)
+└── .github/workflows/      build.yml + test-coverage.yml
+```
 
-### GitHub Actions Workflows
+### Arquitectura
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| **test-coverage.yml** | Push / PR | Run 342+ tests & generate coverage reports |
-| **build.yml** | Push | Validate build & type checking |
+Léete [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Un párrafo: tres servicios (game, API, frontend) hablando por WebSocket y HTTP. El servidor de juego es la única fuente de verdad para la baraja y las cartas, el servidor API lo es para usuarios y estadísticas, y el frontend es un renderer. Nada importante se delega al cliente.
 
-### Automation Features
+### Postura de seguridad (versión honesta)
 
-✅ **Automated testing** on every push  
-✅ **Coverage tracking** via Codecov integration  
-✅ **Type safety** with TypeScript strict mode  
-✅ **Dependency security** checks  
+- Los secretos de firma JWT y las credenciales del monitor Colyseus son obligatorios en producción. El servidor se niega a arrancar sin ellos — no hay fallback inseguro.
+- La baraja se baraja con `crypto.randomInt` (Fisher–Yates) y **nunca** se envía al cliente.
+- El monitor Colyseus (`/colyseus`) está protegido con basic-auth en producción; el playground (`/playground`) está completamente desactivado allí.
+- Un check de CI hace fallar cualquier pull request que intente commitear un `.env` real.
+- 0 vulnerabilidades npm críticas / 0 high / 0 moderate. Las low restantes son del chain del playground de Colyseus (dev-only) y están aceptadas porque el playground no se expone en producción.
 
-Status: All checks passing ✅
+### Contribuir
 
-## 🎮 Game Features & Rules
+Lee [`CONTRIBUTING.md`](CONTRIBUTING.md). Resumen: branch por sprint, commits semánticos, build + lint + tests en verde antes del push, sin firmas `Co-Authored-By` de máquina.
 
-### Core Gameplay
-✅ **Texas Hold'em Rules**  
-✅ **2-6 Player Support** with dynamic seating  
-✅ **Complete Betting Rounds** (Preflop, Flop, Turn, River)  
-✅ **All-in Detection** with automatic sidepot computation  
-✅ **Fold/Check/Call/Raise/All-in** action handlers  
-✅ **Automatic Winner Determination** using 7-card best hand evaluation  
+### Licencia
 
-### Advanced Features
-✅ **Sidepot Calculation** with chip conservation guarantee  
-✅ **Uncalled Bet Returns** when players are all-in  
-✅ **Remainder Distribution** (chips split across winners)  
-✅ **Rebuy System** for continuous play  
-✅ **Real-time Broadcasting** via WebSocket events  
-✅ **Blind Scheduling** with auto-increase support  
-
-### Security & Integrity
-✅ **JWT Authentication** with remote token validation  
-✅ **Session Management** with anti-concurrent-login controls  
-✅ **Rate Limiting** per client (5 actions/second default)  
-✅ **Action Cooldowns** to prevent bot-like spam  
-✅ **Game Audit Logging** for all critical actions  
-✅ **Anti-cheat Validation** on every action  
+`UNLICENSED` — proyecto privado. Si quieres usar algo, pregunta primero.
 
 ---
 
-## 🛠️ Tech Stack
+## Glosario / Glossary
 
-### Backend Services
-
-**Game Server**
-```
-Colyseus 0.16.x • TypeScript 5.x • Node.js 18+ / 20+
-Express 4.x • WebSockets • Real-time Multiplayer
-```
-
-**Database Layer**
-```
-PostgreSQL 14+ • TypeORM 0.3.x • Redis (caching)
-```
-
-**API Server**
-```
-Express.js • JWT Authentication • Rate Limiting
-CORS • Body Parser • Compression Middleware
-```
-
-### Testing & Quality
-
-```
-Jest 29.x • ts-jest • TypeScript strict mode
-Codecov Integration • Automated Coverage Reports
-```
-
-### Development Tools
-
-```
-npm/yarn • TypeScript compiler (tsc)
-ESLint configuration • Source mapping
-```  
-
-## 📁 Project Structure
-
-```
-Chiri-backend/
-├── src/
-│   ├── rooms/
-│   │   ├── MyRoom.ts               # Main Colyseus room handler
-│   │   ├── managers/               # Extracted manager modules
-│   │   │   ├── AuthenticationService.ts
-│   │   │   ├── PlayerLifecycleManager.ts
-│   │   │   ├── SessionManager.ts
-│   │   │   └── ... (5 more managers)
-│   │   ├── game/
-│   │   │   ├── GameEngine.ts       # Main orchestrator (~250 lines)
-│   │   │   └── utils/              # Game utilities
-│   │   │       ├── CardEvaluator.ts
-│   │   │       ├── GameBroadcaster.ts
-│   │   │       ├── WinnerDeterminator.ts
-│   │   │       └── ... (more utilities)
-│   │   └── schema/
-│   │       └── MyRoomState.ts      # Game state definition
-│   ├── types/
-│   │   └── IGameRoom.ts            # Room interface for DI
-│   ├── security/
-│   │   └── game-validation.ts      # Anti-cheat validation
-│   └── __tests__/                  # Jest test suites (342 tests)
-│       ├── game/
-│       ├── managers/
-│       ├── integration/
-│       └── setup.ts                # Global test setup
-│
-├── api-server/                     # Express API server
-│   ├── src/
-│   │   ├── controllers/            # API endpoints
-│   │   ├── middleware/             # Auth, validation
-│   │   └── models/
-│   └── __tests__/
-│
-├── frontend/                       # Vite + TypeScript frontend
-│   ├── src/
-│   └── public/
-│
-├── docs/
-│   ├── ARCHITECTURE.md             # Detailed architecture guide
-│   └── DESIGN_PATTERNS.md
-│
-├── .github/workflows/              # CI/CD automation
-│   ├── test-coverage.yml
-│   └── build.yml
-│
-├── jest.config.js                  # Jest configuration
-├── tsconfig.json                   # TypeScript configuration
-├── TESTING.md                      # Testing documentation
-└── README.md                       # This file
-```
-
-## � Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [Architecture Guide](./docs/ARCHITECTURE.md) | Detailed system design, module interactions, design patterns |
-| [Testing Guide](./TESTING.md) | Testing strategy, running tests, coverage targets |
-| [Colyseus Docs](https://docs.colyseus.io/) | Official Colyseus framework documentation |
+| Castellano | English equivalent | Nota |
+|---|---|---|
+| **Chiribito** | (proper name) | Variante española de póker; también *chispa* en jerga antigua |
+| **Perla** | The Pearl | `Sota + 7` mismo palo · `J + 10s` (J/Ts) en baraja francesa. Mejor mano. |
+| **Oros / Copas / Espadas / Bastos** | Coins / Cups / Swords / Clubs | Los 4 palos de la baraja española |
+| **As** | Ace | Rango `1` en la baraja |
+| **Sota / Caballo / Rey** | Jack / Queen / King | Cartas figura (`10`, `11`, `12`) |
+| **Timba** | High-stakes card game | Partida fuerte, frecuentemente clandestina |
+| **Garito** | Clandestine card room | Sala donde se jugaba al margen de la ley |
+| **Envidarse** | Go all-in | "Ir con todo lo que tienes" en pleno juego |
+| **Tomar la alternativa** | Earn one's stripes | Pasar a jugar en mesas de jugadores grandes |
 
 ---
 
-## 🔐 Security Highlights
-
-### Authentication & Authorization
-- 🔐 **JWT Token Validation** with remote API verification
-- 🔄 **Exponential Backoff Retry** logic (3 attempts, configurable delays)
-- 🛡️ **Session Management** preventing concurrent logins on same account
-- 🔗 **Token Extraction** from multiple sources (token, auth.token, Authorization header)
-
-### Game Integrity
-- ⏱️ **Action Cooldowns** (1000ms default) preventing rapid-fire actions
-- 📊 **Rate Limiting** per client (5 actions/second default)
-- 🎲 **Game State Validation** on every action
-- 📋 **Comprehensive Audit Logging** for all critical events
-- 🔍 **Anti-cheat Detection** built into action validators
-
-### Data Protection
-- 🔒 **PostgreSQL** with proper connection pooling
-- 💾 **Redis Caching** for session data
-- 🔐 **Encrypted Credentials** in configuration
-- 📦 **Type-Safe** TypeScript throughout codebase
-
----
-
-## 📝 Recent Fixes & Improvements
-
-### 🐛 Bug Fixes (March 2026)
-
-**Sidepot Chip Loss Bug** ✅ FIXED
-- **Issue**: Chips being created/lost during sidepot distribution
-- **Root Cause**: Incorrect participant counting at each sidepot level
-- **Solution**: Level-based filtering with active participant verification
-- **Impact**: 100% chip conservation guaranteed mathematically
-- **Tests**: 6 comprehensive property-based tests, 2000 fuzz test iterations
-
-### 🚀 Recent Improvements
-
-- ✅ Extracted 8 manager modules from MyRoom (reducing complexity by 51%)
-- ✅ Implemented comprehensive integration tests for game flow validation
-- ✅ Added exponential backoff retry logic to authentication service
-- ✅ Improved sidepot calculation with uncalled bet returns
-- ✅ Set up global Jest setup for consistent test mocking
-
----
-
-## 🗺️ Roadmap
-
-### In Progress / Planned
-- [ ] Extract MessageRouter from MyRoom
-- [ ] Add PropertyBased tests for game scenarios
-- [ ] Increase coverage to 80%+ across all modules
-- [ ] Add WebSocket performance benchmarks
-- [ ] Implement player reconnection recovery
-- [ ] Add support for tournament mode
-- [ ] Create interactive documentation with examples
-
-### Completed ✅
-- [x] Extract 8 specialized manager modules
-- [x] Write 342+ comprehensive tests
-- [x] Fix critical sidepot chip loss bug
-- [x] Implement global test setup & mocking
-- [x] Create modular architecture with DI
-- [x] Set up CI/CD automation
-
----
-
-## 🤝 Contributing
-
-This is a private project. For questions or issues, please refer to the documentation or contact the development team.
-
----
-
-## 📄 License & Project Info
-
-**License**: UNLICENSED - Private Project  
-**Version**: 0.16.0  
-**Latest Update**: March 5, 2026  
-**Node Requirements**: 18.x, 20.x  
-**Colyseus Version**: 0.16.x  
-
-### Support
-
-- 📖 [Full Documentation](./docs/ARCHITECTURE.md)
-- 🧪 [Testing Guide](./TESTING.md)
-- 💬 Internal team communication
-
----
-
-**Last Updated**: March 5, 2026 | **Status**: ✅ Production Ready
+*Última actualización · Last updated: 2026-05-17 · Sprint 1.2 · HEAD `main`*

@@ -1,504 +1,213 @@
-# GameEngine Architecture Documentation
+# Architecture
 
-## Overview
-
-The GameEngine has been refactored from a monolithic 774-line file into a modular architecture with clear separation of concerns. This document describes the architecture, design decisions, and testing strategy.
-
-## Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                          MyRoom                              │
-│                    (Colyseus Room)                           │
-│                                                              │
-│  Implements IGameRoom interface, provides:                  │
-│  - state: MyRoomState                                       │
-│  - playersInHand, playersAllIn, playersActedThisRound      │
-│  - broadcast(), turnTimeout, dealerIndex, etc.              │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     │ depends on
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      GameEngine                              │
-│                   (Main Orchestrator)                        │
-│                                                              │
-│  constructor(room: IGameRoom)                                │
-│  - Delegates game logic to specialized modules               │
-│  - Coordinates between modules                               │
-│  - Manages game lifecycle                                    │
-│                                                              │
-│  Public API:                                                 │
-│  - handleStartGame(), handleBet(), handleCall()              │
-│  - handleCheck(), handleFold(), handleAllIn(), handleRaise() │
-│  - startNewHand(), proceedToNextPhase(), endTurn()           │
-└─────┬────────────────────────────────────────────────────────┘
-      │
-      │ uses (composition)
-      │
-      ├──────► CardEvaluator      (~170 lines)
-      │        Pure poker hand evaluation
-      │        - evaluateHand(cards): HandRank
-      │        - compareHands(hand1, hand2): number
-      │
-      ├──────► GameBroadcaster    (~50 lines)
-      │        Event broadcasting wrapper
-      │        - broadcastPlayerAction(data)
-      │        - broadcastGameState(data)
-      │
-      ├──────► GameUtils          (~120 lines)
-      │        Player management utilities
-      │        - getNextActiveIndexFrom(start): number (O(k) optimized)
-      │        - getPlayersInHandNonFolded(): string[]
-      │        - addToPot(amount, playerId, contributions)
-      │
-      ├──────► RoundManager       (~90 lines)
-      │        Round & betting management
-      │        - resetForNewHand()
-      │        - dealInitialHands()
-      │        - dealNextCommunityCard()
-      │        - startBettingRound()
-      │
-      ├──────► WinnerDeterminator (~140 lines)
-      │        Winner calculation & payouts
-      │        - determineWinners(): Winner[]
-      │        - distributePot(winners)
-      │        - calculateSidepots()
-      │
-      └──────► PlayerActions      (~80 lines)
-               Player action handlers
-               - handleCheck(client, callback)
-               - handleFold(client, contributions, callback)
-               - handleFoldForTimeout(sessionId, contributions, callback)
-```
-
-## Module Breakdown
-
-### 1. IGameRoom Interface (`src/types/IGameRoom.ts`)
-
-**Purpose**: Decouple GameEngine from MyRoom concrete implementation
-
-**Benefits**:
-- Enables unit testing with mocks
-- Reduces tight coupling
-- Makes dependencies explicit
-- Allows alternative room implementations
-
-**Properties**:
-```typescript
-interface IGameRoom {
-  readonly roomId: string;
-  readonly state: MyRoomState;
-  readonly clients: Client[];
-  playersInHand: string[];
-  readonly playersAllIn: Set<string>;
-  readonly playersActedThisRound: Set<string>;
-  dealerIndex: number;
-  currentPlayerIndex: number;
-  turnTimeout: NodeJS.Timeout | null;
-  broadcast(type: string, data?: any): void;
-}
-```
-
-### 2. GameEngine (`src/rooms/game/GameEngine.ts`)
-
-**Size**: ~250 lines (down from 774)  
-**Responsibility**: Main orchestrator that delegates to specialized modules
-
-**Key Methods**:
-- **Game Lifecycle**: `handleStartGame()`, `startNewHand()`, `proceedToNextPhase()`
-- **Betting Actions**: `handleBet()`, `handleCall()`, `handleCheck()`, `handleRaise()`, `handleAllIn()`, `handleFold()`
-- **Turn Management**: `endTurn()`, `startTurnTimer()`
-- **Round Management**: `endRound()`, `endRoundWithWinners()`
-
-**Refactored `handleBet()` Structure**:
-```typescript
-handleBet(client: Client, amount: number): void {
-  const validation = this._validateBetAction(client, amount);
-  if (!validation.valid) return;
-
-  const player = this.room.state.users.get(client.sessionId)!;
-  const prevCurrentBet = this.room.state.currentBet;
-
-  const betAmounts = this._calculateBetAmounts(player, amount, prevCurrentBet);
-  this._updateGameState(player, betAmounts);
-  this._broadcastAndEndTurn(player, betAmounts);
-}
-```
-
-**Private Helper Methods** (for `handleBet`):
-1. `_validateBetAction()` - Validates turn, player state, and bet amount
-2. `_calculateBetAmounts()` - Calculates final bet, caps to opponent stacks
-3. `_updateGameState()` - Updates chips, pot, currentBet, all-in status
-4. `_broadcastAndEndTurn()` - Broadcasts action and ends turn
-
-### 3. CardEvaluator (`src/rooms/game/utils/CardEvaluator.ts`)
-
-**Size**: ~170 lines  
-**Responsibility**: Pure poker hand evaluation
-
-**Key Functions**:
-- `evaluateHand(cards: string[]): HandRank` - Evaluates a 5-7 card hand
-- `compareHands(hand1: HandRank, hand2: HandRank): number` - Compares two hands (-1, 0, 1)
-- `getRankValue(card: string): number` - Converts card rank to numeric value
-- `getSuitValue(card: string): number` - Converts card suit to numeric value
-
-**Hand Rankings** (from best to worst):
-1. Royal Flush (10)
-2. Straight Flush (9)
-3. Four of a Kind (8)
-4. Full House (7)
-5. Flush (6)
-6. Straight (5)
-7. Three of a Kind (4)
-8. Two Pair (3)
-9. One Pair (2)
-10. High Card (1)
-
-**Pure Functions**: No side effects, fully testable in isolation
-
-### 4. GameBroadcaster (`src/rooms/game/utils/GameBroadcaster.ts`)
-
-**Size**: ~50 lines  
-**Responsibility**: Centralized event broadcasting
-
-**Key Methods**:
-- `broadcast PlayerAction(data)` - Broadcasts player actions (bet, call, fold, etc.)
-- `broadcastGameState(data)` - Broadcasts game state changes
-
-**Benefits**:
-- Single point of event emission
-- Consistent event format
-- Easy to add logging/analytics
-- Simplifies testing (mock broadcast calls)
-
-### 5. GameUtils (`src/rooms/game/utils/GameUtils.ts`)
-
-**Size**: ~120 lines  
-**Responsibility**: General utility functions for player management
-
-**Key Methods**:
-- `getNextActiveIndexFrom(startIndex: number): number` - **O(k) optimized** (k = players to check)
-- `getPlayersInHandNonFolded(): string[]` - Returns active non-folded players
-- `addToPot(amount, playerId, contributions)` - Adds chips to pot and tracks contributions
-- `getActivePlayers(): Player[]` - Returns players with chips > 0
-
-**Performance Note**: `getNextActiveIndexFrom()` was optimized from O(n²) to O(k) where k is typically 1-3 players checked
-
-### 6. RoundManager (`src/rooms/game/utils/RoundManager.ts`)
-
-**Size**: ~90 lines  
-**Responsibility**: Round progression, betting rounds, and dealing cards
-
-**Key Methods**:
-- `resetForNewHand(contributions)` - Resets state for new hand
-- `dealInitialHands()` - Deals 2 cards to each player
-- `dealNextCommunityCard()` - Deals flop/turn/river
-- `startBettingRound()` - Starts new betting round
-- `resetBetsForRound()` - Resets bets between betting rounds
-- `resetDealerAndPhase()` - Moves dealer button
-
-**Phases**: `waiting` → `preflop` → `flop` → `turn` → `river` → `showdown`
-
-### 7. WinnerDeterminator (`src/rooms/game/utils/WinnerDeterminator.ts`)
-
-**Size**: ~140 lines  
-**Responsibility**: Winner calculation and pot distribution with sidepot support
-
-**Key Methods**:
-- `determineWinners(): Winner[]` - Determines winner(s) and calculates payouts
-- `distributePot(winners)` - Distributes chips to winners
-- `calculateSidepots()` - Handles all-in scenarios with sidepots
-
-**Sidepot Logic**:
-1. Sort players by contribution amount
-2. Create pots for each contribution level
-3. Eligible players = those who contributed at least that amount and didn't fold
-4. Evaluate hands among eligible players
-5. Distribute pot proportionally if tie
-
-**Example Sidepot**:
-```
-Player A: all-in 100 chips
-Player B: all-in 200 chips  
-Player C: calls 200 chips
-
-Main pot: 300 (100 × 3) - A, B, C eligible
-Side pot: 200 (100 × 2) - Only B, C eligible
-```
-
-### 8. PlayerActions (`src/rooms/game/utils/PlayerActions.ts`)
-
-**Size**: ~80 lines  
-**Responsibility**: Check and fold action handlers
-
-**Key Methods**:
-- `handleCheck(client, callback)` - Handles check action
-- `handleFold(client, contributions, callback)` - Handles fold action
-- `handleFoldForTimeout(sessionId, contributions, callback)` - Auto-fold on timeout
-
-**Design**: Uses callbacks to trigger endTurn() or endRound() from caller
-
-## Testing Strategy
-
-### Test Infrastructure
-
-**Framework**: Jest with ts-jest  
-**Configuration**: `jest.config.js`, `tsconfig.test.json`  
-**Mock Strategy**: IGameRoom interface for dependency injection
-
-### Current Test Coverage
-
-**Test Suite**: `src/__tests__/GameEngine.handleBet.test.ts`  
-**Tests**: 33 tests (100% passing)
-
-**Test Categories**:
-1. **Integration Tests** (13 tests) - End-to-end handleBet() scenarios
-2. **`_validateBetAction`** (6 tests) - Input validation
-3. **`_calculateBetAmounts`** (5 tests) - Bet calculation logic
-4. **`_updateGameState`** (6 tests) - State mutation
-5. **`_broadcastAndEndTurn`** (3 tests) - Event broadcasting
-
-**Coverage Metrics** (GameEngine module):
-- Lines: 50.93%
-- Branches: 44.64%
-- Functions: 44.11%
-- Statements: 49.42%
-
-**Timer Management**:
-```typescript
-beforeEach(() => {
-  jest.useFakeTimers(); // Control time in tests
-  // ... setup ...
-});
-
-afterEach(() => {
-  if (mockRoom.turnTimeout) {
-    clearTimeout(mockRoom.turnTimeout);
-  }
-  jest.useRealTimers(); // Restore
-});
-```
-
-### Coverage Thresholds (`jest.config.js`)
-
-**Global Thresholds** (baseline for incremental growth):
-- Branches: 0%
-- Functions: 1%
-- Lines: 1%
-- Statements: 1%
-
-**GameEngine Module Thresholds** (current coverage):
-- Branches: 25%
-- Functions: 35%
-- Lines: 33%
-- Statements: 33%
-
-**Strategy**: Start with current coverage, incrementally increase as more tests are added
-
-### Future Test Plan
-
-**Phase 1**: Add tests for utility modules
-- [ ] CardEvaluator: Hand evaluation edge cases
-- [ ] WinnerDeterminator: Sidepot calculations
-- [ ] RoundManager: Phase transitions
-- [ ] GameUtils: Player iteration logic
-- [ ] PlayerActions: Check/fold edge cases
-
-**Phase 2**: Increase GameEngine coverage
-- [ ] Test all betting actions (call, raise, all-in)
-- [ ] Test fold scenarios and winner determination
-- [ ] Test phase transitions
-- [ ] Test edge cases (disconnects, timeouts)
-
-**Phase 3**: Integration tests
-- [ ] Multi-player scenarios
-- [ ] Full hand playthrough
-- [ ] Sidepot edge cases
-- [ ] Reconnection scenarios
-
-## CI/CD Pipeline
-
-### Workflows
-
-**1. test-coverage.yml** - Test & Coverage
-- Runs on: push to `main`/`develop`, PRs
-- Matrix: Node 18.x, 20.x
-- Steps:
-  1. TypeScript type check (`tsc --noEmit`)
-  2. Run tests with coverage (`jest --coverage`)
-  3. Upload coverage to Codecov
-  4. Comment coverage on PRs
-  5. Check coverage thresholds
-
-**2. build.yml** - Build Validation
-- Runs on: push to `main`/`develop`, PRs
-- Steps:
-  1. TypeScript compilation check
-  2. Build frontend & backend
-  3. Lint checks
-
-### Coverage Integration
-
-**Tool**: Codecov  
-**Configuration**: `.github/workflows/test-coverage.yml`  
-**Token**: `CODECOV_TOKEN` secret (prevents rate limiting)  
-**Flags**: `unittests`  
-**Reports**: lcov.info, HTML, JSON
-
-## Design Principles
-
-### 1. Single Responsibility Principle (SRP)
-Each module has one clear responsibility:
-- GameEngine: Orchestration
-- CardEvaluator: Hand evaluation
-- RoundManager: Round progression
-- WinnerDeterminator: Payout calculation
-
-### 2. Dependency Injection
-GameEngine receives IGameRoom interface, not concrete MyRoom:
-```typescript
-constructor(private room: IGameRoom) {
-  this.utils = new GameUtils(room);
-  this.broadcaster = new GameBroadcaster(room);
-  // ...
-}
-```
-
-### 3. Composition over Inheritance
-GameEngine uses composition to delegate to specialized modules instead of inheriting behavior
-
-### 4. Pure Functions Where Possible
-CardEvaluator uses pure functions for hand evaluation - no side effects, fully testable
-
-### 5. Explicit Dependencies
-IGameRoom interface makes MyRoom dependencies explicit
-
-### 6. Test-Driven Development (TDD)
-Tests written first, implementation follows. All 33 tests passing before refactor completion.
-
-## Performance Optimizations
-
-### 1. getNextActiveIndexFrom() - O(k) optimization
-**Before** (O(n²)):
-```typescript
-for (let i = start; i < playersInHand.length + start; i++) {
-  const idx = i % playersInHand.length;
-  // ... check player ...
-}
-```
-
-**After** (O(k), where k = players checked):
-```typescript
-let checks = 0;
-const maxChecks = this.room.playersInHand.length;
-let currentIndex = (startIndex + 1) % this.room.playersInHand.length;
-
-while (checks < maxChecks) {
-  // ... check player ...
-  if (valid) return currentIndex;
-  checks++;
-  currentIndex = (currentIndex + 1) % this.room.playersInHand.length;
-}
-```
-
-**Impact**: Typically checks 1-3 players instead of full loop
-
-## Migration Guide
-
-### Before (Monolithic)
-```typescript
-export class GameEngine {
-  constructor(private room: MyRoom) {}
-  
-  handleBet(client: Client, amount: number): void {
-    // 100+ lines of inline logic
-    // - validation
-    // - calculation  
-    // - state mutation
-    // - broadcasting
-    // - turn ending
-  }
-}
-```
-
-### After (Modular)
-```typescript
-export class GameEngine {
-  private utils: GameUtils;
-  private broadcaster: GameBroadcaster;
-  private roundManager: RoundManager;
-  // ...
-
-  constructor(private room: IGameRoom) {
-    this.utils = new GameUtils(room);
-    this.broadcaster = new GameBroadcaster(room);
-    // ... initialize modules
-  }
-  
-  handleBet(client: Client, amount: number): void {
-    const validation = this._validateBetAction(client, amount);
-    if (!validation.valid) return;
-    
-    const betAmounts = this._calculateBetAmounts(...);
-    this._updateGameState(...);
-    this._broadcastAndEndTurn(...);
-  }
-
-  private _validateBetAction(...) { /* 15 lines */ }
-  private _calculateBetAmounts(...) { /* 20 lines */ }
-  private _updateGameState(...) { /* 25 lines */ }
-  private _broadcastAndEndTurn(...) { /* 15 lines */ }
-}
-```
-
-## Future Improvements
-
-### Short Term
-- [ ] Add tests for all utility modules (target 80% coverage)
-- [ ] Add integration tests for complete hand playthrough
-- [ ] Document all public APIs with TSDoc comments
-- [ ] Add performance benchmarks
-
-### Medium Term
-- [ ] Extract betting logic into BettingManager module
-- [ ] Create separate PhaseManager for phase transitions
-- [ ] Add event sourcing for game history
-- [ ] Implement replay functionality
-
-### Long Term
-- [ ] Multi-table support
-- [ ] Tournament management
-- [ ] Advanced statistics and analytics
-- [ ] ML-based opponent modeling
-
-## Troubleshooting
-
-### Tests Hanging
-**Issue**: Jest doesn't exit after tests  
-**Cause**: `setTimeout` in `startTurnTimer()` not cleaned up  
-**Solution**: Use `jest.useFakeTimers()` in `beforeEach()` and restore in `afterEach()`
-
-### TypeScript Errors in Tests
-**Issue**: `Cannot find name 'describe'`, `Cannot find name 'jest'`  
-**Cause**: Wrong tsconfig used  
-**Solution**: Ensure `jest.config.js` specifies `tsconfig: 'tsconfig.test.json'`
-
-### Coverage Threshold Failures
-**Issue**: Tests pass but CI fails on coverage thresholds  
-**Cause**: Thresholds set too high for current coverage  
-**Solution**: Adjust thresholds in `jest.config.js` to match current coverage
-
-## References
-
-- [Jest Documentation](https://jestjs.io/)
-- [ts-jest Configuration](https://kulshekhar.github.io/ts-jest/)
-- [Codecov Documentation](https://docs.codecov.com/)
-- [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
-- [Test-Driven Development](https://en.wikipedia.org/wiki/Test-driven_development)
+Honest, current view of how Chiribito is wired. If the code disagrees with this document, the code wins and this document is stale — please update it.
 
 ---
 
-**Last Updated**: March 4, 2026  
-**Version**: 1.0.0  
-**Maintainers**: @polito101
+## Three services, one repository
+
+```
+┌──────────────────────────┐
+│  Frontend (Vite + Pixi)  │
+│  :5173 in dev            │
+└──────┬─────────────┬─────┘
+       │ HTTPS       │ WSS
+       ▼             ▼
+┌──────────────┐ ┌──────────────────────┐
+│ API server   │ │ Game server          │
+│ Express      │ │ Colyseus 0.17        │
+│ TypeORM      │ │ Server-authoritative │
+│ :3000        │ │ :2567                │
+└─┬──────┬─────┘ └────────┬─────────────┘
+  │      │                │
+  │      │   HTTP S2S     │
+  │      └────────────────┘  (game → api: tournament-end stats,
+  │                           token validation)
+  ▼      ▼
+PostgreSQL   Redis
+(users,      (rate limits,
+ tokens,     session store,
+ stats)      ranking cache)
+```
+
+Three deployable units, three lockfiles, one branch. The repo is an npm workspace; `api-server` is a child workspace, `frontend` is intentionally **not** a workspace because PixiJS pulls dev deps we do not want in the server's dependency tree.
+
+---
+
+## Source of truth — who owns what
+
+| Domain | Owner |
+|---|---|
+| Deck, cards, hand evaluation, betting state | **Game server** — exclusively. The deck is `private string[]` and never leaves the room process. |
+| Players, accounts, passwords, refresh tokens, password reset | **API server** |
+| Aggregate stats (games played / won, top winners) | **API server** — written from game server through an internal HTTP endpoint protected by `INTERNAL_API_SECRET` |
+| Per-room session, seat assignment, connection liveness | **Game server**, in memory of each `Room` instance |
+| Long-lived session store, rate-limit buckets, ranking cache | **Redis** |
+| Frontend state | The client. **Nothing important.** Discardable. |
+
+If the client claims it has 1.000.000 chips, the game server ignores it. If the client claims it knows the next card, the game server still ignores it (and the client can't actually know — the deck isn't even in its state).
+
+---
+
+## Game server (`src/`)
+
+Built on Colyseus 0.17 over WebSocket. One main room class, one engine, eight managers.
+
+```
+src/
+├── index.ts                  Entry point. Loads env, calls server.listen()
+├── app.config.ts             defineServer: rooms + express routes + monitor + auth
+├── config/
+│   ├── env.ts                Centralised env reading with safe defaults
+│   ├── auth.ts               @colyseus/auth wiring
+│   └── logger.ts             Winston + optional Better Stack (Logtail)
+├── rooms/
+│   ├── MyRoom.ts             Colyseus Room. Will be renamed ChiribitoRoom in 1.4.
+│   ├── close-codes.ts        Custom WS close codes
+│   ├── schema/
+│   │   └── MyRoomState.ts    Public state synced to clients (NO deck)
+│   ├── game/
+│   │   ├── GameEngine.ts     Orchestrator. Delegates to utils below.
+│   │   ├── constants.ts      Reads from config/env
+│   │   └── utils/
+│   │       ├── CardEvaluator.ts        Pure poker hand evaluation
+│   │       ├── GameBroadcaster.ts      Single point of client broadcast
+│   │       ├── GameUtils.ts            Player helpers (active, in-hand…)
+│   │       ├── RoundManager.ts         Round progression, dealing
+│   │       ├── WinnerDeterminator.ts   Winners + sidepot calculation
+│   │       └── PlayerActions.ts        Check/fold handlers
+│   └── managers/
+│       ├── AuthenticationService.ts    JWT verify + remote /api/auth/validate
+│       ├── PlayerLifecycleManager.ts   Join/leave/bust
+│       ├── SeatManager.ts              Seat assignment & reservations
+│       ├── SessionManager.ts           Per-user session lifecycle
+│       ├── ConnectionMonitor.ts        Heartbeat + liveness
+│       ├── RateLimiterService.ts       Per-action cooldowns
+│       └── AnalyticsService.ts         In-process event stats
+├── security/
+│   └── create-room-rate-limit.ts   The only security helper actually wired up.
+├── services/
+│   └── api-server-stats.ts     Server-to-server HTTP client → API
+└── types/                       Shared TypeScript types
+```
+
+### Game flow at a glance
+
+1. Client calls `client.joinOrCreate("my_room", { token })`.
+2. Colyseus invokes `MyRoom.onAuth` → `AuthenticationService.authenticate`:
+   - Verify JWT signature locally
+   - Call `POST /api/auth/validate` on API server (with retry + exponential backoff)
+   - Reject duplicate concurrent sessions unless `forceReplace: true`
+3. Client lands in `onJoin`. `PlayerLifecycleManager` seats them via `SeatManager`.
+4. When everyone is seated, `startGame` triggers `GameEngine.handleStartGame`.
+5. `RoundManager.dealInitialHands()` deals 2 cards per player from the private deck.
+6. Each player's hand is decorated `@view()` in `MyRoomState` — visible only to the owning client.
+7. Betting round drives by `MyRoom.onMessage("bet" | "call" | "check" | "raise" | "fold" | "allIn")`. Each message goes through `isActionAllowed` (turn check + round-active check + rate limiter).
+8. `proceedToNextPhase` reveals the next community card; on showdown `WinnerDeterminator` computes winners and side-pots.
+9. Tournament end → `notifyTournamentEnd` → `reportTournamentStats` → `POST /api/internal/game-ended` (protected by `INTERNAL_API_SECRET`).
+
+### Public vs private state
+
+`MyRoomState` is what every client sees. Only fields with `@type` are serialized. The deck is intentionally `private string[]` with **no decorator** — invisible to clients. Each `Player.hand` is `@view()` — visible only to the player who owns it.
+
+---
+
+## API server (`api-server/`)
+
+Express 4 + TypeORM 0.3 + PostgreSQL + Redis.
+
+```
+api-server/src/
+├── index.ts                  App bootstrap, middleware chain, routes
+├── config/
+│   ├── database.ts           AppDataSource (TypeORM)
+│   └── logger.ts             Winston
+├── controllers/
+│   ├── AuthController.ts     register, login, refresh, validate, password reset
+│   ├── UserController.ts     /api/users/me
+│   └── InternalStatsController.ts   /api/internal/game-ended (S2S)
+├── middleware/
+│   ├── auth.ts               authenticateJWT
+│   ├── validators.ts         express-validator chains
+│   └── validateRequest.ts    common 422 handler
+├── models/                   TypeORM entities: User, RefreshToken, ResetToken
+├── migrations/               TypeORM migrations (run on deploy)
+├── services/
+│   ├── EmailService.ts       Resend wrapper
+│   └── RankingService.ts     Cached top-winners query
+└── scripts/
+    └── init-db.ts            One-shot CREATE DATABASE for fresh hosts
+```
+
+### Endpoints
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/auth/register`        | rate-limited | Create user |
+| POST | `/api/auth/login`           | rate-limited | Issue JWT + refresh |
+| POST | `/api/auth/validate`        | bearer       | Used by game server in `onAuth` |
+| POST | `/api/auth/refresh`         | rate-limited | Rotate JWT |
+| POST | `/api/auth/forgot-password` | rate-limited | Email reset token (UUID, 30 min, single use) |
+| POST | `/api/auth/reset-password`  | rate-limited | Consume reset token |
+| GET  | `/api/users/me`             | JWT          | Current user profile |
+| DELETE | `/api/users/me`           | JWT          | Delete user |
+| GET  | `/api/ranking/top-winners`  | public       | Cached top winners (Redis) |
+| POST | `/api/internal/game-ended`  | shared secret| S2S — game server reports tournament outcome |
+| GET  | `/health`                   | public       | Liveness probe |
+
+### Security baseline
+
+- Helmet with a strict CSP, HSTS, frame-ancestors deny.
+- `express-rate-limit` backed by Redis on every auth endpoint.
+- Token version invalidation on every login (aggressive — will revisit in Sprint 1.3 for multi-device support).
+- Refresh tokens stored as plain text today (will hash in Sprint 1.3).
+- All user input goes through `express-validator`. No raw SQL anywhere; TypeORM QueryBuilder is parameterized.
+
+---
+
+## Frontend (`frontend/`)
+
+Vite + TypeScript + PixiJS 7 + GSAP. Stateful only in the sense that it holds the current Colyseus room reference and token.
+
+```
+frontend/src/
+├── main.ts                   Bootstrap: connect, handle lifecycle
+├── app/                      Per-screen bindings (auth, lobby, room, round end)
+├── auth/                     Token monitor, refresh, room disconnect
+├── security/                 Secure local storage + JWT decode helpers
+├── audio.ts, animations.ts   Effects layer
+└── ...                       PIXI components (cards, seats, popovers)
+```
+
+Frontend security really only consists of: storing tokens carefully (`SecureStorage`), refreshing them before expiry, and not lying to the user about what the server returned. It is not a trust boundary.
+
+---
+
+## CI / CD
+
+See [`CI.md`](CI.md). Summary:
+- `build.yml` on every push/PR: env-file leak guard → `tsc --noEmit` → ESLint → build game → build API
+- `test-coverage.yml`: backend Jest (matrix Node 18 + 20) + frontend Vitest + api-server Jest + Codecov upload + PR comment with coverage report
+- Dependabot grouped npm + GitHub Actions updates, weekly
+
+Deploys to Render are not yet automated from the new `PredictionMarketsSolutions/chiribito` fork — `render.yaml` will be reworked in Sprint 1.3.
+
+---
+
+## Logging
+
+Winston with two transports:
+- Console (always)
+- Better Stack (Logtail) if `LOGTAIL_SOURCE_TOKEN` is set
+
+In production on Render, log files on disk are pointless — Render captures stdout. The previous repo had three contradictory documents prescribing file rotation; they were deleted in Sprint 1.2.
+
+---
+
+## What this document deliberately doesn't cover
+
+- The legacy `gameAuditLog` / `gameActionRateLimiter` / `anti-cheat` modules — gone (Sprint 1.1, never wired up to begin with).
+- The CSRF middleware in the API server — gone (Sprint 1.1, never mounted).
+- "Production-ready" marketing claims — gone (Sprint 1.2).
+- The 74 MB of card assets — exists, scheduled for compression in Sprint 1.5.
+- The real Chiribito rules (deck 5-6-7-Sota-Caballo-Rey-As, 6 betting rounds, reveal one card at a time) — not implemented yet. Phase 2.
