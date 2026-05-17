@@ -1,9 +1,6 @@
 # Dependencies
 node_modules/
 
-# Environment variables
-.env
-
 # Build output
 dist/
 
@@ -30,9 +27,12 @@ npm-debug.log*
 ehthumbs.db
 Thumbs.db
 
-# Environment variants
+# Environment variables and secrets — never commit real values.
+# Only `.env.example` files are allowed in git.
+.env
 .env.*
-.env.local
+!.env.example
+!.env.*.example
 
 # Keys and certificates
 *.pem

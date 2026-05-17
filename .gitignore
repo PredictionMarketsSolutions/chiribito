@@ -4,12 +4,20 @@ node_modules/
 # Build output
 dist/
 
-# Environment variables and secrets
+# Environment variables and secrets — never commit real values.
+# Only `.env.example` files (no real secrets) are allowed in git.
 .env
 .env.*
-.env.local
-.env.development.local
-.env.test.local
+!.env.example
+!.env.*.example
+
+# Test/coverage output
+coverage/
+.nyc_output/
+
+# Tooling artifacts
+*.zip
+render.zip
 
 # Logs
 logs/

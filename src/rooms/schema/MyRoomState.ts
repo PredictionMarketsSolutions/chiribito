@@ -1,4 +1,5 @@
 import { Schema, MapSchema, ArraySchema, type, view } from "@colyseus/schema";
+import { randomInt } from "crypto";
 
 /**
  * Valores válidos de estado del jugador. Solo el servidor puede asignarlos (nunca desde mensajes del cliente).
@@ -32,7 +33,6 @@ export class Player extends Schema {
 
 export class MyRoomState extends Schema {
   @type({ map: Player }) users = new MapSchema<Player>();
-  @type(["string"]) deck: ArraySchema<string> = new ArraySchema<string>();
   @type(["string"]) communityCards: ArraySchema<string> = new ArraySchema<string>();
   @type("number") pot: number = 0;
   @type("number") currentBet: number = 0;
@@ -42,6 +42,10 @@ export class MyRoomState extends Schema {
   @type("string") phase: string = "waiting";  // waiting, preflop, flop, turn, river
   @type("string") lastRaiser: string = "";
 
+  // Deck lives server-side only. Never decorated with @type so it is never
+  // serialized to clients — otherwise any client could read the upcoming cards.
+  private deck: string[] = [];
+
   constructor() {
     super();
     this.resetDeck();
@@ -50,20 +54,20 @@ export class MyRoomState extends Schema {
   resetDeck() {
     const suits = ["O", "C", "E", "B"];
     const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-    this.deck.clear();
+    this.deck = [];
     for (const suit of suits) {
       for (const rank of ranks) {
         this.deck.push(`${rank}${suit}`);
       }
     }
-    // Shuffle deck
+    // Cryptographically-secure Fisher–Yates shuffle.
     for (let i = this.deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = randomInt(i + 1);
       [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
     }
   }
 
   dealCard(): string {
-    return this.deck.shift() || "";
+    return this.deck.shift() ?? "";
   }
 }
