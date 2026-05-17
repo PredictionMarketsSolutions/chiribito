@@ -10,6 +10,28 @@ All notable changes to this project will be documented here. Format roughly foll
 - Replace the heredado print art with a unified visual identity once the new art is ready.
 - Card reveal animation on each `communityCardRevealed` event (engine already emits one card at a time; the visual cue is purely cosmetic and will land with the unified art).
 
+## [0.4.1-phase-4] — 2026-05-17
+
+### Fixed — visual coherence pass
+
+- **Latent rule bug in `frontend/src/game/current-hand.ts`**: the live hand-name shown next to your own cards was computed by a hand-copy of the original heredado `CardEvaluator` and never got migrated when Phase 2 fixed the engine. It still believed ranks went `7 < 8 < 9 < 10 < 11 < 12 < 1` (including the non-existent 8 and 9) and that the Perla was `Sota + Caballo` of the same suit. Now mirrors `src/rooms/game/glossary.ts` and `src/rooms/game/utils/CardEvaluator.ts`:
+  - `RANK_ORDER` → `5 < 6 < 7 < Sota (10) < Caballo (11) < Rey (12) < As (1)`.
+  - `isPerla` → `Sota + 7` of the same suit. Set-based check; card order in the hole doesn't matter.
+  - File header documents the mirror discipline.
+- **Castizo hand names with proper accents** in the server (`src/rooms/game/utils/CardEvaluator.getHandName`): `Poker → Póker`, `Trio → Trío`. These are the strings the server broadcasts as `winningHand` and the client shows verbatim in the winner banner ("Trío para Ana", "Póker para Pedro"). The mirror in `frontend/src/game/current-hand.ts` matches.
+
+### Tests
+- Net test count: 674 → 676 (+2 explicit guards in `current-hand.test.ts`):
+  - `"does NOT call Sota + Caballo suited a Perla"` — pins the heredado mistake we just fixed so it can't regress.
+  - `"returns Doble pareja when two distinct pairs are made"`.
+- Test fixtures across the frontend updated so no assertion uses a card that does not exist in the canonical Chiribito deck (no rank 2/3/4/8/9):
+  - `frontend/src/app/round-ended-history.test.ts`
+  - `frontend/src/app/round-ended-outcome.test.ts`
+  - `frontend/src/app/round-ended-winner-ui.test.ts`
+  - `frontend/src/app/card-popover.test.ts`
+  - `frontend/src/game/room-state.test.ts`
+- Server tests updated to expect the accented hand names (`CardEvaluator.test.ts`, `WinnerDeterminator.test.ts`).
+
 ## [0.4.0-phase-3] — 2026-05-17
 
 ### Added — frontend now reflects the authentic Chiribito flow
