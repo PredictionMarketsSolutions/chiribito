@@ -1,9 +1,31 @@
-# Chiribito — Render Infrastructure as Code (staging)
+# Chiribito — Render Infrastructure as Code (staging, zero-cost path)
 #
-# Three web services + one Redis + one Postgres, all in Frankfurt.
-# Designed to be applied as a Render Blueprint:
+# Three web services + one Key Value (Redis) + one Postgres in Frankfurt,
+# all on Render's FREE tier. Designed to be applied as a Render Blueprint:
 #   https://dashboard.render.com → Blueprints → New Blueprint Instance →
 #   pick this repo → "Apply"
+#
+# Free-tier reality (verified 2026-05-17 — Render's free tier limits):
+#   Web services      512 MB RAM, 0.1 CPU, 750 instance-hours/month total,
+#                     sleeps after 15 min idle (HTTP + WebSocket count as
+#                     activity), cold start 30-60 s on wake.
+#   PostgreSQL        256 MB RAM, 1 GB storage, expires 30 DAYS after creation
+#                     (14 day grace then deleted). For staging beyond
+#                     1 month you must upgrade to a paid plan ($7/mo).
+#   Key Value (Redis) 25 MB memory, 50 conns, NO persistence (cache only).
+#   Static site       free with no practical limits for our build size.
+#
+# Implications for Chiribito playtesting:
+#   - First request of the day to api/game can take ~30-60 s while the
+#     server wakes. After that snappy until 15 min of zero activity.
+#   - The game server sleeps when the room is empty. Re-joiners pay the
+#     cold-start tax. Acceptable for announced private playtests.
+#   - The Postgres clock starts the day the database is created. Mark
+#     30 days from then on your calendar to either upgrade or recreate.
+#
+# To upgrade any service later: in the Render dashboard, Service →
+# Settings → Plan → pick `starter` (Web $7/mo, Postgres $7/mo,
+# Key Value $10/mo) — no code change needed.
 #
 # Conventions:
 #   value: …    committed by intent — same across deploys.
@@ -31,7 +53,7 @@ services:
   # ─────────────────────────────────────────────────────────────────────
   - type: redis
     name: chiribito-redis
-    plan: starter
+    plan: free
     region: frankfurt
     ipAllowList: []   # only services in this Render account
     maxmemoryPolicy: allkeys-lru
@@ -42,7 +64,7 @@ services:
   - type: web
     name: chiribito-api
     env: node
-    plan: starter
+    plan: free
     region: frankfurt
     branch: main
     rootDir: api-server
@@ -116,7 +138,7 @@ services:
   - type: web
     name: chiribito-colyseus
     env: node
-    plan: starter
+    plan: free
     region: frankfurt
     branch: main
     rootDir: .
@@ -193,7 +215,7 @@ services:
   - type: web
     name: chiribito-frontend
     env: static
-    plan: starter
+    plan: free
     region: frankfurt
     branch: main
     rootDir: frontend
@@ -221,6 +243,6 @@ databases:
     databaseName: chiribito
     user: chiribito
     region: frankfurt
-    plan: starter
+    plan: free
     postgresMajorVersion: "16"
     ipAllowList: []   # only services in the same Render account

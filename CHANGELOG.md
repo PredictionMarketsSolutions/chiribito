@@ -9,7 +9,29 @@ All notable changes to this project will be documented here. Format roughly foll
 - Multi-device session support (loosen the `tokenVersion++` per login).
 - Replace the heredado print art with a unified visual identity once the new art is ready.
 - Card reveal animation on each `communityCardRevealed` event (engine already emits one card at a time; the visual cue is purely cosmetic and will land with the unified art).
-- First real Render deploy under `chiribito-*` service names + custom domain `staging.chiribito.com`. Blueprint is ready (`render.yaml`) and documented (`DEPLOY.md`); needs maintainer to apply it in the Render dashboard and paste the secrets.
+- **Day-30 PostgreSQL migration plan**: Render's free Postgres expires 30 days after creation. Before that date, either upgrade to `basic-256mb` ($7/mo) inside the 14-day grace period, or accept the data loss and recreate.
+
+## [0.5.1-phase-6] — 2026-05-17
+
+### Changed
+- **`render.yaml` flipped from `starter` to `free` on every service.** The original Blueprint quoted `starter` plans (~$7/mo per web service, $7/mo Postgres, $10/mo Redis) which contradicted the zero-cost staging plan. Now all five components target Render's free tier and the YAML preamble documents the real free-tier limits and the precise cost-vs-friction trade-offs for each upgrade.
+
+### Rewritten
+- **`DEPLOY.md`** — staging-focused, free-tier-first guide. Concrete steps end-to-end:
+  - Pre-flight in 10 min on your laptop (openssl + Resend signup)
+  - Apply Blueprint in Render (5 min)
+  - Paste exact secrets per service (10 min) — the strings are copyable
+  - Acceptance check via `/health` + `/ready` curls and a two-browser multiplayer smoke
+  - **Custom-domain section now covers Namecheap concretely**: how to add the CNAME on the Advanced DNS tab, how to update `ALLOWED_ORIGINS` and `FRONTEND_URL` once `staging.chiribito.com` is live, and explicit "you don't need to change VITE_API_URL unless you also expose api.chiribito.com"
+  - **New "Add a Jugar Beta button to the landing" section** with three variants: source on GitHub (replace the existing `JUGAR PARTIDA Próximamente` button), no-code landing builders (Webflow/Framer/Lovable click path), or skip and share the URL directly
+  - Honest cost table showing $0/mo for the first 30 days, then $0–$7/mo depending on whether you keep Postgres free
+  - Symptom table covering cold starts, mid-game disconnects from idle sleep, Postgres expiry at day 30, 25 MB Redis eviction, monthly hour cap
+  - "When you outgrow this" upgrade path with concrete prices per tier
+
+### Sources cited in `DEPLOY.md`
+- https://render.com/docs/free
+- https://render.com/pricing
+- https://render.com/docs/databases#free
 
 ## [0.5.0-phase-5] — 2026-05-17
 
