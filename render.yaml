@@ -1,67 +1,196 @@
+# Chiribito — Render Infrastructure as Code
+#
+# Three web services + one Redis + one Postgres, all in the same region.
+# Region: Frankfurt (closest Render PoP to Spain). Change to "oregon" only
+# if a paid plan dictates otherwise.
+#
+# Anything `sync: false` must be set manually in the Render dashboard
+# before the first deploy. Anything `value: ...` is committed by intent.
+# `fromService` / `fromDatabase` are deterministic.
+
 services:
+  # ─────────────────────────────────────────────────────────────────────
+  # Redis (sessions, rate-limit buckets, tokenVersion cache, ranking cache)
+  # ─────────────────────────────────────────────────────────────────────
+  - type: redis
+    name: chiribito-redis
+    plan: starter
+    region: frankfurt
+    ipAllowList: []   # only services in this Render account
+    maxmemoryPolicy: allkeys-lru
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 1. API server (Express + TypeORM + Postgres + Redis)
+  # ─────────────────────────────────────────────────────────────────────
   - type: web
-    name: chiri-api
+    name: chiribito-api
     env: node
+    plan: starter
+    region: frankfurt
     rootDir: api-server
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm run start:migrate
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "3000"
+
+      # Secrets — set manually in Render dashboard.
       - key: JWT_SECRET
         sync: false
+      - key: INTERNAL_API_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: LOGTAIL_SOURCE_TOKEN
+        sync: false
+
+      # Database (managed by Render).
       - key: DB_HOST
-        fromDatabase:
-          name: chiri-postgres
-          property: host
+        fromDatabase: { name: chiribito-postgres, property: host }
       - key: DB_PORT
-        fromDatabase:
-          name: chiri-postgres
-          property: port
+        fromDatabase: { name: chiribito-postgres, property: port }
       - key: DB_NAME
-        fromDatabase:
-          name: chiri-postgres
-          property: database
+        fromDatabase: { name: chiribito-postgres, property: database }
       - key: DB_USER
-        fromDatabase:
-          name: chiri-postgres
-          property: user
+        fromDatabase: { name: chiribito-postgres, property: user }
       - key: DB_PASSWORD
-        fromDatabase:
-          name: chiri-postgres
-          property: password
+        fromDatabase: { name: chiribito-postgres, property: password }
       - key: DB_SSL
         value: "true"
-      - key: ALLOWED_ORIGINS
-        value: https://chiri-frontend.onrender.com
 
+      # Redis (managed by Render).
+      - key: REDIS_URL
+        fromService: { type: redis, name: chiribito-redis, property: connectionString }
+
+      # CORS — frontend service hostname (no scheme, includes port if any).
+      - key: ALLOWED_ORIGINS
+        fromService: { type: web, name: chiribito-frontend, property: host }
+
+      # Frontend URL for password-reset email links.
+      - key: FRONTEND_URL
+        fromService: { type: web, name: chiribito-frontend, property: host }
+
+      # Email sender identity.
+      - key: RESEND_FROM_EMAIL
+        value: no-reply@chiribito.com
+
+      # Auth token-version cache tuning.
+      - key: AUTH_TOKEN_VERSION_CACHE_ENABLED
+        value: "true"
+      - key: AUTH_TOKEN_VERSION_CACHE_TTL_MS
+        value: "60000"
+
+      # Logging
+      - key: LOG_LEVEL
+        value: info
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 2. Game server (Colyseus + WebSockets)
+  # ─────────────────────────────────────────────────────────────────────
   - type: web
-    name: chiri-colyseus
+    name: chiribito-colyseus
     env: node
+    plan: starter
+    region: frankfurt
     rootDir: .
-    buildCommand: npm install && npm run build:game
+    buildCommand: npm ci && npm run build:game
     startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "2567"
+
+      # Secrets — set manually in Render dashboard.
+      # JWT_SECRET MUST be identical to the api-server's.
       - key: JWT_SECRET
         sync: false
-      - key: API_URL
-        value: https://YOUR_API_SERVICE.onrender.com
+      - key: INTERNAL_API_SECRET
+        sync: false
+      - key: MONITOR_USER
+        sync: false
+      - key: MONITOR_PASSWORD
+        sync: false
+      - key: LOGTAIL_SOURCE_TOKEN
+        sync: false
 
+      # Where the api-server lives (used by AuthenticationService.validateTokenRemote).
+      - key: API_URL
+        fromService: { type: web, name: chiribito-api, property: host }
+
+      # Database (env validation only — the game server does not write here).
+      - key: DB_HOST
+        fromDatabase: { name: chiribito-postgres, property: host }
+      - key: DB_USER
+        fromDatabase: { name: chiribito-postgres, property: user }
+      - key: DB_NAME
+        fromDatabase: { name: chiribito-postgres, property: database }
+
+      # Redis (sessions + tokenVersion cache).
+      - key: REDIS_URL
+        fromService: { type: redis, name: chiribito-redis, property: connectionString }
+      - key: REDIS_PREFIX
+        value: chiribito
+
+      # CORS for the Colyseus HTTP handshake.
+      - key: ALLOWED_ORIGINS
+        fromService: { type: web, name: chiribito-frontend, property: host }
+
+      # Runtime tuning.
+      - key: TURN_TIMEOUT_MS
+        value: "60000"
+      - key: HEARTBEAT_INTERVAL_MS
+        value: "30000"
+      - key: HEARTBEAT_TIMEOUT_MS
+        value: "180000"
+      - key: HEARTBEAT_DISCONNECT_ENABLED
+        value: "true"
+      - key: ACTION_COOLDOWN_MS
+        value: "200"
+      - key: AUTH_TOKEN_VERSION_CACHE_ENABLED
+        value: "true"
+      - key: AUTH_TOKEN_VERSION_CACHE_TTL_MS
+        value: "60000"
+
+      - key: LOG_LEVEL
+        value: info
+
+  # ─────────────────────────────────────────────────────────────────────
+  # 3. Frontend (Vite static build)
+  # ─────────────────────────────────────────────────────────────────────
   - type: web
-    name: chiri-frontend
+    name: chiribito-frontend
     env: static
+    plan: starter
+    region: frankfurt
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     staticPublishPath: dist
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://YOUR_API_SERVICE.onrender.com
+        fromService: { type: web, name: chiribito-api, property: host }
       - key: VITE_WS_URL
-        value: wss://YOUR_COLYSEUS_SERVICE.onrender.com
+        fromService: { type: web, name: chiribito-colyseus, property: host }
 
+# ───────────────────────────────────────────────────────────────────────
+# Managed PostgreSQL
+# ───────────────────────────────────────────────────────────────────────
 databases:
-  - name: chiri-postgres
-    databaseName: pokerbase
-    user: poker_user
+  - name: chiribito-postgres
+    databaseName: chiribito
+    user: chiribito
+    region: frankfurt
+    plan: starter
+    postgresMajorVersion: "16"
+    ipAllowList: []   # only services in the same Render account

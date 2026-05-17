@@ -53,3 +53,17 @@ jobs:
 
       - name: Build API server
         run: npm run build:api
+
+      - name: Security audit (root, runtime deps)
+        # --omit=dev skips dev-only chains (the accepted @colyseus/playground
+        # advisories from sprint 1.0). Moderate or higher in runtime deps
+        # blocks the workflow.
+        run: npm audit --audit-level=moderate --omit=dev
+
+      - name: Security audit (api-server, runtime deps)
+        run: npm audit --audit-level=moderate --omit=dev
+        working-directory: api-server
+
+      - name: Security audit (frontend, runtime deps)
+        run: npm audit --audit-level=moderate --omit=dev
+        working-directory: frontend

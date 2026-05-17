@@ -6,6 +6,8 @@ import { User } from '../models/User';
 import { RefreshToken } from '../models/RefreshToken';
 import { ResetToken } from '../models/ResetToken';
 import { emailService } from '../services/EmailService';
+import { publishTokenVersion, invalidateTokenVersion } from '../services/tokenVersionCache';
+import { auditWrite, AuditEventType } from '../services/auditLog';
 import logger from '../config/logger';
 
 interface RegisterRequest {
@@ -126,12 +128,18 @@ export class AuthController {
       
       if (existingUser) {
         // Return success to avoid email enumeration
-        res.status(201).json({ 
+        res.status(201).json({
           user: { id: 0, username: '', email: '' },
           token: 'dummy',
           refreshToken: 'dummy'
         });
         logger.info('Registration attempt with existing user', { email, username });
+        void auditWrite({
+          eventType: AuditEventType.USER_REGISTRATION_DUPLICATE,
+          userId: existingUser.id,
+          payload: { reason: 'email_or_username_in_use' },
+          req
+        });
         return;
       }
 
@@ -142,6 +150,9 @@ export class AuthController {
       await user.setPassword(password);
 
       await this.userRepository.save(user);
+
+      // Warm the cross-service token-version cache for the new user.
+      void publishTokenVersion(user.id, user.tokenVersion ?? 0);
 
       // Send welcome email (non-blocking)
       emailService.sendWelcomeEmail(email, username).catch(err => {
@@ -160,13 +171,18 @@ export class AuthController {
       refreshToken.userAgent = this.getUserAgent(req);
       await this.refreshTokenRepository.save(refreshToken);
 
-      res.status(201).json({ 
+      res.status(201).json({
         user: { id: user.id, username: user.username, email: user.email },
         token,
         refreshToken: refreshTokenStr
       });
 
       logger.info('User registered successfully', { userId: user.id, email, username });
+      void auditWrite({
+        eventType: AuditEventType.USER_REGISTERED,
+        userId: user.id,
+        req
+      });
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Registration error', { message: error.message });
@@ -192,17 +208,32 @@ export class AuthController {
       const user = await this.userRepository.findOne({ where: { email } });
       if (!user) {
         res.status(401).json({ error: 'Invalid credentials' });
+        void auditWrite({
+          eventType: AuditEventType.USER_LOGIN_FAILED,
+          payload: { reason: 'user_not_found', email },
+          req
+        });
         return;
       }
 
       const isValidPassword = await user.validatePassword(password);
       if (!isValidPassword) {
         res.status(401).json({ error: 'Invalid credentials' });
+        void auditWrite({
+          eventType: AuditEventType.USER_LOGIN_FAILED,
+          userId: user.id,
+          payload: { reason: 'bad_password' },
+          req
+        });
         return;
       }
 
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
       await this.userRepository.save(user);
+
+      // Publish the new tokenVersion so the game server can validate this
+      // user via Redis without a round-trip back to us.
+      void publishTokenVersion(user.id, user.tokenVersion);
 
       const token = this.generateAuthToken(user);
       const refreshTokenStr = this.generateRefreshToken(user);
@@ -216,13 +247,18 @@ export class AuthController {
       refreshToken.userAgent = this.getUserAgent(req);
       await this.refreshTokenRepository.save(refreshToken);
 
-      res.json({ 
+      res.json({
         user: { id: user.id, username: user.username, email: user.email },
         token,
         refreshToken: refreshTokenStr
       });
 
       logger.info('User logged in successfully', { userId: user.id, email });
+      void auditWrite({
+        eventType: AuditEventType.USER_LOGIN_OK,
+        userId: user.id,
+        req
+      });
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Login error', { message: error.message });
@@ -296,6 +332,9 @@ export class AuthController {
         res.status(401).json({ error: 'Token invalidated' });
         return;
       }
+
+      // Warm the cache for subsequent game-server lookups within the TTL.
+      void publishTokenVersion(user.id, user.tokenVersion ?? 0);
 
       res.json({ user: { id: user.id, username: user.username, email: user.email } });
     } catch (error) {
@@ -377,6 +416,11 @@ export class AuthController {
 
         res.json({ token: newToken, refreshToken: newRefreshTokenStr });
         logger.info('Token refreshed successfully', { userId: user.id });
+        void auditWrite({
+          eventType: AuditEventType.USER_TOKEN_REFRESHED,
+          userId: user.id,
+          req
+        });
       } catch {
         res.status(401).json({ error: 'Invalid refresh token signature' });
       }
@@ -436,6 +480,12 @@ export class AuthController {
       } else {
         logger.warn('Password reset email failed to send', { userId: user.id, email });
       }
+      void auditWrite({
+        eventType: AuditEventType.USER_PASSWORD_RESET_REQUESTED,
+        userId: user.id,
+        payload: { emailSent },
+        req
+      });
     } catch (error) {
       if (error instanceof Error) {
         logger.error('Forgot password error', { message: error.message });
@@ -498,10 +548,14 @@ export class AuthController {
 
       // Update password
       await user.setPassword(newPassword);
-      
+
       // Invalidate all existing sessions
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
       await this.userRepository.save(user);
+
+      // Publish the new tokenVersion so any in-flight Colyseus joins with
+      // the old token are rejected by the cache instead of slipping through.
+      void publishTokenVersion(user.id, user.tokenVersion);
 
       // Revoke all refresh tokens
       await this.refreshTokenRepository.update(
@@ -515,6 +569,11 @@ export class AuthController {
       await this.resetTokenRepository.save(tokenData);
 
       logger.info('Password reset successful', { userId: user.id, email: user.email });
+      void auditWrite({
+        eventType: AuditEventType.USER_PASSWORD_RESET_COMPLETED,
+        userId: user.id,
+        req
+      });
       res.json({ message: 'Password has been reset successfully' });
     } catch (error) {
       if (error instanceof Error) {

@@ -19,7 +19,12 @@ import {
 } from "./managers";
 import { CUSTOM_GAME_END } from "./close-codes";
 import { reportTournamentGameEnded } from "../services/api-server-stats";
-import { API_URL, JWT_SECRET, AUTH_REQUEST_TIMEOUT_MS } from "../config/env";
+import {
+  API_URL,
+  JWT_SECRET,
+  AUTH_REQUEST_TIMEOUT_MS,
+  HEARTBEAT_DISCONNECT_ENABLED
+} from "../config/env";
 import type { RoomOptions, JoinOptionsFromClient, JoinOptionsWithAuth } from "../types/room-options";
 
 export class MyRoom extends Room<{ state: MyRoomState }> {
@@ -173,11 +178,20 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
         heartbeatTimeoutMs: HEARTBEAT_TIMEOUT
       },
       (sessionId) => {
-        // Solo aviso: desconexión por heartbeat desactivada por ahora
         const client = this.clients.find(c => c.sessionId === sessionId);
-        if (client) {
-          logger.warn(`Client unresponsive (heartbeat timeout) — desconexión desactivada`, { sessionId, roomId: this.roomId });
-          // client.leave(4000, "Heartbeat timeout"); // Desactivado temporalmente
+        if (!client) return;
+        if (HEARTBEAT_DISCONNECT_ENABLED) {
+          logger.warn(`Client unresponsive — disconnecting on heartbeat timeout`, {
+            sessionId,
+            roomId: this.roomId,
+            timeoutMs: HEARTBEAT_TIMEOUT
+          });
+          client.leave(4000, "Heartbeat timeout");
+        } else {
+          logger.warn(`Client unresponsive — disconnect disabled by env flag`, {
+            sessionId,
+            roomId: this.roomId
+          });
         }
       }
     );

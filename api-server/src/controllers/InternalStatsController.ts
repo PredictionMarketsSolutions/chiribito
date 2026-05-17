@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type Redis from "ioredis";
 import { AppDataSource } from "../config/database";
 import { User } from "../models/User";
+import { auditWrite, AuditEventType } from "../services/auditLog";
 import logger from "../config/logger";
 
 type GameEndedPayload = {
@@ -82,6 +83,13 @@ export class InternalStatsController {
         logger.warn("Failed to invalidate ranking cache", { error: String(error) });
       }
     }
+
+    void auditWrite({
+      eventType: AuditEventType.TOURNAMENT_REPORTED,
+      userId: championUserId,
+      payload: { participantCount: normalizedParticipants.length },
+      req
+    });
 
     res.json({ ok: true });
   }

@@ -7,6 +7,8 @@ import * as jwt from "jsonwebtoken";
 import { Client } from "@colyseus/core";
 import logger from "../../config/logger";
 import { SessionManager } from "./SessionManager";
+import { tokenVersionCache } from "./TokenVersionCache";
+import { AUTH_TOKEN_VERSION_CACHE_ENABLED } from "../../config/env";
 import type { AuthUser, JoinOptionsFromClient } from "../../types/room-options";
 
 export interface AuthConfig {
@@ -83,16 +85,18 @@ export class AuthenticationService {
 
     // Verify JWT signature
     const decoded = jwt.verify(token, this.config.jwtSecret) as AuthUser;
-    
-    // Validate token remotely with API server
-    await this.validateTokenRemote(token);
-    
-    options.authUser = decoded;
 
     const userId = Number(decoded?.userId);
     if (!Number.isFinite(userId)) {
       throw new Error("INVALID_TOKEN");
     }
+
+    // Validate the token against the current per-user `tokenVersion`.
+    // Fast path: Redis cache (if enabled and available) avoids the HTTP
+    // round-trip to the api-server. Slow path: HTTP fallback with retries.
+    await this.validateTokenVersion(token, userId, decoded);
+
+    options.authUser = decoded;
 
     // Check for existing sessions
     const hasActiveSession = sessionManager.hasActiveSession(userId);
@@ -115,6 +119,41 @@ export class AuthenticationService {
     sessionManager.addPending(userId);
     
     return result;
+  }
+
+  /**
+   * Validate that the JWT's `tokenVersion` is current.
+   *
+   * Cache hit (Redis) with matching version → no HTTP needed.
+   * Cache hit (Redis) with stale version → reject as INVALID_TOKEN.
+   * Cache miss / disabled → HTTP fallback to api-server `/api/auth/validate`,
+   *   then warm the cache with the version we just trusted.
+   */
+  private async validateTokenVersion(
+    token: string,
+    userId: number,
+    decoded: AuthUser
+  ): Promise<void> {
+    const incomingVersion = typeof decoded.tokenVersion === "number" ? decoded.tokenVersion : null;
+
+    if (AUTH_TOKEN_VERSION_CACHE_ENABLED && incomingVersion !== null) {
+      const cached = await tokenVersionCache.get(userId);
+      if (cached !== null) {
+        if (cached !== incomingVersion) {
+          throw new Error("INVALID_TOKEN");
+        }
+        // Cache hit + version match — skip HTTP.
+        return;
+      }
+    }
+
+    // Cache miss (or cache disabled). Fall back to the api-server.
+    await this.validateTokenRemote(token);
+
+    // Warm cache so future joins in this TTL window skip the HTTP call.
+    if (AUTH_TOKEN_VERSION_CACHE_ENABLED && incomingVersion !== null) {
+      void tokenVersionCache.set(userId, incomingVersion);
+    }
   }
 
   /**

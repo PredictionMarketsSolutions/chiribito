@@ -14,6 +14,12 @@ const getEnvInt = (key: string, defaultValue: number): number => {
   return Number.isFinite(n) ? n : defaultValue;
 };
 
+const getEnvBool = (key: string, defaultValue: boolean): boolean => {
+  const raw = process.env[key];
+  if (raw === undefined || raw === "") return defaultValue;
+  return raw.toLowerCase() === "true" || raw === "1";
+};
+
 /** API base URL (game server → api server). */
 export const API_URL = getEnv("API_URL", "http://localhost:3000");
 
@@ -37,6 +43,32 @@ export const ALLIN_REVEAL_DELAY_MS = getEnvInt("ALLIN_REVEAL_DELAY_MS", 1_000);
 
 /** Timeout para peticiones de autenticación al API (ms). */
 export const AUTH_REQUEST_TIMEOUT_MS = getEnvInt("AUTH_REQUEST_TIMEOUT_MS", 8_000);
+
+/**
+ * If true, clients that miss their heartbeat for HEARTBEAT_TIMEOUT_MS are
+ * forcibly disconnected from the room. If false, only a warning is logged
+ * (the legacy behaviour from the heredado repo).
+ *
+ * Default: true. Mobile clients on background pause their heartbeat via
+ * the frontend, so the timeout (default 3 min) is generous enough.
+ */
+export const HEARTBEAT_DISCONNECT_ENABLED = getEnvBool("HEARTBEAT_DISCONNECT_ENABLED", true);
+
+/** Redis URL (optional in dev; required in prod for rate limits and session store). */
+export const REDIS_URL = getEnv("REDIS_URL", "");
+
+/** Redis key prefix for any chiribito-namespaced keys. */
+export const REDIS_PREFIX = getEnv("REDIS_PREFIX", "chiribito");
+
+/**
+ * If true (default), the game server consults a Redis-backed cache of
+ * `tokenVersion` per user before falling back to the api-server HTTP
+ * call in `onAuth`. When Redis is not configured this flag has no effect.
+ */
+export const AUTH_TOKEN_VERSION_CACHE_ENABLED = getEnvBool("AUTH_TOKEN_VERSION_CACHE_ENABLED", true);
+
+/** TTL for the cached tokenVersion entries (ms). */
+export const AUTH_TOKEN_VERSION_CACHE_TTL_MS = getEnvInt("AUTH_TOKEN_VERSION_CACHE_TTL_MS", 60_000);
 
 /** Validar variables críticas (opcional; tests pueden usar DISABLE_ENV_VALIDATION). */
 export function validateEnv(): { ok: boolean; missing: string[] } {

@@ -8,6 +8,7 @@ import { createClient } from "redis";
 import { randomBytes, timingSafeEqual } from "crypto";
 import logger from "./config/logger";
 import { JWT_SECRET as ENV_JWT_SECRET } from "./config/env";
+import { getRedisClient } from "./config/redis";
 
 // import { RedisDriver } from "@colyseus/redis-driver";
 // import { RedisPresence } from "@colyseus/redis-presence";
@@ -101,7 +102,41 @@ const server = defineServer({
          * Bind your custom express routes here:
          */
         app.get("/", (_req: Request, res: Response) => {
-            res.send("Server running");
+            res.send("Chiribito game server");
+        });
+
+        // Liveness probe — cheap, no dependency checks. Used by Render.
+        app.get("/health", (_req: Request, res: Response) => {
+            res.json({ status: "ok", timestamp: new Date().toISOString() });
+        });
+
+        // Readiness probe — pings Redis when configured. Returns 503 if any
+        // required dependency is unhealthy.
+        app.get("/ready", async (_req: Request, res: Response) => {
+            const startedAt = Date.now();
+            const checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }> = {};
+            const isProd = process.env.NODE_ENV === "production";
+
+            const client = await getRedisClient();
+            if (client) {
+                const t = Date.now();
+                try {
+                    await client.ping();
+                    checks.redis = { ok: true, latencyMs: Date.now() - t };
+                } catch (err) {
+                    checks.redis = { ok: false, error: err instanceof Error ? err.message : String(err) };
+                }
+            } else {
+                checks.redis = { ok: !isProd };
+            }
+
+            const ready = Object.values(checks).every((c) => c.ok);
+            res.status(ready ? 200 : 503).json({
+                ready,
+                checks,
+                durationMs: Date.now() - startedAt,
+                timestamp: new Date().toISOString()
+            });
         });
 
         // Configure Redis session store for monitor

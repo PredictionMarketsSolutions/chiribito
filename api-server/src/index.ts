@@ -20,6 +20,7 @@ import { validateRequest } from './middleware/validateRequest';
 import logger from './config/logger';
 import { User } from './models/User';
 import { getTopWinners } from './services/RankingService';
+import { setRedisClient as setTokenVersionCacheClient } from './services/tokenVersionCache';
 
 // Type augmentation for Express Request
 /* eslint-disable @typescript-eslint/no-namespace */
@@ -232,6 +233,9 @@ if (!redisClient) {
   logger.info('Redis client initialized');
 }
 
+// Wire the Redis client into the token-version cache (used by AuthController).
+setTokenVersionCacheClient(redisClient);
+
 const createLimiter = (windowMs: number, max: number, prefix: string) => {
   return rateLimit({
     windowMs,
@@ -299,8 +303,48 @@ app.delete('/api/users/me', authenticateJWT, async (req, res, next) => {
   }
 });
 
+// Liveness — does the process answer? Cheap, no dependency checks.
+// Render uses this for healthCheckPath.
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Readiness — does this instance hold the dependencies it needs to serve
+// real traffic? Checks DB connectivity and Redis ping when applicable.
+// Returns 200 + per-component status, 503 if any required dep is down.
+app.get('/ready', async (_req: Request, res: Response) => {
+  const startedAt = Date.now();
+  const checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }> = {};
+
+  // PostgreSQL — required.
+  const dbStart = Date.now();
+  try {
+    await AppDataSource.query('SELECT 1');
+    checks.database = { ok: true, latencyMs: Date.now() - dbStart };
+  } catch (err) {
+    checks.database = { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  // Redis — optional in dev, required in prod.
+  if (redisClient) {
+    const redisStart = Date.now();
+    try {
+      await redisClient.ping();
+      checks.redis = { ok: true, latencyMs: Date.now() - redisStart };
+    } catch (err) {
+      checks.redis = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  } else {
+    checks.redis = { ok: process.env.NODE_ENV !== 'production' };
+  }
+
+  const ready = Object.values(checks).every((c) => c.ok);
+  res.status(ready ? 200 : 503).json({
+    ready,
+    checks,
+    durationMs: Date.now() - startedAt,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.use((err: Error & { statusCode?: number; status?: number }, _req: Request, res: Response, _next: NextFunction) => {

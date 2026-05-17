@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
+import { invalidateTokenVersion } from '../services/tokenVersionCache';
+import { auditWrite, AuditEventType } from '../services/auditLog';
 import logger from '../config/logger';
 
 /** Request with user set by auth middleware */
@@ -27,7 +29,17 @@ export class UserController {
 
       // Delete the user
       await this.userRepository.remove(user);
-      
+
+      // Drop any cached tokenVersion so the game server stops accepting
+      // this user's tokens within the next Redis TTL window.
+      void invalidateTokenVersion(userId);
+
+      void auditWrite({
+        eventType: AuditEventType.USER_DELETED,
+        userId,
+        req
+      });
+
       res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
       if (error instanceof Error) {

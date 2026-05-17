@@ -12,6 +12,8 @@ export interface RoomOptions {
 export interface AuthUser {
   userId: number;
   username?: string;
+  /** Monotonic counter incremented on login / refresh / reset. */
+  tokenVersion?: number;
   [key: string]: unknown;
 }
 
