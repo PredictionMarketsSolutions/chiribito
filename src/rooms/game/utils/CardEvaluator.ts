@@ -166,6 +166,11 @@ export class CardEvaluator {
     return 0;
   }
 
+  /**
+   * Canonical Chiribito hand names — broadcast to clients as `winningHand`.
+   * Castizo Spanish with proper accents. Mirrored by the frontend at
+   * `frontend/src/game/current-hand.ts` (must be kept in sync).
+   */
   static getHandName(category: number): string {
     switch (category) {
       case 9:
@@ -173,7 +178,7 @@ export class CardEvaluator {
       case 8:
         return "Escalera de color";
       case 7:
-        return "Poker";
+        return "Póker";
       case 6:
         return "Color";
       case 5:
@@ -181,7 +186,7 @@ export class CardEvaluator {
       case 4:
         return "Escalera";
       case 3:
-        return "Trio";
+        return "Trío";
       case 2:
         return "Doble pareja";
       case 1:

@@ -326,7 +326,7 @@ describe("WinnerDeterminator", () => {
     });
 
     it("should log with different hand names", () => {
-      const handNames = ["Perla", "Poker", "Full", "Color", "Escalera", "Trio", "Doble pareja", "Pareja", "Carta alta"];
+      const handNames = ["Perla", "Póker", "Full", "Color", "Escalera", "Trío", "Doble pareja", "Pareja", "Carta alta"];
       
       for (const handName of handNames) {
         const loggerSpy = jest.spyOn(console, "log").mockImplementation();

@@ -221,8 +221,8 @@ describe("CardEvaluator", () => {
       expect(CardEvaluator.getHandName(9)).toBe("Perla");
     });
 
-    it("should return correct name for Poker", () => {
-      expect(CardEvaluator.getHandName(7)).toBe("Poker");
+    it("should return correct name for Póker", () => {
+      expect(CardEvaluator.getHandName(7)).toBe("Póker");
     });
 
     it("should return correct name for Full House", () => {
@@ -237,8 +237,8 @@ describe("CardEvaluator", () => {
       expect(CardEvaluator.getHandName(4)).toBe("Escalera");
     });
 
-    it("should return correct name for Three of a Kind", () => {
-      expect(CardEvaluator.getHandName(3)).toBe("Trio");
+    it("should return correct name for Trío (Three of a Kind)", () => {
+      expect(CardEvaluator.getHandName(3)).toBe("Trío");
     });
 
     it("should return correct name for Two Pair", () => {
