@@ -21,6 +21,9 @@ generated-schema/
 # Tooling artifacts
 *.zip
 
+# Local dev stack (embedded Postgres data + binaries)
+.dev-stack/
+
 # Logs
 logs/
 *.log
