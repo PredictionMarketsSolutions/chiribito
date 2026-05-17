@@ -256,11 +256,15 @@ const authController = new AuthController();
 const userController = new UserController();
 const internalStatsController = new InternalStatsController(redisClient);
 
-const registerRateLimit = createLimiter(15 * 60 * 1000, 5, 'rl:register:');
-const loginRateLimit = createLimiter(15 * 60 * 1000, 10, 'rl:login:');
-const forgotPasswordRateLimit = createLimiter(15 * 60 * 1000, 5, 'rl:forgot-password:');
-const refreshRateLimit = createLimiter(15 * 60 * 1000, 30, 'rl:refresh:');
-const resetPasswordRateLimit = createLimiter(15 * 60 * 1000, 10, 'rl:reset-password:');
+// Rate limits — strict in production, permissive in development so the
+// happy path (typos, retries, smoke tests) doesn't get blocked locally.
+const isProd = process.env.NODE_ENV === 'production';
+const RL_WINDOW = 15 * 60 * 1000;
+const registerRateLimit = createLimiter(RL_WINDOW, isProd ? 5 : 50, 'rl:register:');
+const loginRateLimit = createLimiter(RL_WINDOW, isProd ? 10 : 50, 'rl:login:');
+const forgotPasswordRateLimit = createLimiter(RL_WINDOW, isProd ? 5 : 30, 'rl:forgot-password:');
+const refreshRateLimit = createLimiter(RL_WINDOW, isProd ? 30 : 200, 'rl:refresh:');
+const resetPasswordRateLimit = createLimiter(RL_WINDOW, isProd ? 10 : 30, 'rl:reset-password:');
 
 app.post('/api/auth/register', registerRateLimit, registerValidator, validateRequest, (req: Request, res: Response) => authController.register(req, res));
 app.post('/api/auth/login', loginRateLimit, loginValidator, validateRequest, (req: Request, res: Response) => authController.login(req, res));

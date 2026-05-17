@@ -127,11 +127,18 @@ export class AuthController {
       });
       
       if (existingUser) {
-        // Return success to avoid email enumeration
-        res.status(201).json({
-          user: { id: 0, username: '', email: '' },
-          token: 'dummy',
-          refreshToken: 'dummy'
+        // 409 Conflict with a clear (non-enumerable) message. We deliberately
+        // do NOT say whether it was email vs username — the client surfaces a
+        // generic "Ese usuario o correo ya existe" via mapAuthError. The audit
+        // log still records the precise reason for ops/security visibility.
+        //
+        // Previous behaviour (return fake 201 + "dummy" token) broke the entire
+        // join flow: the client stored "dummy" as a JWT, then the game server
+        // rejected every join with "jwt malformed", leaving the user stuck in
+        // the lobby with no feedback. The supposed anti-enumeration win was not
+        // worth that catastrophic UX failure for a social game.
+        res.status(409).json({
+          error: 'User with this email or username already exists'
         });
         logger.info('Registration attempt with existing user', { email, username });
         void auditWrite({
