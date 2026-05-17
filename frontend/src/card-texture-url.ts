@@ -1,5 +1,10 @@
 /**
  * Shared card image URLs for DOM (img) and Pixi textures.
+ *
+ * Source of truth for the deck is the game server (src/rooms/game/glossary.ts).
+ * The values mirrored here MUST match it:
+ *   suits: O / C / E / B
+ *   ranks: 5, 6, 7, 10 (Sota), 11 (Caballo), 12 (Rey), 1 (As)
  */
 
 export const CARD_BACK_URL = "/cards/back_logo.png";
@@ -11,6 +16,9 @@ const SUIT_NAME_MAP: Record<string, string> = {
   B: "BASTOS",
 };
 
+const RANK_CODES: readonly string[] = ["5", "6", "7", "10", "11", "12", "1"];
+const SUIT_CODES: readonly string[] = ["O", "C", "E", "B"];
+
 /** Face card id e.g. "7O" → public URL; undefined/empty → back. */
 export function getCardTextureUrl(card: string | undefined | null): string {
   if (!card || card.length < 2) return CARD_BACK_URL;
@@ -21,11 +29,9 @@ export function getCardTextureUrl(card: string | undefined | null): string {
 }
 
 export function listAllCardImageUrls(): string[] {
-  const suits = ["O", "C", "E", "B"];
-  const ranks = ["1", "7", "8", "9", "10", "11", "12"];
   const sources = [CARD_BACK_URL];
-  suits.forEach((suit) => {
-    ranks.forEach((rank) => {
+  SUIT_CODES.forEach((suit) => {
+    RANK_CODES.forEach((rank) => {
       const suitName = SUIT_NAME_MAP[suit] ?? suit;
       sources.push(`/cards/${rank} DE ${suitName}.webp`);
     });

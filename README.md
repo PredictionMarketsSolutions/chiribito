@@ -35,9 +35,10 @@ This project is a social, casual, web-based revival of that game — built with 
 | Game engine (Colyseus, server-authoritative) | ✅ working — bet/raise/call/fold/all-in/sidepots covered by tests |
 | Hand evaluator | ✅ working — Colour > Full, Perla detection, 7-card best hand |
 | Auth + user accounts (Express + PostgreSQL) | ✅ working — JWT + refresh tokens + password reset |
-| Real Chiribito rules in deck/rounds | ⏳ pending Phase 2 — current deck uses placeholder ranks |
-| Identity rename (`MyRoom` → `ChiribitoRoom`, glossary) | ⏳ Sprint 1.4 |
-| Card assets at sane sizes | ⏳ Sprint 1.5 (currently 74 MB of WebP, will drop to <3 MB) |
+| Canonical Chiribito deck (5-6-7-Sota-Caballo-Rey-As) + correct Perla | ✅ Sprint 1.4 — glossary in `src/rooms/game/glossary.ts` is source of truth |
+| Real Chiribito betting rounds (6 streets, one card at a time) | ⏳ Phase 2 — engine still uses heredado 4-street flow |
+| Identity rename (`ChiribitoRoom`, `MesaState`, room id `mesa`) | ✅ Sprint 1.4 |
+| Card assets at sane sizes | ⏳ Sprint 1.5 (most cards still 2-4 MB each) |
 | Production deploy | ⚪ not active — Render targets exist, secrets pending rotation |
 
 We do not claim "production ready". Anything that says so somewhere else in this repo is a leftover and you can ignore it.
@@ -140,9 +141,10 @@ Este proyecto es un revival social, casual y web de aquel juego — hecho con ca
 | Motor de juego (Colyseus, lógica en servidor) | ✅ funciona — apuesta/subida/igualar/pasar/envido/sidepots cubiertos con tests |
 | Evaluador de manos | ✅ funciona — Color > Full, detección de Perla, mejor mano de 7 cartas |
 | Auth + cuentas (Express + PostgreSQL) | ✅ funciona — JWT + refresh tokens + reset de contraseña |
-| Reglas reales del Chiribito en la baraja/rondas | ⏳ Fase 2 — la baraja actual usa rangos placeholder heredados |
-| Renombrado a identidad propia (`ChiribitoRoom`, glosario) | ⏳ Sprint 1.4 |
-| Assets de cartas en tamaños decentes | ⏳ Sprint 1.5 (hoy 74 MB en WebP, bajarán a <3 MB) |
+| Baraja canónica del Chiribito (5-6-7-Sota-Caballo-Rey-As) + Perla correcta | ✅ Sprint 1.4 — el glosario en `src/rooms/game/glossary.ts` es la fuente de verdad |
+| Rondas reales del Chiribito (6 calles, una carta a la vez) | ⏳ Fase 2 — el motor sigue con las 4 calles del repo heredado |
+| Renombrado a identidad propia (`ChiribitoRoom`, `MesaState`, sala `mesa`) | ✅ Sprint 1.4 |
+| Assets de cartas en tamaños decentes | ⏳ Sprint 1.5 (la mayoría siguen pesando 2-4 MB) |
 | Deploy de producción | ⚪ inactivo — los servicios Render existen pero los secretos están pendientes de rotación |
 
 No decimos "production ready". Si algún rincón del repo lo dice, es restos del proyecto heredado y se va a limpiar.

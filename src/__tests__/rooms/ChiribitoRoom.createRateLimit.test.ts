@@ -1,5 +1,5 @@
 /**
- * MyRoom.createRateLimit.test.ts
+ * ChiribitoRoom.createRateLimit.test.ts
  * Ensures onAuth rejects when create-room rate limit is exceeded (room just created, user created recently).
  */
 
@@ -14,10 +14,10 @@ jest.mock("../../security/create-room-rate-limit", () => ({
   recordCreateRoom: jest.fn(),
 }));
 
-import { MyRoom } from "../../rooms/MyRoom";
+import { ChiribitoRoom } from "../../rooms/ChiribitoRoom";
 import { allowCreateRoom, recordCreateRoom } from "../../security/create-room-rate-limit";
 
-describe("MyRoom create room rate limit", () => {
+describe("ChiribitoRoom create room rate limit", () => {
   it("onAuth throws CREATE_ROOM_RATE_LIMIT when room just created and allowCreateRoom returns false", async () => {
     (allowCreateRoom as jest.Mock).mockReturnValue(false);
 
@@ -31,7 +31,7 @@ describe("MyRoom create room rate limit", () => {
     };
 
     await expect(
-      MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {})
+      ChiribitoRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {})
     ).rejects.toThrow("CREATE_ROOM_RATE_LIMIT");
   });
 
@@ -47,7 +47,7 @@ describe("MyRoom create room rate limit", () => {
       },
     };
 
-    const result = await MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {});
+    const result = await ChiribitoRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {});
 
     expect(result).toEqual({ userId: 42 });
     expect(recordCreateRoom).toHaveBeenCalledWith(42);
@@ -66,10 +66,10 @@ describe("MyRoom create room rate limit", () => {
       },
     };
 
-    await MyRoom.prototype.requestJoin.call(fakeRoom, {}, true);
+    await ChiribitoRoom.prototype.requestJoin.call(fakeRoom, {}, true);
     expect(fakeRoom.roomJustCreated).toBe(true);
 
-    const result = await MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {});
+    const result = await ChiribitoRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, {});
     expect(result).toEqual({ userId: 99 });
     expect(recordCreateRoom).toHaveBeenCalledWith(99);
   });
@@ -90,7 +90,7 @@ describe("MyRoom create room rate limit", () => {
       },
     };
 
-    const result = await MyRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, options);
+    const result = await ChiribitoRoom.prototype.onAuth.call(fakeRoom, { sessionId: "c1" } as any, options);
 
     expect(result).toEqual({ userId: 10 });
     expect(options.replaceSessionId).toBe("old-session-123");
@@ -103,7 +103,7 @@ describe("MyRoom create room rate limit", () => {
       authService: { requestJoin: requestJoinMock },
     };
 
-    await MyRoom.prototype.requestJoin.call(fakeRoom, { token: "jwt" }, false);
+    await ChiribitoRoom.prototype.requestJoin.call(fakeRoom, { token: "jwt" }, false);
 
     expect(requestJoinMock).toHaveBeenCalledWith({ token: "jwt" });
   });

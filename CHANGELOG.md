@@ -4,11 +4,31 @@ All notable changes to this project will be documented here. Format roughly foll
 
 ## [Unreleased]
 
-### Pending (Sprint 1.4 → 1.5)
-- Rename `MyRoom` → `ChiribitoRoom`, `my_room` → `mesa`, package names, in-game glossary.
-- Compress 74 MB of card assets to <3 MB and move originals out of the repo.
+### Pending (Sprint 1.5 + Phase 2)
+- Compress remaining 1/7/10/11/12 card assets to <100 KB each (and migrate them off the repo if originals are needed at print quality).
+- Implement real Chiribito betting rounds (6 streets, one community card revealed at a time, "must use both hole cards" enforcement).
 - Hash refresh tokens before storing them in the database.
 - Multi-device session support (loosen the `tokenVersion++` per login).
+
+## [0.2.0-sprint-1.4] — 2026-05-17
+
+### Changed
+- **The deck is now canonical Chiribito.** Ranks `5, 6, 7, Sota (10), Caballo (11), Rey (12), As (1)` × 4 suits (Oros / Copas / Espadas / Bastos). The heredado `8` and `9` ranks (which do not exist in the Spanish deck) are gone.
+- **The Perla is defined correctly.** Sota (10) + 7 of the same suit — equivalent to J/10 suited in the French deck — instead of the inherited Sota + Caballo definition.
+- **Renamed for identity.** `MyRoom` → `ChiribitoRoom`, `MyRoomState` → `MesaState`, room id `"my_room"` → `"mesa"`, package names `my-app` / `pixi-test-client` / `poker-auth-api` → `chiribito-server` / `chiribito-client` / `chiribito-api`. Pinned bug/homepage URLs to the new fork.
+
+### Added
+- **`src/rooms/game/glossary.ts`** — canonical source of truth for the deck. Exports suit codes, rank codes, rank order, Spanish names, French equivalents, the Perla definition, and helpers (`parseCard`, `cardName`, `buildDeck`). Anything downstream — engine, evaluator, frontend mappings — derives from this file.
+- New WebP assets for ranks 5 and 6 across all four suits (8 files, ~1.5 MB total after sharp conversion at quality 90). Sourced from `Documents/CHIRIBITO/nuevas 5-6/` PNG originals.
+
+### Removed
+- Card assets `8 DE *.webp` and `9 DE *.webp` from `frontend/public/cards/` (no longer in the deck).
+- The old `--csharp --output ../Assets/Example/` codegen target (pointed outside the repo). Now writes to `generated-schema/csharp/`, which is gitignored.
+
+### Tests
+- `CardEvaluator.isPerla` test suite rewritten to spec the real Chiribito Perla (Sota + 7 same suit), including the legacy-mistake guard ("Sota + Caballo suited is NOT the Perla").
+- `ChiribitoRoom.onCreate.test.ts` and friends renamed.
+- All 640 tests green (462 backend + 27 api + 149 frontend → 464 backend + 27 + 149).
 
 ## [0.1.0-sprint-1.3] — 2026-05-17 — commit `3a33fa7`
 

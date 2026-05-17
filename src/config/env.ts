@@ -1,6 +1,6 @@
 /**
  * Configuración de entorno centralizada.
- * Usar este módulo en MyRoom, constants (timeouts), app.config (JWT) y auth.
+ * Usar este módulo en ChiribitoRoom, constants (timeouts), app.config (JWT) y auth.
  * Validación al arranque solo si DISABLE_ENV_VALIDATION !== "true".
  */
 

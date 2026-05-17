@@ -14,7 +14,7 @@ import { getRedisClient } from "./config/redis";
 // import { RedisPresence } from "@colyseus/redis-presence";
 
 
-import { MyRoom } from "./rooms/MyRoom";
+import { ChiribitoRoom } from "./rooms/ChiribitoRoom";
 import auth from "./config/auth";
 import { JWT } from "@colyseus/auth";
 import { LobbyRoom } from "@colyseus/core";
@@ -90,7 +90,7 @@ function safeEqual(a: string, b: string): boolean {
 
 const server = defineServer({
     rooms: {
-        my_room: defineRoom(MyRoom).enableRealtimeListing(),
+        mesa: defineRoom(ChiribitoRoom).enableRealtimeListing(),
         lobby: defineRoom(LobbyRoom),
     },
 

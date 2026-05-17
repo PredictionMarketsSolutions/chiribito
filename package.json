@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "my-app",
-  "version": "0.17.0",
-  "description": "npm init template for bootstrapping an empty Colyseus project",
+  "name": "chiribito-server",
+  "version": "0.2.0",
+  "description": "Chiribito game server (Colyseus) — Spanish synthetic poker, multiplayer",
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint .",
@@ -19,7 +19,7 @@
     "test:sidepot:fuzz": "tsx scripts/test-sidepot-fuzz.ts",
     "test:betting-rules": "tsx scripts/test-bet-sizing-rules.ts",
     "test:game-pro": "npm run test:sidepot && npm run test:betting-rules && npm run test:sidepot:fuzz",
-    "loadtest": "tsx loadtest/example.ts --room my_room --numClients 99",
+    "loadtest": "tsx loadtest/example.ts --room mesa --numClients 99",
     "build": "npm run build:game && npm run build:api",
     "build:game": "tsc",
     "build:api": "cd api-server && npm install && npm run build",
@@ -35,14 +35,14 @@
     "logs:error": "node scripts/view-logs.js error",
     "logs:watch": "node scripts/view-logs.js watch",
     "logs:search": "node scripts/view-logs.js search",
-    "schema-codegen": "schema-codegen src/rooms/schema/* --csharp --output ../Assets/Example/"
+    "schema-codegen": "schema-codegen src/rooms/schema/* --csharp --output generated-schema/csharp/"
   },
-  "author": "",
+  "author": "Chiribito",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/colyseus/create-colyseus/issues"
+    "url": "https://github.com/PredictionMarketsSolutions/chiribito/issues"
   },
-  "homepage": "https://github.com/colyseus/create-colyseus#readme",
+  "homepage": "https://github.com/PredictionMarketsSolutions/chiribito#readme",
   "devDependencies": {
     "@colyseus/loadtest": "^0.17.8",
     "@colyseus/testing": "^0.17.11",

@@ -1,5 +1,6 @@
 import { Schema, MapSchema, ArraySchema, type, view } from "@colyseus/schema";
 import { randomInt } from "crypto";
+import { buildDeck } from "../game/glossary";
 
 /**
  * Valores válidos de estado del jugador. Solo el servidor puede asignarlos (nunca desde mensajes del cliente).
@@ -31,7 +32,7 @@ export class Player extends Schema {
   }
 }
 
-export class MyRoomState extends Schema {
+export class MesaState extends Schema {
   @type({ map: Player }) users = new MapSchema<Player>();
   @type(["string"]) communityCards: ArraySchema<string> = new ArraySchema<string>();
   @type("number") pot: number = 0;
@@ -52,14 +53,9 @@ export class MyRoomState extends Schema {
   }
 
   resetDeck() {
-    const suits = ["O", "C", "E", "B"];
-    const ranks = ["1", "7", "8", "9", "10", "11", "12"];
-    this.deck = [];
-    for (const suit of suits) {
-      for (const rank of ranks) {
-        this.deck.push(`${rank}${suit}`);
-      }
-    }
+    // Canonical Chiribito deck — 28 cards (Spanish suits, ranks 5-6-7-Sota-Caballo-Rey-As).
+    // See src/rooms/game/glossary.ts.
+    this.deck = buildDeck();
     // Cryptographically-secure Fisher–Yates shuffle.
     for (let i = this.deck.length - 1; i > 0; i--) {
       const j = randomInt(i + 1);

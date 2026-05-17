@@ -1,5 +1,5 @@
 /**
- * Rate limit for creating new rooms (client.create("my_room")).
+ * Rate limit for creating new rooms (client.create("mesa")).
  * Prevents a user from creating many rooms in a short time.
  * In-memory; resets on server restart.
  */

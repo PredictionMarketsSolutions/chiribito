@@ -4,7 +4,7 @@ import { SessionManager } from "../../rooms/managers/SessionManager";
 import { SeatManager } from "../../rooms/managers/SeatManager";
 import { ConnectionMonitor } from "../../rooms/managers/ConnectionMonitor";
 import { AnalyticsService } from "../../rooms/managers/AnalyticsService";
-import { MyRoomState, Player, PLAYER_STATUS } from "../../rooms/schema/MyRoomState";
+import { MesaState, Player, PLAYER_STATUS } from "../../rooms/schema/MesaState";
 import { GameEngine } from "../../rooms/game/GameEngine";
 
 describe("PlayerLifecycleManager", () => {
@@ -13,7 +13,7 @@ describe("PlayerLifecycleManager", () => {
   let seatManager: SeatManager;
   let connectionMonitor: ConnectionMonitor;
   let analytics: AnalyticsService;
-  let mockState: MyRoomState;
+  let mockState: MesaState;
   let mockEngine: Partial<GameEngine>;
   let playersInHand: string[];
   let broadcastCalls: any[];
@@ -46,7 +46,7 @@ describe("PlayerLifecycleManager", () => {
       heartbeatTimeoutMs: 60000
     }, () => {});
     analytics = new AnalyticsService("test-room");
-    mockState = new MyRoomState();
+    mockState = new MesaState();
     playersInHand = [];
     broadcastCalls = [];
     mockClients = [];

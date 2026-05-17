@@ -27,13 +27,18 @@ export class CardEvaluator {
     return { rank, suit };
   }
 
+  /**
+   * The Perla — strongest hole-card combination in Chiribito.
+   * Defined as Sota (10) + 7 of the same suit (J + 10 suited in the French
+   * deck). It is the only hand that completes every possible straight.
+   */
   static isPerla(hole: string[]): boolean {
     if (hole.length < 2) return false;
     const first = CardEvaluator.parseCard(hole[0]);
     const second = CardEvaluator.parseCard(hole[1]);
-    const sameSuit = first.suit === second.suit;
-    const ranks = [first.rank, second.rank].sort();
-    return sameSuit && ranks[0] === "10" && ranks[1] === "11";
+    if (first.suit !== second.suit) return false;
+    const ranks = new Set([first.rank, second.rank]);
+    return ranks.has("10") && ranks.has("7");
   }
 
   static evaluateHand(cards: string[], rankOrder: CardRankOrder): HandScore {

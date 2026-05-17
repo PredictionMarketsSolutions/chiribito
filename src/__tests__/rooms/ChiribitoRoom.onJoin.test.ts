@@ -1,5 +1,5 @@
 /**
- * MyRoom.onJoin.test.ts
+ * ChiribitoRoom.onJoin.test.ts
  * Ensures the joining client's StateView includes all players (including themselves)
  * so the client can see their own seat and hole cards.
  */
@@ -11,12 +11,12 @@ jest.mock("@colyseus/core", () => ({
 }));
 
 import { StateView } from "@colyseus/schema";
-import { MyRoom } from "../../rooms/MyRoom";
-import { Player, MyRoomState } from "../../rooms/schema/MyRoomState";
+import { ChiribitoRoom } from "../../rooms/ChiribitoRoom";
+import { Player, MesaState } from "../../rooms/schema/MesaState";
 
-describe("MyRoom onJoin StateView", () => {
+describe("ChiribitoRoom onJoin StateView", () => {
   it("adds all players including the joining client to their view so they see their hand", () => {
-    const state = new MyRoomState();
+    const state = new MesaState();
     const ownPlayer = new Player("session-joining");
     ownPlayer.name = "Joining";
     state.users.set("session-joining", ownPlayer);
@@ -39,7 +39,7 @@ describe("MyRoom onJoin StateView", () => {
       broadcast: jest.fn(),
     };
 
-    MyRoom.prototype.onJoin.call(fakeRoom, client as any, {});
+    ChiribitoRoom.prototype.onJoin.call(fakeRoom, client as any, {});
 
     expect(client.view).toBeInstanceOf(StateView);
     expect(client.view!.has(ownPlayer)).toBe(true);
@@ -47,7 +47,7 @@ describe("MyRoom onJoin StateView", () => {
   });
 
   it("adds new player to existing clients' views so they see the new seat", () => {
-    const state = new MyRoomState();
+    const state = new MesaState();
     const existingPlayer = new Player("session-existing");
     existingPlayer.name = "Existing";
     state.users.set("session-existing", existingPlayer);
@@ -71,14 +71,14 @@ describe("MyRoom onJoin StateView", () => {
       broadcast: jest.fn(),
     };
 
-    MyRoom.prototype.onJoin.call(fakeRoom, joiningClient as any, {});
+    ChiribitoRoom.prototype.onJoin.call(fakeRoom, joiningClient as any, {});
 
     expect(joiningClient.view).toBeInstanceOf(StateView);
     expect(existingClient.view.has(joiningPlayer)).toBe(true);
   });
 
   it("passes getClients and broadcast to handleJoin so lifecycle can use them", () => {
-    const state = new MyRoomState();
+    const state = new MesaState();
     const player = new Player("session-1");
     state.users.set("session-1", player);
     const client = { view: null as StateView | null };
@@ -102,7 +102,7 @@ describe("MyRoom onJoin StateView", () => {
       broadcast,
     };
 
-    MyRoom.prototype.onJoin.call(fakeRoom, client as any, {});
+    ChiribitoRoom.prototype.onJoin.call(fakeRoom, client as any, {});
 
     expect(getClientsRef).not.toBeNull();
     expect(getClientsRef!()).toEqual([client]);

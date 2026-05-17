@@ -1,6 +1,6 @@
 import { Client } from "@colyseus/core";
 import { CUSTOM_SESSION_REPLACED } from "../close-codes";
-import { MyRoomState, Player, PLAYER_STATUS } from "../schema/MyRoomState";
+import { MesaState, Player, PLAYER_STATUS } from "../schema/MesaState";
 import { SessionManager } from "./SessionManager";
 import { SeatManager } from "./SeatManager";
 import { ConnectionMonitor } from "./ConnectionMonitor";
@@ -41,7 +41,7 @@ export class PlayerLifecycleManager {
   handleJoin(
     client: Client,
     options: any,
-    state: MyRoomState,
+    state: MesaState,
     dependencies: LifecycleDependencies,
     getAllClients: () => Client[],
     broadcastFn: (type: string, message: any, opts?: any) => void
@@ -142,7 +142,7 @@ export class PlayerLifecycleManager {
     client: Client,
     consented: boolean,
     reason: string,
-    state: MyRoomState,
+    state: MesaState,
     dependencies: LifecycleDependencies,
     playersInHand: string[],
     engine: GameEngine,
@@ -174,7 +174,7 @@ export class PlayerLifecycleManager {
   private replaceSession(
     oldSessionId: string,
     newClient: Client,
-    state: MyRoomState,
+    state: MesaState,
     playersInHand: string[],
     dependencies: LifecycleDependencies
   ): void {
@@ -217,7 +217,7 @@ export class PlayerLifecycleManager {
    */
   private handleLeaveCleanup(
     client: Client,
-    state: MyRoomState,
+    state: MesaState,
     playersInHand: string[],
     dependencies: LifecycleDependencies,
     engine: GameEngine,
@@ -278,7 +278,7 @@ export class PlayerLifecycleManager {
   /**
    * Find the next available seat index.
    */
-  private getNextAvailableSeat(state: MyRoomState): number {
+  private getNextAvailableSeat(state: MesaState): number {
     const occupiedSeats = new Set(
       Array.from(state.users.values()).map(p => p.seatIndex).filter(s => s >= 0)
     );

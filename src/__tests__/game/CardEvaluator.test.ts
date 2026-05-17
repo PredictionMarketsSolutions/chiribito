@@ -40,29 +40,44 @@ describe("CardEvaluator", () => {
   });
 
   describe("isPerla", () => {
-    it("should identify Perla (10-J suited hole cards)", () => {
-      const result = CardEvaluator.isPerla(["10♠", "11♠"]);
+    // The Perla = Sota (10) + 7 same suit in the Spanish deck.
+    // Equivalent to J + 10 suited in the French deck.
+
+    it("identifies Sota + 7 suited as the Perla", () => {
+      const result = CardEvaluator.isPerla(["10O", "7O"]);
       expect(result).toBe(true);
     });
 
-    it("should reject 10-J unsuited", () => {
-      const result = CardEvaluator.isPerla(["10♠", "11♥"]);
-      expect(result).toBe(false);
-    });
-
-    it("should reject other suited pairs", () => {
-      const result = CardEvaluator.isPerla(["9♠", "9♥"]);
-      expect(result).toBe(false);
-    });
-
-    it("should reject invalid input", () => {
-      const result = CardEvaluator.isPerla(["10♠"]);
-      expect(result).toBe(false);
-    });
-
-    it("should handle reversed order (11-10)", () => {
-      const result = CardEvaluator.isPerla(["11♠", "10♠"]);
+    it("identifies the Perla regardless of card order", () => {
+      const result = CardEvaluator.isPerla(["7O", "10O"]);
       expect(result).toBe(true);
+    });
+
+    it("works across all four suits", () => {
+      expect(CardEvaluator.isPerla(["10O", "7O"])).toBe(true);
+      expect(CardEvaluator.isPerla(["10C", "7C"])).toBe(true);
+      expect(CardEvaluator.isPerla(["10E", "7E"])).toBe(true);
+      expect(CardEvaluator.isPerla(["10B", "7B"])).toBe(true);
+    });
+
+    it("rejects Sota + 7 of different suits", () => {
+      const result = CardEvaluator.isPerla(["10O", "7C"]);
+      expect(result).toBe(false);
+    });
+
+    it("rejects Sota + Caballo suited (legacy mistaken definition)", () => {
+      const result = CardEvaluator.isPerla(["10O", "11O"]);
+      expect(result).toBe(false);
+    });
+
+    it("rejects other suited combos", () => {
+      const result = CardEvaluator.isPerla(["5O", "6O"]);
+      expect(result).toBe(false);
+    });
+
+    it("rejects fewer than two cards", () => {
+      expect(CardEvaluator.isPerla(["10O"])).toBe(false);
+      expect(CardEvaluator.isPerla([])).toBe(false);
     });
   });
 

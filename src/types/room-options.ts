@@ -1,5 +1,5 @@
 /**
- * Tipos para opciones de sala y autenticación (MyRoom onCreate, requestJoin, onAuth, onJoin).
+ * Tipos para opciones de sala y autenticación (ChiribitoRoom onCreate, requestJoin, onAuth, onJoin).
  * Evita el uso de `any` en las firmas.
  */
 

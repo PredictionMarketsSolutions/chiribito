@@ -73,7 +73,7 @@ export async function refreshLobbyRooms(
     }
     const client = getWsClient();
     lobbyRoom = await client.joinOrCreate("lobby", {
-      filter: { name: "my_room" }
+      filter: { name: "mesa" }
     } as any);
     const roomsPayload = await new Promise<AvailableRoom[]>((resolve, reject) => {
       const t = setTimeout(() => reject(new Error("Lobby timeout")), 10000);
@@ -92,7 +92,7 @@ export async function refreshLobbyRooms(
         );
       });
       // Request list so we get "rooms" even if the initial send was already delivered
-      lobbyRoom!.send("filter", { name: "my_room" });
+      lobbyRoom!.send("filter", { name: "mesa" });
     });
     const sorted = [...roomsPayload].sort((a, b) => (b.clients ?? 0) - (a.clients ?? 0));
     renderLobbyRooms(sorted, roomsList, onJoinRoom, log);

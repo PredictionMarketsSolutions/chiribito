@@ -197,14 +197,14 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           } as any);
         } else if (mode === "create") {
           const tableName = (opts?.tableName ?? "").trim();
-          joinedRoom = await client.create("my_room", {
+          joinedRoom = await client.create("mesa", {
             auth: { token },
             name: username,
             tableName,
             forceReplace,
           } as any);
         } else {
-          joinedRoom = await client.joinOrCreate("my_room", {
+          joinedRoom = await client.joinOrCreate("mesa", {
             auth: { token },
             name: username,
             forceReplace,

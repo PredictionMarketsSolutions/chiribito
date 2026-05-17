@@ -6,7 +6,7 @@
 import { Client } from "@colyseus/core";
 import logger from "../../../config/logger";
 import type { IGameRoom } from "../../../types/IGameRoom";
-import { Player } from "../../schema/MyRoomState";
+import { Player } from "../../schema/MesaState";
 import { GameUtils } from "./GameUtils";
 import { GameBroadcaster } from "./GameBroadcaster";
 

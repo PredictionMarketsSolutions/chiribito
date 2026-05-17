@@ -6,12 +6,12 @@
 
 import { StateView } from "@colyseus/schema";
 import { GameEngine } from "../../rooms/game/GameEngine";
-import { MyRoomState, Player, PLAYER_STATUS } from "../../rooms/schema/MyRoomState";
+import { MesaState, Player, PLAYER_STATUS } from "../../rooms/schema/MesaState";
 import { GameBroadcaster } from "../../rooms/game/utils/GameBroadcaster";
 import { Room, Client } from "@colyseus/core";
 
 describe("GameFlow Bug Fixes", () => {
-  let roomState: MyRoomState;
+  let roomState: MesaState;
   let engine: GameEngine;
   let mockRoom: any;
   let broadcaster: GameBroadcaster;
@@ -19,7 +19,7 @@ describe("GameFlow Bug Fixes", () => {
   beforeEach(() => {
     // Setup mock room with all required properties
     mockRoom = {
-      state: new MyRoomState(),
+      state: new MesaState(),
       broadcast: jest.fn(),
       clients: [],
       playersInHand: [],
@@ -555,7 +555,7 @@ describe("GameFlow Bug Fixes", () => {
 
   describe("StateView (per-client hand visibility)", () => {
     it("StateView.add(player) allows client to see own hand only when player is in state", () => {
-      const state = new MyRoomState();
+      const state = new MesaState();
       const player = new Player("session-1");
       player.hand.push("1O", "7C");
       state.users.set("session-1", player);

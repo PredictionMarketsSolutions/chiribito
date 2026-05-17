@@ -3,7 +3,7 @@
  * Ensures allowed values and default; security: only server sets this field.
  */
 
-import { Player, PLAYER_STATUS } from "../../rooms/schema/MyRoomState";
+import { Player, PLAYER_STATUS } from "../../rooms/schema/MesaState";
 
 describe("Player.playerStatus (schema)", () => {
   it("PLAYER_STATUS has expected values", () => {

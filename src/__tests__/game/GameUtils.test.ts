@@ -4,16 +4,16 @@
  */
 
 import { GameUtils } from "../../rooms/game/utils/GameUtils";
-import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
+import { MesaState, Player } from "../../rooms/schema/MesaState";
 import type { IGameRoom } from "../../types/IGameRoom";
 
 describe("GameUtils", () => {
   let utils: GameUtils;
   let mockRoom: jest.Mocked<IGameRoom>;
-  let state: MyRoomState;
+  let state: MesaState;
 
   beforeEach(() => {
-    state = new MyRoomState();
+    state = new MesaState();
     state.currentBet = 0;
     state.pot = 0;
 

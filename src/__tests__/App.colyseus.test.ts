@@ -20,7 +20,7 @@ function createTestToken(): string {
   );
 }
 
-describe("Colyseus app (my_room)", () => {
+describe("Colyseus app (mesa)", () => {
   let colyseus: ColyseusTestServer | null = null;
 
   beforeAll(async () => {
@@ -47,7 +47,7 @@ describe("Colyseus app (my_room)", () => {
 
   it("createRoom creates a room and getRoomById returns it", async () => {
     expect(colyseus).toBeDefined();
-    const room = await colyseus!.createRoom("my_room", {});
+    const room = await colyseus!.createRoom("mesa", {});
     expect(room).toBeDefined();
     expect(room.roomId).toBeDefined();
     const found = colyseus!.getRoomById(room.roomId);
@@ -57,7 +57,7 @@ describe("Colyseus app (my_room)", () => {
 
   it("room state has expected schema fields", async () => {
     expect(colyseus).toBeDefined();
-    const room = await colyseus!.createRoom("my_room", {});
+    const room = await colyseus!.createRoom("mesa", {});
     expect(room.state.users).toBeDefined();
     expect(room.state.pot).toBeDefined();
     expect(room.state.roundStarted).toBeDefined();
@@ -66,9 +66,9 @@ describe("Colyseus app (my_room)", () => {
 
   it("room listing has name for matchmaking", async () => {
     expect(colyseus).toBeDefined();
-    const room = await colyseus!.createRoom("my_room", {});
+    const room = await colyseus!.createRoom("mesa", {});
     const listing = room["_listing"] as { name?: string; roomId?: string } | undefined;
-    expect(listing?.name).toBe("my_room");
+    expect(listing?.name).toBe("mesa");
     expect(listing?.roomId).toBe(room.roomId);
   });
 });

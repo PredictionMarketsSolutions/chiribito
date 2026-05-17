@@ -53,11 +53,11 @@ jest.mock("../rooms/game/utils", () => {
 });
 
 import { GameEngine } from "../rooms/game/GameEngine";
-import { MyRoomState, Player } from "../rooms/schema/MyRoomState";
+import { MesaState, Player } from "../rooms/schema/MesaState";
 import type { IGameRoom } from "../types/IGameRoom";
 
 function makeRoom(): jest.Mocked<IGameRoom> {
-  const state = new MyRoomState();
+  const state = new MesaState();
   state.roundStarted = true;
   state.phase = "preflop" as any;
   state.currentTurn = "p1";

@@ -4,17 +4,17 @@
  */
 
 import { PlayerActions } from "../../rooms/game/utils/PlayerActions";
-import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
+import { MesaState, Player } from "../../rooms/schema/MesaState";
 import type { IGameRoom } from "../../types/IGameRoom";
 import type { Client } from "@colyseus/core";
 
 describe("PlayerActions", () => {
   let actions: PlayerActions;
   let mockRoom: jest.Mocked<IGameRoom>;
-  let state: MyRoomState;
+  let state: MesaState;
 
   function createMockRoom(): jest.Mocked<IGameRoom> {
-    state = new MyRoomState();
+    state = new MesaState();
     state.currentTurn = "p1";
     state.currentBet = 0;
     state.pot = 0;

@@ -1,5 +1,5 @@
 /**
- * MyRoom.tournament.test.ts
+ * ChiribitoRoom.tournament.test.ts
  * Tests for tournament end: notifyTournamentEnd sends gameResult (won/lost) to each client,
  * schedules delayed disconnect so all clients receive the message before close.
  */
@@ -15,11 +15,11 @@ jest.mock("../../services/api-server-stats", () => ({
   reportTournamentGameEnded: jest.fn().mockResolvedValue(undefined),
 }));
 
-import { MyRoom } from "../../rooms/MyRoom";
+import { ChiribitoRoom } from "../../rooms/ChiribitoRoom";
 import { CUSTOM_GAME_END } from "../../rooms/close-codes";
 import { reportTournamentGameEnded } from "../../services/api-server-stats";
 
-describe("MyRoom tournament end", () => {
+describe("ChiribitoRoom tournament end", () => {
   it("notifyTournamentEnd sends gameResult won to champion and lost to others, then schedules disconnect", () => {
     const champion = { sessionId: "winner-1", name: "Winner", chips: 5000 };
     const sendWinner = jest.fn();
@@ -42,7 +42,7 @@ describe("MyRoom tournament end", () => {
     };
     fakeRoom.reportTournamentStats = jest.fn();
 
-    MyRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
+    ChiribitoRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
 
     expect(sendWinner).toHaveBeenCalledTimes(1);
     expect(sendWinner).toHaveBeenCalledWith("gameResult", {
@@ -82,7 +82,7 @@ describe("MyRoom tournament end", () => {
     };
     fakeRoom.reportTournamentStats = jest.fn();
 
-    MyRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
+    ChiribitoRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
 
     expect(send).toHaveBeenCalledWith("gameResult", { result: "lost", champion });
     expect(clockSetTimeout).toHaveBeenCalledWith(expect.any(Function), 800);
@@ -106,7 +106,7 @@ describe("MyRoom tournament end", () => {
     };
     fakeRoom.reportTournamentStats = jest.fn();
 
-    MyRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
+    ChiribitoRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
 
     expect(clockSetTimeout).toHaveBeenCalledWith(expect.any(Function), 800);
     if (scheduledCb) scheduledCb();
@@ -133,7 +133,7 @@ describe("MyRoom tournament end", () => {
     };
     fakeRoom.reportTournamentStats = jest.fn();
 
-    MyRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
+    ChiribitoRoom.prototype.notifyTournamentEnd.call(fakeRoom, champion);
 
     expect(clockSetTimeout).toHaveBeenCalledWith(expect.any(Function), 800);
     expect(disconnect).not.toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe("MyRoom tournament end", () => {
         },
       };
 
-      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+      await (ChiribitoRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
       expect(reportTournamentGameEnded).not.toHaveBeenCalled();
     });
 
@@ -179,7 +179,7 @@ describe("MyRoom tournament end", () => {
         tournamentParticipantUserIds: new Set<number>([10, 11]),
       };
 
-      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+      await (ChiribitoRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
 
       expect(reportTournamentGameEnded).toHaveBeenCalledWith(
         expect.any(String),
@@ -201,7 +201,7 @@ describe("MyRoom tournament end", () => {
         tournamentParticipantUserIds: new Set<number>([10]),
       };
 
-      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+      await (ChiribitoRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
 
       expect(reportTournamentGameEnded).not.toHaveBeenCalled();
     });
@@ -216,7 +216,7 @@ describe("MyRoom tournament end", () => {
         tournamentParticipantUserIds: new Set<number>([10]),
       };
 
-      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+      await (ChiribitoRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
 
       expect(reportTournamentGameEnded).not.toHaveBeenCalled();
     });
@@ -231,7 +231,7 @@ describe("MyRoom tournament end", () => {
         tournamentParticipantUserIds: new Set<number>(),
       };
 
-      await (MyRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
+      await (ChiribitoRoom.prototype as any).reportTournamentStats.call(fakeRoom, champion);
 
       expect(reportTournamentGameEnded).not.toHaveBeenCalled();
     });

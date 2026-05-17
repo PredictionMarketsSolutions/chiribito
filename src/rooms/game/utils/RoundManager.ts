@@ -5,7 +5,7 @@
 
 import logger from "../../../config/logger";
 import type { IGameRoom } from "../../../types/IGameRoom";
-import { PLAYER_STATUS } from "../../schema/MyRoomState";
+import { PLAYER_STATUS } from "../../schema/MesaState";
 import { GameUtils } from "./GameUtils";
 import { GameBroadcaster } from "./GameBroadcaster";
 

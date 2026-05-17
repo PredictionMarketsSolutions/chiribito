@@ -7,17 +7,12 @@ import logger from "../../../config/logger";
 import type { IGameRoom } from "../../../types/IGameRoom";
 import { CardEvaluator, type CardRankOrder, type HandScore } from "./CardEvaluator";
 import { GameUtils } from "./GameUtils";
+import { RANK_ORDER } from "../glossary";
 
 export class WinnerDeterminator {
-  private rankOrder: CardRankOrder = {
-    "7": 0,
-    "8": 1,
-    "9": 2,
-    "10": 3,
-    "11": 4,
-    "12": 5,
-    "1": 6
-  };
+  // Canonical Chiribito rank order (see src/rooms/game/glossary.ts):
+  // 5 < 6 < 7 < Sota (10) < Caballo (11) < Rey (12) < As (1).
+  private rankOrder: CardRankOrder = { ...RANK_ORDER };
 
   private utils: GameUtils;
 

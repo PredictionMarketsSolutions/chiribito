@@ -4,7 +4,7 @@
  */
 
 import type { IGameRoom } from "../../../types/IGameRoom";
-import { Player } from "../../schema/MyRoomState";
+import { Player } from "../../schema/MesaState";
 
 export class GameUtils {
   constructor(private room: IGameRoom) {}

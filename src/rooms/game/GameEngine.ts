@@ -6,7 +6,7 @@
 
 import { Client } from "@colyseus/core";
 import type { IGameRoom } from "../../types/IGameRoom";
-import { PLAYER_STATUS } from "../schema/MyRoomState";
+import { PLAYER_STATUS } from "../schema/MesaState";
 import { TURN_TIMEOUT, ALLIN_REVEAL_DELAY_MS } from "./constants";
 import logger from "../../config/logger";
 import {

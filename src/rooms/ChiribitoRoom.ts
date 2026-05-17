@@ -1,6 +1,6 @@
 import { Room, Client, CloseCode } from "@colyseus/core";
 import { StateView } from "@colyseus/schema";
-import { MyRoomState, Player } from "./schema/MyRoomState";
+import { MesaState, Player } from "./schema/MesaState";
 import { GameEngine } from "./game/GameEngine";
 import logger from "../config/logger";
 import { HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, ACTION_COOLDOWN } from "./game/constants";
@@ -27,7 +27,7 @@ import {
 } from "../config/env";
 import type { RoomOptions, JoinOptionsFromClient, JoinOptionsWithAuth } from "../types/room-options";
 
-export class MyRoom extends Room<{ state: MyRoomState }> {
+export class ChiribitoRoom extends Room<{ state: MesaState }> {
   maxClients = 6;
   /** True when the room was just created (client.create); used to rate-limit create-room in onAuth. */
   private roomJustCreated = false;
@@ -136,7 +136,7 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   }
 
   onCreate(options: RoomOptions = {}) {
-    this.setState(new MyRoomState());
+    this.setState(new MesaState());
     this.autoDispose = false;
 
     const requestedName = typeof options?.tableName === "string" ? options.tableName.trim() : "";

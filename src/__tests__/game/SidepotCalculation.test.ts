@@ -4,7 +4,7 @@
  */
 
 import { WinnerDeterminator } from "../../rooms/game/utils/WinnerDeterminator";
-import { MyRoomState, Player } from "../../rooms/schema/MyRoomState";
+import { MesaState, Player } from "../../rooms/schema/MesaState";
 
 describe("Sidepot Calculation - Chip Conservation Bug", () => {
   let mockRoom: any;
@@ -12,7 +12,7 @@ describe("Sidepot Calculation - Chip Conservation Bug", () => {
 
   beforeEach(() => {
     mockRoom = {
-      state: new MyRoomState(),
+      state: new MesaState(),
       roomId: "test-room",
     };
     winnerDeterminator = new WinnerDeterminator(mockRoom);

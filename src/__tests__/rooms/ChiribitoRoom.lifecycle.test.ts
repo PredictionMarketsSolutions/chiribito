@@ -1,5 +1,5 @@
 /**
- * MyRoom.lifecycle.test.ts
+ * ChiribitoRoom.lifecycle.test.ts
  * Tests for onLeave, onDispose, scheduleDelayed.
  */
 
@@ -9,9 +9,9 @@ jest.mock("@colyseus/core", () => ({
   CloseCode: { CONSENTED: 4000 },
 }));
 
-import { MyRoom } from "../../rooms/MyRoom";
+import { ChiribitoRoom } from "../../rooms/ChiribitoRoom";
 
-describe("MyRoom lifecycle", () => {
+describe("ChiribitoRoom lifecycle", () => {
   describe("onLeave", () => {
     it("calls lifecycleManager.handleLeave and engine.tryGameEnd", async () => {
       const handleLeave = jest.fn().mockResolvedValue(undefined);
@@ -31,7 +31,7 @@ describe("MyRoom lifecycle", () => {
         allowReconnection: jest.fn().mockResolvedValue(undefined),
       };
 
-      await MyRoom.prototype.onLeave.call(fakeRoom, client as any, 1000);
+      await ChiribitoRoom.prototype.onLeave.call(fakeRoom, client as any, 1000);
 
       expect(handleLeave).toHaveBeenCalledTimes(1);
       expect(handleLeave).toHaveBeenCalledWith(
@@ -66,7 +66,7 @@ describe("MyRoom lifecycle", () => {
         allowReconnection: jest.fn().mockResolvedValue(undefined),
       };
 
-      await MyRoom.prototype.onLeave.call(fakeRoom, client as any, 4000); // CONSENTED
+      await ChiribitoRoom.prototype.onLeave.call(fakeRoom, client as any, 4000); // CONSENTED
 
       expect(handleLeave).toHaveBeenCalledWith(
         client,
@@ -119,7 +119,7 @@ describe("MyRoom lifecycle", () => {
         allowReconnection: jest.fn().mockResolvedValue(undefined),
       };
 
-      await MyRoom.prototype.onLeave.call(fakeRoom, client as any, 1000);
+      await ChiribitoRoom.prototype.onLeave.call(fakeRoom, client as any, 1000);
 
       expect(captureBroadcast).not.toBeNull();
       captureBroadcast!("playerLeft", { sessionId: "c1" });
@@ -146,7 +146,7 @@ describe("MyRoom lifecycle", () => {
         analytics,
       };
 
-      MyRoom.prototype.onDispose.call(fakeRoom);
+      ChiribitoRoom.prototype.onDispose.call(fakeRoom);
 
       expect(clearTimeoutSpy).toHaveBeenCalledWith(12345);
       expect(connectionMonitor.clearAll).toHaveBeenCalledTimes(1);
@@ -170,7 +170,7 @@ describe("MyRoom lifecycle", () => {
         analytics: { logSummary: jest.fn(), clearAll: jest.fn() },
       };
 
-      MyRoom.prototype.onDispose.call(fakeRoom);
+      ChiribitoRoom.prototype.onDispose.call(fakeRoom);
 
       expect(clearTimeoutSpy).not.toHaveBeenCalled();
       clearTimeoutSpy.mockRestore();
@@ -187,7 +187,7 @@ describe("MyRoom lifecycle", () => {
         analytics: { logSummary: jest.fn(), clearAll: jest.fn() },
       };
 
-      expect(() => MyRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
+      expect(() => ChiribitoRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
       expect(fakeRoom.seatManager.clearAll).toHaveBeenCalled();
     });
 
@@ -202,7 +202,7 @@ describe("MyRoom lifecycle", () => {
         analytics: undefined,
       };
 
-      expect(() => MyRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
+      expect(() => ChiribitoRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
     });
 
     it("handles undefined seatManager, rateLimiter, sessionManager in onDispose", () => {
@@ -216,7 +216,7 @@ describe("MyRoom lifecycle", () => {
         analytics: undefined,
       };
 
-      expect(() => MyRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
+      expect(() => ChiribitoRoom.prototype.onDispose.call(fakeRoom)).not.toThrow();
     });
   });
 
@@ -232,7 +232,7 @@ describe("MyRoom lifecycle", () => {
         clock: { setTimeout: clockSetTimeout },
       };
 
-      MyRoom.prototype.scheduleDelayed.call(fakeRoom, callback, 1500);
+      ChiribitoRoom.prototype.scheduleDelayed.call(fakeRoom, callback, 1500);
 
       expect(clockSetTimeout).toHaveBeenCalledTimes(1);
       expect(clockSetTimeout).toHaveBeenCalledWith(expect.any(Function), 1500);
@@ -247,16 +247,16 @@ describe("MyRoom lifecycle", () => {
       const fakeRoom: any = {
         seatManager: { getNextAvailableSeat: jest.fn().mockReturnValue(3) },
       };
-      expect((MyRoom.prototype as any).getNextAvailableSeat.call(fakeRoom)).toBe(3);
+      expect((ChiribitoRoom.prototype as any).getNextAvailableSeat.call(fakeRoom)).toBe(3);
       fakeRoom.seatManager.getNextAvailableSeat.mockReturnValue(null);
-      expect((MyRoom.prototype as any).getNextAvailableSeat.call(fakeRoom)).toBe(-1);
+      expect((ChiribitoRoom.prototype as any).getNextAvailableSeat.call(fakeRoom)).toBe(-1);
     });
   });
 
   describe("cleanupExpiredReservations (private)", () => {
     it("runs without throwing (no-op, SeatManager handles)", () => {
       const fakeRoom: any = {};
-      expect(() => (MyRoom.prototype as any).cleanupExpiredReservations.call(fakeRoom)).not.toThrow();
+      expect(() => (ChiribitoRoom.prototype as any).cleanupExpiredReservations.call(fakeRoom)).not.toThrow();
     });
   });
 });

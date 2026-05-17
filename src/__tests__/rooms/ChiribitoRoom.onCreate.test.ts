@@ -1,5 +1,5 @@
 /**
- * MyRoom.onCreate.test.ts
+ * ChiribitoRoom.onCreate.test.ts
  * Tests for onCreate (setState, metadata, managers, message handlers),
  * heartbeat handler, and isActionAllowed via message handlers.
  */
@@ -73,19 +73,19 @@ jest.mock("../../rooms/managers", () => ({
   })),
 }));
 
-import { MyRoom } from "../../rooms/MyRoom";
-import { MyRoomState } from "../../rooms/schema/MyRoomState";
+import { ChiribitoRoom } from "../../rooms/ChiribitoRoom";
+import { MesaState } from "../../rooms/schema/MesaState";
 
-describe("MyRoom onCreate and message handlers", () => {
+describe("ChiribitoRoom onCreate and message handlers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     Object.keys(messageHandlers).forEach((k) => delete messageHandlers[k]);
     connectionMonitorTimeoutCallback = null;
   });
 
-  describe("MyRoom instance", () => {
+  describe("ChiribitoRoom instance", () => {
     it("initializes class fields when instantiated", () => {
-      const room = new MyRoom();
+      const room = new ChiribitoRoom();
       expect(room.maxClients).toBe(6);
       expect((room as any).reconnectionTimeoutSeconds).toBe(60);
       expect(room.turnTimeout).toBe(null);
@@ -111,10 +111,10 @@ describe("MyRoom onCreate and message handlers", () => {
         clients: [],
       };
 
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
 
       expect(setState).toHaveBeenCalledTimes(1);
-      expect(setState.mock.calls[0][0]).toBeInstanceOf(MyRoomState);
+      expect(setState.mock.calls[0][0]).toBeInstanceOf(MesaState);
       expect(fakeRoom.autoDispose).toBe(false);
       expect(setMetadata).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -139,7 +139,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clients: [],
       };
 
-      MyRoom.prototype.onCreate.call(fakeRoom, { tableName: "  Mi Mesa Larga  " });
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, { tableName: "  Mi Mesa Larga  " });
 
       expect(setMetadata).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -162,7 +162,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clients: [],
       };
 
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
 
       expect(messageHandlers["startGame"]).toBeDefined();
       expect(messageHandlers["bet"]).toBeDefined();
@@ -178,8 +178,8 @@ describe("MyRoom onCreate and message handlers", () => {
   describe("heartbeat handler", () => {
     it("records heartbeat, records message in analytics, sends heartbeat_ack", () => {
       const fakeRoom: any = {
-        state: new MyRoomState(),
-        setState: jest.fn((s: MyRoomState) => {
+        state: new MesaState(),
+        setState: jest.fn((s: MesaState) => {
           fakeRoom.state = s;
         }),
         setMetadata: jest.fn(),
@@ -191,7 +191,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
 
       const client = { sessionId: "s1", send: jest.fn() };
       messageHandlers["heartbeat"]!.call(fakeRoom, client);
@@ -215,7 +215,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
 
       expect(connectionMonitorTimeoutCallback).not.toBeNull();
       const leave = jest.fn();
@@ -240,7 +240,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [{ sessionId: "other" }],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
 
       expect(() => connectionMonitorTimeoutCallback!("missing-session")).not.toThrow();
     });
@@ -248,7 +248,7 @@ describe("MyRoom onCreate and message handlers", () => {
 
   describe("isActionAllowed via message handlers", () => {
     function bindRoomContext(fakeRoom: any) {
-      fakeRoom.isActionAllowed = (MyRoom.prototype as any).isActionAllowed.bind(fakeRoom);
+      fakeRoom.isActionAllowed = (ChiribitoRoom.prototype as any).isActionAllowed.bind(fakeRoom);
     }
     function invokeHandler(type: string, ...args: any[]) {
       const handler = messageHandlers[type];
@@ -268,7 +268,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
       fakeRoom.state = { roundStarted: false };
       fakeRoom.rateLimiter = { isActionAllowed: jest.fn().mockReturnValue(true), recordAction: jest.fn() };
       bindRoomContext(fakeRoom);
@@ -291,7 +291,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
       fakeRoom.state = { roundStarted: false };
       fakeRoom.rateLimiter = { isActionAllowed: jest.fn().mockReturnValue(true), recordAction: jest.fn() };
       bindRoomContext(fakeRoom);
@@ -314,7 +314,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
       fakeRoom.state = { roundStarted: true };
       fakeRoom.rateLimiter = { isActionAllowed: jest.fn().mockReturnValue(false), recordAction: jest.fn() };
       bindRoomContext(fakeRoom);
@@ -339,7 +339,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
       fakeRoom.state = { roundStarted: true };
       fakeRoom.rateLimiter = { isActionAllowed: jest.fn().mockReturnValue(true), recordAction };
       bindRoomContext(fakeRoom);
@@ -363,7 +363,7 @@ describe("MyRoom onCreate and message handlers", () => {
         clock: { setTimeout: jest.fn() },
         clients: [],
       };
-      MyRoom.prototype.onCreate.call(fakeRoom, {});
+      ChiribitoRoom.prototype.onCreate.call(fakeRoom, {});
       fakeRoom.state = { roundStarted: true };
       fakeRoom.rateLimiter = { isActionAllowed: jest.fn().mockReturnValue(true), recordAction: jest.fn() };
       bindRoomContext(fakeRoom);

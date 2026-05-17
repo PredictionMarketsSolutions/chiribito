@@ -1,19 +1,19 @@
 import { GameEngine } from '../rooms/game/GameEngine';
-import { MyRoomState, Player } from '../rooms/schema/MyRoomState';
+import { MesaState, Player } from '../rooms/schema/MesaState';
 import type { IGameRoom } from '../types/IGameRoom';
 import type { Client } from '@colyseus/core';
 
 describe('GameEngine.handleBet', () => {
   let engine: GameEngine;
   let mockRoom: jest.Mocked<IGameRoom>;
-  let state: MyRoomState;
+  let state: MesaState;
   let mockClient: Partial<Client>;
 
   beforeEach(() => {
     // Use fake timers to avoid real setTimeout delays in tests
     jest.useFakeTimers();
 
-    state = new MyRoomState();
+    state = new MesaState();
     state.currentTurn = 'player1';
     state.currentBet = 0;
     state.pot = 0;

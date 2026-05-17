@@ -1,14 +1,14 @@
-import type { MyRoomState } from "../rooms/schema/MyRoomState";
+import type { MesaState } from "../rooms/schema/MesaState";
 import type { Client } from "@colyseus/core";
 
 /**
- * IGameRoom - Interface to decouple GameEngine from MyRoom concrete implementation
+ * IGameRoom - Interface to decouple GameEngine from ChiribitoRoom concrete implementation
  * Enables testing GameEngine with mocks and reduces tight coupling
  */
 export interface IGameRoom {
   // Room properties
   readonly roomId: string;
-  readonly state: MyRoomState;
+  readonly state: MesaState;
   readonly clients: Client[];
 
   // Game state - players and cards

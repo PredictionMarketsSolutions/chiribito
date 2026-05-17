@@ -1,7 +1,7 @@
 {
-  "name": "poker-auth-api",
-  "version": "1.0.0",
-  "description": "Authentication API for Poker Game",
+  "name": "chiribito-api",
+  "version": "0.2.0",
+  "description": "Chiribito API server — auth, users, ranking, internal stats",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
