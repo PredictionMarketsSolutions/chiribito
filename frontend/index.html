@@ -2,111 +2,218 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#02050c" />
+    <meta name="description" content="Chiribito — el póker español que sobrevivió al casino. 28 cartas, 6 calles, La Perla esperando." />
+    <link rel="icon" type="image/png" href="/brand/logo.png" />
     <title>CHIRIBITO</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <div id="auth-overlay" class="auth-overlay">
-      <div class="auth-card">
-        <header class="panel-header">
-          <div>
-            <p class="panel-kicker">Casino Control</p>
-            <h1>Chiribito Table</h1>
+    <div id="auth-overlay" class="auth-scene">
+      <div class="auth-scene__bg" aria-hidden="true">
+        <div class="auth-scene__vignette"></div>
+        <div class="auth-scene__glow auth-scene__glow--gold"></div>
+        <div class="auth-scene__glow auth-scene__glow--felt"></div>
+        <div class="auth-scene__grain"></div>
+      </div>
+
+      <div class="auth-scene__container">
+        <aside class="auth-hero" aria-hidden="false">
+          <div class="auth-hero__brand">
+            <img src="/brand/logo.png" alt="Chiribito" class="auth-hero__logo" />
           </div>
-          <div class="panel-pill">Live</div>
-        </header>
-        <section class="panel-card">
-          <h2>Acceso</h2>
+          <div class="auth-hero__copy">
+            <p class="auth-hero__eyebrow">Timba española · desde Madrid 1950</p>
+            <h1 class="auth-hero__title">El póker que sobrevivió<br/>al casino.</h1>
+            <p class="auth-hero__lede">Veintiocho cartas. Seis rondas. La Perla esperando. Bienvenido al círculo.</p>
+          </div>
+          <div class="auth-hero__mascots">
+            <img src="/brand/pato-y-toro.png" alt="" class="auth-hero__mascot" loading="lazy" />
+          </div>
+          <div class="auth-hero__meta">
+            <span class="auth-hero__chip"><span class="auth-hero__chip-dot"></span>Mesa privada</span>
+            <span class="auth-hero__chip auth-hero__chip--ghost">28 cartas · 6 rondas</span>
+          </div>
+        </aside>
+
+        <div class="auth-card">
+          <header class="auth-card__header">
+            <p class="auth-card__eyebrow">Acceso al círculo</p>
+            <h2 class="auth-card__title">Entra a la timba</h2>
+          </header>
+
+          <div class="auth-tabs" role="tablist" aria-label="Acceso">
+            <button type="button" class="auth-tab is-active" data-auth-tab="login" role="tab" aria-selected="true">Acceder</button>
+            <button type="button" class="auth-tab" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+          </div>
+
           <div id="auth-message" class="auth-message" role="status"></div>
-          <div id="auth-login-form">
-            <div class="field-grid">
-              <label class="field">
-                <span>Username</span>
-                <input id="username" type="text" placeholder="test1" />
-              </label>
-              <label class="field">
-                <span>Email</span>
-                <input id="email" type="email" placeholder="test1@example.com" />
-              </label>
-              <label class="field">
-                <span>Password</span>
-                <input id="password" type="password" placeholder="123456" />
-              </label>
-              <div class="forgot-password-row">
-                <a href="#" id="forgot-password-link" class="forgot-password-link">¿Has olvidado tu contraseña?</a>
-              </div>
+
+          <div id="auth-login-form" class="auth-form" data-mode="login">
+            <label class="auth-field" data-mode-only="register">
+              <span class="auth-field__label">Nombre de usuario</span>
+              <input id="username" type="text" class="auth-input" placeholder="elcabezon" autocomplete="username" />
+            </label>
+            <label class="auth-field">
+              <span class="auth-field__label">Email</span>
+              <input id="email" type="email" class="auth-input" placeholder="tu@email.com" autocomplete="email" />
+            </label>
+            <label class="auth-field">
+              <span class="auth-field__label">Contraseña</span>
+              <input id="password" type="password" class="auth-input" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+            <div class="auth-form__row" data-mode-only="login">
+              <a href="#" id="forgot-password-link" class="auth-link">¿Olvidaste la contraseña?</a>
             </div>
-            <div class="button-row">
-              <button id="register">Register</button>
-              <button id="login">Login</button>
-              <button id="join" class="accent">Login</button>
+            <div class="auth-form__cta">
+              <button id="login" class="auth-btn auth-btn--primary" data-mode-only="login">
+                <span>Iniciar sesión</span>
+                <span class="auth-btn__shine" aria-hidden="true"></span>
+              </button>
+              <button id="register" class="auth-btn auth-btn--primary" data-mode-only="register">
+                <span>Crear cuenta</span>
+                <span class="auth-btn__shine" aria-hidden="true"></span>
+              </button>
+              <button id="join" class="auth-btn auth-btn--ghost" data-mode-only="login">
+                <span>Entrar como invitado</span>
+              </button>
             </div>
           </div>
-          <div id="forgot-password-block" class="forgot-password-block hidden">
-            <p class="forgot-password-text">Introduce tu email y te enviaremos un enlace para restablecer la contraseña.</p>
-            <label class="field">
-              <span>Email</span>
-              <input id="forgot-password-email" type="email" placeholder="tu@email.com" />
+
+          <div id="forgot-password-block" class="auth-form forgot-password-block hidden">
+            <p class="auth-form__lede">Te enviaremos un enlace al email para recuperarla.</p>
+            <label class="auth-field">
+              <span class="auth-field__label">Email</span>
+              <input id="forgot-password-email" type="email" class="auth-input" placeholder="tu@email.com" />
             </label>
-            <div class="button-row">
-              <button type="button" id="forgot-password-back" class="secondary">Volver</button>
-              <button type="button" id="forgot-password-submit" class="accent">Enviar enlace</button>
+            <div class="auth-form__cta">
+              <button type="button" id="forgot-password-back" class="auth-btn auth-btn--ghost">Volver</button>
+              <button type="button" id="forgot-password-submit" class="auth-btn auth-btn--primary">
+                <span>Enviar enlace</span>
+                <span class="auth-btn__shine" aria-hidden="true"></span>
+              </button>
             </div>
+          </div>
+
+          <p class="auth-card__legal">Versión beta. Solo entretenimiento. Sin dinero real.</p>
+        </div>
+      </div>
+
+      <script>
+        (() => {
+          const init = () => {
+            const tabs = document.querySelectorAll('[data-auth-tab]');
+            const form = document.getElementById('auth-login-form');
+            if (!form || tabs.length === 0) return;
+            const setMode = (mode) => {
+              form.setAttribute('data-mode', mode);
+              tabs.forEach((t) => {
+                const active = t.getAttribute('data-auth-tab') === mode;
+                t.classList.toggle('is-active', active);
+                t.setAttribute('aria-selected', active ? 'true' : 'false');
+              });
+            };
+            tabs.forEach((t) => t.addEventListener('click', () => setMode(t.getAttribute('data-auth-tab'))));
+            setMode('login');
+          };
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init, { once: true });
+          } else {
+            init();
+          }
+        })();
+      </script>
+    </div>
+    <div id="lobby-overlay" class="lobby-scene hidden">
+      <div class="lobby-scene__bg" aria-hidden="true">
+        <div class="lobby-scene__vignette"></div>
+        <div class="lobby-scene__glow lobby-scene__glow--gold"></div>
+        <div class="lobby-scene__glow lobby-scene__glow--felt"></div>
+        <div class="lobby-scene__grain"></div>
+      </div>
+
+      <div class="lobby-scene__shell">
+        <header class="lobby-top">
+          <div class="lobby-top__brand">
+            <img src="/brand/logo.png" alt="" class="lobby-top__logo" />
+            <div class="lobby-top__brand-copy">
+              <p class="lobby-top__eyebrow">Círculo privado</p>
+              <h1 class="lobby-top__title">Chiribito</h1>
+            </div>
+          </div>
+          <div class="lobby-top__actions">
+            <button id="back-to-auth" type="button" class="lobby-icon-btn" title="Salir">
+              <span class="lobby-icon-btn__label">Salir</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="lobby-hero">
+          <div class="lobby-hero__copy">
+            <p class="lobby-hero__eyebrow">Bienvenido a la timba</p>
+            <h2 class="lobby-hero__title">Elige tu mesa<br/>o abre la tuya.</h2>
+            <p class="lobby-hero__lede">Veintiocho cartas, seis rondas, hasta seis jugadores. Los habituales ya están dentro.</p>
+
+            <form class="lobby-hero__create" onsubmit="event.preventDefault(); document.getElementById('create-table')?.click();">
+              <label class="lobby-hero__create-field">
+                <span class="lobby-hero__create-label">Nombre de la mesa</span>
+                <input id="table-name" type="text" placeholder="Mesa de El Cabezón" maxlength="32" class="lobby-input" />
+              </label>
+              <button id="create-table" type="button" class="lobby-cta">
+                <span class="lobby-cta__icon" aria-hidden="true">+</span>
+                <span>Abrir mesa</span>
+                <span class="auth-btn__shine" aria-hidden="true"></span>
+              </button>
+            </form>
+
+            <details class="lobby-hero__advanced">
+              <summary class="lobby-hero__advanced-summary">¿Tienes un código de mesa privada?</summary>
+              <div class="lobby-hero__advanced-body">
+                <label class="lobby-hero__create-field">
+                  <span class="lobby-hero__create-label">Room ID</span>
+                  <input id="join-room-id" type="text" placeholder="Vm1j3o6RM" class="lobby-input" />
+                </label>
+                <button id="join-by-id" type="button" class="lobby-cta lobby-cta--ghost">
+                  <span>Unirme por código</span>
+                </button>
+              </div>
+            </details>
+          </div>
+
+          <div class="lobby-hero__mascots" aria-hidden="true">
+            <img src="/brand/toro.png" alt="" class="lobby-hero__mascot lobby-hero__mascot--toro" loading="lazy" />
+            <img src="/brand/pato.png" alt="" class="lobby-hero__mascot lobby-hero__mascot--pato" loading="lazy" />
           </div>
         </section>
-      </div>
-    </div>
-    <div id="lobby-overlay" class="auth-overlay hidden">
-      <div class="landing-page">
-        <header class="landing-header">
-          <div class="landing-brand">
-            <h1 class="landing-title">Chiribito</h1>
-            <p class="landing-tagline">Poker · Mesas en vivo</p>
-          </div>
-          <button id="back-to-auth" type="button" class="landing-logout">Salir</button>
-        </header>
 
-        <p class="landing-hero">Elige una mesa o crea la tuya.</p>
+        <div id="lobby-message" class="lobby-toast" role="status"></div>
 
-        <div class="landing-main">
-          <aside class="landing-ranking">
-            <section class="landing-card">
-              <h2 class="landing-card-title">Ranking de ganadores</h2>
-              <ul id="winners-ranking" class="ranking-list" aria-label="Ranking de jugadores por partidas ganadas"></ul>
-            </section>
-          </aside>
-
-          <main class="landing-lobby">
-            <section class="landing-card">
-              <h2 class="landing-card-title">Mesas disponibles</h2>
-              <div id="lobby-message" class="auth-message" role="status"></div>
-              <div class="lobby-actions">
-                <button id="refresh-rooms" type="button">Refrescar</button>
+        <div class="lobby-grid">
+          <main class="lobby-tables">
+            <header class="lobby-section-head">
+              <div class="lobby-section-head__copy">
+                <h3 class="lobby-section-title">Mesas en vivo</h3>
+                <p class="lobby-section-sub">Cualquiera puede pedir mano.</p>
               </div>
-              <ul id="rooms-list" class="rooms-list" aria-label="Lista de mesas"></ul>
-            </section>
-            <section class="landing-card">
-              <h2 class="landing-card-title">Crear mesa</h2>
-              <div class="field-grid">
-                <label class="field">
-                  <span>Nombre (opcional)</span>
-                  <input id="table-name" type="text" placeholder="Mesa 1" maxlength="32" />
-                </label>
-              </div>
-              <button id="create-table" type="button" class="accent">Crear y unirme</button>
-            </section>
-            <section class="landing-card">
-              <h2 class="landing-card-title">Unirme por ID</h2>
-              <div class="field-grid">
-                <label class="field">
-                  <span>Room ID</span>
-                  <input id="join-room-id" type="text" placeholder="Vm1j3o6RM" />
-                </label>
-              </div>
-              <button id="join-by-id" type="button" class="accent">Unirme</button>
-            </section>
+              <button id="refresh-rooms" type="button" class="lobby-ghost-btn">
+                <span class="lobby-ghost-btn__icon" aria-hidden="true">↻</span>
+                <span>Refrescar</span>
+              </button>
+            </header>
+            <ul id="rooms-list" class="rooms-list lobby-room-list" aria-label="Lista de mesas"></ul>
           </main>
+
+          <aside class="lobby-ranking">
+            <header class="lobby-section-head">
+              <div class="lobby-section-head__copy">
+                <h3 class="lobby-section-title">Ranking</h3>
+                <p class="lobby-section-sub">Los reyes del bote.</p>
+              </div>
+              <span class="lobby-section-badge">Top jugadores</span>
+            </header>
+            <ul id="winners-ranking" class="ranking-list lobby-ranking-list" aria-label="Ranking de jugadores por partidas ganadas"></ul>
+          </aside>
         </div>
       </div>
     </div>
@@ -193,7 +300,7 @@
               <div class="badge badge-pot">Pot <span id="pot-chip">0</span></div>
             </div>
             <div class="table-header-row table-header-row--meta">
-              <span class="badge badge-meta badge-phase" title="Progreso de la mano (6 calles)">
+              <span class="badge badge-meta badge-phase" title="Progreso de la mano (6 rondas)">
                 <span id="phase-chip">Esperando</span>
                 <span id="phase-progress" class="phase-progress" aria-label="Sin mano en curso"></span>
               </span>
