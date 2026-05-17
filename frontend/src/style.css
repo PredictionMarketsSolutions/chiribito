@@ -1022,6 +1022,35 @@ button.accent:hover:not(:disabled) {
   font-weight: 700;
 }
 
+/* Six-street progress indicator (one dot per Chiribito betting round). */
+.badge-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phase-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.phase-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(244, 196, 48, 0.15);
+  border: 1px solid rgba(244, 196, 48, 0.35);
+  transition: background 240ms ease, transform 240ms ease, box-shadow 240ms ease;
+}
+
+.phase-dot.is-filled {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(244, 196, 48, 0.55);
+  transform: scale(1.05);
+}
+
 .winner-banner {
   position: absolute;
   top: 50%;

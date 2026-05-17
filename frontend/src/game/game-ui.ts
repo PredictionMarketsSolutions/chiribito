@@ -9,6 +9,8 @@ import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
 import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
+import { renderPhaseIndicator } from "./phase-indicator";
+import { phaseLabel } from "./phases";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
   return Boolean(ctx.tableScene?.isActive());
@@ -164,7 +166,12 @@ export function renderState(
   const currentTurnId = inWinnerPhase ? "" : (state.currentTurn ?? "");
   const turnPlayer = entries.find((p) => p.sessionId === currentTurnId);
 
-  refs.phaseStatus.textContent = state.phase ?? "-";
+  // Phase chip + sidebar status: human-readable label, never raw "card3".
+  const phaseInfo = phaseLabel(state.phase);
+  refs.phaseStatus.textContent =
+    phaseInfo.streetNumber > 0
+      ? `${phaseInfo.short} (calle ${phaseInfo.streetNumber}/6)`
+      : phaseInfo.short;
   refs.turnStatus.textContent = turnPlayer?.name ?? (currentTurnId || "-");
   if (ctx.currentSessionId && currentTurnId === ctx.currentSessionId) {
     refs.yourTurnIndicator.classList.remove("hidden");
@@ -178,7 +185,11 @@ export function renderState(
   refs.potStatus.textContent = String(potValue);
   refs.betStatus.textContent = String(currentBetValue);
   refs.potChip.textContent = String(potValue);
-  refs.phaseChip.textContent = state.phase ?? "waiting";
+  // Phase chip + 6-dot progress indicator (mirrors the server's 6 streets).
+  renderPhaseIndicator(state.phase, {
+    progressEl: refs.phaseProgress,
+    labelEl: refs.phaseChip
+  });
   refs.turnChip.textContent = turnPlayer?.name ?? (currentTurnId || "-");
   ctx.previousCurrentBetValue = currentBetValue;
   onUpdateTurnTimer(state);

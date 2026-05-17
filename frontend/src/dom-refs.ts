@@ -42,6 +42,7 @@ export const dom = {
   cardPopoverCards: getRef<HTMLDivElement>("#card-popover-cards", false),
   potChip: getRef<HTMLSpanElement>("#pot-chip"),
   phaseChip: getRef<HTMLSpanElement>("#phase-chip"),
+  phaseProgress: getRef<HTMLSpanElement>("#phase-progress"),
   turnChip: getRef<HTMLSpanElement>("#turn-chip"),
   turnTimerChip: getRef<HTMLSpanElement>("#turn-timer"),
   winningHandChip: getRef<HTMLSpanElement>("#winning-hand-chip"),

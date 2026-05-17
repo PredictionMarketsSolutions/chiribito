@@ -38,6 +38,8 @@ export type GameUiRefs = {
   betStatus: HTMLSpanElement;
   potChip: HTMLSpanElement;
   phaseChip: HTMLSpanElement;
+  /** Container for the 6-dot betting-round progress indicator. */
+  phaseProgress: HTMLSpanElement | null;
   turnChip: HTMLSpanElement;
   turnTimerChip: HTMLSpanElement;
   winningHandStatus: HTMLSpanElement;

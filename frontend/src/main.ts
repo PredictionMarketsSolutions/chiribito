@@ -144,6 +144,7 @@ const communityCardsEl = dom.communityCardsEl!;
 const handCardsEl = dom.handCardsEl!;
 const potChip = dom.potChip!;
 const phaseChip = dom.phaseChip!;
+const phaseProgress = dom.phaseProgress; // optional — fallback handled in renderer
 const turnChip = dom.turnChip!;
 const turnTimerChip = dom.turnTimerChip!;
 const winningHandChip = dom.winningHandChip!;
@@ -298,6 +299,7 @@ function getGameUiRefs(): GameUiRefs {
     betStatus: betStatus,
     potChip: potChip,
     phaseChip: phaseChip,
+    phaseProgress: phaseProgress,
     turnChip: turnChip,
     turnTimerChip: turnTimerChip,
     winningHandStatus: winningHandStatus,
