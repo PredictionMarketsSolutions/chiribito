@@ -8,7 +8,32 @@ All notable changes to this project will be documented here. Format roughly foll
 - Hash refresh tokens before storing them in the database.
 - Multi-device session support (loosen the `tokenVersion++` per login).
 - Replace the heredado print art with a unified visual identity once the new art is ready.
-- Frontend UI changes to surface the 6-street progression to players explicitly (status bar, animations) — engine is ready, presentation pending.
+- Card reveal animation on each `communityCardRevealed` event (engine already emits one card at a time; the visual cue is purely cosmetic and will land with the unified art).
+
+## [0.4.0-phase-3] — 2026-05-17
+
+### Added — frontend now reflects the authentic Chiribito flow
+
+- **Six-street progress indicator** in the table header. The phase chip went from a raw `"card3"` string to `"Calle 4/6 · 3ª comunitaria"` with a row of six dots, lit up to the current street. New: `frontend/src/game/phases.ts` (mirror of the server glossary), `frontend/src/game/phase-indicator.ts` (pure DOM renderer, idempotent, safe with nulls). 14 new unit tests.
+- **Speaking-order context badge** next to the Turn badge — tells the player *why* the current speaker is the current speaker:
+  - `Abre el preflop` — preflop opener, dealer+1
+  - `Abre por última subida` — last raiser opens the new street (the Chiribito rule)
+  - `Abre por orden` — fallback after dealer when nobody raised or the last raiser folded
+  - `Sigue la ronda` — mid-street action
+  New: `frontend/src/game/speaking-order.ts` (pure function) + 8 unit tests.
+- **`Tu apuesta` / `Tus fichas`** in the sidebar status grid, so the player sees their own situation without scanning the players list.
+
+### Changed
+- Sidebar status grid relabelled in Spanish across the board (`Token / Mesa / Fase / Habla / Bote / Apuesta / Tu apuesta / Tus fichas / Comunitarias / Tu mano / Jugada / Ganadores`).
+- `phaseStatus` in the sidebar now shows the readable label (`"3ª comunitaria (calle 4/6)"`) instead of the raw phase code.
+- `dom-refs.ts` and `GameUiRefs` extended with `phaseProgress`, `turnReason`, `yourBetStatus`, `yourChipsStatus` (all optional/null-safe).
+- `GameUiContext` gained `previousPhase` so the speaking-order helper can detect street transitions across renders.
+
+### Tests
+- Net test count: 651 → 674 (+23: 5 in `phases.test.ts`, 9 in `phase-indicator.test.ts`, 8 in `speaking-order.test.ts`, plus +1 happy-path coverage from the new render path). All green.
+
+### Infra
+- `.claude/launch.json` added with a frontend dev-server entry for the preview tool. The preview spawner currently fails on this Windows host (`cmd.exe ENOENT`, same known limitation as the PT project) — file is committed so other hosts can use it.
 
 ## [0.3.0-phase-2] — 2026-05-17
 
