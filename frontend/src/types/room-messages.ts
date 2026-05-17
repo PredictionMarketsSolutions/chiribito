@@ -1,6 +1,6 @@
 /**
  * Tipos de payloads de mensajes de sala (room.onMessage).
- * Alineados con el backend GameBroadcaster y MyRoom.
+ * Alineados con el backend GameBroadcaster y ChiribitoRoom.
  */
 
 export type GameResultPayload = {

@@ -62,10 +62,10 @@ src/
 │   ├── auth.ts               @colyseus/auth wiring
 │   └── logger.ts             Winston + optional Better Stack (Logtail)
 ├── rooms/
-│   ├── MyRoom.ts             Colyseus Room. Will be renamed ChiribitoRoom in 1.4.
+│   ├── ChiribitoRoom.ts      Colyseus Room (room id "mesa")
 │   ├── close-codes.ts        Custom WS close codes
 │   ├── schema/
-│   │   └── MyRoomState.ts    Public state synced to clients (NO deck)
+│   │   └── MesaState.ts      Public state synced to clients (NO deck)
 │   ├── game/
 │   │   ├── GameEngine.ts     Orchestrator. Delegates to utils below.
 │   │   ├── constants.ts      Reads from config/env
@@ -93,22 +93,22 @@ src/
 
 ### Game flow at a glance
 
-1. Client calls `client.joinOrCreate("my_room", { token })`.
-2. Colyseus invokes `MyRoom.onAuth` → `AuthenticationService.authenticate`:
+1. Client calls `client.joinOrCreate("mesa", { token })`.
+2. Colyseus invokes `ChiribitoRoom.onAuth` → `AuthenticationService.authenticate`:
    - Verify JWT signature locally
    - Call `POST /api/auth/validate` on API server (with retry + exponential backoff)
    - Reject duplicate concurrent sessions unless `forceReplace: true`
 3. Client lands in `onJoin`. `PlayerLifecycleManager` seats them via `SeatManager`.
 4. When everyone is seated, `startGame` triggers `GameEngine.handleStartGame`.
 5. `RoundManager.dealInitialHands()` deals 2 cards per player from the private deck.
-6. Each player's hand is decorated `@view()` in `MyRoomState` — visible only to the owning client.
-7. Betting round drives by `MyRoom.onMessage("bet" | "call" | "check" | "raise" | "fold" | "allIn")`. Each message goes through `isActionAllowed` (turn check + round-active check + rate limiter).
+6. Each player's hand is decorated `@view()` in `MesaState` — visible only to the owning client.
+7. Betting round drives by `ChiribitoRoom.onMessage("bet" | "call" | "check" | "raise" | "fold" | "allIn")`. Each message goes through `isActionAllowed` (turn check + round-active check + rate limiter).
 8. `proceedToNextPhase` reveals the next community card; on showdown `WinnerDeterminator` computes winners and side-pots.
 9. Tournament end → `notifyTournamentEnd` → `reportTournamentStats` → `POST /api/internal/game-ended` (protected by `INTERNAL_API_SECRET`).
 
 ### Public vs private state
 
-`MyRoomState` is what every client sees. Only fields with `@type` are serialized. The deck is intentionally `private string[]` with **no decorator** — invisible to clients. Each `Player.hand` is `@view()` — visible only to the player who owns it.
+`MesaState` is what every client sees. Only fields with `@type` are serialized. The deck is intentionally `private string[]` with **no decorator** — invisible to clients. Each `Player.hand` is `@view()` — visible only to the player who owns it.
 
 ---
 
