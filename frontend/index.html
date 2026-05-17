@@ -146,13 +146,15 @@
             <div><span>API</span><strong id="api-url"></strong></div>
             <div><span>WS</span><strong id="ws-url"></strong></div>
             <div><span>Token</span><strong id="token-status">none</strong></div>
-            <div><span>Room</span><strong id="room-status">not joined</strong></div>
-            <div><span>Phase</span><strong id="phase-status">waiting</strong></div>
-            <div><span>Turn</span><strong id="turn-status">-</strong></div>
-            <div><span>Pot</span><strong id="pot-status">0</strong></div>
-            <div><span>Current Bet</span><strong id="bet-status">0</strong></div>
-            <div><span>Community</span><strong id="community-status">-</strong></div>
-            <div><span>Your hand</span><strong id="hand-status">-</strong></div>
+            <div><span>Mesa</span><strong id="room-status">sin mesa</strong></div>
+            <div><span>Fase</span><strong id="phase-status">Esperando</strong></div>
+            <div><span>Habla</span><strong id="turn-status">-</strong></div>
+            <div><span>Bote</span><strong id="pot-status">0</strong></div>
+            <div><span>Apuesta</span><strong id="bet-status">0</strong></div>
+            <div><span>Tu apuesta</span><strong id="your-bet-status">0</strong></div>
+            <div><span>Tus fichas</span><strong id="your-chips-status">0</strong></div>
+            <div><span>Comunitarias</span><strong id="community-status">-</strong></div>
+            <div><span>Tu mano</span><strong id="hand-status">-</strong></div>
             <div><span>Jugada</span><strong id="winning-hand">-</strong></div>
             <div><span>Ganadores</span><strong id="winners-status">-</strong></div>
           </div>
@@ -195,7 +197,10 @@
                 <span id="phase-chip">Esperando</span>
                 <span id="phase-progress" class="phase-progress" aria-label="Sin mano en curso"></span>
               </span>
-              <span class="badge badge-meta">Turno <span id="turn-chip">-</span></span>
+              <span class="badge badge-meta badge-turn">
+                Turno <span id="turn-chip">-</span>
+                <span id="turn-reason" class="turn-reason"></span>
+              </span>
               <span class="badge badge-meta timer">Reloj <span id="turn-timer">-</span></span>
               <span class="badge badge-meta">Jugada <span id="winning-hand-chip">-</span></span>
             </div>

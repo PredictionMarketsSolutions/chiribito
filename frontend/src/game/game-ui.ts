@@ -11,6 +11,7 @@ import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
 import { renderPhaseIndicator } from "./phase-indicator";
 import { phaseLabel } from "./phases";
+import { speakingContext } from "./speaking-order";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
   return Boolean(ctx.tableScene?.isActive());
@@ -191,6 +192,27 @@ export function renderState(
     labelEl: refs.phaseChip
   });
   refs.turnChip.textContent = turnPlayer?.name ?? (currentTurnId || "-");
+  // Speaking-order context: did the street just change? compare phase to
+  // the previous render's snapshot stored on ctx.
+  const streetJustChanged =
+    ctx.previousPhase !== null && ctx.previousPhase !== state.phase;
+  const speaking = speakingContext({
+    phase: state.phase,
+    currentTurn: currentTurnId,
+    lastRaiser: (state as any)?.lastRaiser ?? "",
+    streetJustChanged
+  });
+  if (refs.turnReason) {
+    if (speaking.label) {
+      refs.turnReason.textContent = speaking.label;
+      refs.turnReason.title = speaking.long;
+      refs.turnReason.classList.remove("hidden");
+    } else {
+      refs.turnReason.textContent = "";
+      refs.turnReason.classList.add("hidden");
+    }
+  }
+  ctx.previousPhase = state.phase ?? null;
   ctx.previousCurrentBetValue = currentBetValue;
   onUpdateTurnTimer(state);
 
@@ -228,9 +250,19 @@ export function renderState(
     }
     ctx.previousHandCards.length = 0;
     ctx.previousHandCards.push(...hand);
+    // Sidebar — your own bet + remaining chips, so you don't have to
+    // hunt for your row in the players list to know what you have.
+    if (refs.yourBetStatus) {
+      refs.yourBetStatus.textContent = String(Number(me?.currentBet ?? 0));
+    }
+    if (refs.yourChipsStatus) {
+      refs.yourChipsStatus.textContent = String(Number(me?.chips ?? 0));
+    }
   } else {
     refs.handStatus.textContent = "-";
     ctx.previousHandCards.length = 0;
+    if (refs.yourBetStatus) refs.yourBetStatus.textContent = "0";
+    if (refs.yourChipsStatus) refs.yourChipsStatus.textContent = "0";
   }
   if (!pixiCards) {
     renderCardRow(refs.handCardsEl, handForZone, 2);

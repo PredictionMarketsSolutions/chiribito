@@ -36,11 +36,17 @@ export type GameUiRefs = {
   yourTurnIndicator: HTMLDivElement;
   potStatus: HTMLSpanElement;
   betStatus: HTMLSpanElement;
+  /** Sidebar — your own current bet on this street. */
+  yourBetStatus: HTMLSpanElement | null;
+  /** Sidebar — your remaining chip stack. */
+  yourChipsStatus: HTMLSpanElement | null;
   potChip: HTMLSpanElement;
   phaseChip: HTMLSpanElement;
   /** Container for the 6-dot betting-round progress indicator. */
   phaseProgress: HTMLSpanElement | null;
   turnChip: HTMLSpanElement;
+  /** Sub-label under the turn chip explaining *why* this player speaks. */
+  turnReason: HTMLSpanElement | null;
   turnTimerChip: HTMLSpanElement;
   winningHandStatus: HTMLSpanElement;
   winningHandChip: HTMLSpanElement;
@@ -69,6 +75,8 @@ export type GameUiContext = {
   previousHandCards: string[];
   previousPotValue: number | null;
   previousCurrentBetValue: number | null;
+  /** Phase string from the previous renderState call. Used to detect street transitions for the speaking-order badge. */
+  previousPhase: string | null;
   allInRevealInProgress: boolean;
   latestPlayerNames: Map<string, string>;
   tableScene: TableSceneController | null;
