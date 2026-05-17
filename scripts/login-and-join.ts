@@ -57,7 +57,7 @@ async function main() {
   (client as any).auth = { token };
 
   try {
-    const room = await client.joinOrCreate("my_room", {
+    const room = await client.joinOrCreate("mesa", {
       token,
       auth: { token },
       name: USERNAME
