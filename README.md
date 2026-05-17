@@ -38,7 +38,7 @@ This project is a social, casual, web-based revival of that game — built with 
 | Canonical Chiribito deck (5-6-7-Sota-Caballo-Rey-As) + correct Perla | ✅ Sprint 1.4 — glossary in `src/rooms/game/glossary.ts` is source of truth |
 | Real Chiribito betting rounds (6 streets, one card at a time) | ⏳ Phase 2 — engine still uses heredado 4-street flow |
 | Identity rename (`ChiribitoRoom`, `MesaState`, room id `mesa`) | ✅ Sprint 1.4 |
-| Card assets at sane sizes | ⏳ Sprint 1.5 (most cards still 2-4 MB each) |
+| Card assets at sane sizes | ✅ Sprint 1.5 — 28 cards re-encoded to ~95 KB each (folder went 57 MB → 2.9 MB, −95%) |
 | Production deploy | ⚪ not active — Render targets exist, secrets pending rotation |
 
 We do not claim "production ready". Anything that says so somewhere else in this repo is a leftover and you can ignore it.
@@ -144,7 +144,7 @@ Este proyecto es un revival social, casual y web de aquel juego — hecho con ca
 | Baraja canónica del Chiribito (5-6-7-Sota-Caballo-Rey-As) + Perla correcta | ✅ Sprint 1.4 — el glosario en `src/rooms/game/glossary.ts` es la fuente de verdad |
 | Rondas reales del Chiribito (6 calles, una carta a la vez) | ⏳ Fase 2 — el motor sigue con las 4 calles del repo heredado |
 | Renombrado a identidad propia (`ChiribitoRoom`, `MesaState`, sala `mesa`) | ✅ Sprint 1.4 |
-| Assets de cartas en tamaños decentes | ⏳ Sprint 1.5 (la mayoría siguen pesando 2-4 MB) |
+| Assets de cartas en tamaños decentes | ✅ Sprint 1.5 — 28 cartas re-encodeadas a ~95 KB cada una (carpeta de 57 MB → 2.9 MB, −95%) |
 | Deploy de producción | ⚪ inactivo — los servicios Render existen pero los secretos están pendientes de rotación |
 
 No decimos "production ready". Si algún rincón del repo lo dice, es restos del proyecto heredado y se va a limpiar.

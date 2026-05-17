@@ -35,4 +35,14 @@ This client is **not** a trust boundary. Concretely:
 
 ## Card assets
 
-`public/cards/` currently weighs ~74 MB of WebP. This will be compressed to <3 MB in Sprint 1.5 (script in `scripts/optimize-cards.ts` once written). The high-resolution originals will move out of the repo.
+`public/cards/` weighs **~2.9 MB** for the full 28-card Chiribito deck (Sprint 1.5). Every face card is re-encoded to a max width of 800 px at WebP quality 85 — plenty for retina-quality rendering at the on-screen card sizes the game uses, and a 95% reduction from the print-resolution originals the heredado repo shipped.
+
+To re-run the optimisation (e.g. after adding new art):
+
+```bash
+npm run optimize:cards                 # writes in place
+npm run optimize:cards -- --dry-run    # report only
+npm run optimize:cards -- --width 1200 --quality 90   # custom
+```
+
+The script (`scripts/optimize-cards.ts`) skips `back.svg` and `back_logo.png` on purpose.

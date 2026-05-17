@@ -4,11 +4,23 @@ All notable changes to this project will be documented here. Format roughly foll
 
 ## [Unreleased]
 
-### Pending (Sprint 1.5 + Phase 2)
-- Compress remaining 1/7/10/11/12 card assets to <100 KB each (and migrate them off the repo if originals are needed at print quality).
-- Implement real Chiribito betting rounds (6 streets, one community card revealed at a time, "must use both hole cards" enforcement).
+### Pending (Phase 2)
+- Real Chiribito betting flow: six streets, community cards revealed one at a time, the player who last raised speaks first on the next street, "must use both hole cards" enforced by the engine.
 - Hash refresh tokens before storing them in the database.
 - Multi-device session support (loosen the `tokenVersion++` per login).
+- Replace the heredado 4-suit print art with a unified visual identity once the new art is ready.
+
+## [0.2.1-sprint-1.5] — 2026-05-17
+
+### Changed
+- **Card assets re-encoded.** Every face card in `frontend/public/cards/` was re-encoded to max-width 800 px at WebP quality 85 with `effort: 6`. The folder shrank from 57.2 MB → 2.9 MB (−95%). Per-card average dropped from ~2 MB to ~95 KB, with no visible loss at the on-screen sizes the game uses.
+- **Visual consistency restored.** The heredado set mixed cards at print resolution (1600×2500, 2-4 MB) with half-size leftovers (832×1280, 100 KB-1 MB). Everything is now at the same pipeline output.
+
+### Added
+- **`scripts/optimize-cards.ts`** — reproducible card-optimisation script (sharp). Supports `--dry-run`, `--width`, `--quality` and `--dir`. Reads files into buffers up-front and writes via temp+rename to dodge Windows file-handle races. Reachable via `npm run optimize:cards`.
+
+### Notes
+- `back_logo.png` (99 KB, 500×500) and `back.svg` (1 KB) are intentionally excluded by the script — small, static, used once per session.
 
 ## [0.2.0-sprint-1.4] — 2026-05-17
 
