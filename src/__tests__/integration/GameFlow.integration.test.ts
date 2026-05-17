@@ -453,7 +453,7 @@ describe("GameFlow Bug Fixes", () => {
       mockRoom.playersInHand = ["player-1", "player-2"];
       mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
       roomState.communityCards.clear();
-      roomState.phase = "flop";
+      roomState.phase = "card3";
       roomState.pot = 500;
       const p1 = roomState.users.get("player-1") as Player;
       const p2 = roomState.users.get("player-2") as Player;
@@ -480,7 +480,7 @@ describe("GameFlow Bug Fixes", () => {
       mockRoom.playersInHand = ["player-1", "player-2"];
       mockRoom.playersAllIn = new Set(["player-1", "player-2"]);
       roomState.communityCards.clear();
-      roomState.phase = "flop";
+      roomState.phase = "card3";
       roomState.pot = 500;
       const p1 = roomState.users.get("player-1") as Player;
       const p2 = roomState.users.get("player-2") as Player;
@@ -522,9 +522,10 @@ describe("GameFlow Bug Fixes", () => {
 
   describe("roundEnded payload (winner display UI)", () => {
     it("endRound broadcast always sends winningHand and playerHands for every user", () => {
-      roomState.phase = "river";
+      roomState.phase = "card5";
       roomState.pot = 300;
-      roomState.communityCards.push("1O", "7C", "8E", "9C", "10O");
+      // Five community cards from the canonical Chiribito deck.
+      roomState.communityCards.push("1O", "7C", "10E", "11C", "12O");
       const p1 = roomState.users.get("player-1") as Player;
       const p2 = roomState.users.get("player-2") as Player;
       p1.hand.push("1C", "1E");

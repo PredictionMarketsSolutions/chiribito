@@ -188,37 +188,30 @@ describe("RoundManager", () => {
       expect(mockRoom.state.phase).toBe("card1");
     });
 
-    it("should handle flop (3 cards)", () => {
+    it("phase becomes card3 after the third community card is revealed", () => {
       mockRoom.state.dealCard = jest.fn(() => "Q♦");
-      
-      // Simulate 2 existing cards
+      // Simulate 2 existing cards.
       (mockRoom.state.communityCards as any).push();
       (mockRoom.state.communityCards as any).push();
 
       roundManager.dealNextCommunityCard();
 
-      // After 3rd card push, length = 3, so phase = "card3"
       expect(mockRoom.state.phase).toBe("card3");
     });
 
-    it("should handle turn (4 cards)", () => {
+    it("phase becomes card4 after the fourth community card is revealed", () => {
       mockRoom.state.dealCard = jest.fn(() => "J♣");
-      
-      // Simulate 3 existing cards
       (mockRoom.state.communityCards as any).push();
       (mockRoom.state.communityCards as any).push();
       (mockRoom.state.communityCards as any).push();
 
       roundManager.dealNextCommunityCard();
 
-      // After 4th card push, length = 4, so phase = "card4"
       expect(mockRoom.state.phase).toBe("card4");
     });
 
-    it("should handle river (5 cards)", () => {
+    it("phase becomes card5 after the fifth (and final) community card is revealed", () => {
       mockRoom.state.dealCard = jest.fn(() => "T♠");
-      
-      // Simulate 4 existing cards
       (mockRoom.state.communityCards as any).push();
       (mockRoom.state.communityCards as any).push();
       (mockRoom.state.communityCards as any).push();
@@ -226,7 +219,6 @@ describe("RoundManager", () => {
 
       roundManager.dealNextCommunityCard();
 
-      // After 5th card push, length = 5, so phase = "card5"
       expect(mockRoom.state.phase).toBe("card5");
     });
 
@@ -283,7 +275,7 @@ describe("RoundManager", () => {
     });
 
     it("should broadcast betting round started", () => {
-      mockRoom.state.phase = "flop";
+      mockRoom.state.phase = "card1";
       mockRoom.state.currentTurn = "player-1";
       mockRoom.state.currentBet = 100;
       mockRoom.state.pot = 500;

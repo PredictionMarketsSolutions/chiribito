@@ -179,7 +179,7 @@ describe("GameEngine flow", () => {
 
   it("proceedToNextPhase: all-in showdown path calls startAllInShowdownReveal", () => {
     const room = makeRoom();
-    room.state.phase = "flop" as any;
+    room.state.phase = "card3" as any;
     room.state.communityCards.clear();
     room.state.communityCards.push("a", "b", "c");
     const engine = new GameEngine(room);
@@ -225,7 +225,7 @@ describe("GameEngine flow", () => {
 
   it("proceedToNextPhase: reaches showdown when 5 community cards and not preflop", () => {
     const room = makeRoom();
-    room.state.phase = "turn" as any;
+    room.state.phase = "card5" as any;
     room.state.communityCards.clear();
     room.state.communityCards.push("a", "b", "c", "d", "e");
     const engine = new GameEngine(room);

@@ -1,6 +1,6 @@
 import { Schema, MapSchema, ArraySchema, type, view } from "@colyseus/schema";
 import { randomInt } from "crypto";
-import { buildDeck } from "../game/glossary";
+import { buildDeck, PHASES } from "../game/glossary";
 
 /**
  * Valores válidos de estado del jugador. Solo el servidor puede asignarlos (nunca desde mensajes del cliente).
@@ -40,7 +40,17 @@ export class MesaState extends Schema {
   @type("string") currentTurn: string = "";
   @type("number") dealerIndex: number = 0;
   @type("boolean") roundStarted: boolean = false;
-  @type("string") phase: string = "waiting";  // waiting, preflop, flop, turn, river
+  /**
+   * Current game phase. One of `PHASES` from `../game/glossary`:
+   * waiting → preflop → card1 → card2 → card3 → card4 → card5 → (showdown).
+   * Six betting rounds in total. NOT Hold'em (no flop/turn/river).
+   */
+  @type("string") phase: string = PHASES.WAITING;
+  /**
+   * Session ID of the player who last raised. Carries over between streets
+   * within a hand — the Chiribito rule "the last raiser speaks first on the
+   * next street" reads this. Cleared in `resetForNewHand`.
+   */
   @type("string") lastRaiser: string = "";
 
   // Deck lives server-side only. Never decorated with @type so it is never

@@ -8,6 +8,7 @@ import type { IGameRoom } from "../../../types/IGameRoom";
 import { PLAYER_STATUS } from "../../schema/MesaState";
 import { GameUtils } from "./GameUtils";
 import { GameBroadcaster } from "./GameBroadcaster";
+import { PHASES, communityCardPhase, HOLE_CARDS_PER_PLAYER } from "../glossary";
 
 export class RoundManager {
   private utils: GameUtils;
@@ -41,8 +42,9 @@ export class RoundManager {
     const nextCard = this.room.state.dealCard();
     if (!nextCard) return;
     this.room.state.communityCards.push(nextCard);
-    const cardNumber = this.room.state.communityCards.length;
-    this.room.state.phase = `card${cardNumber}`;
+    // Phase identifier mirrors the count of community cards revealed so far
+    // (PHASES.CARD_1 … PHASES.CARD_5). Six betting rounds in total.
+    this.room.state.phase = communityCardPhase(this.room.state.communityCards.length);
   }
 
   startBettingRound(): void {
@@ -68,7 +70,10 @@ export class RoundManager {
       player.currentBet = 0;
       player.isFolded = false;
       player.playerStatus = PLAYER_STATUS.IN_HAND;
-      player.hand.push(this.room.state.dealCard(), this.room.state.dealCard());
+      // Chiribito deals exactly two hole cards per player.
+      for (let i = 0; i < HOLE_CARDS_PER_PLAYER; i++) {
+        player.hand.push(this.room.state.dealCard());
+      }
       this.room.playersInHand.push(player.sessionId);
     });
   }
@@ -77,6 +82,6 @@ export class RoundManager {
     const players = this.utils.getPlayersWithChips();
     this.room.dealerIndex = (this.room.dealerIndex + 1) % players.length;
     this.room.state.dealerIndex = this.room.dealerIndex;
-    this.room.state.phase = "preflop";
+    this.room.state.phase = PHASES.PREFLOP;
   }
 }

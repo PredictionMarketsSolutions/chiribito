@@ -99,6 +99,57 @@ export const RANK_TO_FRENCH: Record<RankCode, string> = {
 export const PERLA_RANKS = ["10", "7"] as const; // Sota + 7 (J + 10 in French)
 
 // ─────────────────────────────────────────────────────────────────────
+// Game phases — Chiribito has 6 betting streets, NOT 4 (no flop/turn/river).
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Phase sequence:
+ *   WAITING  — no hand in progress; waiting for `startGame`.
+ *   PREFLOP  — hole cards dealt, no community cards revealed, first betting round.
+ *   CARD_1   — first community card revealed, second betting round.
+ *   CARD_2   — second community card revealed, third betting round.
+ *   CARD_3   — third community card revealed, fourth betting round.
+ *   CARD_4   — fourth community card revealed, fifth betting round.
+ *   CARD_5   — fifth community card revealed, sixth betting round → showdown.
+ *
+ * Six betting rounds total — that's the Chiribito spec. Community cards
+ * are revealed one at a time (never as flop / turn / river).
+ */
+export const PHASES = {
+  WAITING: "waiting",
+  PREFLOP: "preflop",
+  CARD_1:  "card1",
+  CARD_2:  "card2",
+  CARD_3:  "card3",
+  CARD_4:  "card4",
+  CARD_5:  "card5"
+} as const;
+
+export type GamePhase = (typeof PHASES)[keyof typeof PHASES];
+
+/** Returns the phase identifier for the N-th community card revealed (1-5). */
+export function communityCardPhase(cardNumber: number): GamePhase {
+  switch (cardNumber) {
+    case 1: return PHASES.CARD_1;
+    case 2: return PHASES.CARD_2;
+    case 3: return PHASES.CARD_3;
+    case 4: return PHASES.CARD_4;
+    case 5: return PHASES.CARD_5;
+    default:
+      throw new Error(`Invalid community card number: ${cardNumber} (expected 1-5)`);
+  }
+}
+
+/** Number of community cards revealed in total during a complete hand. */
+export const TOTAL_COMMUNITY_CARDS = 5;
+
+/** Number of hole cards dealt to each player at the start of a hand. */
+export const HOLE_CARDS_PER_PLAYER = 2;
+
+/** Number of betting rounds in a complete Chiribito hand. */
+export const TOTAL_BETTING_ROUNDS = 6;
+
+// ─────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────
 

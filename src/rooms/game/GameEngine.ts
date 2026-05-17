@@ -8,6 +8,7 @@ import { Client } from "@colyseus/core";
 import type { IGameRoom } from "../../types/IGameRoom";
 import { PLAYER_STATUS } from "../schema/MesaState";
 import { TURN_TIMEOUT, ALLIN_REVEAL_DELAY_MS } from "./constants";
+import { PHASES, TOTAL_COMMUNITY_CARDS } from "./glossary";
 import logger from "../../config/logger";
 import {
   GameUtils,
@@ -131,18 +132,29 @@ export class GameEngine {
       return;
     }
 
-    // Check if we've reached showdown
-    if (this.room.state.phase !== "preflop" && this.room.state.communityCards.length >= 5) {
+    // Check if we've reached showdown — all five community cards revealed and
+    // we are past the preflop betting round. Phase 2: Chiribito reveals one
+    // community card per street, six betting rounds in total.
+    if (
+      this.room.state.phase !== PHASES.PREFLOP &&
+      this.room.state.communityCards.length >= TOTAL_COMMUNITY_CARDS
+    ) {
       this.endRoundWithWinners();
       return;
     }
 
-    // Deal next community card and continue
+    // Deal next community card and continue.
     this.roundManager.dealNextCommunityCard();
-    this.room.currentPlayerIndex = this.utils.getNextActiveIndexFrom(this.room.dealerIndex);
 
-    // When not everyone is all-in, there is at least one player with chips who must check this street.
-    // If getNextActiveIndexFrom returned -1 (e.g. edge case), force the turn to the first such player.
+    // Authentic Chiribito speaking order: on every post-preflop street, the
+    // player who was the last to raise (or, if nobody has raised yet, the
+    // first player after the dealer) speaks first. `state.lastRaiser` is
+    // preserved across streets within a hand (only cleared in
+    // `resetForNewHand`), so it carries the aggressor's identity forward.
+    this.room.currentPlayerIndex = this.pickFirstSpeakerForNewStreet();
+
+    // Fall back to the first active player if no eligible speaker was found
+    // (e.g. last raiser folded between streets — edge case).
     const activePlayerIds = this.utils.getActivePlayerIds();
     if (this.room.currentPlayerIndex === -1 && activePlayerIds.length > 0) {
       const firstActiveId = activePlayerIds[0];
@@ -160,6 +172,28 @@ export class GameEngine {
     this.room.state.currentTurn = this.room.playersInHand[this.room.currentPlayerIndex];
     this.startBettingRound();
     this.startTurnTimer();
+  }
+
+  /**
+   * Chiribito speaking order on a new street (post-preflop):
+   *   1. If `state.lastRaiser` is still in the hand and not folded,
+   *      they speak first.
+   *   2. Otherwise, the first active player clockwise from the dealer
+   *      speaks first.
+   * Returns an index into `playersInHand`, or -1 if no eligible speaker.
+   */
+  private pickFirstSpeakerForNewStreet(): number {
+    const lastRaiser = this.room.state.lastRaiser;
+    if (lastRaiser) {
+      const idx = this.room.playersInHand.indexOf(lastRaiser);
+      if (idx >= 0) {
+        const player = this.room.state.users.get(lastRaiser);
+        if (player && !player.isFolded) {
+          return idx;
+        }
+      }
+    }
+    return this.utils.getNextActiveIndexFrom(this.room.dealerIndex);
   }
 
   // ============ Betting Actions ============
@@ -370,13 +404,13 @@ export class GameEngine {
     // There is no "turn" during all-in auto-reveal.
     this.room.state.currentTurn = "";
 
-    if (this.room.state.communityCards.length >= 5) {
+    if (this.room.state.communityCards.length >= TOTAL_COMMUNITY_CARDS) {
       this.endRoundWithWinners(true);
       return;
     }
 
     const revealNext = (): void => {
-      if (this.room.state.communityCards.length >= 5) {
+      if (this.room.state.communityCards.length >= TOTAL_COMMUNITY_CARDS) {
         this.endRoundWithWinners(true);
         return;
       }
@@ -390,7 +424,7 @@ export class GameEngine {
           communityCards: cards
         });
       }
-      if (this.room.state.communityCards.length >= 5) {
+      if (this.room.state.communityCards.length >= TOTAL_COMMUNITY_CARDS) {
         this.room.scheduleDelayed(() => this.endRoundWithWinners(true), ALLIN_REVEAL_DELAY_MS);
       } else {
         this.room.scheduleDelayed(revealNext, ALLIN_REVEAL_DELAY_MS);

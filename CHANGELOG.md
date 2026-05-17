@@ -4,11 +4,34 @@ All notable changes to this project will be documented here. Format roughly foll
 
 ## [Unreleased]
 
-### Pending (Phase 2)
-- Real Chiribito betting flow: six streets, community cards revealed one at a time, the player who last raised speaks first on the next street, "must use both hole cards" enforced by the engine.
+### Pending
 - Hash refresh tokens before storing them in the database.
 - Multi-device session support (loosen the `tokenVersion++` per login).
-- Replace the heredado 4-suit print art with a unified visual identity once the new art is ready.
+- Replace the heredado print art with a unified visual identity once the new art is ready.
+- Frontend UI changes to surface the 6-street progression to players explicitly (status bar, animations) — engine is ready, presentation pending.
+
+## [0.3.0-phase-2] — 2026-05-17
+
+### Game rules — Chiribito authentic flow
+
+- **Six betting rounds per hand**, not four. Phase progression is now `WAITING → PREFLOP → CARD_1 → CARD_2 → CARD_3 → CARD_4 → CARD_5 → showdown`. The legacy `flop / turn / river` strings were never real in runtime — `dealNextCommunityCard` already emitted `card${N}`. This phase formalises that and removes the misleading comments and tests that pretended otherwise.
+- **Authentic speaking order on every post-preflop street**: the player who last raised in the previous betting round opens the new street. If they folded between streets, action falls back to the first active player after the dealer. Implemented in `GameEngine.pickFirstSpeakerForNewStreet()`. Was Hold'em-style (always dealer+1) before.
+- **Must-use-both-hole-cards reaffirmed**: the existing `CardEvaluator.getCommunityCombos` returns 3-card slices (not 5-card combinations), so the evaluator was already correct. New explicit tests guard against regressions.
+
+### Added
+- `src/rooms/game/glossary.ts` exports `PHASES` (`WAITING`/`PREFLOP`/`CARD_1..CARD_5`), `GamePhase` type, `communityCardPhase(n)`, `TOTAL_COMMUNITY_CARDS`, `HOLE_CARDS_PER_PLAYER`, `TOTAL_BETTING_ROUNDS`. Single source of truth for the street vocabulary.
+- New test suites:
+  - `src/__tests__/game/Phase2Flow.test.ts` — phase mapping, one-card-per-street reveal, must-use-2-hole guarantees.
+  - `src/__tests__/game/SpeakingOrder.test.ts` — five scenarios covering the new speaking order (last raiser opens, fallback after fold, no-raiser-yet fallback, raiser persistence across streets, full 5-street progression to showdown).
+
+### Changed
+- `MesaState.phase` initialises to `PHASES.WAITING` and the misleading `"waiting, preflop, flop, turn, river"` comment is replaced with the actual six-street progression.
+- `RoundManager` consumes `communityCardPhase()` and `HOLE_CARDS_PER_PLAYER`; `resetDealerAndPhase` uses `PHASES.PREFLOP`.
+- `GameEngine.proceedToNextPhase` uses `PHASES.PREFLOP` and `TOTAL_COMMUNITY_CARDS` constants; all `length >= 5` magic numbers are gone.
+- Existing tests that set `state.phase = "flop"` / `"river"` updated to `"card3"` / `"card5"`. Integration test that pushed `"8E"` / `"9C"` (ranks that do not exist in the Chiribito deck) updated to canonical `5O / 7C / 10E / 11C / 12O`.
+
+### Tests
+- Net test count: 464 → 475 backend (+11), 27 api-server, 149 frontend → **651/651 green**.
 
 ## [0.2.1-sprint-1.5] — 2026-05-17
 
