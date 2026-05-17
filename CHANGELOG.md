@@ -4,13 +4,27 @@ All notable changes to this project will be documented here. Format roughly foll
 
 ## [Unreleased]
 
-### Pending (Sprint 1.3 → 1.5)
-- Re-enable heartbeat disconnect (currently no-op via comment in `MyRoom.onCreate`).
-- Cache `tokenVersion` in Redis to remove the API round-trip on every `onAuth`.
-- Persist critical audit events to a DB table instead of stdout-only.
-- Real `render.yaml` for the new fork with all required env vars and no placeholders.
+### Pending (Sprint 1.4 → 1.5)
 - Rename `MyRoom` → `ChiribitoRoom`, `my_room` → `mesa`, package names, in-game glossary.
 - Compress 74 MB of card assets to <3 MB and move originals out of the repo.
+- Hash refresh tokens before storing them in the database.
+- Multi-device session support (loosen the `tokenVersion++` per login).
+
+## [0.1.0-sprint-1.3] — 2026-05-17 — commit `3a33fa7`
+
+### Changed
+- **Heartbeat-disconnect re-enabled.** Clients that miss the heartbeat past `HEARTBEAT_TIMEOUT_MS` (default 3 min) are now disconnected with code 4000 instead of being silently kept alive. Gated by `HEARTBEAT_DISCONNECT_ENABLED` (default true).
+- **`render.yaml` rewritten** for the `PredictionMarketsSolutions/chiribito` fork. All three services renamed `chiri-*` → `chiribito-*`, region pinned to Frankfurt, Redis declared as a managed service, every env var the code reads is declared, cross-service refs use `fromService` / `fromDatabase`. Zero placeholders left.
+- **`/health` and `/ready` probes** added to both web services. `/health` is liveness only (no dep checks). `/ready` pings PostgreSQL + Redis with latencies, returns 503 if any required dependency is unhealthy.
+
+### Added
+- **Token-version cache (Redis).** The game server checks a Redis-cached `tokenVersion` per user before falling back to the api-server `/api/auth/validate` HTTP call in Colyseus `onAuth`. Hit + match skips the HTTP round-trip entirely. The api-server publishes the current `tokenVersion` on register / login / refresh / reset / validate, and invalidates on user delete. Cache failures never throw — the system stays functional without Redis. Files: `src/config/redis.ts`, `src/rooms/managers/TokenVersionCache.ts`, `api-server/src/services/tokenVersionCache.ts`. Configurable via `AUTH_TOKEN_VERSION_CACHE_ENABLED` + `AUTH_TOKEN_VERSION_CACHE_TTL_MS`.
+- **Persistent audit log.** New `audit_events` table (id, event_type, user_id, payload jsonb, ip_address, user_agent, created_at) with composite indexes. Migration `1773000000000-CreateAuditEvents`. Helper `auditWrite()` is best-effort — never throws. Events wired: register / register-duplicate / login-ok / login-failed / token-refreshed / password-reset-requested / password-reset-completed / user-deleted / tournament-reported.
+- **CI security audit step** runs `npm audit --audit-level=moderate --omit=dev` on root, api-server and frontend after the build. Moderate or higher in runtime deps blocks the workflow; dev-only chains (the accepted `@colyseus/playground` low advisories from Sprint 1.0) are skipped.
+
+### Architecture
+- The game server now has a shared Redis client (`src/config/redis.ts`) lazily initialised and shared between session store, Colyseus monitor, and the new token cache.
+- Game ↔ API coupling reduced: when Redis is available, the synchronous HTTP call per room join goes away unless the token's version has aged out of the 60-second cache window.
 
 ## [0.1.0-sprint-1.2] — 2026-05-17
 
