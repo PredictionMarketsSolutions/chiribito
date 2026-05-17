@@ -1,12 +1,29 @@
-# Chiribito — Render Infrastructure as Code
+# Chiribito — Render Infrastructure as Code (staging)
 #
-# Three web services + one Redis + one Postgres, all in the same region.
-# Region: Frankfurt (closest Render PoP to Spain). Change to "oregon" only
-# if a paid plan dictates otherwise.
+# Three web services + one Redis + one Postgres, all in Frankfurt.
+# Designed to be applied as a Render Blueprint:
+#   https://dashboard.render.com → Blueprints → New Blueprint Instance →
+#   pick this repo → "Apply"
 #
-# Anything `sync: false` must be set manually in the Render dashboard
-# before the first deploy. Anything `value: ...` is committed by intent.
-# `fromService` / `fromDatabase` are deterministic.
+# Conventions:
+#   value: …    committed by intent — same across deploys.
+#   sync: false set manually in the Render dashboard before first deploy.
+#               Lives in `Environment` tab per service.
+#   fromDatabase / fromService → resolved automatically by Render at deploy time.
+#
+# What needs your hand (one time, before first deploy):
+#   On chiribito-api:        JWT_SECRET, INTERNAL_API_SECRET, RESEND_API_KEY,
+#                            LOGTAIL_SOURCE_TOKEN (optional),
+#                            ALLOWED_ORIGINS, FRONTEND_URL
+#   On chiribito-colyseus:   JWT_SECRET (same value as api), INTERNAL_API_SECRET
+#                            (same value as api), MONITOR_USER, MONITOR_PASSWORD,
+#                            LOGTAIL_SOURCE_TOKEN (optional),
+#                            API_URL, ALLOWED_ORIGINS
+#   On chiribito-frontend:   VITE_API_URL, VITE_WS_URL
+#
+# All `*_URL` and `ALLOWED_ORIGINS` values must include scheme (https://, wss://).
+# Render's `property: host` returns bare hostname so we cannot derive them
+# automatically. See DEPLOY.md for the exact strings to paste.
 
 services:
   # ─────────────────────────────────────────────────────────────────────
@@ -27,6 +44,7 @@ services:
     env: node
     plan: starter
     region: frankfurt
+    branch: main
     rootDir: api-server
     buildCommand: npm ci && npm run build
     startCommand: npm run start:migrate
@@ -66,13 +84,17 @@ services:
       - key: REDIS_URL
         fromService: { type: redis, name: chiribito-redis, property: connectionString }
 
-      # CORS — frontend service hostname (no scheme, includes port if any).
+      # URLs with scheme — set manually in dashboard (Render `property: host`
+      # only gives bare hostname). After first deploy, paste:
+      #   ALLOWED_ORIGINS: https://chiribito-frontend.onrender.com
+      #   FRONTEND_URL:    https://chiribito-frontend.onrender.com
+      # If you later wire a custom domain (e.g. staging.chiribito.com),
+      # update these to include https://staging.chiribito.com (and keep
+      # the .onrender.com one too if you want both to work).
       - key: ALLOWED_ORIGINS
-        fromService: { type: web, name: chiribito-frontend, property: host }
-
-      # Frontend URL for password-reset email links.
+        sync: false
       - key: FRONTEND_URL
-        fromService: { type: web, name: chiribito-frontend, property: host }
+        sync: false
 
       # Email sender identity.
       - key: RESEND_FROM_EMAIL
@@ -96,6 +118,7 @@ services:
     env: node
     plan: starter
     region: frankfurt
+    branch: main
     rootDir: .
     buildCommand: npm ci && npm run build:game
     startCommand: npm start
@@ -109,6 +132,7 @@ services:
 
       # Secrets — set manually in Render dashboard.
       # JWT_SECRET MUST be identical to the api-server's.
+      # INTERNAL_API_SECRET MUST be identical to the api-server's.
       - key: JWT_SECRET
         sync: false
       - key: INTERNAL_API_SECRET
@@ -120,9 +144,10 @@ services:
       - key: LOGTAIL_SOURCE_TOKEN
         sync: false
 
-      # Where the api-server lives (used by AuthenticationService.validateTokenRemote).
+      # URL with scheme — set manually in dashboard. After first deploy:
+      #   API_URL: https://chiribito-api.onrender.com
       - key: API_URL
-        fromService: { type: web, name: chiribito-api, property: host }
+        sync: false
 
       # Database (env validation only — the game server does not write here).
       - key: DB_HOST
@@ -138,9 +163,10 @@ services:
       - key: REDIS_PREFIX
         value: chiribito
 
-      # CORS for the Colyseus HTTP handshake.
+      # CORS for the Colyseus HTTP handshake — set manually in dashboard:
+      #   ALLOWED_ORIGINS: https://chiribito-frontend.onrender.com
       - key: ALLOWED_ORIGINS
-        fromService: { type: web, name: chiribito-frontend, property: host }
+        sync: false
 
       # Runtime tuning.
       - key: TURN_TIMEOUT_MS
@@ -169,6 +195,7 @@ services:
     env: static
     plan: starter
     region: frankfurt
+    branch: main
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
@@ -178,10 +205,13 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      # URLs with scheme — set manually in dashboard. After first deploy:
+      #   VITE_API_URL: https://chiribito-api.onrender.com
+      #   VITE_WS_URL:  wss://chiribito-colyseus.onrender.com
       - key: VITE_API_URL
-        fromService: { type: web, name: chiribito-api, property: host }
+        sync: false
       - key: VITE_WS_URL
-        fromService: { type: web, name: chiribito-colyseus, property: host }
+        sync: false
 
 # ───────────────────────────────────────────────────────────────────────
 # Managed PostgreSQL

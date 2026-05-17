@@ -9,6 +9,27 @@ All notable changes to this project will be documented here. Format roughly foll
 - Multi-device session support (loosen the `tokenVersion++` per login).
 - Replace the heredado print art with a unified visual identity once the new art is ready.
 - Card reveal animation on each `communityCardRevealed` event (engine already emits one card at a time; the visual cue is purely cosmetic and will land with the unified art).
+- First real Render deploy under `chiribito-*` service names + custom domain `staging.chiribito.com`. Blueprint is ready (`render.yaml`) and documented (`DEPLOY.md`); needs maintainer to apply it in the Render dashboard and paste the secrets.
+
+## [0.5.0-phase-5] — 2026-05-17
+
+### Added
+- **`DEPLOY.md`** — concrete step-by-step Render Blueprint deploy guide. Lists the exact env vars to paste per service, including all `*_URL` / `ALLOWED_ORIGINS` strings (Render's `property: host` returns bare hostname, so we cannot derive URLs with scheme automatically). Covers the optional `staging.chiribito.com` custom-domain hook and the later cutover of `chiribito.com` from the current Vercel landing to this stack.
+- **`docker-compose.yml`** — local end-to-end smoke stack. One command (`docker compose up --build`) brings up Postgres + Redis + api + game server + frontend on `http://localhost:5173`, wired the same way the staging stack will be. Lets you exercise register → log in → create table → join → play before paying for any Render time.
+
+### Changed
+- **`render.yaml` reworked for clarity around the URL-with-scheme problem.** `VITE_API_URL`, `VITE_WS_URL`, `API_URL`, `ALLOWED_ORIGINS` and `FRONTEND_URL` are now `sync: false` instead of being auto-derived from `fromService.property: host` — the latter returned bare hostnames, which would have broken the frontend's `fetch()` and WebSocket. Each service block in the YAML documents the exact string the operator pastes in the dashboard.
+- Every web service now pins `branch: main` explicitly so only `main` triggers a deploy.
+
+### Documented but not automated
+- Custom-domain provisioning (`staging.chiribito.com`, eventual `chiribito.com` cutover). Manual on the registrar + Render dashboard. Steps spelled out in `DEPLOY.md`.
+- Vercel landing cutover. Out of this repo's scope; runbook in `DEPLOY.md`.
+
+### Verified state (2026-05-17)
+- `chiribito.com` / `www.chiribito.com` → Vercel landing, separate project, untouched.
+- `chiri-frontend.onrender.com` → live, serves the old heredado static build.
+- `chiri-api.onrender.com` / `chiri-colyseus.onrender.com` → 404 (heredado backend gone).
+- This repo's `chiribito-*` stack → **not deployed yet**. First deploy is the maintainer's next manual action.
 
 ## [0.4.1-phase-4] — 2026-05-17
 

@@ -1,0 +1,136 @@
+# docker-compose.yml — local end-to-end smoke test for Chiribito
+#
+# Spins up Postgres + Redis + api-server + game-server + frontend, all wired
+# the way the production stack will be. Lets you exercise the full stack
+# (register → log in → create table → join → play) on your laptop before
+# paying for a Render deploy.
+#
+# Usage:
+#   docker compose up --build       # first run / after code changes
+#   docker compose up               # subsequent runs
+#   docker compose down -v          # nuke including the db volume
+#
+# Endpoints once it's healthy:
+#   http://localhost:5173   frontend
+#   http://localhost:3000   api server   (curl /health)
+#   http://localhost:2567   game server  (curl /health)
+#   localhost:5432          postgres     (user/pass chiribito/chiribito)
+#   localhost:6379          redis
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chiribito-postgres
+    environment:
+      POSTGRES_USER: chiribito
+      POSTGRES_PASSWORD: chiribito
+      POSTGRES_DB: chiribito
+    ports:
+      - "5432:5432"
+    volumes:
+      - chiribito-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chiribito -d chiribito"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: chiribito-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: node:20-bookworm-slim
+    container_name: chiribito-api
+    working_dir: /app/api-server
+    command: sh -c "npm ci && npm run build && npm run start:migrate"
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: chiribito
+      DB_PASSWORD: chiribito
+      DB_NAME: chiribito
+      DB_SSL: "false"
+      REDIS_URL: redis://redis:6379
+      # Shared secrets — same values used by the game server below.
+      JWT_SECRET: local-dev-only-not-for-production-9f3a7e2b1c8d4e5f
+      INTERNAL_API_SECRET: local-dev-internal-secret-2e8a4d7b9c1f3e5a
+      # No real email needed for the smoke test.
+      RESEND_API_KEY: ""
+      RESEND_FROM_EMAIL: no-reply@chiribito.local
+      FRONTEND_URL: http://localhost:5173
+      ALLOWED_ORIGINS: http://localhost:5173
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - chiribito-api-node-modules:/app/api-server/node_modules
+
+  game:
+    image: node:20-bookworm-slim
+    container_name: chiribito-game
+    working_dir: /app
+    command: sh -c "npm ci && npm run build:game && npm start"
+    environment:
+      NODE_ENV: development
+      PORT: "2567"
+      DB_HOST: postgres
+      DB_USER: chiribito
+      DB_NAME: chiribito
+      REDIS_URL: redis://redis:6379
+      REDIS_PREFIX: chiribito
+      # SAME shared secrets as the api service.
+      JWT_SECRET: local-dev-only-not-for-production-9f3a7e2b1c8d4e5f
+      INTERNAL_API_SECRET: local-dev-internal-secret-2e8a4d7b9c1f3e5a
+      API_URL: http://api:3000
+      ALLOWED_ORIGINS: http://localhost:5173
+      # Monitor is open in dev (no MONITOR_USER set) — only safe locally.
+      LOG_LEVEL: info
+    ports:
+      - "2567:2567"
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - chiribito-root-node-modules:/app/node_modules
+
+  frontend:
+    image: node:20-bookworm-slim
+    container_name: chiribito-frontend
+    working_dir: /app/frontend
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_WS_URL: ws://localhost:2567
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+      - game
+    volumes:
+      - ./:/app
+      - chiribito-frontend-node-modules:/app/frontend/node_modules
+
+volumes:
+  chiribito-postgres-data:
+  chiribito-api-node-modules:
+  chiribito-root-node-modules:
+  chiribito-frontend-node-modules:

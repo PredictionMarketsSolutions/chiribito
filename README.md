@@ -56,6 +56,20 @@ CI               GitHub Actions (build, lint, jest, vitest) + Dependabot
 
 ### Quick start (local development)
 
+Two paths — pick whichever fits.
+
+**Path A — Docker (recommended for end-to-end smoke):**
+
+```bash
+docker compose up --build
+# → http://localhost:5173
+```
+
+Runs Postgres + Redis + API + game server + frontend wired together, the
+way the staging stack will be. Stop with `docker compose down -v`.
+
+**Path B — Bare-metal (faster iteration on one service):**
+
 Requirements: Node 20, npm 10, PostgreSQL 14+, Redis (optional in dev).
 
 ```bash
@@ -78,6 +92,11 @@ npm run dev:api       # API server   :3000
 npm run dev           # Game server  :2567
 cd frontend && npm run dev   # Frontend :5173
 ```
+
+### Deploy to Render (staging)
+
+See [`DEPLOY.md`](DEPLOY.md). One Blueprint apply + a handful of secrets to
+paste in the dashboard.
 
 ### Repository layout
 
@@ -162,6 +181,20 @@ CI                  GitHub Actions (build, lint, jest, vitest) + Dependabot
 
 ### Arranque rápido (desarrollo local)
 
+Dos caminos — escoge el que te encaje.
+
+**Camino A — Docker (recomendado para smoke end-to-end):**
+
+```bash
+docker compose up --build
+# → http://localhost:5173
+```
+
+Levanta Postgres + Redis + API + servidor de juego + frontend cableados
+igual que el stack de staging. Parar con `docker compose down -v`.
+
+**Camino B — Bare-metal (más rápido para iterar un servicio):**
+
 Requisitos: Node 20, npm 10, PostgreSQL 14+, Redis (opcional en dev).
 
 ```bash
@@ -184,6 +217,11 @@ npm run dev:api       # API server   :3000
 npm run dev           # Game server  :2567
 cd frontend && npm run dev   # Frontend :5173
 ```
+
+### Deploy a Render (staging)
+
+Léete [`DEPLOY.md`](DEPLOY.md). Un Blueprint apply + un puñado de secretos
+para pegar en el dashboard.
 
 ### Estructura del repo
 
