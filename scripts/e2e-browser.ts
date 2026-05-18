@@ -278,6 +278,53 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
     pass(`entered table room=${tableVisible.roomStatus}`, await shot(page, `${scenarioName}_04_table`));
   }
 
+  // 4.5 spawn a second player who joins the SAME mesa via joinById. Without
+  //     this, the engine's checkGameEnd considers a single player with chips
+  //     as the tournament champion and disposes the room on any onLeave —
+  //     including the brief onLeave that fires during a reload+reconnect.
+  //     That race kills the mesa between step 5's reconnect-success and
+  //     step 6's login-recovery, masking what Move 1.5 is actually
+  //     validating (client recovery primitive). A second seated player
+  //     keeps tryGameEnd from crowning anyone, so the mesa survives the
+  //     full reload/login cycle.
+  logStep("Spawn second player to keep mesa alive across recovery");
+  const realRoomId = (tableVisible.roomStatus ?? "").trim();
+  const player2 = uniqueUser();
+  let player2Ctx: BrowserContext | null = null;
+  let player2KeptAlive = false;
+  try {
+    player2Ctx = await ctx.browser()!.newContext({ viewport: { width: 1024, height: 768 } });
+    const p2 = await player2Ctx.newPage();
+    attachListeners(p2, `${scenarioName}_p2`);
+    await p2.goto(FRONTEND_URL, { waitUntil: "domcontentloaded" });
+    await waitForInitialAuthState(p2);
+    await fillRegister(p2, player2);
+    await p2.click("#register");
+    const p2LobbyShown = await waitOverlay(p2, "lobby-overlay", true, 10000);
+    if (!p2LobbyShown) {
+      failStep("player2 never reached lobby — cannot keep mesa alive");
+    } else {
+      // #join-room-id lives inside a <details> that is closed by default —
+      // open it programmatically so the input becomes visible to fill().
+      await p2.evaluate(() => {
+        const details = document.querySelector<HTMLDetailsElement>("details.lobby-hero__advanced");
+        if (details) details.open = true;
+      });
+      await p2.fill("#join-room-id", realRoomId);
+      await p2.click("#join-by-id");
+      const p2InMesa = await waitForMesaVisible(p2, 10000);
+      if (!p2InMesa) {
+        const p2State = await captureOverlayState(p2);
+        failStep(`player2 did NOT enter mesa ${realRoomId}. state=${JSON.stringify(p2State)}`);
+      } else {
+        player2KeptAlive = true;
+        pass(`player2 (${player2.username}) seated in mesa ${realRoomId}`);
+      }
+    }
+  } catch (err: any) {
+    failStep(`player2 setup error: ${err?.message ?? err}`);
+  }
+
   // 5 reload during table session — must auto-restore the MESA (not just hide
   // auth). The previous lenient assertion (any state with auth hidden counted
   // as ok) hid the real bug: hydration was bouncing the user to a lobby where
@@ -337,8 +384,14 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
   //   and clear the stale id so subsequent reloads behave normally. Tests the
   //   robustness of the new recovery path: if joinRoom rejects, recover.ts
   //   must clearLastRoomId and openLobby.
+  //
+  //   Move 1.5: also clear the reconnection token so this step exercises the
+  //   pure joinById-fallback path. Otherwise the token from the real (still
+  //   alive, thanks to player2) mesa would reconnect us back into the mesa
+  //   and step 7 would assert the wrong path.
   logStep("Stale lastRoomId falls back to lobby cleanly");
   await page.evaluate(() => {
+    sessionStorage.removeItem("chiri_reconnection_token");
     localStorage.setItem("chiri_last_room_id", "stale-nonexistent-room-id-xyz");
   });
   await page.reload({ waitUntil: "domcontentloaded" });
@@ -369,6 +422,12 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
   }
 
   await page.close();
+  if (player2Ctx) {
+    try { await player2Ctx.close(); } catch { /* ignore */ }
+  }
+  if (player2KeptAlive) {
+    process.stdout.write(`${colors.dim}  (player2 ${player2.username} cleanup ok)${colors.reset}\n`);
+  }
 }
 
 async function runDuplicateLoginErrorTest(ctx: BrowserContext): Promise<void> {
