@@ -9,6 +9,8 @@ import {
   attemptReconnect,
   type AttemptReconnectDeps,
   RECONNECT_BACKOFF_MS,
+  startClientHeartbeat,
+  stopClientHeartbeat,
 } from "./connection";
 
 describe("connection.attemptReconnect", () => {
@@ -132,6 +134,21 @@ describe("connection.attemptReconnect", () => {
     await p;
     expect(reconnect).toHaveBeenCalledTimes(1);
     expect(nowAttempt).toBe(1);
+  });
+
+  it("fires onTimeout after timeoutMs with no ack", async () => {
+    const onTimeout = vi.fn();
+    const fakeRoom = { send: vi.fn() } as unknown as Parameters<typeof startClientHeartbeat>[0];
+    startClientHeartbeat(fakeRoom, {
+      intervalMs: 5000,
+      timeoutMs: 10000,
+      log: vi.fn(),
+      onTimeout,
+    });
+    vi.advanceTimersByTime(5000); // first heartbeat sent
+    vi.advanceTimersByTime(10000); // no ack arrived
+    expect(onTimeout).toHaveBeenCalledTimes(1);
+    stopClientHeartbeat();
   });
 
   it("times out client.reconnect after RECONNECT_PER_ATTEMPT_TIMEOUT_MS", async () => {

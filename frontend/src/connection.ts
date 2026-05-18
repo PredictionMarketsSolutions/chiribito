@@ -75,11 +75,19 @@ export function startClientHeartbeat(room: Room, opts: HeartbeatOpts): void {
   const { intervalMs, timeoutMs, log, onTimeout, onSend } = opts;
   clientHeartbeatId = window.setInterval(() => {
     if (!room) return;
-    clearHeartbeatTimeout();
+    // Move 2: do NOT pre-clear an in-flight timeout. The previous behaviour
+    // (clearHeartbeatTimeout on every interval tick) meant onTimeout could
+    // never fire whenever intervalMs < timeoutMs — the timer was reset
+    // before it ever had a chance to expire. Now we skip the send while a
+    // previous heartbeat is still waiting for its ack; the timeout (or the
+    // matching heartbeat_ack) will null heartbeatTimeoutId before the next
+    // send goes out.
+    if (heartbeatTimeoutId !== null) return;
     const sendTime = Date.now();
     onSend?.(sendTime);
     room.send("heartbeat", sendTime);
     heartbeatTimeoutId = window.setTimeout(() => {
+      heartbeatTimeoutId = null;
       log("[HEARTBEAT] No ACK received, server not responding");
       onTimeout();
     }, timeoutMs);

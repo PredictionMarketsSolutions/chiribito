@@ -256,8 +256,13 @@ let reconnectAttempts = 0;
 // it can call roomSessionController.reconnect(token). attemptReconnect()
 // no-ops gracefully until the director is ready (rare race during boot).
 let reconnectDirector: ReturnType<typeof createReconnectDirector> | null = null;
-const HEARTBEAT_INTERVAL_MS = 30000;
-const HEARTBEAT_TIMEOUT_MS = 180000;
+// Move 2: tightened to detect silent network drops (mobile network switch,
+// laptop sleep+wake, tab-bg with no clean close) within ~15s worst case
+// (one interval + one timeout). Leaves >=45s of the 60s server seat window
+// for retries. Previously 30000 / 180000 which let ~3min pass before any
+// reconnect action could be taken.
+const HEARTBEAT_INTERVAL_MS = 5000;
+const HEARTBEAT_TIMEOUT_MS = 10000;
 let lastHeartbeatSendTime = 0;
 
 let pixiTableSurface: HTMLDivElement | null = null;
@@ -681,10 +686,15 @@ function startClientHeartbeat() {
     timeoutMs: HEARTBEAT_TIMEOUT_MS,
     log,
     onTimeout: () => {
-      log("[HEARTBEAT] Timeout alcanzado, mostrando popup de inactividad");
-      if (dom.idleTimeoutModal) {
-        dom.idleTimeoutModal.classList.remove("hidden");
-      }
+      // Move 2: heartbeat timeout now means "the WebSocket is silent" — not
+      // "the user is idle". The previous behaviour conflated the two by
+      // showing an idle modal after 3 minutes of silence. Now the timeout
+      // fires within ~15s of a real drop and triggers reconnect immediately,
+      // setting state to disconnected BEFORE attemptReconnect so the banner
+      // sees a consistent state.
+      log("[HEARTBEAT] No ACK received — assuming WebSocket drop, requesting reconnect.");
+      setConnectionState("disconnected");
+      attemptReconnect();
     },
     onSend: (t) => { lastHeartbeatSendTime = t; }
   });
