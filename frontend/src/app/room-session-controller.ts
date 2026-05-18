@@ -30,6 +30,26 @@ import { getWinnerDisplayFromRoundEnd } from "../game/round-end-winner";
 import { TURN_TIMEOUT_MS, MAX_HAND_HISTORY } from "../config";
 import type { GameResultPayload as GameResultPayloadType } from "../types/room-messages";
 
+/** Move 2 — Slice B: silence the SDK warnings the server emits after every
+ *  successful reconnect (`reconnected`) and at game end (`gameEnded`).
+ *  - `reconnected` is fired by PlayerLifecycleManager.replaceSession; the
+ *    `reconnected` ack is purely informational — state sync handles the
+ *    actual replacement, so we just log.
+ *  - `gameEnded` is duplicated by `gameResult` + state sync; we register
+ *    a no-op handler so @colyseus/sdk does not log
+ *    "onMessage() not registered for type 'gameEnded'" on every reconnect.
+ *  Extracted from `mountJoinedRoom` so the registration is independently
+ *  testable. */
+export function bindOrphanMessageHandlers(
+  room: { onMessage: (evt: string, cb: (p: unknown) => void) => void },
+  log: (msg: string) => void
+): void {
+  room.onMessage("reconnected", () => log("Server acknowledged reconnect."));
+  room.onMessage("gameEnded", () => {
+    // Duplicated by gameResult + state sync — no UI side-effect needed.
+  });
+}
+
 export type JoinRoomSessionControllerDeps = {
   // Join gating
   getToken: () => string | null;
@@ -209,6 +229,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
     deps.armTableScene?.();
     deps.startClientHeartbeat();
     bindRoomMessageHandlers(joinedRoom);
+    bindOrphanMessageHandlers(joinedRoom, deps.log);
   }
 
   async function joinRoom(
