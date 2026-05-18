@@ -837,6 +837,10 @@ async function joinRoom(
   await roomSessionController.joinRoom(forceReplace, opts);
 }
 
+async function reconnectMesa(token: string): Promise<void> {
+  await roomSessionController.reconnect(token);
+}
+
 type LobbyDepsFactory = () => LobbyDeps;
 const refreshWinnersRanking = () =>
   refreshWinnersRankingFn({
@@ -980,13 +984,7 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
   const buildRecoveryDeps = () => ({
     getReconnectionToken: () => SecureStorage.getReconnectionToken(),
     clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
-    // STUB — slice D wires the real client.reconnect(token) path through
-    // roomSessionController. Throwing here means the helper logs the
-    // failure, clears the (now-stale) token, and falls through to the
-    // existing joinById path — preserving current behaviour for one
-    // commit.
-    reconnect: (_token: string) =>
-      Promise.reject(new Error("reconnect not wired yet (slice D)")),
+    reconnect: (token: string) => reconnectMesa(token),
     getLastRoomId: () => SecureStorage.getLastRoomId(),
     joinRoom: (forceReplace: boolean, opts: { mode: "joinById"; roomId: string }) =>
       joinRoom(forceReplace, opts),

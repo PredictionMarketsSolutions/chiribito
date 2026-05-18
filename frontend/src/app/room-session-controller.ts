@@ -162,6 +162,51 @@ export type JoinRoomSessionControllerDeps = {
 };
 
 export function createRoomSessionController(deps: JoinRoomSessionControllerDeps) {
+  /** Apply ALL post-join wiring that both joinRoom and reconnect share:
+   *  state reset (applyPostJoinSetup), table scene arm, client heartbeat,
+   *  onLeave handler, and every onMessage subscription. Without this shared
+   *  block, a reconnected room would silently miss game events. */
+  function mountJoinedRoom(joinedRoom: Room): void {
+    applyPostJoinSetup({
+      joinedRoom,
+      setRoom: deps.setRoom,
+      setCurrentSessionId: deps.setCurrentSessionId,
+      setShouldAutoReconnect: deps.setShouldAutoReconnect,
+      setTournamentEnded: deps.setTournamentEnded,
+      setAuthOverlayVisible: deps.setAuthOverlayVisible,
+      setLobbyOverlayVisible: deps.setLobbyOverlayVisible,
+      setTournamentResultVisible: deps.setTournamentResultVisible,
+      stopLobbyPolling: deps.stopLobbyPolling,
+      setConnectionState: deps.setConnectionState,
+      setReconnectAttempts: deps.setReconnectAttempts,
+      winnerDisplayState: deps.winnerDisplayState,
+      clearDeferredTournamentTimer: () => {
+        deps.setDeferredTournamentResult(null);
+        const id = deps.getDeferredTournamentTimerId();
+        if (id !== null) {
+          clearTimeout(id);
+          deps.setDeferredTournamentTimerId(null);
+        }
+      },
+      winningHandStatusEl: deps.winningHandStatusEl,
+      winningHandChipEl: deps.winningHandChipEl,
+      winnersStatusEl: deps.winnersStatusEl,
+      clearHandHistory: deps.clearHandHistory,
+      renderHandHistoryUi: deps.renderHandHistoryUi,
+      preloadCardImages: deps.preloadCardImages,
+      setRoomStatusText: (text) => {
+        deps.roomStatusEl.textContent = text;
+      },
+      saveLastRoomId: deps.saveLastRoomId,
+      saveReconnectionToken: deps.saveReconnectionToken,
+      log: deps.log,
+    });
+
+    deps.armTableScene?.();
+    deps.startClientHeartbeat();
+    bindRoomMessageHandlers(joinedRoom);
+  }
+
   async function joinRoom(
     forceReplace = false,
     opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
@@ -249,47 +294,51 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
         return;
       }
 
-      // Post-join setup
-      applyPostJoinSetup({
-        joinedRoom,
-        setRoom: deps.setRoom,
-        setCurrentSessionId: deps.setCurrentSessionId,
-        setShouldAutoReconnect: deps.setShouldAutoReconnect,
-        setTournamentEnded: deps.setTournamentEnded,
-        setAuthOverlayVisible: deps.setAuthOverlayVisible,
-        setLobbyOverlayVisible: deps.setLobbyOverlayVisible,
-        setTournamentResultVisible: deps.setTournamentResultVisible,
-        stopLobbyPolling: deps.stopLobbyPolling,
-        setConnectionState: deps.setConnectionState,
-        setReconnectAttempts: deps.setReconnectAttempts,
-        winnerDisplayState: deps.winnerDisplayState,
-        clearDeferredTournamentTimer: () => {
-          deps.setDeferredTournamentResult(null);
-          const id = deps.getDeferredTournamentTimerId();
-          if (id !== null) {
-            clearTimeout(id);
-            deps.setDeferredTournamentTimerId(null);
-          }
-        },
-        winningHandStatusEl: deps.winningHandStatusEl,
-        winningHandChipEl: deps.winningHandChipEl,
-        winnersStatusEl: deps.winnersStatusEl,
-        clearHandHistory: deps.clearHandHistory,
-        renderHandHistoryUi: deps.renderHandHistoryUi,
-        preloadCardImages: deps.preloadCardImages,
-        setRoomStatusText: (text) => {
-          deps.roomStatusEl.textContent = text;
-        },
-        saveLastRoomId: deps.saveLastRoomId,
-        saveReconnectionToken: deps.saveReconnectionToken,
-        log: deps.log,
+      mountJoinedRoom(joinedRoom);
+      // eslint-disable-next-line no-empty
+    } finally {
+      finalizeJoinAttempt(mode, {
+        setJoinInProgress: (value) => deps.setJoinInProgress(value),
+        setJoinByIdEnabled: deps.setJoinByIdEnabled,
+        setCreateTableEnabled: deps.setCreateTableEnabled,
+        schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+        createCooldownMs: deps.createTableCooldownMs,
       });
+    }
+  }
 
-      deps.armTableScene?.();
+  /** Resume a previously joined seat via the Colyseus reconnect primitive.
+   *  Bypasses onAuth entirely (no SESSION_EXISTS check) by resolving the
+   *  server's allowReconnection promise directly.
+   *
+   *  Throws on failure so the caller (recoverMesaOrOpenLobby) can fall
+   *  through to its joinById branch or, ultimately, to the lobby. */
+  async function reconnect(token: string): Promise<void> {
+    if (deps.getJoinInProgress()) {
+      deps.log("Reconnect skipped: another join is already in progress.");
+      throw new Error("join in progress");
+    }
+    deps.setJoinInProgress(true);
+    deps.setLobbyJoinButtonsEnabled(false);
+    try {
+      deps.setConnectionState("connecting");
+      deps.log("Reconnecting to Colyseus mesa via reconnectionToken...");
+      const client = deps.getWsClient();
+      const joinedRoom = await client.reconnect(token);
+      mountJoinedRoom(joinedRoom);
+    } finally {
+      finalizeJoinAttempt("joinById", {
+        setJoinInProgress: (value) => deps.setJoinInProgress(value),
+        setJoinByIdEnabled: deps.setJoinByIdEnabled,
+        setCreateTableEnabled: deps.setCreateTableEnabled,
+        schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+        createCooldownMs: deps.createTableCooldownMs,
+      });
+    }
+  }
 
-      deps.startClientHeartbeat();
-
-      joinedRoom.onLeave((code: number) => {
+  function bindRoomMessageHandlers(joinedRoom: Room): void {
+    joinedRoom.onLeave((code: number) => {
         deps.stopClientHeartbeat();
         handleRoomLeave({
           code,
@@ -515,19 +564,8 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
         deps.renderHandHistoryUi();
         deps.log(`Round ended: ${JSON.stringify(payload)}`);
       });
-
-      // eslint-disable-next-line no-empty
-    } finally {
-      finalizeJoinAttempt(mode, {
-        setJoinInProgress: (value) => deps.setJoinInProgress(value),
-        setJoinByIdEnabled: deps.setJoinByIdEnabled,
-        setCreateTableEnabled: deps.setCreateTableEnabled,
-        schedule: (callback, delayMs) => setTimeout(callback, delayMs),
-        createCooldownMs: deps.createTableCooldownMs,
-      });
-    }
   }
 
-  return { joinRoom };
+  return { joinRoom, reconnect };
 }
 
