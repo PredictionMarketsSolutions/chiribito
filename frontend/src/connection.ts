@@ -216,5 +216,13 @@ export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void
       deps.clearReconnectionToken();
     }
   }
-  await deps.joinRoom(true);
+  // joinRoom fallback. Errors are swallowed (logged): the caller (director
+  // loop) retries this whole attemptReconnect on next iteration. Letting
+  // an exception escape would tear down the loop.
+  try {
+    await deps.joinRoom(true);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    deps.log(`joinRoom fallback failed (${msg}); director will retry.`);
+  }
 }
