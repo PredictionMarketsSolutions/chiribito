@@ -1,6 +1,6 @@
 import { Client, Room } from "@colyseus/sdk";
 
-import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_RECONNECT_ATTEMPTS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
+import { API_URL, WS_URL, TURN_TIMEOUT_MS, MAX_HAND_HISTORY, ACTION_BUFFER_MAX_SIZE } from "./config";
 import type { RoomState, PlayerState, ConnectionState } from "./types";
 import type {
   GameResultPayload,
@@ -36,8 +36,9 @@ import {
   recordRtt as recordRttFn,
   getRttInfo,
   updateConnectionIndicator as updateConnectionIndicatorFn,
-  attemptReconnect as attemptReconnectFn
+  DEFAULT_MAX_RECONNECT_ATTEMPTS,
 } from "./connection";
+import { createReconnectDirector } from "./reconnect-director";
 import {
   addHandHistoryEntry,
   clearHandHistory,
@@ -243,6 +244,10 @@ let pixiLayer: HTMLDivElement | null = null;
 // Connection monitoring (state owned here; heartbeat/RTT in connection.ts)
 let connectionState: ConnectionState = "disconnected";
 let reconnectAttempts = 0;
+// Move 2: Lazy director init — bound after roomSessionController is built so
+// it can call roomSessionController.reconnect(token). attemptReconnect()
+// no-ops gracefully until the director is ready (rare race during boot).
+let reconnectDirector: ReturnType<typeof createReconnectDirector> | null = null;
 const HEARTBEAT_INTERVAL_MS = 30000;
 const HEARTBEAT_TIMEOUT_MS = 180000;
 let lastHeartbeatSendTime = 0;
@@ -689,7 +694,7 @@ function setConnectionState(state: ConnectionState) {
   updateConnectionIndicatorFn({
     connectionState,
     reconnectAttempts,
-    maxAttempts: MAX_RECONNECT_ATTEMPTS,
+    maxAttempts: DEFAULT_MAX_RECONNECT_ATTEMPTS,
     connectionIndicatorEl: connectionIndicator,
     averageRtt,
     connectionQuality
@@ -727,17 +732,11 @@ function attemptReconnect() {
     log("Auto-reconnect disabled; staying in lobby.");
     return;
   }
-  return attemptReconnectFn({
-    getToken: () => token,
-    getConnectionState: () => connectionState,
-    getTournamentEnded: () => tournamentEnded,
-    getReconnectAttempts: () => reconnectAttempts,
-    setReconnectAttempts: (n) => { reconnectAttempts = n; },
-    joinRoom: (forceReplace) => joinRoom(forceReplace),
-    maxAttempts: MAX_RECONNECT_ATTEMPTS,
-    clearAuthToken,
-    log
-  });
+  if (!reconnectDirector) {
+    log("Reconnect director not yet initialised; skipping retry.");
+    return;
+  }
+  return reconnectDirector.requestReconnect();
 }
 
 function getWsClient(): Client {
@@ -825,6 +824,32 @@ const roomSessionController = createRoomSessionController({
     gameUiContext.tableScene?.syncCommunityFromServer(cards);
   },
   armTableScene,
+});
+
+// Move 2 — wire the reconnect director now that roomSessionController exists.
+// attemptReconnect() above delegates to this director.
+reconnectDirector = createReconnectDirector({
+  getToken: () => token,
+  getConnectionState: () => connectionState,
+  getTournamentEnded: () => tournamentEnded,
+  joinRoom: (forceReplace) => joinRoom(forceReplace),
+  clearAuthToken,
+  log,
+  getReconnectionToken: () => SecureStorage.getReconnectionToken(),
+  clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
+  reconnect: (tok) => roomSessionController.reconnect(tok),
+  degradeToLobby: (message: string) => {
+    setLobbyMessage(message, "error");
+    resetRoomUi(message);
+    setLobbyOverlayVisible(true);
+    setConnectionState("disconnected");
+  },
+  // Slice C.3 wires onAttemptChange to the banner; left undefined here until
+  // that slice lands so this commit can ship independently.
+  onAttemptChange: (state) => {
+    // Keep the connection-indicator tooltip in sync with director attempts.
+    reconnectAttempts = state.attempt;
+  },
 });
 
 async function joinRoom(
