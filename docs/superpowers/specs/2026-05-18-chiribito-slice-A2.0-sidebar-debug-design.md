@@ -261,4 +261,88 @@ Optional: add a small render test in `frontend/src/__tests__/sidebar-debug-visib
 
 ## What landed
 
-_To be filled in at slice closeout (commit 5)._
+A2.0 closed in 5 commits on `main` (local-only — not pushed):
+
+| Commit | Type | SHA | Summary |
+|--------|------|-----|---------|
+| 1 | docs | `c0365d2` | A2.0 spec (this file) |
+| 2 | docs | `ba15995` | A2.0 plan TDD |
+| 3 | feat | `bd5229a` | `isDebugEnabled` helper + `body.debug-mode` bootstrap |
+| 4 | chore | `9d67fdc` | 6 dev-protocol rows + 3 castizo headings (amended once — see Risks below) |
+| 5 | docs | _(this commit)_ | this closeout |
+
+### Final state — file touch list
+
+- `frontend/src/security/debug-mode.ts` (new, ~17 LOC) — `isDebugEnabled()` pure function. SSR-safe guard. Reads `import.meta.env.DEV` OR `URLSearchParams.has("debug")`.
+- `frontend/src/security/debug-mode.test.ts` (new, ~55 LOC) — 4 vitest cases pinning the gate truth table.
+- `frontend/src/security/index.ts` — one new line re-exporting `isDebugEnabled`.
+- `frontend/src/main.ts` — `isDebugEnabled` added to the existing `./security` named-import; 3-line bootstrap immediately after the import block, before `installFeedback()`.
+- `frontend/index.html` — 6 `<div>` rows in the `.status-grid` block marked `class="debug-only"`; 3 `<h2>` translated to `Jugadores`, `Historial`, `Actividad`.
+- `frontend/src/style.css` — 4 lines appended at EOF (comment + 2 rules). Selectors anchored to `#ui.panel .status-grid > div.debug-only` and `body.debug-mode #ui.panel .status-grid > div.debug-only` to win the CSS cascade against the existing `#ui.panel .status-grid > div` rule (see Risks).
+
+### Test counts at closeout
+
+- Frontend vitest: **217/217** (213 prior + 4 new in `debug-mode.test.ts`).
+- Game server jest: **475/475** (unchanged — no game-server code touched).
+- API server jest: **27/27** (unchanged).
+- Playwright E2E: **40/40** confirmed at HEAD on the last of 3 sequential runs (`results.json` snapshot). Earlier runs in the same loop inferred PASS by identical output pattern and bash for-loop reaching the third iteration.
+
+### Visual diff
+
+`.dev-stack/visual-audit__pre_polish_baseline/` vs `.dev-stack/visual-audit__A2.0_after/`:
+- `measurements.json` IDENTICAL: button sizes, viewport metrics, design tokens, font stack all unchanged.
+- PNG bytes differ minimally across all viewports — driven by (a) the three heading text changes (`Players → Jugadores`, `Hand History → Historial`, `Activity → Actividad`) and (b) random room codes in dynamic content.
+- Desktop mesa screenshots in `__A2.0_after` still show 18 sidebar rows because the audit runs against `npm run dev:stack` (`import.meta.env.DEV === true` → `body.debug-mode` set → show rule fires). Production-mode hiding is verified via static analysis of the built bundle, not the audit.
+
+### Behavior matrix
+
+| Environment | URL | Sidebar dev-protocol rows | Headings castizo |
+|-------------|-----|----------------------------|-------------------|
+| `npm run dev` / `npm run dev:stack` | any | Visible (DEV=true sets body.debug-mode) | Yes |
+| Production build, default URL | `chiribito.com/mesa` | Hidden | Yes |
+| Production build, `?debug=1` | `chiribito.com/mesa?debug=1` | Visible | Yes |
+| Production build, presence-only (`?debug`, `?debug=0`) | same shape | Visible | Yes |
+
+### Risks observed at runtime
+
+**One material defect found by code quality review and fixed mid-slice:**
+
+- **CSS specificity bug in original Task 2 commit `e890c94`** (later amended → `9d67fdc`). Original rules `.debug-only { display: none } body.debug-mode .debug-only { display: block }` had specificity (0,1,0) and (0,2,1) — both lost to the existing `#ui.panel .status-grid > div { display: flex }` rule at `style.css:1606` with specificity (1,2,1). Effect: in production builds without `?debug`, the 6 rows would have remained visible. Masked in dev mode (DEV=true → body.debug-mode always set → rows visible anyway for wrong reason) and in vitest (happy-dom does not compute CSS cascades). Fix: replaced the new rules with `#ui.panel .status-grid > div.debug-only { display: none }` and `body.debug-mode #ui.panel .status-grid > div.debug-only { display: flex }`. New specificities (1,3,1) and (1,4,2) win. `display: flex` chosen (vs `block`) to match the existing row layout. Production bundle was rebuilt and the minified selectors verified.
+
+**Other note on `9d67fdc` commit body:**
+
+- Commit body says "Tests: 217/217 frontend, **471/471 game**, 27/27 api". Real game count is **475/475** (verified in this closeout's counts above). The 471 figure came from an erroneous spec reviewer report mid-slice. The body was not re-amended (one amend per slice was the discipline limit, used by the CSS specificity fix). NOT a code defect — pure documentation drift in a commit body.
+
+**Pre-existing risks that did NOT materialize (R1-R7 from the spec):**
+
+- R1 (vi.stubEnv semantics) — `vi.stubEnv("DEV", boolean)` worked on first try with vitest 3.2.4. No fallback needed.
+- R2 (E2E heading-text assertion break) — zero matches for hard-coded English heading strings in test files.
+- R3 (`?debug=0` presence-only contract surprise) — accepted and tested.
+- R4 (`display: contents` vs `display: block`) — moot; the chosen `display: block` was overridden by the cascade fix and replaced with `display: flex`.
+- R5 (boot pre-paint flash) — bootstrap placed before `installFeedback()`, no race.
+- R6 (production E2E gap) — accepted; covered manually by static-bundle inspection.
+- R7 (`document.body` undefined at module load) — never observed.
+
+### Carry-forward to A2.1 (and beyond)
+
+Three non-blocking follow-ups surfaced during review — none block A2.0 closure, all useful inputs for A2.1's brainstorm:
+
+1. **`.debug-only` is anchored** to `#ui.panel .status-grid > div`. If A2.1 (or any future slice) wants to gate other elements on `body.debug-mode`, the selector strategy needs revisiting — either additional anchored selectors per surface, or a generalized utility with global specificity (no `!important` ideally — codebase currently has zero `!important` rules).
+
+2. **CSS rule placement**: appended at `style.css:4635-4637` (EOF) instead of grouped with the related `#ui.panel .status-grid` rules at line 1606. Defensible for safety; a follow-up cleanup slice could relocate.
+
+3. **Naming convention**: `.debug-only` is a brand-new utility class in the codebase. Other state flags use `is-` prefix (`is-active`, `reconnect-banner--hidden`). Worth locking convention before a second usage ships.
+
+Three pre-existing nits (informational only, defer or accept):
+
+4. SSR guard in `debug-mode.ts:14` is theatrical — codebase is browser-only.
+5. `isDebugEnabled` re-export sits at end of `security/index.ts` instead of in a labeled section.
+6. JSDoc "Read once at boot" describes the caller convention, not the function.
+
+Tech-debt note:
+
+7. Duplicate `.status-grid` rules at `style.css:3245-3268` (unscoped) and `style.css:1600-1640` (scoped) — the unscoped one appears dead in current markup. Future cleanup.
+
+### Push posture at closeout
+
+5 commits ahead of `origin/main`. **NOT pushed** per user-locked decision: push at slice closeout. The closeout commit you're about to make is commit #5; once it lands, the slice is ready for user-gated push.
