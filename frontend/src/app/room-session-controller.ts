@@ -76,6 +76,10 @@ export type JoinRoomSessionControllerDeps = {
   showGameEndMessage: () => void;
   isTournamentResultOverlayHidden: () => boolean;
   clearLastRoomId: () => void;
+  /** Drop the persisted Colyseus reconnectionToken on terminal leaves
+   *  (session replaced, tournament ended). Keeping it would point future
+   *  hydrations at a seat that no longer exists. */
+  clearReconnectionToken: () => void;
 
   // Core rendering + game ops
   winnerDisplayState: WinnerDisplayState;
@@ -347,6 +351,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           setHadRoomWhenBackgrounded: deps.setHadRoomWhenBackgrounded,
           setShouldAutoReconnect: deps.setShouldAutoReconnect,
           clearLastRoomId: deps.clearLastRoomId,
+          clearReconnectionToken: deps.clearReconnectionToken,
           clearAuthToken: deps.clearAuthToken,
           resetRoomUi: deps.resetRoomUi,
           setConnectionState: deps.setConnectionState,

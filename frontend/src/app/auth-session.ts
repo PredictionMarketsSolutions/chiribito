@@ -8,6 +8,10 @@ export type ClearAuthSessionDeps = {
   setTokenInvalidNotified: (value: boolean) => void;
   clearAccessToken: () => void;
   clearRefreshToken: () => void;
+  /** Drop the persisted Colyseus reconnectionToken — once the auth session
+   *  is gone, the token would only be usable to re-enter a seat that no
+   *  longer corresponds to the user. */
+  clearReconnectionToken: () => void;
 };
 
 export function clearAuthSession(deps: ClearAuthSessionDeps): void {
@@ -19,6 +23,7 @@ export function clearAuthSession(deps: ClearAuthSessionDeps): void {
   deps.setTokenInvalidNotified(false);
   deps.clearAccessToken();
   deps.clearRefreshToken();
+  deps.clearReconnectionToken();
 }
 
 export type HandleTokenInvalidatedDeps = {

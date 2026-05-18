@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { clearAuthSession, handleTokenInvalidated, startTokenMonitor } from "./auth-session";
 
 describe("auth-session", () => {
-  it("clearAuthSession resets tokens and status", () => {
+  it("clearAuthSession resets tokens and status (including reconnection token)", () => {
     const tokenStatusEl = document.createElement("span");
     const setToken = vi.fn();
     const setRefreshToken = vi.fn();
@@ -10,6 +10,7 @@ describe("auth-session", () => {
     const setTokenInvalidNotified = vi.fn();
     const clearAccessToken = vi.fn();
     const clearRefreshToken = vi.fn();
+    const clearReconnectionToken = vi.fn();
 
     clearAuthSession({
       setToken,
@@ -19,6 +20,7 @@ describe("auth-session", () => {
       setTokenInvalidNotified,
       clearAccessToken,
       clearRefreshToken,
+      clearReconnectionToken,
     });
 
     expect(setToken).toHaveBeenCalledWith(null);
@@ -28,6 +30,7 @@ describe("auth-session", () => {
     expect(tokenStatusEl.textContent).toBe("none");
     expect(clearAccessToken).toHaveBeenCalled();
     expect(clearRefreshToken).toHaveBeenCalled();
+    expect(clearReconnectionToken).toHaveBeenCalledTimes(1);
   });
 
   it("handleTokenInvalidated runs once when not notified", () => {

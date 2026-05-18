@@ -5,6 +5,11 @@ export type RoomLeaveDeps = {
   setHadRoomWhenBackgrounded: (value: boolean) => void;
   setShouldAutoReconnect: (value: boolean) => void;
   clearLastRoomId: () => void;
+  /** Drop the persisted Colyseus reconnectionToken when the mesa is gone for
+   *  good (session replaced, tournament ended). Keeping it would let the
+   *  next hydration attempt to client.reconnect() a seat that no longer
+   *  exists, which the server would reject — wasted round-trip + noise. */
+  clearReconnectionToken: () => void;
   clearAuthToken: () => void;
   resetRoomUi: (message?: string) => void;
   setConnectionState: (state: "disconnected" | "connecting" | "connected") => void;
@@ -22,6 +27,7 @@ export function handleRoomLeave(deps: RoomLeaveDeps): void {
     deps.alertUser("Tu sesion fue reemplazada por otro ingreso.");
     deps.setShouldAutoReconnect(false);
     deps.clearLastRoomId();
+    deps.clearReconnectionToken();
     deps.clearAuthToken();
     deps.resetRoomUi("replaced");
     deps.setConnectionState("disconnected");
@@ -34,6 +40,7 @@ export function handleRoomLeave(deps: RoomLeaveDeps): void {
     deps.setHadRoomWhenBackgrounded(false);
     deps.setShouldAutoReconnect(false);
     deps.clearLastRoomId();
+    deps.clearReconnectionToken();
     deps.setConnectionState("disconnected");
     deps.clearCurrentRoomRefs();
     if (!deps.isTournamentResultOverlayHidden()) return;
@@ -45,6 +52,7 @@ export function handleRoomLeave(deps: RoomLeaveDeps): void {
     deps.setHadRoomWhenBackgrounded(false);
     deps.setShouldAutoReconnect(false);
     deps.clearLastRoomId();
+    deps.clearReconnectionToken();
     deps.setConnectionState("disconnected");
     deps.clearCurrentRoomRefs();
     if (!deps.isTournamentResultOverlayHidden()) return;
@@ -52,6 +60,8 @@ export function handleRoomLeave(deps: RoomLeaveDeps): void {
     return;
   }
 
+  // Transient disconnect: keep the reconnectionToken so attemptReconnect (or
+  // the next hydration) can use it.
   deps.log(`Disconnected from room (code: ${deps.code}). Attempting to reconnect...`);
   deps.setConnectionState("disconnected");
   deps.attemptReconnect();

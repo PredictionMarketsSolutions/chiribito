@@ -563,6 +563,7 @@ function clearAuthToken() {
     },
     clearAccessToken: () => SecureStorage.clearAccessToken(),
     clearRefreshToken: () => SecureStorage.clearRefreshToken(),
+    clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
   });
 }
 
@@ -786,6 +787,7 @@ const roomSessionController = createRoomSessionController({
   showGameEndMessage: () => showGameEndMessageFn(overlayRefs),
   isTournamentResultOverlayHidden: () => overlayRefs.tournamentResultOverlay.classList.contains("hidden"),
   clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+  clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
   winnerDisplayState, gameUiContext,
   renderState, isWinnerPhaseActive: () => isInWinnerPhase(winnerDisplayState),
   startWinnerDisplayPhase, showTournamentResult,
@@ -879,6 +881,7 @@ async function openLobby() {
       // El usuario está explícitamente en el lobby: no queremos reconexiones automáticas a mesas antiguas.
       shouldAutoReconnect = false;
       SecureStorage.clearLastRoomId();
+      SecureStorage.clearReconnectionToken();
     },
     setJoinInProgress: (value) => {
       joinInProgress = value;
