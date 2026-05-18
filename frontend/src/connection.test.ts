@@ -5,7 +5,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { attemptReconnect, type AttemptReconnectDeps } from "./connection";
+import {
+  attemptReconnect,
+  type AttemptReconnectDeps,
+  RECONNECT_BACKOFF_MS,
+} from "./connection";
 
 describe("connection.attemptReconnect", () => {
   let joinRoom: ReturnType<typeof vi.fn>;
@@ -107,6 +111,26 @@ describe("connection.attemptReconnect", () => {
     expect(joinRoom).not.toHaveBeenCalled();
     expect(clearReconnectionToken).not.toHaveBeenCalled();
     expect(degradeToLobby).not.toHaveBeenCalled();
+  });
+
+  it("waits the calibrated backoff schedule for each attempt", async () => {
+    const reconnect = vi.fn().mockResolvedValue(undefined);
+    let nowAttempt = 0;
+    const deps: AttemptReconnectDeps = {
+      ...baseDeps(),
+      maxAttempts: 6,
+      getReconnectAttempts: () => nowAttempt,
+      setReconnectAttempts: (n: number) => { nowAttempt = n; },
+      getReconnectionToken: () => "tok",
+      reconnect,
+    };
+
+    const p = attemptReconnect(deps);
+    // attempt 1 expects ~250ms ±20% (max 300ms + a bit of slack)
+    await vi.advanceTimersByTimeAsync(RECONNECT_BACKOFF_MS[0] * 1.2 + 50);
+    await p;
+    expect(reconnect).toHaveBeenCalledTimes(1);
+    expect(nowAttempt).toBe(1);
   });
 });
 

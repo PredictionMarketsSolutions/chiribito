@@ -15,6 +15,21 @@ let connectionQuality: "excellent" | "good" | "degraded" | "poor" = "excellent";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";
 
+/** Move 2: backoff schedule in ms, indexed by attempt-1.
+ *  Cumulative ~16 s without per-attempt timeout, ~46 s worst case
+ *  with the 5 s per-attempt timeout (Slice A.4). Stays inside the
+ *  server's reconnectionTimeoutSeconds = 60 window. */
+export const RECONNECT_BACKOFF_MS = [250, 500, 1000, 2000, 4000, 8000] as const;
+export const RECONNECT_JITTER_PCT = 0.2;
+export const DEFAULT_MAX_RECONNECT_ATTEMPTS = RECONNECT_BACKOFF_MS.length;
+
+function backoffDelayFor(attempt: number, random = Math.random): number {
+  const idx = Math.min(attempt - 1, RECONNECT_BACKOFF_MS.length - 1);
+  const base = RECONNECT_BACKOFF_MS[idx];
+  const jitter = (random() * 2 - 1) * RECONNECT_JITTER_PCT;
+  return Math.max(0, Math.round(base * (1 + jitter)));
+}
+
 export function getWsClient(wsUrl: string): Client {
   if (!wsClient) wsClient = new Client(wsUrl);
   return wsClient;
@@ -150,8 +165,7 @@ export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void
 
   deps.setReconnectAttempts(deps.getReconnectAttempts() + 1);
   const attempt = deps.getReconnectAttempts();
-  const baseDelayMs = 1000;
-  const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
+  const delayMs = backoffDelayFor(attempt);
   deps.log(`Reconnect attempt ${attempt}/${deps.maxAttempts} in ${delayMs}ms...`);
   await new Promise((r) => setTimeout(r, delayMs));
 
