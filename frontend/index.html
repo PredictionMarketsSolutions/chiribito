@@ -251,12 +251,12 @@
           <h2>Estado</h2>
           <div class="status-grid">
             <div><span>Conexión</span><div id="connection-indicator" class="connection-dot"></div></div>
-            <div><span>Latencia</span><strong id="rtt-status">-</strong></div>
-            <div><span>Calidad</span><strong id="quality-status">-</strong></div>
-            <div><span>Buffer</span><strong id="buffer-status">0</strong></div>
-            <div><span>API</span><strong id="api-url"></strong></div>
-            <div><span>WS</span><strong id="ws-url"></strong></div>
-            <div><span>Token</span><strong id="token-status">none</strong></div>
+            <div class="debug-only"><span>Latencia</span><strong id="rtt-status">-</strong></div>
+            <div class="debug-only"><span>Calidad</span><strong id="quality-status">-</strong></div>
+            <div class="debug-only"><span>Buffer</span><strong id="buffer-status">0</strong></div>
+            <div class="debug-only"><span>API</span><strong id="api-url"></strong></div>
+            <div class="debug-only"><span>WS</span><strong id="ws-url"></strong></div>
+            <div class="debug-only"><span>Token</span><strong id="token-status">none</strong></div>
             <div><span>Mesa</span><strong id="room-status">sin mesa</strong></div>
             <div><span>Fase</span><strong id="phase-status">Esperando</strong></div>
             <div><span>Habla</span><strong id="turn-status">-</strong></div>
@@ -272,17 +272,17 @@
         </section>
 
         <section class="panel-card panel-players">
-          <h2>Players</h2>
+          <h2>Jugadores</h2>
           <ul id="players" class="players"></ul>
         </section>
 
         <section class="panel-card panel-history">
-          <h2>Hand History</h2>
+          <h2>Historial</h2>
           <ul id="hand-history" class="history-list"></ul>
         </section>
 
         <section class="panel-card panel-log">
-          <h2>Activity</h2>
+          <h2>Actividad</h2>
           <pre id="log"></pre>
         </section>
       </aside>

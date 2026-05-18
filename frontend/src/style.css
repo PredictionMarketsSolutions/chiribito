@@ -4631,3 +4631,7 @@ button.accent:hover:not(:disabled) {
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 1.0; }
 }
+
+/* A2.0 — debug-only rows hidden by default; revealed when body has .debug-mode */
+#ui.panel .status-grid > div.debug-only { display: none; }
+body.debug-mode #ui.panel .status-grid > div.debug-only { display: flex; }
