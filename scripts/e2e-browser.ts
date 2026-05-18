@@ -78,6 +78,56 @@ async function shot(page: Page, name: string): Promise<string> {
   return file;
 }
 
+/** Move 2 — CDP-driven network controls for the WS-drop E2E steps. */
+async function setOffline(page: Page, offline: boolean): Promise<void> {
+  await page.context().setOffline(offline);
+}
+
+async function emulateSlowNetwork(page: Page, enable: boolean): Promise<void> {
+  const cdp = await page.context().newCDPSession(page);
+  if (enable) {
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 500,
+      downloadThroughput: 50_000,
+      uploadThroughput: 20_000,
+    });
+  } else {
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
+  }
+}
+
+async function waitBannerVisible(page: Page, timeoutMs = 5000): Promise<boolean> {
+  return page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById("reconnect-banner");
+        return !!el && !el.classList.contains("reconnect-banner--hidden");
+      },
+      undefined,
+      { timeout: timeoutMs }
+    )
+    .then(() => true, () => false);
+}
+
+async function waitBannerHidden(page: Page, timeoutMs = 10000): Promise<boolean> {
+  return page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById("reconnect-banner");
+        return !!el && el.classList.contains("reconnect-banner--hidden");
+      },
+      undefined,
+      { timeout: timeoutMs }
+    )
+    .then(() => true, () => false);
+}
+
 async function clearStorage(page: Page): Promise<void> {
   await page.evaluate(() => {
     localStorage.clear();
