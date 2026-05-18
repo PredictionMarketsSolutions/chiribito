@@ -463,6 +463,35 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
     }
   }
 
+  // 9 Tab inactive + drop + resume restores the mesa via the
+  //   global-lifecycle visibilitychange handler which fans into the same
+  //   director.requestReconnect path used by step 8. Heartbeat was paused
+  //   while hidden; on resume it restarts and the director recovers.
+  logStep("Tab inactive + drop + resume restores mesa");
+  {
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await setOffline(page, true);
+    await new Promise((r) => setTimeout(r, 4000));
+    await setOffline(page, false);
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    const recovered = await waitBannerHidden(page, 20000);
+    const tableStill = await page.evaluate(() => {
+      const t = document.querySelector("#table .table-surface") as HTMLElement | null;
+      return !!t && t.offsetWidth > 0;
+    });
+    if (recovered && tableStill) {
+      pass("recovered after tab-inactive drop", await shot(page, `${scenarioName}_09_tab_inactive`));
+    } else {
+      failStep(`tab-inactive recovery FAILED: recovered=${recovered} tableStill=${tableStill}`);
+    }
+  }
+
   // 7 stale lastRoomId must NOT trap the user — fall back to lobby cleanly
   //   and clear the stale id so subsequent reloads behave normally. Tests the
   //   robustness of the new recovery path: if joinRoom rejects, recover.ts
