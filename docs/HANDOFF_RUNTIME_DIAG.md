@@ -11,7 +11,7 @@
 
 | Field | Value |
 |-------|-------|
-| **HEAD (this commit)** | `6265039` (handoff doc only — code unchanged from `0304ea0`) |
+| **HEAD (this commit)** | most recent `docs(handoff)` commit on main — `git log --oneline -1` (handoff doc only — code unchanged from `0304ea0`) |
 | **Last code commit** | `0304ea0` (Phase A `?perf=1` instrumentation, SHIPPED + pushed) |
 | **Diagnostic phase** | Phase A SHIPPED; Phase B PARTIAL (B0 + B1 done; B10 #9 readability captured with methodology gaps; B2-B9 + B11 pending) |
 | **Working tree** | clean post-handoff commit (only `_screenshots/` + `.dev-stack/` untracked, both gitignored) |
@@ -45,7 +45,7 @@ Phase A instrumentation works. Phase B partial captures + the operator's pre-tri
 1. `3f1fb9a` — `docs(diag): add runtime diagnostic + sequencing rules design spec` (282 lines)
 2. `ad39c88` — `docs(diag): add runtime diagnostic implementation plan` (1521 lines)
 3. `0304ea0` — `feat(diag): add ?perf=1 instrumentation for runtime diagnostic` (9 files, +249/-1 LoC)
-4. `6265039` — `docs(handoff): runtime diagnostic session-of-2026-05-18 handoff` (this doc)
+4. most recent `docs(handoff): ...` commit — `docs(handoff): runtime diagnostic session-of-2026-05-18 handoff` (this doc — pinned by topic, not SHA, because the SHA changes if the doc is amended)
 
 ### Phase A — Instrumentation SHIPPED
 
