@@ -9,9 +9,9 @@
 
 | Campo | Valor |
 |-------|-------|
-| **HEAD** | `5ee6338` |
+| **HEAD** | `67b2c2a` (handoff docs; A1 closure commit es `5ee6338`) |
 | **Branch** | `main` (push live en `origin/main`) |
-| **Slice activo** | NINGUNO (A1 cerrado, esperando autorización del user para abrir A2) |
+| **Slice activo** | NINGUNO (A1 cerrado en `5ee6338`, esperando autorización del user para abrir A2) |
 | **Tests vitest frontend** | **213/213 PASS** |
 | **Tests jest game-server** | **475/475 PASS** |
 | **Tests jest api-server** | **27/27 PASS** |
