@@ -3426,6 +3426,13 @@ button.accent:hover:not(:disabled) {
   border-radius: 999px;
   box-shadow: 0 0 18px rgba(244, 196, 48, 0.6);
   background: radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.22), transparent 50%), rgba(10, 15, 26, 0.96);
+  /* A1.2 — replace the hidden Pixi potText scale-bump with a subtle DOM pulse. */
+  transition: transform 200ms ease-out;
+  transform: scale(1);
+}
+
+.badge-pot--pulse {
+  transform: scale(1.06);
 }
 
 .badge-pot span {

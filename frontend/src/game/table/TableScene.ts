@@ -108,6 +108,10 @@ export class TableScene implements TableSceneController {
 
     this.potText = new Text("Pot: 0", { fill: 0xfff8dc, fontSize: 20, fontWeight: "bold" });
     this.potText.anchor.set(0.5);
+    // A1.2 — DOM #pot-chip is the single visible pot. The Pixi text stays
+    // wired (position, updatePot, scale tweens, destroy refs) so scene
+    // continuity is unaffected — only the rendering is suppressed.
+    this.potText.visible = false;
     this.uiContainer.addChild(this.potText);
 
     this.dealerMarker = new Graphics();

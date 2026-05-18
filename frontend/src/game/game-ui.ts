@@ -186,7 +186,19 @@ export function renderState(
   const prevPotForTween = ctx.previousPotValue;
   refs.potStatus.textContent = String(potValue);
   refs.betStatus.textContent = String(currentBetValue);
-  refs.potChip.textContent = String(potValue);
+  const prevPotText = refs.potChip.textContent ?? "";
+  const nextPotText = String(potValue);
+  refs.potChip.textContent = nextPotText;
+  if (prevPotText !== nextPotText) {
+    // A1.2 — discreet 200ms scale pulse on pot change (replaces the now-hidden
+    // Pixi scale-bump). Toggle off → reflow → on so re-renders re-trigger.
+    const badge = refs.potChip.parentElement;
+    if (badge) {
+      badge.classList.remove("badge-pot--pulse");
+      void badge.offsetWidth;
+      badge.classList.add("badge-pot--pulse");
+    }
+  }
   // Phase chip + 6-dot progress indicator (mirrors the server's 6 streets).
   renderPhaseIndicator(state.phase, {
     progressEl: refs.phaseProgress,
