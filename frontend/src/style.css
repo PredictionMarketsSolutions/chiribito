@@ -3405,6 +3405,16 @@ button.accent:hover:not(:disabled) {
 
 .table-header-row--meta {
   opacity: 0.9;
+  /* A1.3 — reserve the row's resolved height so it does not collapse when
+     the contextual badges (turn / reloj / jugada) hide in waiting state.
+     Measured at audit baseline: ~36px single row at desktop, ~52px wrapped
+     at mobile below 600px. */
+  min-height: 36px;
+}
+@media (max-width: 600px) {
+  .table-header-row--meta {
+    min-height: 52px;
+  }
 }
 
 .badge {

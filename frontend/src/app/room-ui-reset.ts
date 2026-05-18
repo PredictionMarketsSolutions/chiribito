@@ -1,6 +1,7 @@
 import type { Room } from "@colyseus/sdk";
 import type { WinnerDisplayState, TurnTimerState } from "../game";
 import type { GameUiContext } from "../game/game-ui-types";
+import { applyHideIfEmpty } from "../game/meta-pills";
 
 type ActionButtonsFlags = {
   canStart: boolean;
@@ -93,6 +94,11 @@ export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
   deps.turnChipEl.textContent = "-";
   deps.turnTimerChipEl.textContent = "-";
   deps.winningHandChipEl.textContent = "-";
+  // A1.3 — reset should also hide the now-empty badges so the user does not
+  // see 'Turno -' / 'Reloj -' / 'Jugada -' between mesa transitions.
+  applyHideIfEmpty(deps.turnChipEl.parentElement as HTMLElement | null, "-");
+  applyHideIfEmpty(deps.turnTimerChipEl.parentElement as HTMLElement | null, "-");
+  applyHideIfEmpty(deps.winningHandChipEl.parentElement as HTMLElement | null, "-");
   deps.renderCardRow(deps.communityCardsEl, [], 5);
   deps.renderCardRow(deps.handCardsEl, [], 2);
   deps.handCardsEl.classList.remove("has-perla");

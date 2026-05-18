@@ -12,6 +12,7 @@ import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
 import { renderPhaseIndicator } from "./phase-indicator";
 import { phaseLabel } from "./phases";
+import { applyHideIfEmpty } from "./meta-pills";
 import { speakingContext } from "./speaking-order";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
@@ -232,6 +233,12 @@ export function renderState(
   refs.winningHandStatus.textContent = ctx.winnerDisplayState.lastWinningHand;
   refs.winningHandChip.textContent = ctx.winnerDisplayState.lastWinningHand;
   refs.winnersStatus.textContent = ctx.winnerDisplayState.lastWinners.join(", ") || "-";
+
+  // A1.3 — hide meta badges whose value is empty or '-'. Phase chip + dots
+  // always carry meaningful state, so they are not toggled here.
+  applyHideIfEmpty(refs.turnChip.parentElement as HTMLElement | null, refs.turnChip.textContent);
+  applyHideIfEmpty(refs.turnTimerChip.parentElement as HTMLElement | null, refs.turnTimerChip.textContent);
+  applyHideIfEmpty(refs.winningHandChip.parentElement as HTMLElement | null, refs.winningHandChip.textContent);
 
   const community = schemaArrayToCards(state.communityCards);
   refs.communityStatus.textContent = community.length ? community.join(" ") : "-";
