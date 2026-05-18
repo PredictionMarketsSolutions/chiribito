@@ -125,6 +125,15 @@ export type AttemptReconnectDeps = {
   maxAttempts: number;
   clearAuthToken: () => void;
   log: (msg: string) => void;
+  // --- Move 2 ---
+  /** Read the stored Colyseus reconnectionToken (Move 1.5). */
+  getReconnectionToken: () => string | null;
+  /** Drop the stored token after a confirmed-bad-token attempt. */
+  clearReconnectionToken: () => void;
+  /** Resume the seat via Colyseus reconnect; throws on failure. */
+  reconnect: (token: string) => Promise<void>;
+  /** Soft-fail path. Reset UI to lobby + keep auth token valid. */
+  degradeToLobby: (message: string) => void;
 };
 
 export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void> {

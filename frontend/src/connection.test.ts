@@ -25,6 +25,10 @@ describe("connection.attemptReconnect", () => {
     maxAttempts: 3,
     clearAuthToken,
     log,
+    getReconnectionToken: () => null,
+    clearReconnectionToken: vi.fn(),
+    reconnect: vi.fn().mockResolvedValue(undefined),
+    degradeToLobby: vi.fn(),
   });
 
   beforeEach(() => {
@@ -71,6 +75,30 @@ describe("connection.attemptReconnect", () => {
 
     expect(joinRoom).not.toHaveBeenCalled();
     expect(clearAuthToken).toHaveBeenCalledTimes(1);
+  });
+
+  it("prefers reconnect(token) over joinRoom when a reconnectionToken is stored", async () => {
+    const reconnect = vi.fn().mockResolvedValue(undefined);
+    const getReconnectionToken = vi.fn(() => "stored-token");
+    const clearReconnectionToken = vi.fn();
+    const degradeToLobby = vi.fn();
+    const deps: AttemptReconnectDeps = {
+      ...baseDeps(),
+      getReconnectionToken,
+      clearReconnectionToken,
+      reconnect,
+      degradeToLobby,
+    };
+
+    const p = attemptReconnect(deps);
+    vi.runAllTimers();
+    await p;
+
+    expect(reconnect).toHaveBeenCalledTimes(1);
+    expect(reconnect).toHaveBeenCalledWith("stored-token");
+    expect(joinRoom).not.toHaveBeenCalled();
+    expect(clearReconnectionToken).not.toHaveBeenCalled();
+    expect(degradeToLobby).not.toHaveBeenCalled();
   });
 });
 
