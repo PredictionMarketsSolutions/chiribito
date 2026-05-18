@@ -314,6 +314,7 @@ export function updateActionButtons(
 ): void {
   if (isAllIn || !state || !ctx.currentSessionId) {
     setActionButtonsEnabled(refs, { canStart: false, canCheck: false, canCall: false, canFold: false, canAllIn: false, canBet: false, canRaise: false });
+    setActionButtonsVisibility(refs, { start: false, check: false, call: false, fold: false, allIn: false, bet: false, raise: false });
     refs.callButton.textContent = "Igualar";
     return;
   }
@@ -347,6 +348,21 @@ export function updateActionButtons(
     canBet,
     canRaise,
   });
+
+  // A1.4 — project the same canX flags onto a visibility axis. Buttons that
+  // do not apply this tick are hidden, not just disabled. Same render tick
+  // as enabled-state, so transitions are atomic.
+  const visibility = computeActionButtonsVisibility(state, ctx.currentSessionId ?? null, {
+    activeCount,
+    isAllIn,
+    me: me ? {
+      sessionId: me.sessionId,
+      currentBet: Number(me.currentBet ?? 0),
+      chips: Number(me.chips ?? 0),
+      isFolded: Boolean(me.isFolded),
+    } : undefined,
+  });
+  setActionButtonsVisibility(refs, visibility);
 }
 
 export function setActionButtonsEnabled(refs: GameUiRefs, e: ActionButtonsEnabled): void {
@@ -357,4 +373,96 @@ export function setActionButtonsEnabled(refs: GameUiRefs, e: ActionButtonsEnable
   refs.allInButton.disabled = !e.canAllIn;
   refs.betButton.disabled = !e.canBet;
   refs.raiseButton.disabled = !e.canRaise;
+}
+
+/* ============================================================
+   A1.4 — contextual action panel visibility.
+
+   Same source of truth as setActionButtonsEnabled (the canX
+   booleans derived in updateActionButtons). Instead of toggling
+   .disabled on buttons that do not apply, we hide them entirely.
+   The state machine is unchanged — we just project onto a
+   parallel visibility axis.
+   ============================================================ */
+
+export interface ActionButtonsVisibility {
+  start: boolean;
+  check: boolean;
+  call: boolean;
+  fold: boolean;
+  allIn: boolean;
+  bet: boolean;
+  raise: boolean;
+}
+
+interface ComputeVisibilityCtx {
+  activeCount: number;
+  isAllIn: boolean;
+  me?: { sessionId: string; currentBet?: number; chips?: number; isFolded?: boolean } | undefined;
+}
+
+const EMPTY_VISIBILITY: ActionButtonsVisibility = {
+  start: false, check: false, call: false, fold: false, allIn: false, bet: false, raise: false,
+};
+
+/** Pure function — easy to unit-test. Visibility = applicability. */
+export function computeActionButtonsVisibility(
+  state: RoomState | null,
+  currentSessionId: string | null,
+  ctx: ComputeVisibilityCtx
+): ActionButtonsVisibility {
+  if (!state || !currentSessionId || ctx.isAllIn) return { ...EMPTY_VISIBILITY };
+
+  if (!state.roundStarted) {
+    return { ...EMPTY_VISIBILITY, start: ctx.activeCount >= 2 };
+  }
+  const isMyTurn = state.currentTurn === currentSessionId;
+  if (!isMyTurn) return { ...EMPTY_VISIBILITY };
+
+  const me = ctx.me;
+  if (!me || me.isFolded || (me.chips ?? 0) <= 0) return { ...EMPTY_VISIBILITY };
+
+  const currentBet = Number(state.currentBet ?? 0);
+  const myBet = Number(me.currentBet ?? 0);
+  const openStreet = currentBet === myBet;
+  const liveRaise = currentBet > myBet;
+
+  return {
+    start: false,
+    check: openStreet,
+    bet:   openStreet,
+    fold:  true,
+    allIn: true,
+    call:  liveRaise,
+    raise: liveRaise,
+  };
+}
+
+export function setActionButtonsVisibility(refs: GameUiRefs, v: ActionButtonsVisibility): void {
+  refs.startGameButton.classList.toggle("hidden", !v.start);
+  refs.checkButton.classList.toggle("hidden", !v.check);
+  refs.callButton.classList.toggle("hidden", !v.call);
+  refs.foldButton.classList.toggle("hidden", !v.fold);
+  refs.allInButton.classList.toggle("hidden", !v.allIn);
+  refs.betButton.classList.toggle("hidden", !v.bet);
+  refs.raiseButton.classList.toggle("hidden", !v.raise);
+
+  // Hide the bet-group (input + bet + raise) whenever neither bet nor raise
+  // applies — otherwise the empty input would float beside the start button
+  // in pre-game.
+  const betGroup = refs.betButton.parentElement; // .bet-group
+  if (betGroup) betGroup.classList.toggle("hidden", !(v.bet || v.raise));
+
+  // Hide the action-group (check + call + fold + all-in) when no in-hand
+  // action applies — keeps the chrome quiet between hands and during
+  // not-my-turn waits.
+  const actionGroup = refs.checkButton.parentElement; // .action-group
+  if (actionGroup) actionGroup.classList.toggle("hidden", !(v.check || v.call || v.fold || v.allIn));
+
+  // Hide the whole panel chrome when no action applies at all (waiting for
+  // other players, post-tournament, all-in lock). The container is fixed
+  // bottom-right and would otherwise float as an empty chrome box.
+  const anyVisible = v.start || v.check || v.call || v.fold || v.allIn || v.bet || v.raise;
+  const container = refs.startGameButton.parentElement; // .game-actions
+  if (container) container.classList.toggle("hidden", !anyVisible);
 }
