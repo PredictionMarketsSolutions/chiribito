@@ -78,8 +78,8 @@ export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
   deps.renderHandHistoryUi();
   deps.setAuthOverlayVisible(true);
   deps.setAuthMessage("", "info");
-  deps.roomStatusEl.textContent = message || "not joined";
-  deps.phaseStatusEl.textContent = "waiting";
+  deps.roomStatusEl.textContent = message || "sin mesa";
+  deps.phaseStatusEl.textContent = "Esperando";
   deps.turnStatusEl.textContent = "-";
   deps.stopTurnTimer(deps.turnTimerState, deps.turnTimerChipEl);
   deps.potStatusEl.textContent = "0";
@@ -89,7 +89,7 @@ export function resetRoomUi(deps: ResetRoomUiDeps, message?: string): void {
   deps.winningHandStatusEl.textContent = "-";
   deps.winnersStatusEl.textContent = "-";
   deps.potChipEl.textContent = "0";
-  deps.phaseChipEl.textContent = "waiting";
+  deps.phaseChipEl.textContent = "Esperando";
   deps.turnChipEl.textContent = "-";
   deps.turnTimerChipEl.textContent = "-";
   deps.winningHandChipEl.textContent = "-";

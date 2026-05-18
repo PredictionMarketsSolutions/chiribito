@@ -295,7 +295,7 @@ export function updateActionButtons(
 ): void {
   if (isAllIn || !state || !ctx.currentSessionId) {
     setActionButtonsEnabled(refs, { canStart: false, canCheck: false, canCall: false, canFold: false, canAllIn: false, canBet: false, canRaise: false });
-    refs.callButton.textContent = "Call";
+    refs.callButton.textContent = "Igualar";
     return;
   }
   const entries = getUserEntries(state).filter(isPlayerState);
@@ -310,7 +310,7 @@ export function updateActionButtons(
   const canCheck = canAct && currentBet === myBet;
   const canCall = canAct && currentBet > myBet && myChips > 0;
   const callAmount = currentBet - myBet;
-  refs.callButton.textContent = canCall ? `Call ($${callAmount})` : "Call";
+  refs.callButton.textContent = canCall ? `Igualar ($${callAmount})` : "Igualar";
 
   const canFold = canAct;
   const canAllIn = canAct && myChips > 0;

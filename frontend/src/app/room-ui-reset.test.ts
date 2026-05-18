@@ -62,7 +62,7 @@ describe("room-ui-reset", () => {
     expect(deps.disconnectRoom).toHaveBeenCalled();
     expect(deps.setRoom).toHaveBeenCalledWith(null);
     expect(deps.roomStatusEl.textContent).toBe("left");
-    expect(deps.phaseStatusEl.textContent).toBe("waiting");
+    expect(deps.phaseStatusEl.textContent).toBe("Esperando");
     expect(deps.winnersStatusEl.textContent).toBe("-");
   });
 });
