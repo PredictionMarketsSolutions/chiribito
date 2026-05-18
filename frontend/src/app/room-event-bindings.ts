@@ -1,5 +1,7 @@
 import type { RoomState } from "../types";
 import type { PlayerActionPayload, TurnTimerPayload } from "../types/room-messages";
+import { isPerfEnabled } from "../security";
+import { perfStateChangeInc } from "../perf/perf-counters";
 
 type RoomLike = {
   onMessage: (type: string, handler: (payload: any) => void) => void;
@@ -60,6 +62,7 @@ export function bindCoreRoomEvents(deps: RoomEventBindingsDeps): void {
   });
 
   deps.room.onStateChange((state) => {
+    if (isPerfEnabled()) perfStateChangeInc();
     deps.setLastRoomState(state);
     if (!deps.isWinnerPhaseActive()) {
       deps.renderState(state);

@@ -14,6 +14,8 @@ import { renderPhaseIndicator } from "./phase-indicator";
 import { phaseLabel } from "./phases";
 import { applyHideIfEmpty } from "./meta-pills";
 import { speakingContext } from "./speaking-order";
+import { isPerfEnabled } from "../security";
+import { perfRerenderInc } from "../perf/perf-counters";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
   return Boolean(ctx.tableScene?.isActive());
@@ -24,6 +26,7 @@ export function renderSeats(
   refs: GameUiRefs,
   ctx: GameUiContext
 ): void {
+  if (isPerfEnabled()) perfRerenderInc("renderSeats");
   const entries = getUserEntries(state).filter(isPlayerState);
   const { visualSeats, visualSeatNumbers, dealerIndex } = computeVisualSeatLayout(state, ctx.currentSessionId);
   const inWinnerPhase = isInWinnerPhase(ctx.winnerDisplayState);
@@ -117,6 +120,7 @@ export function renderSeats(
 }
 
 export function renderPlayers(state: RoomState, refs: GameUiRefs, ctx: GameUiContext): void {
+  if (isPerfEnabled()) perfRerenderInc("renderPlayers");
   refs.playersList.innerHTML = "";
   refs.mobileSeatsList.innerHTML = "";
   if (!state?.users) return;
@@ -160,6 +164,7 @@ export function renderState(
   ctx: GameUiContext,
   onUpdateTurnTimer: (state: RoomState) => void
 ): void {
+  if (isPerfEnabled()) perfRerenderInc("renderState");
   if (!state) return;
   const entries = getUserEntries(state).filter(isPlayerState);
   ctx.latestPlayerNames.clear();
@@ -312,6 +317,7 @@ export function updateActionButtons(
   ctx: GameUiContext,
   isAllIn: boolean = false
 ): void {
+  if (isPerfEnabled()) perfRerenderInc("updateActionButtons");
   if (isAllIn || !state || !ctx.currentSessionId) {
     setActionButtonsEnabled(refs, { canStart: false, canCheck: false, canCall: false, canFold: false, canAllIn: false, canBet: false, canRaise: false });
     setActionButtonsVisibility(refs, { start: false, check: false, call: false, fold: false, allIn: false, bet: false, raise: false });

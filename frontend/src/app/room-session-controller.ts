@@ -15,6 +15,7 @@ import type { JoinMode } from "./room-join";
 import { validateJoinRequest, handleJoinError } from "./room-join";
 import { applyPostJoinSetup, finalizeJoinAttempt } from "./join-room-lifecycle";
 import { handleRoomLeave } from "./room-leave-handler";
+import { attachPerfWsCounters } from "../connection";
 import {
   handleGameResultMessage,
   handleHeartbeatAckMessage,
@@ -191,6 +192,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
    *  onLeave handler, and every onMessage subscription. Without this shared
    *  block, a reconnected room would silently miss game events. */
   function mountJoinedRoom(joinedRoom: Room): void {
+    attachPerfWsCounters(joinedRoom);
     applyPostJoinSetup({
       joinedRoom,
       setRoom: deps.setRoom,

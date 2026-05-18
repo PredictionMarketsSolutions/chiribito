@@ -110,11 +110,17 @@ import {
   validatePassword,
   validateUsername,
   stateGuard,
-  isDebugEnabled
+  isDebugEnabled,
+  isPerfEnabled
 } from "./security";
+import { perfTickerInc, startPerfReporter } from "./perf/perf-counters";
 
 if (isDebugEnabled()) {
   document.body.classList.add("debug-mode");
+}
+
+if (isPerfEnabled()) {
+  document.body.classList.add("perf-mode");
 }
 
 // Install audio + motion feedback observers (auto-trigger sounds on UI state changes)
@@ -428,6 +434,11 @@ async function initPixiLayer() {
     backgroundAlpha: 0,
     antialias: true
   });
+
+  if (isPerfEnabled()) {
+    pixiApp.ticker.add(perfTickerInc);
+    startPerfReporter();
+  }
 
   const canvas = (pixiApp as unknown as { view?: HTMLCanvasElement; canvas?: HTMLCanvasElement }).view
     ?? (pixiApp as unknown as { canvas?: HTMLCanvasElement }).canvas;

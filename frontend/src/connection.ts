@@ -3,6 +3,8 @@
  */
 
 import { Client, type Room } from "@colyseus/sdk";
+import { isPerfEnabled } from "./security";
+import { perfWsInInc, perfWsOutInc } from "./perf/perf-counters";
 
 let wsClient: Client | null = null;
 // In the browser, window.setInterval / setTimeout return number, not NodeJS.Timeout.
@@ -233,4 +235,37 @@ export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void
     const msg = err instanceof Error ? err.message : String(err);
     deps.log(`joinRoom fallback failed (${msg}); director will retry.`);
   }
+}
+
+/**
+ * Attach `?perf=1` WS message counters to a joined room.
+ *
+ * Wildcard listener for incoming + monkey-patch on `room.send` for outgoing.
+ * Outgoing counter via patch covers ALL sends (heartbeats included) without
+ * needing per-call-site instrumentation. Safe to call multiple times because
+ * counters are additive across attaches; recommended once per `mountJoinedRoom`.
+ *
+ * No-op when `isPerfEnabled()` is false — installs nothing, perturbs nothing.
+ */
+export function attachPerfWsCounters(room: Room): void {
+  if (!isPerfEnabled()) return;
+
+  room.onMessage("*", (_type, message) => {
+    let byteSize = 0;
+    try {
+      byteSize = JSON.stringify(message).length;
+    } catch {
+      byteSize = 0;
+    }
+    perfWsInInc(byteSize);
+  });
+
+  const originalSend = room.send.bind(room);
+  // Colyseus Room.send is overloaded; wrap by reassignment with broad typing.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (room as any).send = function patchedSend(type: string | number, payload?: unknown) {
+    perfWsOutInc();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (originalSend as any)(type, payload);
+  };
 }

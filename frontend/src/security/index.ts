@@ -177,3 +177,4 @@ export default {
 };
 
 export { isDebugEnabled } from "./debug-mode";
+export { isPerfEnabled } from "./perf-mode";
