@@ -467,19 +467,23 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
   //   global-lifecycle visibilitychange handler which fans into the same
   //   director.requestReconnect path used by step 8. Heartbeat was paused
   //   while hidden; on resume it restarts and the director recovers.
+  //
+  //   Note: we pass the evaluate body as a string instead of a closure
+  //   because tsx wraps nested function literals with `__name(...)` which
+  //   is undefined in the page context.
   logStep("Tab inactive + drop + resume restores mesa");
   {
-    await page.evaluate(() => {
-      Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
+    await page.evaluate(
+      `Object.defineProperty(document, "hidden", { configurable: true, get: function () { return true; } });
+       document.dispatchEvent(new Event("visibilitychange"));`
+    );
     await setOffline(page, true);
     await new Promise((r) => setTimeout(r, 4000));
     await setOffline(page, false);
-    await page.evaluate(() => {
-      Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
-      document.dispatchEvent(new Event("visibilitychange"));
-    });
+    await page.evaluate(
+      `Object.defineProperty(document, "hidden", { configurable: true, get: function () { return false; } });
+       document.dispatchEvent(new Event("visibilitychange"));`
+    );
     const recovered = await waitBannerHidden(page, 20000);
     const tableStill = await page.evaluate(() => {
       const t = document.querySelector("#table .table-surface") as HTMLElement | null;
@@ -517,30 +521,35 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
 
   // 11 Multiple-retry path. Offline window long enough to force >=2 attempts
   //     to fail at the WS-open stage, then come back online and let a later
-  //     attempt succeed. Verified by inspecting the director's banner copy
-  //     reaching attempt 2 or higher.
+  //     attempt succeed. Verified by scraping the in-page #log textarea
+  //     (main.ts log() writes there, not to console) for "Reconnect attempt
+  //     N/" lines emitted by attemptReconnect.
   logStep("Multiple retries before reconnect success");
   {
-    const attemptLines: string[] = [];
-    const consoleSpy = (msg: ConsoleMessage) => {
-      const t = msg.text();
-      if (/Reconnect attempt \d+/.test(t)) attemptLines.push(t);
-    };
-    page.on("console", consoleSpy);
+    // Read raw textContent and do the regex match in Node-land — embedding
+    // a regex literal inside page.evaluate's string body confuses the
+    // implicit `return (...)` wrapper Playwright builds.
+    const ATTEMPT_RX = /Reconnect attempt \d+\//g;
+    const beforeText: string = await page.evaluate(
+      `document.getElementById("log")?.textContent ?? ""`
+    );
+    const beforeAttempts = (beforeText.match(ATTEMPT_RX) ?? []).length;
     await setOffline(page, true);
     await new Promise((r) => setTimeout(r, 4000));
     await setOffline(page, false);
     const hidden = await waitBannerHidden(page, 20000);
-    page.off("console", consoleSpy);
-    const sawAttempt2OrMore = attemptLines.some((line) => /Reconnect attempt [2-9]\d*\//.test(line));
-    if (hidden && sawAttempt2OrMore) {
+    const afterText: string = await page.evaluate(
+      `document.getElementById("log")?.textContent ?? ""`
+    );
+    const newAttempts = ((afterText.match(ATTEMPT_RX) ?? []).length) - beforeAttempts;
+    if (hidden && newAttempts >= 2) {
       pass(
-        `recovered after >=2 attempts (saw ${attemptLines.length} attempt logs)`,
+        `recovered after ${newAttempts} attempts logged in this step`,
         await shot(page, `${scenarioName}_11_multi`)
       );
     } else {
       failStep(
-        `multi-retry FAILED: hidden=${hidden} sawAttempt2OrMore=${sawAttempt2OrMore} lines=${JSON.stringify(attemptLines)}`
+        `multi-retry FAILED: hidden=${hidden} newAttempts=${newAttempts} (before=${beforeAttempts})`
       );
     }
   }
