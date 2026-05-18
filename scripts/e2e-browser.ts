@@ -492,6 +492,84 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
     }
   }
 
+  // 10 Slow network recovery must still complete inside the 60s server seat
+  //    window. Emulates mobile 3G-grade conditions (50 kB/s, 500 ms latency)
+  //    plus a 2s offline blip. Director should retry via reconnect(token)
+  //    and succeed without falling all the way through to degradeToLobby.
+  logStep("Slow network reconnect stays inside server window");
+  {
+    await emulateSlowNetwork(page, true);
+    await setOffline(page, true);
+    await new Promise((r) => setTimeout(r, 2000));
+    await setOffline(page, false);
+    const hidden = await waitBannerHidden(page, 30000);
+    await emulateSlowNetwork(page, false);
+    const tableStill = await page.evaluate(() => {
+      const t = document.querySelector("#table .table-surface") as HTMLElement | null;
+      return !!t && t.offsetWidth > 0;
+    });
+    if (hidden && tableStill) {
+      pass("recovery on slow network", await shot(page, `${scenarioName}_10_slow`));
+    } else {
+      failStep(`slow-network recovery FAILED: hidden=${hidden} tableStill=${tableStill}`);
+    }
+  }
+
+  // 11 Multiple-retry path. Offline window long enough to force >=2 attempts
+  //     to fail at the WS-open stage, then come back online and let a later
+  //     attempt succeed. Verified by inspecting the director's banner copy
+  //     reaching attempt 2 or higher.
+  logStep("Multiple retries before reconnect success");
+  {
+    const attemptLines: string[] = [];
+    const consoleSpy = (msg: ConsoleMessage) => {
+      const t = msg.text();
+      if (/Reconnect attempt \d+/.test(t)) attemptLines.push(t);
+    };
+    page.on("console", consoleSpy);
+    await setOffline(page, true);
+    await new Promise((r) => setTimeout(r, 4000));
+    await setOffline(page, false);
+    const hidden = await waitBannerHidden(page, 20000);
+    page.off("console", consoleSpy);
+    const sawAttempt2OrMore = attemptLines.some((line) => /Reconnect attempt [2-9]\d*\//.test(line));
+    if (hidden && sawAttempt2OrMore) {
+      pass(
+        `recovered after >=2 attempts (saw ${attemptLines.length} attempt logs)`,
+        await shot(page, `${scenarioName}_11_multi`)
+      );
+    } else {
+      failStep(
+        `multi-retry FAILED: hidden=${hidden} sawAttempt2OrMore=${sawAttempt2OrMore} lines=${JSON.stringify(attemptLines)}`
+      );
+    }
+  }
+
+  // 12 Long drop > 65s exhausts all attempts inside the 60s server window.
+  //     Director must transition to degraded state, clearReconnectionToken
+  //     + degradeToLobby, and leave the auth token intact so the user can
+  //     re-enter the lobby and rejoin manually.
+  logStep("Long drop > 65s degrades to lobby with auth intact");
+  {
+    await setOffline(page, true);
+    await new Promise((r) => setTimeout(r, 65_000));
+    await setOffline(page, false);
+    const lobbyShown = await page.waitForFunction(
+      () => {
+        const l = document.getElementById("lobby-overlay");
+        return !!l && !l.classList.contains("hidden");
+      },
+      undefined,
+      { timeout: 30000 }
+    ).then(() => true, () => false);
+    const stillAuth = await page.evaluate(() => !!sessionStorage.getItem("chiri_auth_token"));
+    if (lobbyShown && stillAuth) {
+      pass("graceful degradation to lobby with auth", await shot(page, `${scenarioName}_12_long_drop`));
+    } else {
+      failStep(`long-drop degradation FAILED: lobbyShown=${lobbyShown} stillAuth=${stillAuth}`);
+    }
+  }
+
   // 7 stale lastRoomId must NOT trap the user — fall back to lobby cleanly
   //   and clear the stale id so subsequent reloads behave normally. Tests the
   //   robustness of the new recovery path: if joinRoom rejects, recover.ts
