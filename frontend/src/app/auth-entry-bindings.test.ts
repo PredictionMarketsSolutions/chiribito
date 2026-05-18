@@ -13,7 +13,7 @@ describe("auth-entry-bindings", () => {
   function setup() {
     const register = vi.fn().mockResolvedValue(undefined);
     const login = vi.fn().mockResolvedValue(undefined);
-    const openLobby = vi.fn().mockResolvedValue(undefined);
+    const joinAsGuest = vi.fn().mockResolvedValue(undefined);
     const mapAuthError = vi.fn((msg: string) => `mapped:${msg}`);
     const setAuthMessage = vi.fn();
     const log = vi.fn();
@@ -26,23 +26,23 @@ describe("auth-entry-bindings", () => {
       },
       register,
       login,
-      openLobby,
+      joinAsGuest,
       mapAuthError,
       setAuthMessage,
       log,
     });
 
-    return { register, login, openLobby, mapAuthError, setAuthMessage, log };
+    return { register, login, joinAsGuest, mapAuthError, setAuthMessage, log };
   }
 
   it("binds clicks to register/login/join handlers", () => {
-    const { register, login, openLobby } = setup();
+    const { register, login, joinAsGuest } = setup();
     (document.querySelector("#register") as HTMLButtonElement).click();
     (document.querySelector("#login") as HTMLButtonElement).click();
     (document.querySelector("#join") as HTMLButtonElement).click();
     expect(register).toHaveBeenCalled();
     expect(login).toHaveBeenCalled();
-    expect(openLobby).toHaveBeenCalled();
+    expect(joinAsGuest).toHaveBeenCalled();
   });
 
   it("maps and shows error when register rejects", async () => {
@@ -67,12 +67,12 @@ describe("auth-entry-bindings", () => {
     expect(log).toHaveBeenCalledWith("Login error: l-fail");
   });
 
-  it("logs lobby error when openLobby rejects", async () => {
-    const { openLobby, log } = setup();
-    openLobby.mockRejectedValueOnce(new Error("join-fail"));
+  it("logs guest entry error when joinAsGuest rejects", async () => {
+    const { joinAsGuest, log } = setup();
+    joinAsGuest.mockRejectedValueOnce(new Error("guest-fail"));
     (document.querySelector("#join") as HTMLButtonElement).click();
     await vi.waitFor(() => {
-      expect(log).toHaveBeenCalledWith("Lobby error: join-fail");
+      expect(log).toHaveBeenCalledWith("Guest entry error: guest-fail");
     });
   });
 });

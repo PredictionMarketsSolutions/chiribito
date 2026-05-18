@@ -101,3 +101,31 @@ export async function loginFlow(deps: LoginFlowDeps): Promise<void> {
     deps.log(`Login error: ${message}`);
   }
 }
+
+export type GuestFlowDeps = {
+  generateCredentials: () => { username: string; email: string; password: string };
+  setAuthMessage: (message: string, type?: AuthMessageType) => void;
+  log: (message: string) => void;
+  request: (path: string, body: Record<string, unknown>) => Promise<AuthApiResponse>;
+  mapAuthError: (message: string, mode: "register") => string;
+  persistTokens: (token: string | null, refreshToken: string | null) => void;
+  onAuthSuccess: () => void;
+};
+
+export async function guestFlow(deps: GuestFlowDeps): Promise<void> {
+  const credentials = deps.generateCredentials();
+  deps.log(`Entering as guest (${credentials.username})...`);
+  deps.setAuthMessage("Entrando como invitado...", "info");
+  try {
+    const data = await deps.request("/api/auth/register", credentials);
+    const token = typeof data.token === "string" ? data.token : null;
+    const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
+    deps.persistTokens(token, refreshToken);
+    deps.onAuthSuccess();
+    deps.log("Guest registered and token received.");
+  } catch (error) {
+    const message = deps.mapAuthError(error instanceof Error ? error.message : String(error), "register");
+    deps.setAuthMessage(message, "error");
+    deps.log(`Guest entry error: ${message}`);
+  }
+}

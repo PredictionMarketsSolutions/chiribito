@@ -13,7 +13,7 @@ export type AuthEntryBindingDeps = {
   refs: AuthEntryBindingRefs;
   register: AuthAction;
   login: AuthAction;
-  openLobby: AuthAction;
+  joinAsGuest: AuthAction;
   mapAuthError: MapAuthErrorFn;
   setAuthMessage: SetAuthMessageFn;
   log: LogFn;
@@ -39,9 +39,9 @@ export function bindAuthEntryButtons(deps: AuthEntryBindingDeps): void {
   });
 
   deps.refs.joinButton.addEventListener("click", () => {
-    deps.openLobby().catch((error) => {
+    deps.joinAsGuest().catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
-      deps.log(`Lobby error: ${message}`);
+      deps.log(`Guest entry error: ${message}`);
     });
   });
 }

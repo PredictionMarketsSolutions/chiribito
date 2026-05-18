@@ -96,7 +96,7 @@ import { applyAllInShowdownOutcome, applyStandardRoundOutcome } from "./app/roun
 import { bindCoreRoomEvents } from "./app/room-event-bindings";
 import { applyPostJoinSetup, finalizeJoinAttempt } from "./app/join-room-lifecycle";
 import { setupCardPopover } from "./app/card-popover";
-import { registerFlow, loginFlow } from "./app/auth-flows";
+import { registerFlow, loginFlow, guestFlow } from "./app/auth-flows";
 import { clearAuthSession, handleTokenInvalidated as handleTokenInvalidatedFn, startTokenMonitor as startTokenMonitorApp } from "./app/auth-session";
 import { resetRoomUi as resetRoomUiFn } from "./app/room-ui-reset";
 import { registerGlobalLifecycle } from "./app/global-lifecycle";
@@ -659,6 +659,34 @@ async function register() {
   });
 }
 
+async function joinAsGuest() {
+  await guestFlow({
+    generateCredentials: () => {
+      const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+      const username = `invitado_${suffix}`;
+      const email = `${username}@chiribito.guest`;
+      const password = crypto.randomUUID();
+      return { username, email, password };
+    },
+    setAuthMessage,
+    log,
+    request,
+    mapAuthError,
+    persistTokens: (nextToken, nextRefreshToken) => {
+      token = nextToken;
+      refreshToken = nextRefreshToken;
+      if (refreshToken) SecureStorage.saveRefreshToken(refreshToken);
+      if (token) SecureStorage.saveAccessToken(token);
+      tokenStatus.textContent = token ? "set" : "none";
+    },
+    onAuthSuccess: () => {
+      tokenInvalidNotified = false;
+      startTokenMonitor();
+      openLobby().catch((err) => log(`Open lobby after guest entry failed: ${err}`));
+    },
+  });
+}
+
 async function login() {
   await loginFlow({
     getLoginValues,
@@ -957,7 +985,7 @@ bindAuthEntryButtons({
   },
   register,
   login,
-  openLobby,
+  joinAsGuest,
   mapAuthError,
   setAuthMessage,
   log,
