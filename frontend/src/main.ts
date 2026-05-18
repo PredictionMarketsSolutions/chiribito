@@ -109,8 +109,13 @@ import {
   validateEmail,
   validatePassword,
   validateUsername,
-  stateGuard
+  stateGuard,
+  isDebugEnabled
 } from "./security";
+
+if (isDebugEnabled()) {
+  document.body.classList.add("debug-mode");
+}
 
 // Install audio + motion feedback observers (auto-trigger sounds on UI state changes)
 installFeedback();

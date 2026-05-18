@@ -175,3 +175,5 @@ export default {
   clearSecurityData,
   FrontendSecurityConfig,
 };
+
+export { isDebugEnabled } from "./debug-mode";
