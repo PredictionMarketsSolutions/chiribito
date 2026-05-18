@@ -112,6 +112,10 @@ export type JoinRoomSessionControllerDeps = {
 
   // Persistent + banner
   saveLastRoomId: (roomId: string) => void;
+  /** Persist the Colyseus reconnectionToken returned by a successful join so
+   *  the recovery path (reload / post-login hydration) can call
+   *  client.reconnect(token) instead of joinById. */
+  saveReconnectionToken: (token: string) => void;
   showWinnerBanner: (text: string) => void;
   revealAllInCards: (cards: string[], onComplete?: () => void) => void;
 
@@ -277,6 +281,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           deps.roomStatusEl.textContent = text;
         },
         saveLastRoomId: deps.saveLastRoomId,
+        saveReconnectionToken: deps.saveReconnectionToken,
         log: deps.log,
       });
 

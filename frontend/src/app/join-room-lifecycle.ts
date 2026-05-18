@@ -23,6 +23,13 @@ export type ApplyPostJoinSetupDeps = {
   preloadCardImages: () => void;
   setRoomStatusText: (text: string) => void;
   saveLastRoomId: (roomId: string) => void;
+  /** Persist the Colyseus reconnectionToken so a subsequent reload (or
+   *  post-login recovery) can call client.reconnect(token) instead of
+   *  joinById, which would collide with the SESSION_EXISTS gate while the
+   *  seat is held by allowReconnection. Persisted synchronously here so the
+   *  window between join success and a potential immediate disconnect cannot
+   *  drop the token. */
+  saveReconnectionToken: (token: string) => void;
   log: (message: string) => void;
 };
 
@@ -52,6 +59,12 @@ export function applyPostJoinSetup(deps: ApplyPostJoinSetupDeps): string {
     ?? "joined";
   deps.setRoomStatusText(roomId);
   deps.saveLastRoomId(roomId);
+
+  const reconnectToken = (deps.joinedRoom as Room & { reconnectionToken?: string }).reconnectionToken;
+  if (reconnectToken) {
+    deps.saveReconnectionToken(reconnectToken);
+  }
+
   deps.log("Joined room successfully.");
   return roomId;
 }

@@ -799,6 +799,7 @@ const roomSessionController = createRoomSessionController({
   schemaArrayToCards, renderCardRow, preloadCardImages,
   clearHandHistory, renderHandHistoryUi, addHandHistoryEntry,
   saveLastRoomId: (id) => { SecureStorage.saveLastRoomId(id); },
+  saveReconnectionToken: (token) => { SecureStorage.saveReconnectionToken(token); },
   showWinnerBanner, revealAllInCards,
   getLastHeartbeatSendTime: () => lastHeartbeatSendTime,
   recordRtt, clearHeartbeatTimeout: clearHeartbeatTimeoutFn,
