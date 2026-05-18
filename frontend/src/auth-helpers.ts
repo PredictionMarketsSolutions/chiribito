@@ -57,6 +57,16 @@ export function getFormValues(): { username: string; email: string; password: st
   return { username, email, password };
 }
 
+/**
+ * Non-throwing read of the username input. Used by the join-mesa path, which
+ * only needs a display name and runs in contexts (lobby, reload-recovery)
+ * where the auth form may be empty. Auth validation lives in registerFlow,
+ * not here.
+ */
+export function getUsernameFromInput(): string {
+  return (document.querySelector("#username") as HTMLInputElement)?.value?.trim() ?? "";
+}
+
 export function getLoginValues(): { email: string; password: string } {
   const email = (document.querySelector("#email") as HTMLInputElement)?.value?.trim() ?? "";
   const password = (document.querySelector("#password") as HTMLInputElement)?.value ?? "";

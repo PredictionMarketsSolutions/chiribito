@@ -15,6 +15,7 @@ import {
   request,
   getFormValues,
   getLoginValues,
+  getUsernameFromInput,
   mapAuthError,
   setAuthOverlayVisible,
   setAuthMessage
@@ -46,6 +47,7 @@ import { renderCardRow, preloadCardImages } from "./ui-cards";
 import { installFeedback } from "./feedback";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { runPostLoginAutoRejoin } from "./auth/login-auto-rejoin";
+import { recoverMesaOrOpenLobby } from "./auth/recover-or-lobby";
 import { disconnectRoom } from "./auth/room-disconnect";
 import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
 import {
@@ -773,7 +775,13 @@ const roomSessionController = createRoomSessionController({
   setJoinInProgress: (v) => { joinInProgress = v; }, setLobbyJoinButtonsEnabled,
   setJoinByIdEnabled: (e) => { joinByIdButton.disabled = !e; }, setCreateTableEnabled: (e) => { createTableButton.disabled = !e; },
   createTableCooldownMs: CREATE_TABLE_COOLDOWN_MS, setConnectionState, log,
-  getWsClient, getFormValues, setAuthOverlayVisible, setLobbyOverlayVisible, setTournamentResultVisible, setAuthMessage, setLobbyMessage, handleTokenInvalidated,
+  getWsClient,
+  // roomSessionController only needs the in-form username (used as Colyseus
+  // display name). On reload-recovery the form input is empty, so we read it
+  // non-throwing here instead of the auth-helpers getFormValues (which throws
+  // when register fields are missing — appropriate for registerFlow only).
+  getFormValues: () => ({ username: getUsernameFromInput() }),
+  setAuthOverlayVisible, setLobbyOverlayVisible, setTournamentResultVisible, setAuthMessage, setLobbyMessage, handleTokenInvalidated,
   setRoom: (v) => { room = v; }, setCurrentSessionId: (id) => { currentSessionId = id; gameUiContext.currentSessionId = id; },
   setShouldAutoReconnect: (v) => { shouldAutoReconnect = v; }, setTournamentEnded: (v) => { tournamentEnded = v; }, getTournamentEnded: () => tournamentEnded,
   setHadRoomWhenBackgrounded: (v) => { hadRoomWhenBackgrounded = v; }, setReconnectAttempts: (n) => { reconnectAttempts = n; },
@@ -956,15 +964,27 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Session hydration on startup
 // Restore tokens from SecureStorage so a page reload does not bounce the user
-// back to the auth screen. The browser E2E exposed this as the "reload during
-// session loses session" silent failure.
-//   1. If we have an access token in sessionStorage → restore + open lobby
-//   2. Else if we have a refresh token in localStorage → try refresh + restore
+// back to the auth screen. Once tokens are restored, recoverMesaOrOpenLobby
+// centralises the "do we rejoin a previous mesa, or just open lobby?" decision
+// so we never go through openLobby() — which clears lastRoomId via
+// onEnterLobby() — before the rejoin attempt can read it.
+//   1. If we have an access token → restore + recover (rejoin mesa OR lobby)
+//   2. Else if we have a refresh token → try refresh + recover
 //   3. Else → leave auth visible (default state from HTML)
 // ─────────────────────────────────────────────────────────────────────────────
 (() => {
   const savedAccess = SecureStorage.getAccessToken();
   const savedRefresh = SecureStorage.getRefreshToken();
+
+  const buildRecoveryDeps = () => ({
+    getLastRoomId: () => SecureStorage.getLastRoomId(),
+    joinRoom: (forceReplace: boolean, opts: { mode: "joinById"; roomId: string }) =>
+      joinRoom(forceReplace, opts),
+    isJoined: () => room !== null,
+    openLobby,
+    clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+    log,
+  });
 
   if (savedAccess) {
     token = savedAccess;
@@ -973,7 +993,13 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
     tokenInvalidNotified = false;
     startTokenMonitor();
     log("Session restored from sessionStorage");
-    openLobby().catch((err) => log(`Lobby open on hydrate failed: ${err}`));
+    // Pre-hide auth so the user does not see an auth-overlay flash while the
+    // recovery join attempt is in flight; the helper will then reveal either
+    // the mesa (on rejoin success) or the lobby (clean fallback).
+    setAuthOverlayVisible(false);
+    recoverMesaOrOpenLobby(buildRecoveryDeps()).catch((err) =>
+      log(`Hydrate recovery error: ${err?.message ?? err}`),
+    );
     return;
   }
 
@@ -990,7 +1016,10 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
           tokenInvalidNotified = false;
           startTokenMonitor();
           log("Session restored via refresh");
-          openLobby().catch((err) => log(`Lobby open after refresh hydrate failed: ${err}`));
+          setAuthOverlayVisible(false);
+          recoverMesaOrOpenLobby(buildRecoveryDeps()).catch((err) =>
+            log(`Hydrate-refresh recovery error: ${err?.message ?? err}`),
+          );
         } else {
           SecureStorage.clearAllTokens();
           log(`Token refresh on hydrate failed: ${result.reason}. Keeping auth screen.`);
