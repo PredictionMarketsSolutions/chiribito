@@ -349,3 +349,30 @@ Resolves audit finding P0-4.
 - Pixi continuity: the only Pixi line touched is `potText.visible = false`. No removals, no shape changes.
 - Test surface: the only test update is the `room-ui-reset.test.ts:65` literal assertion. The 199 vitest + 502 jest + 40 E2E stay green.
 - Honest scope: A1 names what it does (chrome cleanup) and explicitly defers A2 (sidebar / player rail), B (compact table), C (banner visibility), E (depth + tactility), F (lobby polish). No scope creep.
+
+---
+
+## What landed (closeout 2026-05-18)
+
+| Micro-slice | Commit | Tests added |
+|---|---|---|
+| A1.1 castizo localization | `3bc2928` | 1 assertion updated (room-ui-reset.test.ts) |
+| A1.2 pot dedup (Pixi hide + DOM pulse) | `5ecdd8e` | 0 (unit-test skipped — mocking the TableScene constructor was heavier than the one-line change; verified visually) |
+| A1.3 contextual meta pills | `bfb96d6` | 6 new (meta-pills.test.ts) |
+| A1.4 contextual action panel | `d5e583f` | 7 new (action-panel-visibility.test.ts) |
+
+Final suite: **213/213 vitest + 475/475 jest game + 27/27 jest api + 40/40 E2E × 3 runs**. Move 1.5 + Move 2 paths untouched.
+
+Visual audit baseline (`.dev-stack/visual-audit__A1_baseline/`) vs after (`.dev-stack/visual-audit__A1_after/`) confirms on every viewport (desktop 1440 / tablet 768 / mobile 375):
+
+- pot badge reads `Bote 0` (not `Pot 0`);
+- no `Pot: 0` Pixi text overlay on the felt;
+- action panel localised: `Empezar mano` / `Pasar` / `Igualar` / `Tirar` / `Envidarse` / `Apostar` / `Subir` / `Cantidad`;
+- pre-game with 1 active player: action panel **completely hidden** (no floating empty chrome);
+- pre-game with 2+ active players: action panel shows **only `Empezar mano`**;
+- meta row in waiting state shows **only the phase chip + 6 dots** (no `Turno -` / `Reloj -` / `Jugada -` placeholders);
+- min-height reservation on the meta row prevents layout shift between waiting and in-hand transitions.
+
+**Real bug uncovered during A1.4 implementation:** my first pass referenced `refs.betAmountInput` which is not a field of `GameUiRefs` (it lives in the separate `GameActionBindingRefs`). Reading `undefined.classList` crashed `setActionButtonsVisibility` silently after the button toggles, leaving the `.game-actions` container visible. Switched to `parentElement` chains accessible from the actual `GameUiRefs` buttons (`betButton.parentElement = .bet-group`, `checkButton.parentElement = .action-group`, `startGameButton.parentElement = .game-actions`). Documented the debugging path in the A1.4 commit message.
+
+**A2 sidebar / player rail remains untouched** — next foco when the user authorises it. The dev-stats sidebar (P0-1 of the audit) is exactly where the A2 slice opens.
