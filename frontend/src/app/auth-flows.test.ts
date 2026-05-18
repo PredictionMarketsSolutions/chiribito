@@ -21,11 +21,9 @@ describe("auth-flows", () => {
     expect(setAuthMessage).toHaveBeenCalledWith("bad email", "error");
   });
 
-  it("loginFlow persists tokens and triggers auto rejoin on success", async () => {
+  it("loginFlow persists tokens and fires single onAuthSuccess on success", async () => {
     const persistTokens = vi.fn();
     const onAuthSuccess = vi.fn();
-    const runAutoRejoin = vi.fn();
-    const joinRoom = vi.fn().mockResolvedValue(undefined);
     await loginFlow({
       getLoginValues: () => ({ email: "ok@test.com", password: "Password123!" }),
       validateEmail: () => ({ valid: true }),
@@ -36,11 +34,26 @@ describe("auth-flows", () => {
       mapAuthError: (m) => m,
       persistTokens,
       onAuthSuccess,
-      runAutoRejoin,
-      joinRoom,
     });
     expect(persistTokens).toHaveBeenCalledWith("t", "r");
-    expect(onAuthSuccess).toHaveBeenCalled();
-    expect(runAutoRejoin).toHaveBeenCalledWith(joinRoom);
+    expect(onAuthSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("loginFlow does NOT call onAuthSuccess when request rejects", async () => {
+    const onAuthSuccess = vi.fn();
+    const setAuthMessage = vi.fn();
+    await loginFlow({
+      getLoginValues: () => ({ email: "ok@test.com", password: "Password123!" }),
+      validateEmail: () => ({ valid: true }),
+      validatePassword: () => ({ valid: true }),
+      setAuthMessage,
+      log: vi.fn(),
+      request: vi.fn().mockRejectedValue(new Error("Invalid credentials")),
+      mapAuthError: (m) => m,
+      persistTokens: vi.fn(),
+      onAuthSuccess,
+    });
+    expect(onAuthSuccess).not.toHaveBeenCalled();
+    expect(setAuthMessage).toHaveBeenCalledWith("Invalid credentials", "error");
   });
 });

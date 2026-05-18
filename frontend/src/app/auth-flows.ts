@@ -1,5 +1,3 @@
-import type { JoinMode } from "./room-join";
-
 type AuthMessageType = "success" | "error" | "info";
 
 type ValidationResult = { valid: boolean; error?: string };
@@ -66,9 +64,13 @@ export type LoginFlowDeps = {
   request: (path: string, body: Record<string, unknown>) => Promise<AuthApiResponse>;
   mapAuthError: (message: string, mode: "login") => string;
   persistTokens: (token: string | null, refreshToken: string | null) => void;
+  /** Single post-login callback: persist tokens are already done by the
+   *  time this runs. The caller is responsible for driving recovery
+   *  (recoverMesaOrOpenLobby — reconnect → joinById → lobby). We do NOT
+   *  expose a separate runAutoRejoin hook any more; routing through one
+   *  helper kills the race where openLobby ran first and cleared
+   *  lastRoomId before the rejoin attempt could read it. */
   onAuthSuccess: () => void;
-  runAutoRejoin: (joinRoom: (forceReplace?: boolean, opts?: { mode?: JoinMode; roomId?: string }) => Promise<void>) => void;
-  joinRoom: (forceReplace?: boolean, opts?: { mode?: JoinMode; roomId?: string }) => Promise<void>;
 };
 
 export async function loginFlow(deps: LoginFlowDeps): Promise<void> {
@@ -91,9 +93,8 @@ export async function loginFlow(deps: LoginFlowDeps): Promise<void> {
     const token = typeof data.token === "string" ? data.token : null;
     const refreshToken = typeof data.refreshToken === "string" ? data.refreshToken : null;
     deps.persistTokens(token, refreshToken);
-    deps.onAuthSuccess();
     deps.log("Logged in and token received.");
-    deps.runAutoRejoin(deps.joinRoom);
+    deps.onAuthSuccess();
   } catch (error) {
     const message = deps.mapAuthError(error instanceof Error ? error.message : String(error), "login");
     deps.setAuthMessage(message, "error");

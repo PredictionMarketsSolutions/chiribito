@@ -46,7 +46,6 @@ import {
 import { renderCardRow, preloadCardImages } from "./ui-cards";
 import { installFeedback } from "./feedback";
 import { attemptTokenRefresh } from "./auth/token-refresh";
-import { runPostLoginAutoRejoin } from "./auth/login-auto-rejoin";
 import { recoverMesaOrOpenLobby } from "./auth/recover-or-lobby";
 import { disconnectRoom } from "./auth/room-disconnect";
 import { refreshLobbyRooms, type LobbyDeps } from "./lobby";
@@ -647,21 +646,17 @@ async function login() {
     onAuthSuccess: () => {
       tokenInvalidNotified = false;
       startTokenMonitor();
-      // Open lobby immediately so the user always has somewhere to go. If
-      // runAutoRejoin (below) successfully reconnects to a previous mesa, it
-      // will close the lobby overlay in turn — only a ~100ms flash.
-      openLobby().catch((err) => log(`Open lobby after login failed: ${err}`));
+      // Single recovery decision — same primitive the reload hydration uses.
+      // The previous design called openLobby() here and ran a separate
+      // runAutoRejoin afterwards; openLobbyFlow().onEnterLobby() cleared
+      // lastRoomId synchronously, so the rejoin always read null. Routing
+      // through recoverMesaOrOpenLobby keeps the reconnect → joinById →
+      // lobby chain intact and avoids the auth-flash before recovery.
+      setAuthOverlayVisible(false);
+      recoverMesaOrOpenLobby(buildRecoveryDeps()).catch((err) =>
+        log(`Login recovery error: ${err?.message ?? err}`),
+      );
     },
-    runAutoRejoin: (joinRoomFn) => {
-      runPostLoginAutoRejoin({
-        getLastRoomId: () => SecureStorage.getLastRoomId(),
-        joinRoom: (forceReplace, opts) => joinRoomFn(forceReplace, opts),
-        clearLastRoomId: () => SecureStorage.clearLastRoomId(),
-        setAuthMessage,
-        log,
-      });
-    },
-    joinRoom,
   });
 }
 
@@ -841,6 +836,26 @@ async function reconnectMesa(token: string): Promise<void> {
   await roomSessionController.reconnect(token);
 }
 
+/** Single source of truth for the recovery decision deps. Used by:
+ *    - hydration IIFE on page load
+ *    - post-login onAuthSuccess
+ *  Both paths must use the same deps so the reconnect → joinById → lobby
+ *  chain behaves identically regardless of entry point. */
+function buildRecoveryDeps() {
+  return {
+    getReconnectionToken: () => SecureStorage.getReconnectionToken(),
+    clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
+    reconnect: (token: string) => reconnectMesa(token),
+    getLastRoomId: () => SecureStorage.getLastRoomId(),
+    joinRoom: (forceReplace: boolean, opts: { mode: "joinById"; roomId: string }) =>
+      joinRoom(forceReplace, opts),
+    isJoined: () => room !== null,
+    openLobby,
+    clearLastRoomId: () => SecureStorage.clearLastRoomId(),
+    log,
+  };
+}
+
 type LobbyDepsFactory = () => LobbyDeps;
 const refreshWinnersRanking = () =>
   refreshWinnersRankingFn({
@@ -980,19 +995,6 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
 (() => {
   const savedAccess = SecureStorage.getAccessToken();
   const savedRefresh = SecureStorage.getRefreshToken();
-
-  const buildRecoveryDeps = () => ({
-    getReconnectionToken: () => SecureStorage.getReconnectionToken(),
-    clearReconnectionToken: () => SecureStorage.clearReconnectionToken(),
-    reconnect: (token: string) => reconnectMesa(token),
-    getLastRoomId: () => SecureStorage.getLastRoomId(),
-    joinRoom: (forceReplace: boolean, opts: { mode: "joinById"; roomId: string }) =>
-      joinRoom(forceReplace, opts),
-    isJoined: () => room !== null,
-    openLobby,
-    clearLastRoomId: () => SecureStorage.clearLastRoomId(),
-    log,
-  });
 
   if (savedAccess) {
     token = savedAccess;
