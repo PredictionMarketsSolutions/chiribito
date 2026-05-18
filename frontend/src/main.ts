@@ -242,6 +242,14 @@ let token: string | null = null;
 let refreshToken: string | null = null;
 let room: Room | null = null;
 let currentSessionId: string | null = null;
+// Move 2 — E2E hook: expose currentSessionId for the WS-drop Playwright step
+// to assert the seat actually survived the reconnect. Read-only getter, no
+// production behaviour change.
+(window as any).__chiri = (window as any).__chiri ?? {};
+Object.defineProperty((window as any).__chiri, "currentSessionId", {
+  get: () => currentSessionId,
+  configurable: true,
+});
 /** Solo reconectar automáticamente a una mesa si el usuario estaba jugando (no en lobby) y no ha terminado el torneo. */
 let shouldAutoReconnect = false;
 /** True cuando la mesa cerró por fin de torneo (único ganador); no reconectar. */

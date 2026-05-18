@@ -430,6 +430,39 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
     pass(`mesa restored after login`, await shot(page, `${scenarioName}_06_login_mesa`));
   }
 
+  // 8 Mid-game WebSocket drop must restore the seat via the reconnect
+  //   director without taking the user out of the mesa. The mesa still has
+  //   player2 seated so checkGameEnd does not crown a champion during the
+  //   ~3s drop (single-player auto-dispose is a known follow-up).
+  logStep("Mid-game WS drop restores seat (3s offline)");
+  {
+    const sidBefore = await page.evaluate(() => (window as any).__chiri?.currentSessionId ?? null);
+    await setOffline(page, true);
+    await new Promise((r) => setTimeout(r, 3000));
+    const bannerShown = await waitBannerVisible(page, 6000);
+    if (!bannerShown) failStep("banner never appeared during offline");
+    await setOffline(page, false);
+    const bannerHidden = await waitBannerHidden(page, 15000);
+    if (!bannerHidden) failStep("banner never hid after coming back online");
+    const tableStill = await page.evaluate(() => {
+      const t = document.querySelector("#table .table-surface") as HTMLElement | null;
+      return !!t && t.offsetWidth > 0;
+    });
+    const sidAfter = await page.evaluate(() => (window as any).__chiri?.currentSessionId ?? null);
+    if (tableStill && bannerShown && bannerHidden) {
+      pass(
+        sidAfter && sidAfter !== sidBefore
+          ? `seat restored (new sid ${String(sidAfter).slice(0, 6)}…)`
+          : "seat restored (sid unchanged)",
+        await shot(page, `${scenarioName}_08_ws_drop`)
+      );
+    } else {
+      failStep(
+        `mesa lost: tableStill=${tableStill} bannerShown=${bannerShown} bannerHidden=${bannerHidden}`
+      );
+    }
+  }
+
   // 7 stale lastRoomId must NOT trap the user — fall back to lobby cleanly
   //   and clear the stale id so subsequent reloads behave normally. Tests the
   //   robustness of the new recovery path: if joinRoom rejects, recover.ts
