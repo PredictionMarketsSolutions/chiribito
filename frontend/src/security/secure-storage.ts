@@ -45,6 +45,7 @@ export class SecureStorage {
   private static readonly REFRESH_KEY = 'chiri_refresh_token';
   private static readonly EXPIRY_KEY = 'chiri_token_expiry';
   private static readonly LAST_ROOM_KEY = 'chiri_last_room_id';
+  private static readonly RECONNECT_KEY = 'chiri_reconnection_token';
 
   /**
    * Save access token to memory/storage
@@ -162,6 +163,7 @@ export class SecureStorage {
   static clearAllTokens(): void {
     this.clearAccessToken();
     this.clearRefreshToken();
+    this.clearReconnectionToken();
     console.log('[STORAGE] All tokens cleared');
   }
 
@@ -192,6 +194,45 @@ export class SecureStorage {
       console.log('[STORAGE] Last room id cleared');
     } catch (error) {
       console.error('[STORAGE] Failed to clear last room id:', error);
+    }
+  }
+
+  /**
+   * Persist the Colyseus `reconnectionToken` returned by the last successful
+   * room join. Used by the recovery path (`client.reconnect(token)`) to
+   * resume the seat held by `allowReconnection` on the server without going
+   * through the `onAuth` SESSION_EXISTS gate.
+   *
+   * Stored in sessionStorage on purpose: the token is meaningless once the
+   * tab closes (the 60-second server window almost always expires before
+   * the user reopens), and we never want to leak it across tabs (Move 5
+   * multi-tab semantics rely on SESSION_EXISTS staying active for the
+   * second tab).
+   */
+  static saveReconnectionToken(token: string): void {
+    try {
+      sessionStorage.setItem(this.RECONNECT_KEY, token);
+      console.log('[STORAGE] Reconnection token saved');
+    } catch (error) {
+      console.error('[STORAGE] Failed to save reconnection token:', error);
+    }
+  }
+
+  static getReconnectionToken(): string | null {
+    try {
+      return sessionStorage.getItem(this.RECONNECT_KEY);
+    } catch (error) {
+      console.error('[STORAGE] Failed to get reconnection token:', error);
+      return null;
+    }
+  }
+
+  static clearReconnectionToken(): void {
+    try {
+      sessionStorage.removeItem(this.RECONNECT_KEY);
+      console.log('[STORAGE] Reconnection token cleared');
+    } catch (error) {
+      console.error('[STORAGE] Failed to clear reconnection token:', error);
     }
   }
 

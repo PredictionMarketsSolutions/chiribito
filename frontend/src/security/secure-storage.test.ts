@@ -9,6 +9,7 @@ import { SecureStorage } from "./secure-storage";
 const REFRESH_KEY = "chiri_refresh_token";
 const AUTH_KEY = "chiri_auth_token";
 const EXPIRY_KEY = "chiri_token_expiry";
+const RECONNECT_KEY = "chiri_reconnection_token";
 
 function createStorageMock(): Storage {
   const store: Record<string, string> = {};
@@ -63,17 +64,47 @@ describe("SecureStorage", () => {
   });
 
   describe("clearAllTokens (logout)", () => {
-    it("clears both access and refresh token from storage", () => {
+    it("clears access, refresh, and reconnection token from storage", () => {
       SecureStorage.saveAccessToken("at");
       SecureStorage.saveRefreshToken("rt");
+      SecureStorage.saveReconnectionToken("recon-xyz");
       expect(SecureStorage.getAccessToken()).toBe("at");
       expect(SecureStorage.getRefreshToken()).toBe("rt");
+      expect(SecureStorage.getReconnectionToken()).toBe("recon-xyz");
 
       SecureStorage.clearAllTokens();
       expect(SecureStorage.getAccessToken()).toBeNull();
       expect(SecureStorage.getRefreshToken()).toBeNull();
+      expect(SecureStorage.getReconnectionToken()).toBeNull();
       expect(localStorage.getItem(REFRESH_KEY)).toBeNull();
       expect(sessionStorage.getItem(AUTH_KEY)).toBeNull();
+      expect(sessionStorage.getItem(RECONNECT_KEY)).toBeNull();
+    });
+  });
+
+  describe("reconnectionToken (Colyseus recovery primitive)", () => {
+    it("saveReconnectionToken persists to sessionStorage and getReconnectionToken returns it", () => {
+      expect(SecureStorage.getReconnectionToken()).toBeNull();
+      SecureStorage.saveReconnectionToken("recon-abc");
+      expect(SecureStorage.getReconnectionToken()).toBe("recon-abc");
+      expect(sessionStorage.getItem(RECONNECT_KEY)).toBe("recon-abc");
+      // Must NOT leak to localStorage — cross-tab leakage would break the
+      // Move 5 multi-tab story (second tab must keep getting SESSION_EXISTS).
+      expect(localStorage.getItem(RECONNECT_KEY)).toBeNull();
+    });
+
+    it("clearReconnectionToken removes the value saved by saveReconnectionToken", () => {
+      SecureStorage.saveReconnectionToken("recon-1");
+      expect(SecureStorage.getReconnectionToken()).toBe("recon-1");
+      SecureStorage.clearReconnectionToken();
+      expect(SecureStorage.getReconnectionToken()).toBeNull();
+      expect(sessionStorage.getItem(RECONNECT_KEY)).toBeNull();
+    });
+
+    it("clearReconnectionToken is idempotent when no token is stored", () => {
+      SecureStorage.clearReconnectionToken();
+      SecureStorage.clearReconnectionToken();
+      expect(SecureStorage.getReconnectionToken()).toBeNull();
     });
   });
 
