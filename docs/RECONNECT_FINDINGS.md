@@ -178,3 +178,53 @@ duplicated by state sync) in a polish pass.
 - Engine, managers, schemas, glossary, protocol.
 - Single-player auto-dispose fix (separate follow-up Move).
 - Render / Docker deploy configuration.
+
+## What landed — Move 2 (2026-05-18 — closed)
+
+Move 2 turns mid-game WebSocket drops into a production-grade,
+client-side recovery that lives entirely inside the existing 60s
+server seat window. Server-side `reconnectionTimeoutSeconds = 60`
+stays intact per user direction.
+
+| Slice | Commit | What |
+|---|---|---|
+| A.1 | `cb2ef08` | Red test pinning `reconnect(token)` priority in `attemptReconnect`. Extends `AttemptReconnectDeps` with `getReconnectionToken / clearReconnectionToken / reconnect / degradeToLobby`. |
+| A.2 | `c4d31f7` | Green: `attemptReconnect` calls `roomSessionController.reconnect(token)` BEFORE `joinRoom(true)`. Failure clears the stale token and falls through. Max-attempts now degrades to lobby keeping the auth token alive (was `clearAuthToken`, a hard ejection). |
+| A.3 | `5bdf165` | Calibrated backoff `[250, 500, 1000, 2000, 4000, 8000]ms` +-20% jitter, capped at 6 attempts. Cumulative ~16s without per-attempt timeout, ~46s worst case. Replaces exponential `1/2/4/8/16/32s` (63s, blew the 60s window). |
+| A.4 | `49408c3` | Per-attempt 5s timeout via `raceWithTimeout`. `disposeOrphanRoom` dep covers the case where `client.reconnect()` resolves AFTER the timeout fired — Colyseus has no cancel. Wrapped `joinRoom` fallback in try/catch so the director loop can keep retrying. |
+| A.5 | `fb30b07` | New `reconnect-director.ts`: epoch-locked idempotent loop, single canonical entry-point for the three trigger sources (`onLeave` transient, heartbeat `onTimeout`, `visibilitychange` resume). Owns terminal degradation; emits `onAttemptChange({attempt, max, phase})`. |
+| A.6 | `8a44396` | `main.ts.attemptReconnect()` now delegates to the director. Removes unused `MAX_RECONNECT_ATTEMPTS` import; indicator tooltip sources max from `DEFAULT_MAX_RECONNECT_ATTEMPTS`. |
+| B | `35d094e` | `bindOrphanMessageHandlers` silences SDK warnings for `reconnected` and `gameEnded`. |
+| C.1 | `ac33d77` | Banner DOM + CSS. Sticky top, pulsing dot, `--hidden` start, `--degraded` red variant. `pointer-events:none` so it cannot swallow clicks. |
+| C.2 | `bcc6623` | `createReconnectBanner` controller. Debounces first-show for 250ms — reconnect that succeeds inside the window NEVER shows the banner (the discreet-UX constraint). Live attempt updates once visible; instant hide on idle. |
+| C.3 | `13781a0` | Banner wired into director's `onAttemptChange`. |
+| D | `2cb6b85` | Heartbeat tightened: `30s/180s -> 5s/10s`. `onTimeout` now triggers reconnect (previously popped idle modal, which conflated user-idle with WS-silent). Fixed a pre-existing bug in `startClientHeartbeat`: interval was clearing the timeout every tick, so `onTimeout` could never fire when `intervalMs < timeoutMs` (always). Now the interval skips its send while a previous heartbeat is still pending; the timeout (or ack) nulls `heartbeatTimeoutId` before the next send. |
+| E.1 | `66b489f` | CDP-driven helpers: `setOffline / emulateSlowNetwork / waitBannerVisible / waitBannerHidden`. |
+| E.2 | `2a428f1` | E2E Step 8 (3s offline mid-game restores seat). Adds `window.__chiri.currentSessionId` E2E hook. |
+| E.3 | `a5c462e` | E2E Step 9 (tab inactive + drop + resume). |
+| E.4-6 | `ca9982d` | E2E Steps 10, 11, 12 (slow network, multi-retry, long-drop -> lobby). |
+| F | `620d511` | Director race-condition coverage: fresh-loop-after-finish (epoch advances) + visibility-during-retry (no parallel loops). |
+| E fix | `6e312c9` | Step 9 page.evaluate string-form (tsx __name workaround). Step 11 reads #log DOM textContent (main.ts log() does not hit console). |
+| G | (this commit) | Docs + memory closeout. |
+
+### Final validation
+
+- Vitest unit: **199 / 199 PASS** (baseline 182 + Move 2 additions).
+- Playwright E2E: **40 / 40 PASS x 3 runs** including the 25 Move 1.5 steps and the 5 new Move 2 steps.
+- `npx tsc --noEmit` errors: 12 (all pre-existing strict-null + Timeout-type; baseline was 14, so Move 2 reduces TS noise).
+- Console warnings during a full reconnect cycle: zero "onMessage() not registered" warnings (slice B). `ERR_INTERNET_DISCONNECTED` lines from CDP offline are expected and benign.
+
+### Out of scope (do NOT touch in Move 2)
+
+- Server-side `reconnectionTimeoutSeconds = 60` (user-locked; revisit only if real mobile-drop metrics justify it post-Move 2).
+- Engine, managers, schemas, glossary, protocol.
+- `SESSION_EXISTS` gate / multi-tab (Move 5).
+- Auth flow, token refresh, logout (Move 3).
+- Single-player mesa auto-dispose (separate follow-up).
+- Ephemeral broadcast replay (state-only resync deemed sufficient; UI animations missed during the gap are forfeit by design).
+
+### Recommended follow-ups
+
+- `idle-timeout-modal` DOM/CSS is currently unreferenced after Slice D rewired `onTimeout`. Either delete it or wire it to a user-activity timer in a future cleanup Move — not Move 2.
+- Single-player mesa auto-dispose (`GameEngine.checkGameEnd` crowning the lone chip-holder on any onLeave) remains the same recommended follow-up identified in Move 1.5. Real production single-player mesas waiting for friends still lose the mesa on refresh / disconnect.
+- If real mobile-drop telemetry shows > 60s drops are common, evaluate extending `reconnectionTimeoutSeconds` in a separate Move (would touch `ChiribitoRoom.ts:43` and `PlayerLifecycleManager.ts:33` only).
