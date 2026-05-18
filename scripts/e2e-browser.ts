@@ -2,7 +2,9 @@
  * Real-browser E2E test against the live dev-stack.
  *
  * Drives Chromium via Playwright through the actual UI:
- *   register → lobby → create mesa → table mounts → reload → 2 tabs → logout
+ *   register → lobby → create mesa → table mounts → reload restores mesa
+ *   → login (post token wipe) restores mesa from stored lastRoomId
+ *   → stale lastRoomId falls back to lobby cleanly
  *
  * Capture per step: screenshot, console errors, network failures, key DOM/state.
  *
@@ -143,6 +145,45 @@ async function waitOverlay(page: Page, id: string, visible: boolean, timeoutMs =
   return false;
 }
 
+/**
+ * Wait until the UI is in the "mesa visible" state: auth overlay hidden,
+ * lobby overlay hidden, and room-status indicates a real mesa (not the
+ * empty "sin mesa" / "not joined" sentinels).
+ */
+async function waitForMesaVisible(page: Page, timeoutMs = 10000): Promise<boolean> {
+  try {
+    await page.waitForFunction(
+      () => {
+        const a = document.getElementById("auth-overlay");
+        const l = document.getElementById("lobby-overlay");
+        const status = document.getElementById("room-status")?.textContent ?? "";
+        if (!a || !l) return false;
+        const authHidden = a.classList.contains("hidden");
+        const lobbyHidden = l.classList.contains("hidden");
+        const trimmed = status.trim();
+        const inMesa = !!trimmed && trimmed !== "sin mesa" && trimmed !== "not joined";
+        return authHidden && lobbyHidden && inMesa;
+      },
+      { timeout: timeoutMs },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function captureOverlayState(page: Page) {
+  return page.evaluate(() => ({
+    authHidden: document.getElementById("auth-overlay")?.classList.contains("hidden") ?? false,
+    lobbyHidden: document.getElementById("lobby-overlay")?.classList.contains("hidden") ?? false,
+    roomStatus: document.getElementById("room-status")?.textContent ?? null,
+    hasAccessToken: !!sessionStorage.getItem("chiri_auth_token"),
+    hasRefreshToken: !!localStorage.getItem("chiri_refresh_token"),
+    lastRoomId: localStorage.getItem("chiri_last_room_id"),
+    lastLogLines: (document.getElementById("log")?.textContent ?? "").split("\n").slice(-8).join(" || "),
+  }));
+}
+
 async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<void> {
   console.log(`\n${colors.bold}${colors.yellow}── ${scenarioName} ──${colors.reset}`);
   const page = await ctx.newPage();
@@ -237,10 +278,69 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
     pass(`entered table room=${tableVisible.roomStatus}`, await shot(page, `${scenarioName}_04_table`));
   }
 
-  // 5 reload during table session — must auto-restore the session and NOT
-  // bounce back to auth. Wait for a settled state (exactly one of auth/lobby
-  // visible) before evaluating, since hydration is async.
-  logStep("Reload page during session");
+  // 5 reload during table session — must auto-restore the MESA (not just hide
+  // auth). The previous lenient assertion (any state with auth hidden counted
+  // as ok) hid the real bug: hydration was bouncing the user to a lobby where
+  // onEnterLobby() cleared lastRoomId, making the mesa unreachable.
+  logStep("Reload restores mesa (not lobby)");
+  const lastRoomIdBeforeReload = await page.evaluate(() =>
+    localStorage.getItem("chiri_last_room_id"),
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  if (!(await waitForMesaVisible(page))) {
+    const state = await captureOverlayState(page);
+    failStep(`mesa NOT restored after reload. state=${JSON.stringify(state)}`);
+    await shot(page, `${scenarioName}_05_FAIL_no_mesa_restore`);
+  } else {
+    const after = await captureOverlayState(page);
+    if (after.lastRoomId !== lastRoomIdBeforeReload) {
+      failStep(
+        `lastRoomId changed across reload: before=${lastRoomIdBeforeReload} after=${after.lastRoomId}`,
+      );
+      await shot(page, `${scenarioName}_05_FAIL_lastRoomId_changed`);
+    } else {
+      pass(
+        `mesa restored (room=${after.roomStatus})`,
+        await shot(page, `${scenarioName}_05_reload_mesa`),
+      );
+    }
+  }
+
+  // 6 login restores mesa from previous session — Fix B coverage.
+  //   Simulate "tokens expired but lastRoomId preserved": clear access +
+  //   refresh tokens (keep lastRoomId), reload (auth screen appears since no
+  //   token to hydrate), login as same user. Without the fix, openLobby() runs
+  //   first and onEnterLobby() clears lastRoomId before runAutoRejoin reads
+  //   it, so the user lands in the lobby instead of their mesa. With the fix,
+  //   the post-login decision is centralized and reads lastRoomId BEFORE any
+  //   lobby transition.
+  logStep("Login restores mesa from stored lastRoomId");
+  await page.evaluate(() => {
+    sessionStorage.removeItem("chiri_auth_token");
+    sessionStorage.removeItem("chiri_token_expiry");
+    localStorage.removeItem("chiri_refresh_token");
+    // keep chiri_last_room_id intentionally
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForInitialAuthState(page);
+  await fillLogin(page, { email: u.email, password: u.password });
+  await page.click("#login");
+  if (!(await waitForMesaVisible(page))) {
+    const state = await captureOverlayState(page);
+    failStep(`mesa NOT restored after login. state=${JSON.stringify(state)}`);
+    await shot(page, `${scenarioName}_06_FAIL_no_mesa_after_login`);
+  } else {
+    pass(`mesa restored after login`, await shot(page, `${scenarioName}_06_login_mesa`));
+  }
+
+  // 7 stale lastRoomId must NOT trap the user — fall back to lobby cleanly
+  //   and clear the stale id so subsequent reloads behave normally. Tests the
+  //   robustness of the new recovery path: if joinRoom rejects, recover.ts
+  //   must clearLastRoomId and openLobby.
+  logStep("Stale lastRoomId falls back to lobby cleanly");
+  await page.evaluate(() => {
+    localStorage.setItem("chiri_last_room_id", "stale-nonexistent-room-id-xyz");
+  });
   await page.reload({ waitUntil: "domcontentloaded" });
   try {
     await page.waitForFunction(
@@ -248,42 +348,24 @@ async function runScenario(ctx: BrowserContext, scenarioName: string): Promise<v
         const a = document.getElementById("auth-overlay");
         const l = document.getElementById("lobby-overlay");
         if (!a || !l) return false;
-        const authHidden = a.classList.contains("hidden");
-        const lobbyHidden = l.classList.contains("hidden");
-        // Settled when one is visible and the other is hidden (XOR)
-        return authHidden !== lobbyHidden;
+        return a.classList.contains("hidden") && !l.classList.contains("hidden");
       },
-      { timeout: 8000 },
+      { timeout: 10000 },
     );
+    const after = await captureOverlayState(page);
+    if (after.lastRoomId === "stale-nonexistent-room-id-xyz") {
+      failStep(`stale lastRoomId NOT cleared on fallback. still=${after.lastRoomId}`);
+      await shot(page, `${scenarioName}_07_FAIL_stale_not_cleared`);
+    } else {
+      pass(
+        `lobby fallback + stale id cleared (now=${after.lastRoomId ?? "null"})`,
+        await shot(page, `${scenarioName}_07_stale_fallback`),
+      );
+    }
   } catch {
-    /* timeout — capture the unsettled state below */
-  }
-  const afterReload = await page.evaluate(() => {
-    const auth = document.getElementById("auth-overlay");
-    const lobby = document.getElementById("lobby-overlay");
-    return {
-      authHidden: auth?.classList.contains("hidden") ?? false,
-      authClass: auth?.className ?? null,
-      lobbyHidden: lobby?.classList.contains("hidden") ?? false,
-      lobbyClass: lobby?.className ?? null,
-      roomStatus: document.getElementById("room-status")?.textContent ?? null,
-      hasAccessToken: !!sessionStorage.getItem("chiri_auth_token"),
-      hasRefreshToken: !!localStorage.getItem("chiri_refresh_token"),
-      lastLogLines: (document.getElementById("log")?.textContent ?? "").split("\n").slice(-6).join(" || "),
-    };
-  });
-  const hasAnyToken = afterReload.hasAccessToken || afterReload.hasRefreshToken;
-  if (!hasAnyToken) {
-    failStep(`tokens vanished after reload. state=${JSON.stringify(afterReload)}`);
-    await shot(page, `${scenarioName}_05_FAIL_no_token`);
-  } else if (!afterReload.authHidden) {
-    failStep(`tokens present but auth shown (no hydration). state=${JSON.stringify(afterReload)}`);
-    await shot(page, `${scenarioName}_05_FAIL_no_hydration`);
-  } else {
-    pass(
-      `session survived (access=${afterReload.hasAccessToken} refresh=${afterReload.hasRefreshToken} lobbyHidden=${afterReload.lobbyHidden})`,
-      await shot(page, `${scenarioName}_05_reload_ok`),
-    );
+    const state = await captureOverlayState(page);
+    failStep(`stale lastRoomId did NOT fall back to lobby. state=${JSON.stringify(state)}`);
+    await shot(page, `${scenarioName}_07_FAIL_no_fallback`);
   }
 
   await page.close();
