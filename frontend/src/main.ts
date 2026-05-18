@@ -39,6 +39,7 @@ import {
   DEFAULT_MAX_RECONNECT_ATTEMPTS,
 } from "./connection";
 import { createReconnectDirector } from "./reconnect-director";
+import { createReconnectBanner } from "./app/reconnect-banner";
 import {
   addHandHistoryEntry,
   clearHandHistory,
@@ -168,6 +169,13 @@ const allInButton = dom.allInButton!;
 const betButton = dom.betButton!;
 const raiseButton = dom.raiseButton!;
 const connectionIndicator = dom.connectionIndicator!;
+const reconnectBannerEl = document.getElementById("reconnect-banner") as HTMLElement;
+const reconnectBannerTextEl = reconnectBannerEl.querySelector(".reconnect-banner__text") as HTMLElement;
+const reconnectBanner = createReconnectBanner({
+  bannerEl: reconnectBannerEl,
+  textEl: reconnectBannerTextEl,
+  maxAttempts: 6,
+});
 const rttStatus = dom.rttStatus!;
 const qualityStatus = dom.qualityStatus!;
 const bufferStatus = dom.bufferStatus!;
@@ -844,11 +852,11 @@ reconnectDirector = createReconnectDirector({
     setLobbyOverlayVisible(true);
     setConnectionState("disconnected");
   },
-  // Slice C.3 wires onAttemptChange to the banner; left undefined here until
-  // that slice lands so this commit can ship independently.
   onAttemptChange: (state) => {
-    // Keep the connection-indicator tooltip in sync with director attempts.
+    // Keep the connection-indicator tooltip in sync with director attempts...
     reconnectAttempts = state.attempt;
+    // ...and drive the discreet reconnect banner from the same signal.
+    reconnectBanner.apply(state);
   },
 });
 
