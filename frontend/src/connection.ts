@@ -142,17 +142,31 @@ export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void
     return;
   }
   if (deps.getReconnectAttempts() >= deps.maxAttempts) {
-    deps.log("❌ Max reconnection attempts reached. Please refresh and login again.");
-    deps.clearAuthToken();
+    deps.log("Max reconnection attempts reached. Degrading to lobby.");
+    deps.clearReconnectionToken();
+    deps.degradeToLobby("Conexión perdida. Vuelve al lobby.");
     return;
   }
+
   deps.setReconnectAttempts(deps.getReconnectAttempts() + 1);
   const attempt = deps.getReconnectAttempts();
   const baseDelayMs = 1000;
   const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
-  deps.log(`🔄 Reconnect attempt ${attempt}/${deps.maxAttempts} in ${delayMs}ms...`);
+  deps.log(`Reconnect attempt ${attempt}/${deps.maxAttempts} in ${delayMs}ms...`);
   await new Promise((r) => setTimeout(r, delayMs));
-  if (deps.getToken() && deps.getConnectionState() === "disconnected") {
-    await deps.joinRoom(true);
+
+  if (!deps.getToken() || deps.getConnectionState() !== "disconnected") return;
+
+  const token = deps.getReconnectionToken();
+  if (token) {
+    try {
+      await deps.reconnect(token);
+      return;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.log(`reconnect(token) failed (${msg}); falling back to joinRoom.`);
+      deps.clearReconnectionToken();
+    }
   }
+  await deps.joinRoom(true);
 }

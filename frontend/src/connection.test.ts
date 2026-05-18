@@ -67,14 +67,22 @@ describe("connection.attemptReconnect", () => {
     expect(joinRoom).toHaveBeenCalledWith(true);
   });
 
-  it("stops and clears auth token after reaching maxAttempts", async () => {
+  it("degrades to lobby and clears reconnect token when maxAttempts reached", async () => {
     reconnectAttempts = 3; // already at max
-    const deps = baseDeps();
+    const degradeToLobby = vi.fn();
+    const clearReconnectionToken = vi.fn();
+    const deps: AttemptReconnectDeps = {
+      ...baseDeps(),
+      degradeToLobby,
+      clearReconnectionToken,
+    };
 
     await attemptReconnect(deps);
 
     expect(joinRoom).not.toHaveBeenCalled();
-    expect(clearAuthToken).toHaveBeenCalledTimes(1);
+    expect(clearAuthToken).not.toHaveBeenCalled();
+    expect(clearReconnectionToken).toHaveBeenCalledTimes(1);
+    expect(degradeToLobby).toHaveBeenCalledTimes(1);
   });
 
   it("prefers reconnect(token) over joinRoom when a reconnectionToken is stored", async () => {
