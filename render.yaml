@@ -209,32 +209,6 @@ services:
       - key: LOG_LEVEL
         value: info
 
-  # ─────────────────────────────────────────────────────────────────────
-  # 3. Frontend (Vite static build)
-  # ─────────────────────────────────────────────────────────────────────
-  - type: web
-    name: chiribito-frontend
-    env: static
-    plan: free
-    region: frankfurt
-    branch: main
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    pullRequestPreviewsEnabled: false
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      # URLs with scheme — set manually in dashboard. After first deploy:
-      #   VITE_API_URL: https://chiribito-api.onrender.com
-      #   VITE_WS_URL:  wss://chiribito-colyseus.onrender.com
-      - key: VITE_API_URL
-        sync: false
-      - key: VITE_WS_URL
-        sync: false
-
 # ───────────────────────────────────────────────────────────────────────
 # Managed PostgreSQL
 # ───────────────────────────────────────────────────────────────────────
