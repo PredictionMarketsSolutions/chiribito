@@ -30,6 +30,32 @@ function backoffDelayFor(attempt: number, random = Math.random): number {
   return Math.max(0, Math.round(base * (1 + jitter)));
 }
 
+/** Hard ceiling per `client.reconnect()` attempt. Colyseus does not expose
+ *  cancellation, so the promise may resolve AFTER our timeout fires. If it
+ *  resolves with a Room, the caller must `.leave()` it via
+ *  `disposeOrphanRoom` — otherwise the server keeps the seat held until
+ *  `reconnectionTimeoutSeconds` expires. */
+export const RECONNECT_PER_ATTEMPT_TIMEOUT_MS = 5000;
+
+async function raceWithTimeout<T>(
+  task: Promise<T>,
+  timeoutMs: number,
+  onStaleResolve?: (value: T) => void
+): Promise<T> {
+  let timedOut = false;
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => {
+      timedOut = true;
+      reject(new Error(`timeout after ${timeoutMs}ms`));
+    }, timeoutMs)
+  );
+  task.then(
+    (value) => { if (timedOut && onStaleResolve) onStaleResolve(value); },
+    () => { /* late rejection is harmless */ }
+  );
+  return Promise.race([task, timeout]);
+}
+
 export function getWsClient(wsUrl: string): Client {
   if (!wsClient) wsClient = new Client(wsUrl);
   return wsClient;
@@ -149,6 +175,10 @@ export type AttemptReconnectDeps = {
   reconnect: (token: string) => Promise<void>;
   /** Soft-fail path. Reset UI to lobby + keep auth token valid. */
   degradeToLobby: (message: string) => void;
+  /** Called if `reconnect(token)` resolves AFTER our per-attempt timeout
+   *  fired. The late-arrived Room must be left, otherwise its seat stays
+   *  held on the server. */
+  disposeOrphanRoom?: () => void;
 };
 
 export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void> {
@@ -174,7 +204,11 @@ export async function attemptReconnect(deps: AttemptReconnectDeps): Promise<void
   const token = deps.getReconnectionToken();
   if (token) {
     try {
-      await deps.reconnect(token);
+      await raceWithTimeout(
+        deps.reconnect(token),
+        RECONNECT_PER_ATTEMPT_TIMEOUT_MS,
+        () => deps.disposeOrphanRoom?.()
+      );
       return;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

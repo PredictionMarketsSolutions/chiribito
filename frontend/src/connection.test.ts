@@ -33,6 +33,7 @@ describe("connection.attemptReconnect", () => {
     clearReconnectionToken: vi.fn(),
     reconnect: vi.fn().mockResolvedValue(undefined),
     degradeToLobby: vi.fn(),
+    disposeOrphanRoom: vi.fn(),
   });
 
   beforeEach(() => {
@@ -131,6 +132,46 @@ describe("connection.attemptReconnect", () => {
     await p;
     expect(reconnect).toHaveBeenCalledTimes(1);
     expect(nowAttempt).toBe(1);
+  });
+
+  it("times out client.reconnect after RECONNECT_PER_ATTEMPT_TIMEOUT_MS", async () => {
+    const reconnect = vi.fn().mockImplementation(() => new Promise(() => {})); // never resolves
+    const deps: AttemptReconnectDeps = {
+      ...baseDeps(),
+      getReconnectionToken: () => "tok",
+      reconnect,
+    };
+
+    const p = attemptReconnect(deps);
+    await vi.advanceTimersByTimeAsync(400); // past backoff (~250ms ±20%)
+    await vi.advanceTimersByTimeAsync(5000 + 50); // past per-attempt timeout
+    await p;
+
+    expect(joinRoom).toHaveBeenCalledWith(true); // falls through after timeout
+  });
+
+  it("calls disposeOrphanRoom when reconnect resolves AFTER the timeout fires", async () => {
+    let resolveLate!: () => void;
+    const reconnect = vi.fn().mockImplementation(
+      () => new Promise<void>((res) => { resolveLate = res; })
+    );
+    const disposeOrphanRoom = vi.fn();
+    const deps: AttemptReconnectDeps = {
+      ...baseDeps(),
+      getReconnectionToken: () => "tok",
+      reconnect,
+      disposeOrphanRoom,
+    };
+
+    const p = attemptReconnect(deps);
+    await vi.advanceTimersByTimeAsync(400);
+    await vi.advanceTimersByTimeAsync(5000 + 50);
+    await p;
+    // Now the late resolve fires
+    resolveLate();
+    await vi.runAllTimersAsync();
+
+    expect(disposeOrphanRoom).toHaveBeenCalledTimes(1);
   });
 });
 
