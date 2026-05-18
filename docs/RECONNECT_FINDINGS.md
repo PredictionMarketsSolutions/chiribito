@@ -228,3 +228,58 @@ stays intact per user direction.
 - `idle-timeout-modal` DOM/CSS is currently unreferenced after Slice D rewired `onTimeout`. Either delete it or wire it to a user-activity timer in a future cleanup Move — not Move 2.
 - Single-player mesa auto-dispose (`GameEngine.checkGameEnd` crowning the lone chip-holder on any onLeave) remains the same recommended follow-up identified in Move 1.5. Real production single-player mesas waiting for friends still lose the mesa on refresh / disconnect.
 - If real mobile-drop telemetry shows > 60s drops are common, evaluate extending `reconnectionTimeoutSeconds` in a separate Move (would touch `ChiribitoRoom.ts:43` and `PlayerLifecycleManager.ts:33` only).
+
+### How to validate Move 2 manually
+
+Boot the local stack and exercise the reconnect flow end-to-end. All commands run from the repo root (`chiri-app/`).
+
+**1) Start the dev-stack** (terminal A):
+
+```
+npm run dev:stack
+```
+
+Wait for "READY" lines in the log. The script boots embedded-postgres on :5432, api-server on :3000, game-server on :2567 and Vite on :5173. If port 5432 is held by an orphan from a previous crashed run, kill it: `taskkill /F /PID <pid>` after locating it via `netstat -ano | grep 5432`.
+
+**2) Open two browsers** at `http://localhost:5173`, register two users, both seated in the same mesa (the second player keeps the mesa alive across the recovery path — single-player auto-dispose is a known follow-up).
+
+**3) Discreet-UX check (fast reconnect)**
+
+In browser A: DevTools → Network → Offline for **1 second** then back online. The banner must **NOT** appear (debounce 250 ms; recovery completes inside the window). RTT chip stays green.
+
+**4) Visible-recovery check (slow reconnect)**
+
+Offline for **5 seconds**, then back online. The yellow banner "Reconectando… intento N/6" must appear, then hide within ~10 seconds of restoring the network. Mesa, seats, hole cards and turn ownership must all survive the gap with no flicker, no Pixi remount, no full re-render.
+
+**5) Tab-inactive check**
+
+Switch away from the browser tab (or use DevTools Application → Background services to simulate). Drop the network. Bring the tab back to the foreground. The director's `visibilitychange` branch must trigger recovery; banner appears + hides cleanly.
+
+**6) Mobile-style switch (slow network)**
+
+DevTools → Network → "Slow 3G" preset + Offline blip 2s + back. Banner should appear under degraded throughput and recovery must still complete inside the 60 s server window.
+
+**7) Long-drop degradation**
+
+Offline for **>65 s**, then back online. Banner switches to red "Conexión perdida — volviendo al lobby". User lands in the lobby; the auth token in `sessionStorage` is **still valid** (user is NOT logged out). User can rejoin the same mesa from the lobby list if it still exists.
+
+**8) Move 1.5 regression check** (must still work)
+
+Refresh the page mid-game → mesa restores (step 5 path). Manually clear `sessionStorage` `chiri_auth_token`, log in again → mesa restores (step 6 path). Set a stale `chiri_last_room_id` in localStorage and refresh → falls back to lobby cleanly (step 7 path).
+
+### Automated validation
+
+```
+# Unit suites
+cd frontend && npm test              # expect 199/199 vitest
+cd ..       && npm test              # expect 475/475 jest (game server)
+cd api-server && npm test            # expect 27/27 jest
+
+# Build sanity
+cd ..       && npm run build         # tsc + api-server build clean
+
+# Full Playwright E2E (requires dev-stack running)
+npx tsx scripts/e2e-browser.ts       # expect 40/40 steps x 3 runs
+```
+
+If any of the above misses its target, halt before deploying — investigate root cause first.
