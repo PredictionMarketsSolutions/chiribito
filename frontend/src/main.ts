@@ -618,6 +618,10 @@ async function register() {
     onAuthSuccess: () => {
       tokenInvalidNotified = false;
       startTokenMonitor();
+      // Take the user straight to the lobby instead of leaving them stuck on
+      // the auth screen with a "puedes unirte a la mesa" toast and no obvious
+      // next step. This was the silent fail surfaced by the browser E2E.
+      openLobby().catch((err) => log(`Open lobby after register failed: ${err}`));
     },
   });
 }
@@ -641,6 +645,10 @@ async function login() {
     onAuthSuccess: () => {
       tokenInvalidNotified = false;
       startTokenMonitor();
+      // Open lobby immediately so the user always has somewhere to go. If
+      // runAutoRejoin (below) successfully reconnects to a previous mesa, it
+      // will close the lobby overlay in turn — only a ~100ms flash.
+      openLobby().catch((err) => log(`Open lobby after login failed: ${err}`));
     },
     runAutoRejoin: (joinRoomFn) => {
       runPostLoginAutoRejoin({
@@ -944,3 +952,53 @@ if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
     dom.idleTimeoutModal!.classList.add("hidden");
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session hydration on startup
+// Restore tokens from SecureStorage so a page reload does not bounce the user
+// back to the auth screen. The browser E2E exposed this as the "reload during
+// session loses session" silent failure.
+//   1. If we have an access token in sessionStorage → restore + open lobby
+//   2. Else if we have a refresh token in localStorage → try refresh + restore
+//   3. Else → leave auth visible (default state from HTML)
+// ─────────────────────────────────────────────────────────────────────────────
+(() => {
+  const savedAccess = SecureStorage.getAccessToken();
+  const savedRefresh = SecureStorage.getRefreshToken();
+
+  if (savedAccess) {
+    token = savedAccess;
+    refreshToken = savedRefresh;
+    tokenStatus.textContent = "set";
+    tokenInvalidNotified = false;
+    startTokenMonitor();
+    log("Session restored from sessionStorage");
+    openLobby().catch((err) => log(`Lobby open on hydrate failed: ${err}`));
+    return;
+  }
+
+  if (savedRefresh) {
+    log("Attempting token refresh from stored refresh token...");
+    attemptTokenRefresh(API_URL, savedRefresh)
+      .then((result) => {
+        if (result.ok) {
+          token = result.token;
+          refreshToken = result.refreshToken;
+          SecureStorage.saveAccessToken(result.token);
+          SecureStorage.saveRefreshToken(result.refreshToken);
+          tokenStatus.textContent = "set";
+          tokenInvalidNotified = false;
+          startTokenMonitor();
+          log("Session restored via refresh");
+          openLobby().catch((err) => log(`Lobby open after refresh hydrate failed: ${err}`));
+        } else {
+          SecureStorage.clearAllTokens();
+          log(`Token refresh on hydrate failed: ${result.reason}. Keeping auth screen.`);
+        }
+      })
+      .catch((err) => {
+        SecureStorage.clearAllTokens();
+        log(`Token refresh on hydrate error: ${err?.message ?? err}`);
+      });
+  }
+})();

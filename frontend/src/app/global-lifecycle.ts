@@ -28,7 +28,12 @@ export function registerGlobalLifecycle(deps: GlobalLifecycleDeps): void {
     deps.apiUrlEl.textContent = deps.apiUrl;
     deps.wsUrlEl.textContent = deps.wsUrl;
     void deps.initPixiLayer();
-    deps.setAuthOverlayVisible(true);
+    // Only force-show auth when there is no session to restore. Otherwise the
+    // hydration logic (main.ts IIFE) will have already opened the lobby/mesa
+    // and we would clobber that by re-showing auth here.
+    if (!deps.hasToken()) {
+      deps.setAuthOverlayVisible(true);
+    }
     deps.renderHandHistoryUi();
     deps.setupCardPopover();
   });
