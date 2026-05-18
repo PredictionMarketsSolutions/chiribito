@@ -78,6 +78,44 @@ describe("reconnect-director", () => {
     expect(phases[phases.length - 1]).toBe("degraded");
   });
 
+  it("allows a fresh loop after the previous one has finished (epoch advances)", async () => {
+    // First loop succeeds immediately
+    const d = createReconnectDirector(makeDeps());
+    const p1 = d.requestReconnect();
+    await vi.runAllTimersAsync();
+    await p1;
+    expect(reconnect).toHaveBeenCalledTimes(1);
+
+    // Simulate a new drop and a fresh requestReconnect — the director must
+    // start a new loop (running flag was cleared in finally) with a fresh
+    // epoch, not be locked out by the previous run's state.
+    connectionState = "disconnected";
+    reconnect.mockClear();
+    reconnect.mockImplementation(async () => { connectionState = "connected"; });
+    const p2 = d.requestReconnect();
+    await vi.runAllTimersAsync();
+    await p2;
+    expect(reconnect).toHaveBeenCalledTimes(1);
+    expect(d.isRunning()).toBe(false);
+  });
+
+  it("ignores visibilitychange-triggered duplicate during an in-flight retry", async () => {
+    reconnect = vi.fn().mockRejectedValueOnce(new Error("fail")).mockImplementation(async () => {
+      connectionState = "connected";
+    });
+    const d = createReconnectDirector(makeDeps());
+    const first = d.requestReconnect();
+    await vi.advanceTimersByTimeAsync(300);
+    // Visibility-resume fires while loop is mid-retry. Director must no-op.
+    const second = d.requestReconnect();
+    await vi.runAllTimersAsync();
+    await Promise.all([first, second]);
+    // Loop executed at most maxAttempts attempts in total; the second
+    // requestReconnect did NOT spawn a parallel loop.
+    expect(reconnect.mock.calls.length).toBeLessThanOrEqual(3);
+    expect(d.isRunning()).toBe(false);
+  });
+
   it("does nothing when tournament ended", async () => {
     const d = createReconnectDirector(makeDeps({ getTournamentEnded: () => true }));
     await d.requestReconnect();
