@@ -6,7 +6,7 @@ import { RotateCcw } from "lucide-react"
 
 // --- Types ---
 type Palo = "oros" | "copas" | "espadas" | "bastos"
-type Valor = 1 | 7 | 8 | 9 | 10 | 11 | 12 // 1=As, 11=Sota, 12=Caballo
+type Valor = 1 | 5 | 6 | 7 | 10 | 11 | 12 // 1=As, 10=Sota, 11=Caballo, 12=Rey
 
 interface Carta {
   valor: Valor
@@ -15,13 +15,13 @@ interface Carta {
 
 // --- Constants ---
 const PALOS: Palo[] = ["oros", "copas", "espadas", "bastos"]
-const VALORES: Valor[] = [1, 7, 8, 9, 10, 11, 12]
+const VALORES: Valor[] = [1, 5, 6, 7, 10, 11, 12]
 
 const NOMBRE_VALOR: Record<Valor, string> = {
   1: "A",
+  5: "5",
+  6: "6",
   7: "7",
-  8: "8",
-  9: "9",
   10: "S",
   11: "C",
   12: "R",
@@ -29,12 +29,25 @@ const NOMBRE_VALOR: Record<Valor, string> = {
 
 const NOMBRE_VALOR_LARGO: Record<Valor, string> = {
   1: "As",
+  5: "Cinco",
+  6: "Seis",
   7: "Siete",
-  8: "Ocho",
-  9: "Nueve",
   10: "Sota",
   11: "Caballo",
   12: "Rey",
+}
+
+// RANK_ORDER mirror of src/rooms/game/glossary.ts canonical strength order.
+// Lower index = lower value. As is always high — no wrap-around.
+// Used by esEscalera (mirror of CardEvaluator.isStraight).
+const RANK_ORDER_INDEX: Record<Valor, number> = {
+  5: 0,
+  6: 1,
+  7: 2,
+  10: 3, // Sota
+  11: 4, // Caballo
+  12: 5, // Rey
+  1: 6,  // As
 }
 
 const NOMBRE_PALO: Record<Palo, string> = {
@@ -110,36 +123,48 @@ function barajar(baraja: Carta[]): Carta[] {
   return copia
 }
 
-// --- Hand Evaluation (Chiribito: Color > Full) ---
+// --- Hand Evaluation (Chiribito: Color > Full, Perla > Escalera de color) ---
+// Hand names mirror src/rooms/game/utils/CardEvaluator.ts getHandName() exactly
+// (sentence case, castizo accents). Do not reword without updating canon.
 type ManoTipo =
-  | "Escalera de Color"
+  | "Perla"
+  | "Escalera de color"
   | "Póker"
   | "Color"
   | "Full"
   | "Escalera"
   | "Trío"
-  | "Doble Pareja"
+  | "Doble pareja"
   | "Pareja"
-  | "Carta Alta"
+  | "Carta alta"
 
 const MANO_RANKING: Record<ManoTipo, number> = {
-  "Escalera de Color": 9,
+  "Perla": 10,           // Sota + 7 same suit in hole — above everything
+  "Escalera de color": 9,
   "Póker": 8,
-  "Color": 7,     // Color beats Full in Chiribito
+  "Color": 7,            // Color beats Full in Chiribito
   "Full": 6,
   "Escalera": 5,
   "Trío": 4,
-  "Doble Pareja": 3,
+  "Doble pareja": 3,
   "Pareja": 2,
-  "Carta Alta": 1,
+  "Carta alta": 1,
 }
 
+// Mirror of CardEvaluator.isStraight: dedupe rank-order indices, sort, require
+// exactly 5 entries that are arithmetically consecutive in RANK_ORDER_INDEX
+// (not in numeric Valor — 7 and Sota are adjacent in Chiribito).
 function esEscalera(valores: Valor[]): boolean {
-  const sorted = [...valores].sort((a, b) => a - b)
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i] - sorted[i - 1] !== 1) return false
-  }
-  return true
+  const indices = Array.from(new Set(valores.map((v) => RANK_ORDER_INDEX[v]))).sort((a, b) => a - b)
+  if (indices.length !== 5) return false
+  return indices.every((idx, i) => i === 0 || idx === indices[i - 1] + 1)
+}
+
+// Mirror of CardEvaluator.isPerla — Sota + 7 of the same suit in the hole.
+function esPerla(mano: [Carta, Carta]): boolean {
+  if (mano[0].palo !== mano[1].palo) return false
+  const valores = new Set<Valor>([mano[0].valor, mano[1].valor])
+  return valores.has(10) && valores.has(7)
 }
 
 function evaluarMano5(cartas: Carta[]): { tipo: ManoTipo; rank: number } {
@@ -155,25 +180,30 @@ function evaluarMano5(cartas: Carta[]): { tipo: ManoTipo; rank: number } {
   const todosIgualPalo = palos.every((p) => p === palos[0])
   const escalera = esEscalera(valores)
 
-  if (todosIgualPalo && escalera) return { tipo: "Escalera de Color", rank: 9 }
+  if (todosIgualPalo && escalera) return { tipo: "Escalera de color", rank: 9 }
   if (conteos[0] === 4) return { tipo: "Póker", rank: 8 }
   if (todosIgualPalo) return { tipo: "Color", rank: 7 }
   if (conteos[0] === 3 && conteos[1] === 2) return { tipo: "Full", rank: 6 }
   if (escalera) return { tipo: "Escalera", rank: 5 }
   if (conteos[0] === 3) return { tipo: "Trío", rank: 4 }
-  if (conteos[0] === 2 && conteos[1] === 2) return { tipo: "Doble Pareja", rank: 3 }
+  if (conteos[0] === 2 && conteos[1] === 2) return { tipo: "Doble pareja", rank: 3 }
   if (conteos[0] === 2) return { tipo: "Pareja", rank: 2 }
-  return { tipo: "Carta Alta", rank: 1 }
+  return { tipo: "Carta alta", rank: 1 }
 }
 
-// Must use both hole cards + pick best 3 from 5 community
+// Must use both hole cards + pick best 3 from 5 community.
+// Perla (Sota + 7 same suit in hole) overrides any 5-card eval — canonical
+// top category. Otherwise pick best 5-card hand across C(5,3) = 10 combos.
 function evaluarMejorMano(
   mano: [Carta, Carta],
   comunitarias: Carta[]
 ): { tipo: ManoTipo; rank: number } {
-  let mejor: { tipo: ManoTipo; rank: number } = { tipo: "Carta Alta", rank: 1 }
+  if (esPerla(mano)) {
+    return { tipo: "Perla", rank: 10 }
+  }
 
-  // Choose 3 from 5 community cards: C(5,3) = 10 combinations
+  let mejor: { tipo: ManoTipo; rank: number } = { tipo: "Carta alta", rank: 1 }
+
   for (let i = 0; i < comunitarias.length; i++) {
     for (let j = i + 1; j < comunitarias.length; j++) {
       for (let k = j + 1; k < comunitarias.length; k++) {
@@ -192,9 +222,9 @@ function evaluarMejorMano(
 function getCartaImagePath(carta: Carta): string {
   const valorMap: Record<Valor, string> = {
     1: "1",
+    5: "5",
+    6: "6",
     7: "7",
-    8: "8",
-    9: "9",
     10: "10",
     11: "11",
     12: "12",
@@ -481,20 +511,21 @@ export function SimuladorSection() {
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {[
-              "Escalera de Color",
+              "Perla",
+              "Escalera de color",
               "Póker",
               "Color",
               "Full",
               "Escalera",
               "Trío",
-              "Doble Pareja",
+              "Doble pareja",
               "Pareja",
-              "Carta Alta",
+              "Carta alta",
             ].map((nombre, i) => (
               <span
                 key={nombre}
                 className={`text-xs px-3 py-1.5 rounded border ${
-                  nombre === "Color"
+                  nombre === "Color" || nombre === "Perla"
                     ? "border-primary/60 text-primary bg-primary/10"
                     : "border-border text-muted-foreground"
                 }`}
