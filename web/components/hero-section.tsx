@@ -73,7 +73,7 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-primary/70 mb-6"
         >
-          El poker que se jugaba en Madrid
+          El póker que se jugaba en Madrid
         </motion.span>
 
         {/* Title with shimmer effect */}
