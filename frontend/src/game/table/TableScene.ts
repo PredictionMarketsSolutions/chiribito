@@ -20,10 +20,10 @@ import { computeVisualSeatLayout, TOTAL_SEATS } from "../visual-layout";
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "../room-state";
 import { isInWinnerPhase } from "../winner-display";
 
-const CARD_W = 52;
-const CARD_H = 78;
-const BOARD_SPREAD = 58;
-const HOLE_SPREAD = 20;
+const CARD_W = 60;
+const CARD_H = 90;
+const BOARD_SPREAD = 67;
+const HOLE_SPREAD = 23;
 const DEFAULT_ALL_IN_STEP_MS = 2000;
 
 export type TableSceneOptions = {
@@ -184,8 +184,11 @@ export class TableScene implements TableSceneController {
       });
     }
 
-    this.boardCenter = { x: w * 0.5, y: h * 0.44 };
-    this.deckPos = { x: w * 0.5, y: h * 0.36 };
+    // Compact Table sprint — desktop bajado al tercio medio, mobile preservado en
+    // baseline 0.44 para no comprometer la claridad vertical post-Phase-D-Primary.
+    const mobile = typeof window !== "undefined" && window.innerWidth <= 768;
+    this.boardCenter = { x: w * 0.5, y: h * (mobile ? 0.44 : 0.48) };
+    this.deckPos = { x: w * 0.5, y: h * (mobile ? 0.36 : 0.40) };
 
     this.layoutStaticUi();
     this.applyBoardPositions();
