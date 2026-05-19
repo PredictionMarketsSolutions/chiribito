@@ -16,7 +16,7 @@ const mechanics = [
     icon: Layers,
     title: "La Baraja",
     description:
-      "Se juega con 28 cartas de baraja española (del 7 al As). Con baraja francesa, se utilizan cartas del 8 al As. En mesas de 12 jugadores, la baraja se amplía a 32 cartas.",
+      "Baraja española de 28 cartas: 4 palos (Oros, Copas, Espadas, Bastos) y 7 rangos por palo: 5, 6, 7, Sota (10), Caballo (11), Rey (12) y As. En la baraja francesa equivalente serían 8, 9, 10, J, Q, K y A.",
   },
   {
     icon: Zap,
