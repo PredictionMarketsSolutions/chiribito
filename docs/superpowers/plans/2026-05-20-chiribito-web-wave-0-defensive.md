@@ -159,7 +159,7 @@ Edit `web/components/hero-section.tsx`. Replace lines 158–189 (the entire CTA 
             target="_blank"
             rel="noopener noreferrer"
             animate={{
-              scale: [1, 1.04, 1],
+              scale: [1, 1.08, 1],
               boxShadow: [
                 "0 0 20px 0px rgba(212, 175, 55, 0.3), 0 10px 30px -5px rgba(212, 175, 55, 0.3)",
                 "0 0 40px 8px rgba(212, 175, 55, 0.5), 0 20px 50px -5px rgba(212, 175, 55, 0.5)",
@@ -168,7 +168,7 @@ Edit `web/components/hero-section.tsx`. Replace lines 158–189 (the entire CTA 
             }}
             transition={{
               repeat: Infinity,
-              duration: 2.4,
+              duration: 2,
               ease: "easeInOut",
             }}
             className="relative inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-lg transition-all duration-300 overflow-hidden"
@@ -177,7 +177,7 @@ Edit `web/components/hero-section.tsx`. Replace lines 158–189 (the entire CTA 
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               animate={{ x: ["-100%", "100%"] }}
-              transition={{ repeat: Infinity, duration: 2.4, ease: "linear" }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
             />
           </motion.a>
         </motion.div>
@@ -189,8 +189,7 @@ Notes:
 - `cursor-not-allowed opacity-75` classes removed
 - `bg-primary/60` → `bg-primary` (full saturation, no faded look)
 - `Próximamente` tag span removed
-- Pulse `scale: [1, 1.08, 1]` softened to `[1, 1.04, 1]` and `duration: 2 → 2.4` — less aggressive since it's now an active link, not "look at me I'm coming"
-- Glow shimmer animation preserved
+- Pulse + shimmer animation params kept IDENTICAL to original (scale 1.08, durations 2). Wave 1 can revisit pulse intensity if it feels too casino — out of Wave 0 scope.
 
 - [ ] **Step 3: Wire Desktop navbar `Juega Ya`**
 
