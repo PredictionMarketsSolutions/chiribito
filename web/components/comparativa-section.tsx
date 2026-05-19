@@ -6,7 +6,7 @@ import { Check, X } from "lucide-react"
 const comparisons = [
   {
     aspect: "Baraja",
-    chiribito: "28 cartas (5-As)",
+    chiribito: "Baraja española de 28 cartas: 5, 6, 7, Sota, Caballo, Rey y As",
     holdem: "52 cartas completa",
   },
   {
