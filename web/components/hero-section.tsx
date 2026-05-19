@@ -121,7 +121,7 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.8 }}
           className="font-serif text-lg md:text-2xl text-primary italic"
         >
-          El Alma del Poker Español
+          El Alma del Póker Español
         </motion.p>
 
         {/* Description */}

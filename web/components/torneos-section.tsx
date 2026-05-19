@@ -15,14 +15,14 @@ const torneos = [
     icon: Calendar,
     title: "Eventos Diarios",
     description:
-      "Competiciones rapidas y dinamicas con botes garantizados todos los dias. No te quedes fuera!",
+      "Competiciones rápidas y dinámicas con botes garantizados todos los días. No te quedes fuera.",
     highlight: false,
   },
   {
     icon: Crown,
     title: "El Gran Torneo de Fin de Semana",
     description:
-      "Nuestra joya de la corona. Los mayores premios, los mejores jugadores y la gloria absoluta en juego. Reserva tu asiento, prepara tu mejor estrategia y llevate el bote a casa.",
+      "Nuestra joya de la corona. Los mayores premios, los mejores jugadores y la gloria absoluta en juego. Reserva tu asiento, prepara tu mejor estrategia y llévate el bote a casa.",
     highlight: true,
   },
 ]
@@ -43,13 +43,13 @@ export function TorneosSection() {
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <span className="text-xs uppercase tracking-[0.3em] text-primary">
-            Competicion
+            Competición
           </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 text-balance">
             Torneos
           </h2>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-pretty">
-            Demuestra quien manda en la mesa. Enfrentate a jugadores de todo el
+            Demuestra quién manda en la mesa. Enfréntate a jugadores de todo el
             mundo en nuestros torneos diarios, semanales y eventos especiales.
           </p>
           <div className="w-24 h-px bg-primary mx-auto mt-6" />

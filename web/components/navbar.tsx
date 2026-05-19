@@ -9,7 +9,7 @@ const links = [
   { label: "Simulador", href: "#simulador" },
   { label: "Ranking", href: "#ranking" },
   { label: "Historia", href: "#historia" },
-  { label: "Mécanica", href: "#mecanica" },
+  { label: "Mecánica", href: "#mecanica" },
   { label: "Torneos", href: "#torneos" },
   { label: "Contacto", href: "/contacto" },
 ]

@@ -62,7 +62,7 @@ export function Footer() {
             className="drop-shadow-lg"
           />
           <p className="text-sm text-muted-foreground max-w-md text-pretty">
-            El Poker Sintetico. Nacido en Madrid, jugado en la penumbra,
+            El Póker Sintético. Nacido en Madrid, jugado en la penumbra,
             inmortalizado en la memoria de quienes tuvieron el privilegio de
             sentarse a la mesa.
           </p>

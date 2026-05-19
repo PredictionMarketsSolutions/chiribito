@@ -72,7 +72,7 @@ export function ComparativaSection() {
           </h2>
           <div className="w-24 h-px bg-primary mx-auto mt-6" />
           <p className="text-muted-foreground mt-6 max-w-2xl mx-auto leading-relaxed text-pretty">
-            Aunque comparten raices, el Chiribito tiene reglas unicas que cambian completamente la estrategia del juego.
+            Aunque comparten raíces, el Chiribito tiene reglas únicas que cambian completamente la estrategia del juego.
           </p>
         </motion.div>
 
