@@ -10,7 +10,6 @@ import { ComparativaSection } from "@/components/comparativa-section"
 import { TorneosSection } from "@/components/torneos-section"
 import { TipsSection } from "@/components/tips-section"
 import { NewsletterSection } from "@/components/newsletter-section"
-import { ReviewsSection } from "@/components/reviews-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { ScrollToTop } from "@/components/scroll-to-top"
@@ -64,8 +63,6 @@ export default function Home() {
       <SectionSeparator />
       <TipsSection />
       <NewsletterSection />
-      <SectionSeparator />
-      <ReviewsSection />
       <Footer />
       <BackToTop />
     </main>
