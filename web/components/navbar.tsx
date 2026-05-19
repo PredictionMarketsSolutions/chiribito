@@ -108,12 +108,14 @@ export function Navbar() {
               </button>
             )
           })}
-          <button
-            disabled
-            className="text-sm font-bold bg-primary/60 text-primary-foreground px-5 py-2 rounded-lg cursor-not-allowed opacity-75 transition-all duration-300"
+          <a
+            href="https://play.chiribito.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2 rounded-lg hover:brightness-110 transition-all duration-300"
           >
             Juega Ya
-          </button>
+          </a>
         </div>
 
         {/* Mobile menu button */}
@@ -162,12 +164,15 @@ export function Navbar() {
                   </a>
                 )
               })}
-              <button
-                disabled
-                className="text-sm font-bold bg-primary/60 text-primary-foreground px-5 py-2 rounded-lg cursor-not-allowed opacity-75 transition-all duration-300 mt-2"
+              <a
+                href="https://play.chiribito.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2 rounded-lg hover:brightness-110 transition-all duration-300 mt-2 text-center"
               >
                 Juega Ya
-              </button>
+              </a>
             </div>
           </motion.div>
         )}

@@ -161,8 +161,10 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="mt-10"
         >
-          <motion.button
-            disabled
+          <motion.a
+            href="https://play.chiribito.com"
+            target="_blank"
+            rel="noopener noreferrer"
             animate={{
               scale: [1, 1.08, 1],
               boxShadow: [
@@ -176,16 +178,15 @@ export function HeroSection() {
               duration: 2,
               ease: "easeInOut",
             }}
-            className="relative inline-flex items-center gap-2 bg-primary/60 text-primary-foreground font-bold text-lg px-10 py-4 rounded-lg transition-all duration-300 overflow-hidden cursor-not-allowed opacity-75"
+            className="relative inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-lg transition-all duration-300 overflow-hidden"
           >
             <span className="relative z-10">JUGAR PARTIDA</span>
-            <span className="text-xs ml-2 font-semibold">Próximamente</span>
-            <motion.div 
+            <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               animate={{ x: ["-100%", "100%"] }}
               transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
             />
-          </motion.button>
+          </motion.a>
         </motion.div>
 
         {/* Scroll indicator with smooth scroll */}
