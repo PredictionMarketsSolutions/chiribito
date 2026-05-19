@@ -11,7 +11,6 @@ const links = [
   { label: "Historia", href: "#historia" },
   { label: "Mécanica", href: "#mecanica" },
   { label: "Torneos", href: "#torneos" },
-  { label: "Bonos", href: "#bonos" },
   { label: "Contacto", href: "/contacto" },
 ]
 
