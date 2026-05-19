@@ -3,7 +3,6 @@ import { SocialBar } from "@/components/social-bar"
 import { AudioPlayer } from "@/components/audio-player"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
-import { HomeCards } from "@/components/home-cards"
 import { HistorySection } from "@/components/history-section"
 import { TimelineSection } from "@/components/timeline-section"
 import { RulesSection } from "@/components/rules-section"
@@ -38,7 +37,6 @@ export default function Home() {
       <SocialBar />
       <Navbar />
       <HeroSection />
-      <HomeCards />
       <SectionSeparator />
       <SimuladorSection />
       <SectionSeparator />
