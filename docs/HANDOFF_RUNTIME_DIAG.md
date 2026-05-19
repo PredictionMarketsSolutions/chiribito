@@ -1,26 +1,58 @@
-# Chiribito — Runtime Diagnostic Handoff (session-of-2026-05-18)
+# Chiribito — Runtime Diagnostic Handoff (session-of-2026-05-18 + 2026-05-19 close-out)
 
-> Comprehensive handoff to resume the runtime diagnostic without losing reasoning chain.
+> Comprehensive handoff. Phase A + B + C **CLOSED** as of 2026-05-19. Phase D pending.
 > Predecessor: `docs/HANDOFF_A2.0.md` (Slice A2.0 closure, still valid).
 > Spec: `docs/superpowers/specs/2026-05-18-chiribito-runtime-diagnostic-design.md`.
 > Plan: `docs/superpowers/plans/2026-05-18-chiribito-runtime-diagnostic.md`.
+> **Master findings (Phase C close-out)**: `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md` ← READ FIRST.
 
 ---
 
-## CURRENT STATUS
+## PHASE C CLOSE-OUT SUMMARY (2026-05-19)
+
+**Status:** Phase A ✅ + Phase B ✅ (with #7 DEFERRED) + Phase C ✅ → Phase D pending.
+
+**Sequencing decision:** **P1 (readability) + P5 (mobile ergonomics) bucket** as next sprint. **No P2 perf bucket triggered.**
+
+**Verdicts at close-out:**
+
+| Area | Verdict | Driver |
+|------|---------|--------|
+| #1 frame-pacing | RED (spec) → **INDETERMINATE (adjusted)** | harness ~50Hz cap inflates slow-frames %; corroborating signals all PASS — no real pressure. RETEST_REQUIRED real prod 60Hz |
+| #2 pixi-render-loop | PASS | wastefulRedrawsIdle = 0 |
+| #3 texture-memory | PASS | 4 textures total, heap delta 0 MB/min |
+| #4 resize-thrashing | PASS | CLS ~0, jitter 0 px, 0 canvas recreates |
+| #5 ws-cadence | PASS | idle 0.2 msg/s heartbeat-only |
+| #6 dom-rerenders | PASS | idle 0/win, 0 orphan |
+| **#7 mobile-gpu** | **DEFERRED** | no real Android USB this session; retest pre-P5 polish |
+| #8 zindex-layering | PASS | DOM analysis: label BELOW canvas (source order); "text-dominant pixel" mobile explained by Pixi backgroundAlpha:0 (transparent canvas reveals DOM label, not z-stacking misconfig) |
+| **#9 readability** | **RED** | desktop: cardAreaPctOfFelt 2.81% (cards too small vs felt); mobile: labelIntrusionPct 13.73% portrait (label intrudes on community-card row). PURELY GEOMETRIC. |
+
+**Net interpretation (confirmed by triangulation B9 + B4):** mobile label intrusion is **geometric/static**, not z-order or resize-triggered. Phase D scope is bounded.
+
+**Tests baseline (verified 2026-05-19 post-close):** 225/225 vitest + 475/475 jest game + 27/27 jest api. Zero regression.
+
+**Next session opens with Phase D 6-point spec** — see findings doc "Next session's first action".
+
+---
+
+---
+
+## CURRENT STATUS (close-out 2026-05-19)
 
 | Field | Value |
 |-------|-------|
-| **HEAD (this commit)** | most recent `docs(handoff)` commit on main — `git log --oneline -1` (handoff doc only — code unchanged from `0304ea0`) |
-| **Last code commit** | `0304ea0` (Phase A `?perf=1` instrumentation, SHIPPED + pushed) |
-| **Diagnostic phase** | Phase A SHIPPED; Phase B PARTIAL (B0 + B1 done; B10 #9 readability captured with methodology gaps; B2-B9 + B11 pending) |
-| **Working tree** | clean post-handoff commit (only `_screenshots/` + `.dev-stack/` untracked, both gitignored) |
-| **vitest frontend** | 225/225 PASS |
-| **jest game-server** | 475/475 PASS |
-| **jest api-server** | 27/27 PASS |
-| **Playwright E2E** | 40/40 PASS (last run pre-Phase-A; no regression expected since no game code changed) |
-| **Bootstrap smoke (programmatic)** | PASS 3/3 (body class, console gating, payload shape) |
-| **Perceptual smoke (visual diff)** | PASS — 0 px drift of 1,296,000 between default and ?perf=1 |
+| **HEAD (last code commit)** | `0304ea0` (Phase A `?perf=1` instrumentation, SHIPPED + pushed) |
+| **HEAD (last handoff commit pre-close)** | `be6b4ea` (handoff doc self-referencing) |
+| **Diagnostic phase** | Phase A SHIPPED ✅ · Phase B CLOSED ✅ (8/9 areas captured; #7 mobile-GPU DEFERRED) · Phase C CLOSED ✅ (findings doc + sequencing decision) · Phase D PENDING |
+| **Working tree** | clean except `_screenshots/` + `.dev-stack/` (both gitignored). New uncommitted artifacts (handoff close-out + findings doc + updated matrix.json — last is gitignored): tracked-file drift = 2 modified files awaiting commit, see "Session close drift" section below |
+| **vitest frontend** | 225/225 PASS (verified 2026-05-19) |
+| **jest game-server** | 475/475 PASS (verified 2026-05-19) |
+| **jest api-server** | 27/27 PASS (verified 2026-05-19) |
+| **Playwright E2E** | 40/40 PASS (last run pre-Phase-A; no regression expected — no game code changed) |
+| **Bootstrap smoke (programmatic)** | PASS 3/3 (Phase A) |
+| **Perceptual smoke (visual diff)** | PASS — 0 px drift between default and ?perf=1 |
+| **Dev-stack** | all 4 services responsive at session close (postgres :5432, api :3000, game :2567, frontend :5173) |
 
 ---
 
@@ -215,37 +247,45 @@ frontend/src/app/room-session-controller.ts                                    (
 
 ---
 
-## WHAT'S STILL PENDING (resume order for tomorrow)
+## WHAT'S STILL PENDING (post-close-out 2026-05-19)
 
-### Highest priority (user-feedback-aligned, finish first)
+### COMPLETED in session-of-2026-05-19
 
-1. **Re-run B10 #9 readability with methodology fixes**:
-   - Fix contrast sampling (sample center of a known-revealed card, 5×5 patch median, OR measure DOM card-popover instead)
-   - Scope thumb-occlusion to mobile only (n/a on desktop)
-   - Add a NEW metric: `cardAreaPctOfFelt` (or similar relative-scale measure)
-   - Document the threshold recalibration in `matrix.json.recalibrations[]`
-   - Re-emit verdict + fill `09-readability/verdict.md` properly
+1. ✅ **B10 v2 #9 readability methodology rerun** — `cardAreaPctOfFelt` + `labelIntrusionPct` + `criticalInfoOverlap` (severity-weighted) + canonical-camera freeze. Verdict RED both viewports, drivers identified (desktop card-scale 2.81%, mobile label-intrusion 13.73% portrait).
+2. ✅ **B9 #8 z-index/layering** — PASS. Mobile label is BELOW canvas in stacking order (DOM analysis conclusive). "Text-dominant pixel-class" mobile is artifact of Pixi `backgroundAlpha: 0` (transparent canvas reveals DOM label, NOT z-stacking misconfig).
+3. ✅ **B4 #4 resize/responsive thrashing** — PASS. CLS ~0, 0 canvas recreates, 0 jitter, 0 stale bounds, instant Pixi resize. Intrusion is STATIC, not transient.
+4. ✅ **Perf batch (B2/B3/B5/B6/B7)** — #2/#3/#5/#6 PASS clean. #1 spec-RED is harness-fidelity artifact (headless ~50Hz cap); corroborating signals confirm no real pressure.
+5. ✅ **B11 matrix consolidation** — all 8 captured areas filled; #7 explicitly DEFERRED with `retestRequiredOnRealAndroid: true` flag.
+6. ✅ **Phase C master findings doc** — at `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md`. Sequencing decision: **P1 readability + P5 mobile ergonomics** as next bucket. No P2 perf trigger.
 
-2. **B9 #8 z-index/layering** — capture during deal + during normal play, specifically look for the "COMUNITARIAS label overlapping community cards" observation from B1 mobile baseline. Likely Yellow/Red.
+### DEFERRED (low urgency, not blocking Phase D)
 
-3. **B5 #4 resize/responsive thrashing** — desktop window drag + Playwright `setViewportSize()` flip between portrait/landscape Pixel 5. Watch for CLS, canvas recreate events. Priority because it speaks to "responsive geometry" pain.
+7. **#7 mobile-GPU + thermal** — requires real Android via chrome://inspect. Re-trigger pre-P5 polish gate (Phase E close-out).
+8. **#1 real-prod retest** — needs DevTools Performance trace at `play.chiribito.com` on a real 60Hz monitor. Corroborating evidence strongly suggests no real pressure, but a clean prod capture would close the artifact-vs-real ambiguity definitively. NOT blocking.
+9. **Longer-window texture-memory retest** (5-min × 3-5 manos) — recommended pre-Phase-D-merge to catch slow leaks invisible at the 60s window.
 
-### Mid priority (perf areas, batch-friendly)
+### NEXT (Phase D execution)
 
-4. **B4 #5 WS cadence + B7 #6 DOM rerenders + B3 #2 Pixi render loop** — single dev-stack `?perf=1` multi-tab session can produce data for all three at once. Already have the instrumentation; just need to capture 60+ seconds of `[perf]` console logs + isolate idle vs burst windows.
+10. **Phase D 6-point spec** — open next session per `feedback_chiribito_disciplined_format.md`. Target: eliminate `labelIntrusionPctMobile > 0` in portrait. Scope: CSS-only primary; TableScene constants secondary (requires explicit "go").
+11. **Phase E closure** — final test baselines re-verified post-Phase-D, ?perf=1 retention confirmed (keep behind flag), update this handoff with all-closed status.
 
-5. **B2 #1 frame pacing + B6 #3 texture memory** — vite preview (prod build) captures. Mostly independent of multi-player.
+---
 
-### Lower priority (gapped by harness)
+## SESSION CLOSE DRIFT (2026-05-19)
 
-6. **B8 #7 mobile GPU + thermal** — partial verdict via Pixel 5 emulation + CPU 4× throttle. Mark RETEST_REQUIRED on real Android pre-P5.
+Tracked-file modifications awaiting commit at session close:
 
-### Closeout
+```
+M  docs/HANDOFF_RUNTIME_DIAG.md     (close-out status section + verdicts table + completed/pending split)
+A  docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md   (NEW — Phase C master findings)
+```
 
-7. **B11 consolidate matrix.json** — fill all 9 verdicts + cross-area linking notes.
-8. **Phase C master findings doc** — `docs/superpowers/findings/2026-05-18-chiribito-runtime-diagnostic.md` with priority feedback verbatim at top + sequencing rule applied.
-9. **Phase D deep-dives** — per Y/R area (likely #9, #4, #8 at minimum based on today's evidence).
-10. **Phase E closure** — final test baselines, `?perf=1` retention decision (user already leaned: NOT a permanent dev-overlay, but the helper + counters can persist behind the flag as the harness for future regression checks), update this handoff with closed status.
+Untracked (will remain gitignored):
+- `.dev-stack/diag/**` — all measurements + verdict.md + matrix.json + PNGs
+- `.dev-stack/b*-*.ts` — capture scripts (b10-rerun-v2, b9-zindex-capture, b4-resize-capture, b-perf-batch)
+- `_screenshots/` — Playwright run artifacts
+
+**Recommended action at session start (next time):** commit the 2 tracked-file changes with message `docs(diag): close out Phase C runtime diagnostic — sequencing decision P1+P5` and push, then open Phase D.
 
 ---
 
