@@ -112,7 +112,7 @@ export function TorneosSection() {
           className="text-center mt-12"
         >
           <a
-            href="https://chiri-frontend.onrender.com/"
+            href="https://play.chiribito.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-lg hover:brightness-110 transition-all duration-300"

@@ -145,7 +145,7 @@ export function HeroSection() {
         >
           Este es un proyecto{" "}
           <a
-            href="https://github.com/polito101/Chiri-backend/"
+            href="https://github.com/PredictionMarketsSolutions/chiribito"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary/80 hover:text-primary underline transition-colors"

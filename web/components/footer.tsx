@@ -95,7 +95,7 @@ export function Footer() {
           <div className="text-xs text-muted-foreground/70 pt-4">
             Este es un proyecto{" "}
             <a
-              href="https://github.com/polito101/Chiri-backend/"
+              href="https://github.com/PredictionMarketsSolutions/chiribito"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline transition-colors"
