@@ -10,7 +10,6 @@ const _playfair = Playfair_Display({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: 'Chiribito - El Alma del Póker Español',
   description: 'Descubre la historia del Chiribito, el póker sintético nacido en la clandestinidad madrileña. Reglas, historia y leyendas del juego de cartas más exclusivo de España.',
-  generator: 'v0.app',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32', type: 'image/png' },
