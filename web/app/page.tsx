@@ -14,7 +14,6 @@ import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { SectionSeparator } from "@/components/section-separator"
-import { StatsGrid } from "@/components/chip-counter"
 
 // Lazy load heavy interactive components
 const SimuladorSection = dynamic(
@@ -41,19 +40,6 @@ export default function Home() {
       <RankingsSection />
       <SectionSeparator />
       <HistorySection />
-      {/* Stats with animated chip counters */}
-      <div className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-6">
-          <StatsGrid
-            stats={[
-              { value: 50, suffix: "+", label: "Años de historia" },
-              { value: 1000, suffix: "+", label: "Jugadores activos" },
-              { value: 28, label: "Cartas en juego" },
-              { value: 6, label: "Rondas de apuestas" },
-            ]}
-          />
-        </div>
-      </div>
       <TimelineSection />
       <SectionSeparator />
       <RulesSection />
