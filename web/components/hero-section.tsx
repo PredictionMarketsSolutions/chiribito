@@ -26,7 +26,7 @@ export function HeroSection() {
       <motion.div className="absolute inset-0" style={{ y: bgY }}>
         <Image
           src="/images/hero-casino.jpg"
-          alt="Mesa de casino vintage en Madrid"
+          alt="Salón de cartas madrileño, años 50"
           fill
           className="object-cover scale-110"
           priority
@@ -96,10 +96,10 @@ export function HeroSection() {
           <div className="w-16 md:w-24 h-px bg-primary/40" />
           <div className="flex items-center gap-2">
             {[
-              { src: "/ace-oros.png", alt: "Ace of Coins" },
-              { src: "/ace-copas.png", alt: "Ace of Cups" },
-              { src: "/ace-espada.png", alt: "Ace of Swords" },
-              { src: "/ace-bastos.png", alt: "Ace of Clubs" },
+              { src: "/ace-oros.png", alt: "As de Oros" },
+              { src: "/ace-copas.png", alt: "As de Copas" },
+              { src: "/ace-espada.png", alt: "As de Espadas" },
+              { src: "/ace-bastos.png", alt: "As de Bastos" },
             ].map((ace) => (
               <div key={ace.alt} style={{ position: "relative", display: "inline-block", width: 28, height: 42 }}>
                 <Image
