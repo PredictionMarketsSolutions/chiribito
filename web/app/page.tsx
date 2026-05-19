@@ -8,7 +8,6 @@ import { TimelineSection } from "@/components/timeline-section"
 import { RulesSection } from "@/components/rules-section"
 import { ComparativaSection } from "@/components/comparativa-section"
 import { TorneosSection } from "@/components/torneos-section"
-import { BonosSection } from "@/components/bonos-section"
 import { TipsSection } from "@/components/tips-section"
 import { NewsletterSection } from "@/components/newsletter-section"
 import { ReviewsSection } from "@/components/reviews-section"
@@ -62,7 +61,6 @@ export default function Home() {
       <ComparativaSection />
       <SectionSeparator />
       <TorneosSection />
-      <BonosSection />
       <SectionSeparator />
       <TipsSection />
       <NewsletterSection />
