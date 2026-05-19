@@ -1,10 +1,19 @@
-# Chiribito — Runtime Diagnostic Handoff (session-of-2026-05-18 + 2026-05-19 close-out)
+# Chiribito — Runtime Diagnostic Handoff (sessions 2026-05-18 + 2026-05-19)
 
-> Comprehensive handoff. Phase A + B + C **CLOSED** as of 2026-05-19. Phase D pending.
+> # RUNTIME DIAGNOSTIC OFFICIALLY CLOSED — 2026-05-19
+>
+> Phases A + B + C + **Phase D PRIMARY** all SHIPPED. Mobile `labelIntrusionPct` 13.73% → 0%; mobile overall verdict red → yellow. No regressions; tests baseline preserved.
+>
+> The remaining desktop `cardAreaPctOfFelt = 2.81%` RED is **reclassified out of this diagnostic** — it moves to *Compact Table / Gameplay Density* sprint territory and will be addressed there as conscious gameplay-composition tuning, not as a runtime-diagnostic fix.
+>
+> Other deferred items (#7 mobile-GPU on real Android, #1 real-prod retest, long-window texture-memory) are no longer this diagnostic's responsibility. They become an optional Phase-E-style backlog the user may or may not choose to revisit.
+>
+> **No resume of this diagnostic. Future Chiribito work opens in a fresh sprint frame.**
+>
 > Predecessor: `docs/HANDOFF_A2.0.md` (Slice A2.0 closure, still valid).
 > Spec: `docs/superpowers/specs/2026-05-18-chiribito-runtime-diagnostic-design.md`.
 > Plan: `docs/superpowers/plans/2026-05-18-chiribito-runtime-diagnostic.md`.
-> **Master findings (Phase C close-out)**: `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md` ← READ FIRST.
+> **Master findings (Phase C close-out)**: `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md` ← canonical diagnostic record.
 
 ---
 
@@ -38,21 +47,25 @@
 
 ---
 
-## CURRENT STATUS (close-out 2026-05-19)
+## CURRENT STATUS (final close-out 2026-05-19, post-Phase-D Primary)
 
 | Field | Value |
 |-------|-------|
-| **HEAD (last code commit)** | `0304ea0` (Phase A `?perf=1` instrumentation, SHIPPED + pushed) |
-| **HEAD (last handoff commit pre-close)** | `be6b4ea` (handoff doc self-referencing) |
-| **Diagnostic phase** | Phase A SHIPPED ✅ · Phase B CLOSED ✅ (8/9 areas captured; #7 mobile-GPU DEFERRED) · Phase C CLOSED ✅ (findings doc + sequencing decision) · Phase D PENDING |
-| **Working tree** | clean except `_screenshots/` + `.dev-stack/` (both gitignored). New uncommitted artifacts (handoff close-out + findings doc + updated matrix.json — last is gitignored): tracked-file drift = 2 modified files awaiting commit, see "Session close drift" section below |
-| **vitest frontend** | 225/225 PASS (verified 2026-05-19) |
-| **jest game-server** | 475/475 PASS (verified 2026-05-19) |
-| **jest api-server** | 27/27 PASS (verified 2026-05-19) |
-| **Playwright E2E** | 40/40 PASS (last run pre-Phase-A; no regression expected — no game code changed) |
+| **HEAD (last code commit)** | `45b0618` (Phase D Primary CSS fix, SHIPPED + pushed) |
+| **HEAD (last docs commit)** | `9f55ebc` (Phase C close-out docs) — superseded by the official-closure docs commit that ships this update |
+| **Pre-Phase-D-primary commit** | `0304ea0` (Phase A `?perf=1` instrumentation) |
+| **Diagnostic phase** | Phase A SHIPPED ✅ · Phase B CLOSED ✅ (8/9 areas captured; #7 mobile-GPU reclassified to optional backlog) · Phase C CLOSED ✅ (findings + sequencing) · **Phase D PRIMARY SHIPPED ✅** · **Diagnostic OFFICIALLY CLOSED** |
+| **Working tree** | clean except `_screenshots/` (gitignored) |
+| **Mobile `labelIntrusionPct`** | **0** (was 13.73% pre-fix). Mobile overall verdict: red → yellow. |
+| **Desktop `labelIntrusionPct`** | 0 (unchanged) |
+| **Desktop `cardAreaPctOfFelt`** | 2.81% — **reclassified out of diagnostic scope** as Compact Table / Gameplay Density territory |
+| **vitest frontend** | 225/225 PASS (verified post-Phase-D Primary) |
+| **jest game-server** | 475/475 PASS (verified post-Phase-D Primary) |
+| **jest api-server** | 27/27 PASS (verified post-Phase-D Primary) |
+| **Playwright E2E** | 40/40 PASS (last run pre-Phase-A; no regression expected — no game code changed in Phase D) |
 | **Bootstrap smoke (programmatic)** | PASS 3/3 (Phase A) |
 | **Perceptual smoke (visual diff)** | PASS — 0 px drift between default and ?perf=1 |
-| **Dev-stack** | all 4 services responsive at session close (postgres :5432, api :3000, game :2567, frontend :5173) |
+| **Dev-stack** | all 4 services responsive at close (postgres :5432, api :3000, game :2567, frontend :5173) |
 
 ---
 
@@ -247,45 +260,48 @@ frontend/src/app/room-session-controller.ts                                    (
 
 ---
 
-## WHAT'S STILL PENDING (post-close-out 2026-05-19)
+## DIAGNOSTIC LIFECYCLE — FINAL SUMMARY
 
-### COMPLETED in session-of-2026-05-19
+### Completed within the diagnostic (all SHIPPED)
 
-1. ✅ **B10 v2 #9 readability methodology rerun** — `cardAreaPctOfFelt` + `labelIntrusionPct` + `criticalInfoOverlap` (severity-weighted) + canonical-camera freeze. Verdict RED both viewports, drivers identified (desktop card-scale 2.81%, mobile label-intrusion 13.73% portrait).
-2. ✅ **B9 #8 z-index/layering** — PASS. Mobile label is BELOW canvas in stacking order (DOM analysis conclusive). "Text-dominant pixel-class" mobile is artifact of Pixi `backgroundAlpha: 0` (transparent canvas reveals DOM label, NOT z-stacking misconfig).
-3. ✅ **B4 #4 resize/responsive thrashing** — PASS. CLS ~0, 0 canvas recreates, 0 jitter, 0 stale bounds, instant Pixi resize. Intrusion is STATIC, not transient.
-4. ✅ **Perf batch (B2/B3/B5/B6/B7)** — #2/#3/#5/#6 PASS clean. #1 spec-RED is harness-fidelity artifact (headless ~50Hz cap); corroborating signals confirm no real pressure.
-5. ✅ **B11 matrix consolidation** — all 8 captured areas filled; #7 explicitly DEFERRED with `retestRequiredOnRealAndroid: true` flag.
-6. ✅ **Phase C master findings doc** — at `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md`. Sequencing decision: **P1 readability + P5 mobile ergonomics** as next bucket. No P2 perf trigger.
+1. ✅ **Phase A instrumentation** — `?perf=1` mode, perf-counters, Heisenberg-disciplined. Commit `0304ea0`.
+2. ✅ **Phase B captures** — 8 of 9 areas measured (B1 baseline pair, B10 v2 readability, B9 z-index, B4 resize, B-perf batch B2/B3/B5/B6, B11 matrix consolidation). #7 mobile-GPU was DEFERRED at the time (no real Android USB).
+3. ✅ **Phase C findings + sequencing** — canonical doc at `docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md`. Bucket decision: P1 readability + P5 mobile ergonomics; no P2 perf trigger. Commit `9f55ebc`.
+4. ✅ **Phase D PRIMARY** — single CSS rule added at `frontend/src/style.css:4327-4335` (pure additive, +9 LoC, 0 modified, 0 removed):
+   ```css
+   @media (max-width: 768px) and (orientation: portrait) {
+     .table-zone--community .zone-title { display: none; }
+   }
+   ```
+   Mobile `labelIntrusionPct` 13.73 → 0; mobile overall verdict red → yellow. Commit `45b0618`.
 
-### DEFERRED (low urgency, not blocking Phase D)
+### Reclassified OUT of this diagnostic (no longer treated as bugs here)
 
-7. **#7 mobile-GPU + thermal** — requires real Android via chrome://inspect. Re-trigger pre-P5 polish gate (Phase E close-out).
-8. **#1 real-prod retest** — needs DevTools Performance trace at `play.chiribito.com` on a real 60Hz monitor. Corroborating evidence strongly suggests no real pressure, but a clean prod capture would close the artifact-vs-real ambiguity definitively. NOT blocking.
-9. **Longer-window texture-memory retest** (5-min × 3-5 manos) — recommended pre-Phase-D-merge to catch slow leaks invisible at the 60s window.
+- **Desktop `cardAreaPctOfFelt = 2.81%` (#9 desktop RED driver)** — moves to *Compact Table / Gameplay Density* sprint territory. Will be addressed as conscious gameplay-composition tuning, not as a runtime-diagnostic fix. The earlier Phase D Secondary framing (TableScene `CARD_W / CARD_H / BOARD_SPREAD` tuning behind explicit GO) is hereby retired — the new sprint will set its own scope, constraints, and no-touch list from scratch.
+- **`criticalInfoOverlapPct = 1.64%` mobile YELLOW** (header overlapping canvas) — same: gameplay-composition territory, not a diagnostic regression.
 
-### NEXT (Phase D execution)
+### Optional backlog (NOT this diagnostic's responsibility; revisit only if a future sprint explicitly asks for it)
 
-10. **Phase D 6-point spec** — open next session per `feedback_chiribito_disciplined_format.md`. Target: eliminate `labelIntrusionPctMobile > 0` in portrait. Scope: CSS-only primary; TableScene constants secondary (requires explicit "go").
-11. **Phase E closure** — final test baselines re-verified post-Phase-D, ?perf=1 retention confirmed (keep behind flag), update this handoff with all-closed status.
+- **#7 mobile-GPU + thermal on real Android** — USB-gated, requires `chrome://inspect`.
+- **#1 frame-pacing real-prod retest** — DevTools Performance trace at `play.chiribito.com` on real 60Hz hardware. Strong prior that prod is clean; remaining ambiguity is harness-vs-real, not user-impact.
+- **Longer-window texture-memory** — 5-min × 3-5 manos slow-leak capture.
+- **Phase E formal closure with retests** — only meaningful if the deferred items above are revisited. Otherwise the diagnostic stays closed at the Phase D Primary stamp above.
+
+The `?perf=1` instrumentation **stays installed** behind its flag as a persistent regression harness. No removal planned.
 
 ---
 
-## SESSION CLOSE DRIFT (2026-05-19)
+## SESSION CLOSE DRIFT — RESOLVED
 
-Tracked-file modifications awaiting commit at session close:
+The Phase C drift (this handoff + the findings doc) was shipped as commit `9f55ebc`. The Phase D Primary code change was shipped as commit `45b0618`. The final closure docs update (this revision) ships next.
 
-```
-M  docs/HANDOFF_RUNTIME_DIAG.md     (close-out status section + verdicts table + completed/pending split)
-A  docs/superpowers/findings/2026-05-19-chiribito-runtime-diagnostic-findings.md   (NEW — Phase C master findings)
-```
+Working tree at official closure: clean except `_screenshots/` (gitignored).
 
-Untracked (will remain gitignored):
-- `.dev-stack/diag/**` — all measurements + verdict.md + matrix.json + PNGs
+Untracked artifacts (intentionally gitignored, preserved locally as the diagnostic record):
+- `.dev-stack/diag/**` — measurements + verdict.md + matrix.json + PNGs (incl. post-Phase-D-primary 09-readability rerun)
 - `.dev-stack/b*-*.ts` — capture scripts (b10-rerun-v2, b9-zindex-capture, b4-resize-capture, b-perf-batch)
+- `.dev-stack/b10-phase-d-run.log` — Phase D Primary verification run log
 - `_screenshots/` — Playwright run artifacts
-
-**Recommended action at session start (next time):** commit the 2 tracked-file changes with message `docs(diag): close out Phase C runtime diagnostic — sequencing decision P1+P5` and push, then open Phase D.
 
 ---
 
@@ -305,49 +321,13 @@ Untracked (will remain gitignored):
 
 ---
 
-## RESUME PROTOCOL (for tomorrow's session)
+## RESUME PROTOCOL — RETIRED
 
-When the user says "Hola Chiribito" or "Continúa runtime diag" or equivalent, execute these steps WITHOUT waiting for confirmation:
+This diagnostic is officially closed. There is no resume of the runtime-diag sprint.
 
-```
-STEP 1 — Load context
-  Read: docs/HANDOFF_RUNTIME_DIAG.md (this doc)
-  Read: docs/HANDOFF_A2.0.md (still valid for pre-runtime-diag context)
-  Read: docs/superpowers/specs/2026-05-18-chiribito-runtime-diagnostic-design.md
-  Read: docs/superpowers/plans/2026-05-18-chiribito-runtime-diagnostic.md
-  Read: ~/.claude/projects/C--Users-Usuario/memory/project_chiribito.md (will have updated index)
-  Read: ~/.claude/projects/C--Users-Usuario/memory/project_chiribito_runtime_diag.md (new entry for this diagnostic)
+When the user opens the next Chiribito session ("Hola Chiribito" / equivalent), do NOT re-enter the runtime-diag flow. Read `project_chiribito.md` and `project_chiribito_runtime_diag.md` for state-of-the-world, but treat any new work as a fresh sprint with its own scope, plan, and no-touch list.
 
-STEP 2 — Verify state
-  cd C:/Users/Usuario/Documents/CHIRIBITO/chiri-infrastructure/chiri-app
-  git log --oneline -5     # HEAD must be the handoff commit (or further if user advanced)
-  git status --short        # working tree clean (only _screenshots/ + .dev-stack/)
-  git fetch origin && git rev-parse origin/main    # must match local
-
-STEP 3 — Check existing diagnostic artifacts
-  ls -la .dev-stack/diag/baseline/     # mano-completa pair should still exist
-  ls -la .dev-stack/diag/09-readability/    # B10 partial capture + measurements
-  cat .dev-stack/diag/matrix.json | head -30    # current matrix state (mostly null except B10)
-  cat .dev-stack/diag/09-readability/verdicts.json   # the B10 instrumented verdict + methodology gaps
-
-STEP 4 — Verify tests still green (sanity)
-  cd frontend && npm test    # 225/225
-  cd .. && npm test           # 475/475
-  cd api-server && npm test   # 27/27
-
-STEP 5 — Dev-stack state
-  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173    # 200 if up, 000/curl-error if down
-  If down: npm run dev:stack &  (and wait until 5173 responds 200)
-
-STEP 6 — Propose next action in Spanish
-  Summarize: "Phase A SHIPPED. Phase B B0+B1 done. B10 partial with methodology gaps documented.
-              Next action: re-run B10 with contrast-sampling fix + add cardAreaPctOfFelt metric,
-              then proceed B9/B4 (priority-feedback aligned), then batch B2/B5/B6 perf areas,
-              then B1/B3, then B7 partial. Closeout C-E to follow."
-  Ask: "¿Arrancamos con la re-corrida de B10 con methodology fix, o prefieres otro orden?"
-```
-
-Do NOT auto-start any subagents. Wait for "go".
+Per the user's direction at close (2026-05-19), the next planned bucket is **Compact Table / Gameplay Density** — but do NOT auto-start it. Wait for the user to open it explicitly with its own framing and restrictions.
 
 ---
 
@@ -381,12 +361,15 @@ From `HANDOFF_A2.0.md` (still apply):
 ✅ Slice A1 (chrome cleanup, A1-new)
 ✅ Slice A2.0 (sidebar dev-strings hide + castizo)
 ✅ Phase G + P (production deploy + guest auto-register, play.chiribito.com live)
-✅ Runtime diag spec + plan + Phase A instrumentation (TODAY)
-🔵 Runtime diag Phase B partial — IN PROGRESS (this handoff is the resume point)
-⏳ Runtime diag Phase B remainder + C + D + E
-⏳ First gameplay polish sprint (P1 / P2 / P5 — bucket determined by Phase C sequencing decision)
-⏳ Phase W (landing fork from polito101/WEB-CHIRIBITO Next.js, gated on polish sprint shipped)
-⏳ Phase A apex cutover (chiribito.com, gated on Phase W + 1 week of stable polish use)
+✅ Runtime diag spec + plan + Phase A instrumentation
+✅ Runtime diag Phase B captures (8/9; #7 reclassified to optional backlog)
+✅ Runtime diag Phase C findings + sequencing (P1+P5 bucket)
+✅ Runtime diag Phase D Primary (mobile portrait label intrusion 13.73% → 0%)
+🔒 Runtime diagnostic OFFICIALLY CLOSED (2026-05-19)
+⏳ Compact Table / Gameplay Density sprint — NEXT (user-locked direction; opens with its own fresh framing, not auto-started)
+⏳ Optional backlog: #7 real-Android, #1 real-prod retest, long-window texture-memory, formal Phase E closure — only if a future sprint asks for it
+⏳ Phase W (landing fork from polito101/WEB-CHIRIBITO Next.js)
+⏳ Phase A apex cutover (chiribito.com)
 ```
 
 ---
