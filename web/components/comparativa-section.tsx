@@ -6,7 +6,7 @@ import { Check, X } from "lucide-react"
 const comparisons = [
   {
     aspect: "Baraja",
-    chiribito: "28 cartas (7-As)",
+    chiribito: "28 cartas (5-As)",
     holdem: "52 cartas completa",
   },
   {
@@ -47,7 +47,7 @@ const comparisons = [
   },
   {
     aspect: "Mejor mano inicial",
-    chiribito: "S/9s (La Perla)",
+    chiribito: "S/7s (La Perla)",
     holdem: "A/A",
   },
 ]
