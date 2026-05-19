@@ -8,7 +8,7 @@ const tips = [
     icon: Gem,
     title: "La Perla",
     description:
-      "S/9s (Sota y 9 del mismo palo) es la mejor mano inicial pre-flop. Al jugar del 7 al As, es la única mano central con la que haces todas las escaleras. Esta combinación es conocida como 'La Perla'. Su equivalente jugando con baraja francesa es J/Ts.",
+      "S/7s (Sota y 7 del mismo palo) es la mejor mano inicial pre-flop. Al jugar del 5 al As, es la única mano central que completa todas las escaleras posibles. Esta combinación es conocida como 'La Perla'. Su equivalente jugando con baraja francesa es J/Ts.",
     highlight: true,
   },
   {
