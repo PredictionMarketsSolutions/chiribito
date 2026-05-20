@@ -24,6 +24,10 @@ const CARD_W = 60;
 const CARD_H = 90;
 const BOARD_SPREAD = 67;
 const HOLE_SPREAD = 23;
+// Distance the hole-card cluster is pulled from the seat nameplate toward the
+// board center, onto open felt. Without it cards render at the nameplate center
+// (behind the higher z-index nameplate) or off-canvas for top/bottom seats.
+const HOLE_INSET = 104;
 const DEFAULT_ALL_IN_STEP_MS = 2000;
 
 export type TableSceneOptions = {
@@ -166,8 +170,16 @@ export class TableScene implements TableSceneController {
 
   measureLayout(): void {
     const surfaceRect = this.surfaceEl.getBoundingClientRect();
-    const w = Math.max(1, surfaceRect.width);
-    const h = Math.max(1, surfaceRect.height);
+    // The Pixi canvas fills the padding box (#pixi-layer inset:0), i.e. inside
+    // the wood border, and the renderer is sized to clientWidth/Height. Measure
+    // seats against that same origin so sprite coords map 1:1 to canvas pixels —
+    // using the border-box origin shifted everything by the 16px border width.
+    const borderL = this.surfaceEl.clientLeft;
+    const borderT = this.surfaceEl.clientTop;
+    const w = Math.max(1, this.surfaceEl.clientWidth);
+    const h = Math.max(1, this.surfaceEl.clientHeight);
+    const originX = surfaceRect.left + borderL;
+    const originY = surfaceRect.top + borderT;
 
     const seats = Array.from(this.seatsEl.querySelectorAll<HTMLElement>(".seat"));
     this.slotCenters = [];
@@ -179,8 +191,8 @@ export class TableScene implements TableSceneController {
       }
       const r = el.getBoundingClientRect();
       this.slotCenters.push({
-        x: r.left + r.width / 2 - surfaceRect.left,
-        y: r.top + r.height / 2 - surfaceRect.top,
+        x: r.left + r.width / 2 - originX,
+        y: r.top + r.height / 2 - originY,
       });
     }
 
@@ -210,8 +222,14 @@ export class TableScene implements TableSceneController {
 
   private holePosFor(visualSlot: number, cardIndex: number): { x: number; y: number } {
     const base = this.slotCenters[visualSlot] ?? this.boardCenter;
+    // Pull the cluster from the rim nameplate toward the board, onto the felt.
+    const vx = this.boardCenter.x - base.x;
+    const vy = this.boardCenter.y - base.y;
+    const len = Math.hypot(vx, vy) || 1;
+    const cx = base.x + (vx / len) * HOLE_INSET;
+    const cy = base.y + (vy / len) * HOLE_INSET;
     const dx = cardIndex === 0 ? -HOLE_SPREAD : HOLE_SPREAD;
-    return { x: base.x + dx, y: base.y };
+    return { x: cx + dx, y: cy };
   }
 
   private applyHolePositions(): void {
