@@ -5,6 +5,11 @@
 > **Delivered:** a first genuinely *playable & feel-able* Chiribito with living atmosphere
 > across landing → lobby → mesa. Pushed to origin/main; `chiribito-play` (re)deployed to
 > play.chiribito.com as part of this close-out.
+>
+> **Update 2026-05-20 (post-close-out):** a 4th perceptual layer — **card contact shadows
+> (physical grounding)** — was added on top. Committed locally (`d554176`); **not yet pushed**
+> to origin/main (origin sits at the felt/lighting close-out `e6db55e`). See §1 "Depth / grounding".
+>
 > **Next session = perceptual only.** Do NOT reopen resolved technical work.
 
 ---
@@ -44,6 +49,21 @@ locked "spanish dark jazz / flamenco lounge" direction. Verified across all thre
   clear — no spotlight, which would compete with the cards; only edges/corners deepen).
   Does NOT touch felt / cards / rim.
 
+### Depth / grounding — card contact shadows (this phase, `frontend/src/game/table/TableScene.ts`)
+- **Cards are now physically grounded on the felt** — they no longer "float" above it.
+- **Perceptual contact achieved**: an ultra-soft shadow concentrated at the card BASE, offset
+  straight down (a *contact* shadow, not a floating UI drop shadow). Reads as weight / resting
+  on the table almost subconsciously — not as "an effect".
+- **Explicitly verified clean** (close-crop runtime inspection, desktop + Pixel 5):
+  **NO floating-card look · NO halo · NO glow · NO dark outline · NO blur on the card face ·
+  NO edge / neighbour contamination · card crispness fully preserved.**
+- **How (no filter, no dependency):** a canvas-generated soft radial shadow texture (one shared
+  instance, sized per card), rendered in a container BELOW every card so only the grounded
+  sliver shows and a shadow can never bleed onto a card face or an overlapping neighbour; a
+  per-frame mirror tracks each card's transform so shadows follow GSAP deals / reveals and
+  resizes. Conservative params: alpha **0.34**, width **0.90×**, height **0.52×**, drop **0.36×**.
+  Commit `d554176` (local, unpushed).
+
 ---
 
 ## 2. 2-player bot harness (perception tooling — `.dev-stack/`, gitignored)
@@ -75,6 +95,11 @@ hand (≥2 players — solo testing sits in "ESPERANDO", no hand is dealt).
 - The music **works much better in real context** than in solo/static testing.
 - **2-player gameplay completely changes the perception** — this was the missing piece.
 - The **nocturnal / social atmosphere** is starting to emerge.
+- **Premium-by-accumulation validated** (felt material → tonal richness → cinematic framing →
+  physical grounding): four deliberately subtle layers now read as ONE cohesive, intentional
+  premium table — not a collection of effects. The whole exceeds the sum; no single step broke
+  the tone or hurt clarity. Chiribito crossed a perceptual line — designed with intent and
+  premium restraint, not "more effects".
 
 ### What worked best
 - A **real 2-player hand** as the perception baseline (vs solo) — the single biggest lever.
@@ -82,6 +107,9 @@ hand (≥2 players — solo testing sits in "ESPERANDO", no hand is dealt).
 - Music + gameplay SFX + ducking **together**, in context.
 - Felt deeper/desaturated + the ambient lighting vignette (play area emerging from shadow)
   reinforced "mesa viva" WITHOUT touching the locked card/felt identity.
+- Card contact shadows (grounding) — likely the highest-value perceptual lever, precisely
+  because it acts on the focal point yet is felt subconsciously, not seen. A manual
+  base-concentrated shadow (vs a blur-filter drop shadow) is what kept it physical, not floaty.
 
 ---
 
@@ -103,6 +131,12 @@ hand (≥2 players — solo testing sits in "ESPERANDO", no hand is dealt).
 - **Card size:** locked-good. Do not rescale.
 - **Felt width / oval gradient identity; wood border + gold rim; Fournier cards
   (`frontend/public/cards/*.webp`); mascots; castizo vocabulary; branding.**
+- **Card contact shadows: keep them a *contact* shadow** — base-concentrated, behind the card,
+  offset straight down, conservative alpha. Do NOT convert to a blur-filter / UI drop shadow,
+  do NOT expand the shadow around the card, do NOT raise the drop/gap (→ floating), do NOT add
+  softness/blur. Current params are at the conservative ceiling for this lever.
+- **Felt-L2b (velvet "tooth" / grain): deferred on purpose** — high artificiality / procedural
+  risk. Do not add texture grain without an explicit "go".
 - No new systems, no big refactors, no framework changes, no infra changes.
 
 ---
@@ -110,4 +144,10 @@ hand (≥2 players — solo testing sits in "ESPERANDO", no hand is dealt).
 ## 6. Tests / runtime
 - Frontend vitest: **232/232 green** (41 files). Game-server + api-server untouched this
   phase (their jest suites unaffected).
+- Depth / grounding validated runtime apples-to-apples via `.dev-stack/b5-depth-capture.ts`
+  (full frame + close crops, desktop + Pixel 5, real multi-player hand). `TableScene.ts` is
+  type-clean — the repo's pre-existing `tsc --noEmit` errors are in unrelated files
+  (`card-popover.ts`, `token-monitor.ts`, `connection.ts`), not this change.
+- Perceptual capture tooling added this phase (`.dev-stack/`, gitignored): `b3-felt-material-
+  capture.ts` (felt / lighting), `b5-depth-capture.ts` (depth, with close crops).
 - dev:stack ports: api 3000, game 2567, postgres 5432; frontend Vite 5173.
