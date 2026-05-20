@@ -224,4 +224,9 @@ export const music = {
     musicMaster.gain.linearRampToValueAtTime(depth, now + 0.06);
     musicMaster.gain.linearRampToValueAtTime(1, now + 0.06 + restoreS);
   },
+  /** Live level tuning (used by the runtime knob): set a state's base level now. */
+  setBaseLevel(s: "lobby" | "mesa", value: number): void {
+    BASE_LEVEL[s] = Math.max(0, Math.min(1, value));
+    if (current && state === s) rampTo(current.gain.gain, BASE_LEVEL[s], 0.3);
+  },
 };

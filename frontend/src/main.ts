@@ -1120,6 +1120,17 @@ if (soundToggleButton) {
 // Music layer: duck under moment SFX, and attach to the shared audio bus on the
 // first user gesture (browser autoplay policy requires a gesture before any audio).
 audio.setMomentEffectHandler(() => music.duck());
+// Dev tuning knobs (no UI): calibrate by ear at runtime in the console, e.g.
+//   __chiri.music.level("mesa", 0.07)   __chiri.music.state("mesa")   __chiri.music.duck()
+{
+  const w = window as unknown as { __chiri?: Record<string, unknown> };
+  w.__chiri = w.__chiri ?? {};
+  w.__chiri.music = {
+    level: (s: "lobby" | "mesa", v: number) => music.setBaseLevel(s, v),
+    state: (s: "lobby" | "mesa" | "none") => music.setState(s),
+    duck: () => music.duck(),
+  };
+}
 let musicAttached = false;
 function ensureMusicAttached(): void {
   if (musicAttached) return;
