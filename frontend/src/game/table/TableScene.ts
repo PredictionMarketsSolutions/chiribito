@@ -7,6 +7,7 @@ import {
   Application,
   Container,
   Graphics,
+  MIPMAP_MODES,
   Sprite,
   Text,
   Texture,
@@ -43,7 +44,17 @@ export type TableSceneOptions = {
 };
 
 function textureForUrl(url: string): Texture {
-  return Texture.from(url);
+  const tex = Texture.from(url);
+  const bt = tex.baseTexture;
+  if (bt.mipmap !== MIPMAP_MODES.ON) {
+    // Source art is ~800px wide shown at ~210px (DPR2): mipmaps + anisotropy
+    // give a clean downscale instead of the aliased "compressed" look of raw
+    // bilinear sampling. Real filtering, not a sharpen filter.
+    bt.mipmap = MIPMAP_MODES.ON;
+    bt.anisotropicLevel = 16;
+    if (bt.valid) bt.update();
+  }
+  return tex;
 }
 
 export class TableScene implements TableSceneController {
