@@ -882,6 +882,7 @@ const roomSessionController = createRoomSessionController({
   startTurnTimer: (turnId, timeoutMs, deadlineMs) => startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
   playActionSound: (a) => audio.playActionSound(a),
   playWinEffect: () => audio.playEffect("win"),
+  playLoseEffect: () => audio.playEffect("lose"),
   runTableRoundEndAnimation: (done) => {
     const ts = gameUiContext.tableScene;
     if (ts?.isActive()) {

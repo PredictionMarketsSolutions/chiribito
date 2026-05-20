@@ -24,6 +24,7 @@ describe("round-ended-outcome", () => {
       latestPlayerNames: new Map([["w1", "Ana"]]),
       applyWinnerUi,
       playWinEffect: vi.fn(),
+      playLoseEffect: vi.fn(),
       startWinnerDisplayPhase: vi.fn(),
       renderLastState: vi.fn(),
       showWinnerBanner: vi.fn(),
@@ -40,6 +41,7 @@ describe("round-ended-outcome", () => {
 
     expect(applyWinnerUi).toHaveBeenCalledWith(["w1", "me"], "Escalera");
     expect(deps.playWinEffect).toHaveBeenCalled();
+    expect(deps.playLoseEffect).not.toHaveBeenCalled();
     expect(deps.startWinnerDisplayPhase).toHaveBeenCalled();
     expect(deps.revealAllInCards).not.toHaveBeenCalled();
     expect(deps.showWinnerBanner).toHaveBeenCalledWith("Escalera para Ana");
@@ -59,6 +61,7 @@ describe("round-ended-outcome", () => {
       latestPlayerNames: new Map(),
       applyWinnerUi,
       playWinEffect: vi.fn(),
+      playLoseEffect: vi.fn(),
       startWinnerDisplayPhase: vi.fn(),
       renderLastState: vi.fn(),
       showWinnerBanner: vi.fn(),
@@ -90,6 +93,7 @@ describe("round-ended-outcome", () => {
       latestPlayerNames: new Map([["me", "Yo"]]),
       applyWinnerUi,
       playWinEffect,
+      playLoseEffect: vi.fn(),
       startWinnerDisplayPhase: vi.fn(),
       renderLastState: vi.fn(),
       showWinnerBanner: vi.fn(),
@@ -107,5 +111,38 @@ describe("round-ended-outcome", () => {
     expect(applyWinnerUi).toHaveBeenCalledWith(["me"], "Trío");
     expect(setPreviousWinnersKey).toHaveBeenCalledWith("me");
     expect(playWinEffect).toHaveBeenCalled();
+  });
+
+  it("plays the lose effect when the local player is known but did not win", () => {
+    const winnerDisplayState = createWinnerState();
+    const applyWinnerUi = vi.fn((winnerIds: string[], winningHand: string) => {
+      winnerDisplayState.lastWinners = winnerIds;
+      winnerDisplayState.lastWinningHand = winningHand;
+    });
+    const playWinEffect = vi.fn();
+    const playLoseEffect = vi.fn();
+
+    applyStandardRoundOutcome({
+      winnerDisplayState,
+      currentSessionId: "me",
+      latestPlayerNames: new Map([["w1", "Ana"]]),
+      applyWinnerUi,
+      playWinEffect,
+      playLoseEffect,
+      startWinnerDisplayPhase: vi.fn(),
+      renderLastState: vi.fn(),
+      showWinnerBanner: vi.fn(),
+      setPreviousCommunityCards: vi.fn(),
+      winnerDisplay: {
+        winnerIds: ["w1"],
+        winningHand: "Trío",
+        startPhaseNow: true,
+      },
+      fallbackWinningHand: "-",
+      setPreviousWinnersKey: vi.fn(),
+    });
+
+    expect(playLoseEffect).toHaveBeenCalled();
+    expect(playWinEffect).not.toHaveBeenCalled();
   });
 });

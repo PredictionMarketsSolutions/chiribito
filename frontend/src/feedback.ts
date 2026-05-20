@@ -90,14 +90,8 @@ function wireDomFeedback(): void {
     );
   }
 
-  const winnerBanner = document.getElementById("winner-banner");
-  if (winnerBanner) {
-    observeClassToggle(
-      winnerBanner,
-      (el) => el.classList.contains("visible"),
-      () => audio.playEffect("win"),
-    );
-  }
+  // Win/lose is fired from the round-ended outcome handler (which knows whether
+  // the local player actually won) — not here, where the banner shows for everyone.
 
   const handCards = document.getElementById("hand-cards");
   if (handCards) {

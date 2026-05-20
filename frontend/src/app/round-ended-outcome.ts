@@ -13,6 +13,7 @@ type CommonOutcomeDeps = {
   latestPlayerNames: Map<string, string>;
   applyWinnerUi: (winnerIds: string[], winningHand: string) => void;
   playWinEffect: () => void;
+  playLoseEffect: () => void;
   startWinnerDisplayPhase: () => void;
   renderLastState: () => void;
   showWinnerBanner: (text: string) => void;
@@ -34,6 +35,8 @@ export function applyAllInShowdownOutcome(deps: AllInOutcomeDeps): void {
 
     if (deps.currentSessionId && deps.winnerDisplayState.lastWinners.includes(deps.currentSessionId)) {
       deps.playWinEffect();
+    } else if (deps.currentSessionId) {
+      deps.playLoseEffect();
     }
 
     deps.setAllInRevealInProgress(false);
@@ -73,6 +76,8 @@ export function applyStandardRoundOutcome(deps: StandardOutcomeDeps): void {
 
     if (deps.currentSessionId && deps.winnerDisplayState.lastWinners.includes(deps.currentSessionId)) {
       deps.playWinEffect();
+    } else if (deps.currentSessionId) {
+      deps.playLoseEffect();
     }
 
     if (deps.winnerDisplay.startPhaseNow) {

@@ -47,6 +47,7 @@ export type SoundEffect =
   | "fold"
   | "allIn"
   | "win"
+  | "lose"
   | "deal"
   | "reveal"
   | "click"

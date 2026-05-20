@@ -168,11 +168,51 @@ function playSwoosh(durationMs: number, volume: number): void {
   noise.stop(now + durationMs / 1000 + 0.02);
 }
 
+// A single warm tone gliding downward — a resigned "se acabó" sigh, with an
+// octave-down body and a lowpass so it stays soft and never punishing.
+function playFall(fromHz: number, toHz: number, durationMs: number, volume: number): void {
+  const ctx = ensureContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const dur = durationMs / 1000;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = fromHz * 3.5;
+  filter.Q.value = 0.7;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(volume, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(fromHz, now);
+  osc.frequency.exponentialRampToValueAtTime(toHz, now + dur * 0.9);
+  const sub = ctx.createOscillator();
+  sub.type = "sine";
+  sub.frequency.setValueAtTime(fromHz / 2, now);
+  sub.frequency.exponentialRampToValueAtTime(toHz / 2, now + dur * 0.9);
+  const subGain = ctx.createGain();
+  subGain.gain.value = 0.5;
+  osc.connect(filter);
+  sub.connect(subGain);
+  subGain.connect(filter);
+  filter.connect(gain);
+  gain.connect(busOut(ctx));
+  osc.start(now);
+  sub.start(now);
+  osc.stop(now + dur + 0.02);
+  sub.stop(now + dur + 0.02);
+}
+
 function playComplex(effect: SoundEffect): boolean {
   switch (effect) {
     case "win":
       // Triumphant chord: I → V → I octave
       playChord([523.25, 659.25, 783.99, 1046.5], 420, "triangle", 0.12);
+      return true;
+    case "lose":
+      // Quiet descending fifth — the counterpoint to win's rising chord.
+      playFall(392, 261.63, 440, 0.07);
       return true;
     case "deal":
       playSwoosh(180, 0.08);

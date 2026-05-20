@@ -184,6 +184,7 @@ export type JoinRoomSessionControllerDeps = {
   // Audio
   playActionSound: (action: string) => void;
   playWinEffect: () => void;
+  playLoseEffect: () => void;
 };
 
 export function createRoomSessionController(deps: JoinRoomSessionControllerDeps) {
@@ -516,6 +517,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
               });
             },
             playWinEffect: deps.playWinEffect,
+            playLoseEffect: deps.playLoseEffect,
             startWinnerDisplayPhase: deps.startWinnerDisplayPhase,
             renderLastState: () => {
               const last = deps.getLastRoomState();
@@ -557,6 +559,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
                 });
               },
               playWinEffect: deps.playWinEffect,
+            playLoseEffect: deps.playLoseEffect,
               startWinnerDisplayPhase: deps.startWinnerDisplayPhase,
               renderLastState: () => {
                 const last = deps.getLastRoomState();
