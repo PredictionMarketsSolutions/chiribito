@@ -7,7 +7,9 @@
  *   ranks: 5, 6, 7, 10 (Sota), 11 (Caballo), 12 (Rey), 1 (As)
  */
 
-export const CARD_BACK_URL = "/cards/back_logo.png";
+// Clean, unbranded premium back — keeps CHIRIBITO branding off the felt
+// (it lives in the lobby/menus/overlays instead). SVG = crisp at any DPR.
+export const CARD_BACK_URL = "/cards/back-clean.svg";
 
 const SUIT_NAME_MAP: Record<string, string> = {
   O: "ORO",

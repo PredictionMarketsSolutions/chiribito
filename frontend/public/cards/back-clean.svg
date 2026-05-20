@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 200 300">
+  <!-- Clean premium card back — no branding. Burgundy field, gold frame,
+       geometric center motif. Vector, so crisp at any device pixel ratio. -->
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0" stop-color="#7c2233"/>
+      <stop offset="1" stop-color="#561522"/>
+    </linearGradient>
+    <pattern id="weave" patternUnits="userSpaceOnUse" width="13" height="13" patternTransform="rotate(45)">
+      <path d="M6.5 0 V13 M0 6.5 H13" stroke="#ffffff" stroke-width="0.5" opacity="0.045"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="300" rx="14" fill="#f7f4ec"/>
+  <rect x="6" y="6" width="188" height="288" rx="10" fill="url(#field)"/>
+  <rect x="6" y="6" width="188" height="288" rx="10" fill="url(#weave)"/>
+  <rect x="12" y="12" width="176" height="276" rx="7" fill="none" stroke="#d8b56a" stroke-width="2.4" opacity="0.9"/>
+  <rect x="16.5" y="16.5" width="167" height="267" rx="5" fill="none" stroke="#d8b56a" stroke-width="0.7" opacity="0.4"/>
+  <g transform="translate(100,150)" fill="none" stroke="#d8b56a">
+    <path d="M0 -30 L21 0 L0 30 L-21 0 Z" stroke-width="1.5" opacity="0.6"/>
+    <path d="M0 -16 L11 0 L0 16 L-11 0 Z" stroke-width="1" opacity="0.42"/>
+  </g>
+</svg>
