@@ -39,12 +39,20 @@ const simpleProfiles: Partial<Record<SoundEffect, SimpleProfile>> = {
 
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
-let ambientSource: AudioBufferSourceNode | null = null;
-let ambientGain: GainNode | null = null;
-let ambientVisibilityWired = false;
+let musicInput: GainNode | null = null;
+let onMomentEffect: (() => void) | null = null;
 let unlocked = false;
 let enabled = true;
 let masterVolume = 1;
+
+// "Moment" effects briefly duck the music so they cut through; routine UI ticks don't.
+const MOMENT_EFFECTS: ReadonlySet<SoundEffect> = new Set<SoundEffect>([
+  "win",
+  "lose",
+  "perlaArrive",
+  "yourTurn",
+  "allIn",
+]);
 
 function ensureContext(): AudioContext | null {
   if (!enabled) return null;
@@ -72,61 +80,6 @@ function buildRoomImpulse(ctx: AudioContext, durationSec: number, decay: number)
     }
   }
   return impulse;
-}
-
-// Continuous room tone: a whisper-level brown-noise bed, heavily lowpassed into a
-// warm low presence ("the room has its own air"), routed through the master bus so
-// it shares the reverb. Pauses when the tab is hidden; off when sound is muted.
-function buildBrownNoise(ctx: AudioContext, seconds: number): AudioBuffer {
-  const rate = ctx.sampleRate;
-  const length = Math.max(1, Math.floor(rate * seconds));
-  const buf = ctx.createBuffer(1, length, rate);
-  const data = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < length; i += 1) {
-    const white = Math.random() * 2 - 1;
-    last = (last + 0.02 * white) / 1.02;
-    data[i] = last * 3.5;
-  }
-  return buf;
-}
-
-function startAmbient(): void {
-  const ctx = audioContext;
-  if (!enabled || !ctx || ambientSource) return;
-  const src = ctx.createBufferSource();
-  src.buffer = buildBrownNoise(ctx, 6);
-  src.loop = true;
-  const lp = ctx.createBiquadFilter();
-  lp.type = "lowpass";
-  lp.frequency.value = 500;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0, ctx.currentTime);
-  g.gain.setTargetAtTime(0.025, ctx.currentTime, 1.5); // gentle fade-in
-  src.connect(lp);
-  lp.connect(g);
-  g.connect(busOut(ctx));
-  src.start();
-  ambientSource = src;
-  ambientGain = g;
-}
-
-function stopAmbient(): void {
-  const src = ambientSource;
-  const ctx = audioContext;
-  if (!src) return;
-  ambientSource = null;
-  if (ctx && ambientGain) {
-    ambientGain.gain.setTargetAtTime(0, ctx.currentTime, 0.3); // gentle fade-out
-    ambientGain = null;
-  }
-  setTimeout(() => {
-    try {
-      src.stop();
-    } catch {
-      /* already stopped */
-    }
-  }, 600);
 }
 
 function playSimple(profile: SimpleProfile): void {
@@ -296,14 +249,21 @@ function playComplex(effect: SoundEffect): boolean {
 export const audio = {
   setEnabled(value: boolean): void {
     enabled = value;
-    if (value) startAmbient();
-    else stopAmbient();
   },
   setMasterVolume(value: number): void {
     masterVolume = Math.max(0, Math.min(1, value));
     if (masterGain && audioContext) {
       masterGain.gain.setTargetAtTime(masterVolume, audioContext.currentTime, 0.04);
     }
+  },
+  // Shared context + a dedicated input node for the music layer (music.ts plugs in here).
+  getMusicTap(): { ctx: AudioContext; node: AudioNode } | null {
+    if (!audioContext || !musicInput) return null;
+    return { ctx: audioContext, node: musicInput };
+  },
+  // The music layer registers here so "moment" effects can duck the music (no import cycle).
+  setMomentEffectHandler(handler: (() => void) | null): void {
+    onMomentEffect = handler;
   },
   isUnlocked: (): boolean => unlocked,
   init(): void {
@@ -335,26 +295,25 @@ export const audio = {
       convolver.connect(wetFilter);
       wetFilter.connect(wet);
       wet.connect(comp);
+      // Music tap: a dedicated gain into the compressor — shares the limiter + master
+      // mute, but bypasses the SFX reverb (pre-produced music shouldn't be re-verbed).
+      const music = ctx.createGain();
+      music.connect(comp);
       comp.connect(ctx.destination);
       audioContext = ctx;
       masterGain = master;
+      musicInput = music;
       if (ctx.state === "suspended") void ctx.resume();
       unlocked = true;
-      startAmbient();
-      if (!ambientVisibilityWired) {
-        ambientVisibilityWired = true;
-        document.addEventListener("visibilitychange", () => {
-          if (document.hidden) stopAmbient();
-          else startAmbient();
-        });
-      }
     } catch {
       audioContext = null;
       masterGain = null;
+      musicInput = null;
     }
   },
   playEffect(effect: SoundEffect): void {
     if (!enabled) return;
+    if (MOMENT_EFFECTS.has(effect)) onMomentEffect?.();
     if (playComplex(effect)) return;
     const profile = simpleProfiles[effect];
     if (profile) playSimple(profile);
