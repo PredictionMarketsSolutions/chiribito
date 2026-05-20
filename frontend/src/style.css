@@ -4297,6 +4297,17 @@ button.accent:hover:not(:disabled) {
     overflow: hidden;
   }
 
+  /* Mobile renders cards via the DOM zones, so hide the Pixi canvas (it can't
+     position hole cards when seats are display:none) and undo the pixi-cards
+     visibility suppression for the community + your-cards rows. */
+  #pixi-layer {
+    display: none;
+  }
+
+  .table-surface--pixi-cards .card-row .card {
+    visibility: visible;
+  }
+
   .table-zone--your-cards .card .rank {
     font-size: 20px;
   }

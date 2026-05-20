@@ -253,9 +253,12 @@ export function renderState(
   updateActionButtons(state, refs, ctx, allPlayersAllIn);
 
   const pixiCards = usePixiTableCards(ctx);
+  // Mobile renders cards via the DOM zones: the Pixi canvas is hidden on mobile
+  // (CSS) because it can't position hole cards when seats are display:none.
+  const narrowViewport = typeof window !== "undefined" && window.innerWidth <= 768;
   if (!ctx.allInRevealInProgress) {
     if (!cardsEqual(community, ctx.previousCommunityCards)) {
-      if (!pixiCards) {
+      if (!pixiCards || narrowViewport) {
         renderCardRow(refs.communityCardsEl, community, 5);
       }
       ctx.previousCommunityCards.length = 0;
@@ -289,7 +292,7 @@ export function renderState(
     if (refs.yourBetStatus) refs.yourBetStatus.textContent = "0";
     if (refs.yourChipsStatus) refs.yourChipsStatus.textContent = "0";
   }
-  if (!pixiCards) {
+  if (!pixiCards || narrowViewport) {
     renderCardRow(refs.handCardsEl, handForZone, 2);
   }
   markPerlaIfApplicable(refs.handCardsEl, handForZone);
