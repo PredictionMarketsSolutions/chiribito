@@ -2945,6 +2945,17 @@ button, .auth-tab, .lobby-icon-btn, .lobby-ghost-btn, .lobby-cta, .auth-btn, .ga
   justify-content: center;
   padding: 40px 20px;
   position: relative;
+  /* Lighting-L1 (premium perceptual phase): a subtle cinematic vignette in the
+     ambient AROUND the felt oval, so the play area emerges from ambient shadow.
+     The center stays clear (no spotlight — that competes with the cards); only
+     the edges / corners deepen. Does not touch the felt, cards, or rim.
+     Calibrated a touch tighter + deeper, with a smooth 3-stop ramp so the
+     vignette reads as ambient depth, never as a hard ring / overlay edge. */
+  background:
+    radial-gradient(ellipse 98% 88% at 50% 44%,
+      transparent 44%,
+      rgba(2, 5, 12, 0.3) 72%,
+      rgba(2, 5, 12, 0.62) 100%);
 }
 
 /* Your Turn Indicator */
