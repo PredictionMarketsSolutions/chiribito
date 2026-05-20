@@ -1133,6 +1133,7 @@ audio.setMomentEffectHandler(() => music.duck());
     level: (s: "lobby" | "mesa", v: number) => music.setBaseLevel(s, v),
     state: (s: "lobby" | "mesa" | "none") => music.setState(s),
     duck: () => music.duck(),
+    debug: () => music.debug(),
   };
 }
 let musicAttached = false;

@@ -229,4 +229,26 @@ export const music = {
     BASE_LEVEL[s] = Math.max(0, Math.min(1, value));
     if (current && state === s) rampTo(current.gain.gain, BASE_LEVEL[s], 0.3);
   },
+  /** Diagnostic snapshot (runtime debug hook): is music attached, what state, is it playing. */
+  debug(): {
+    attached: boolean;
+    enabled: boolean;
+    state: MusicState;
+    url: string | null;
+    paused: boolean | null;
+    currentTime: number;
+    voiceGain: number;
+    masterGain: number;
+  } {
+    return {
+      attached: ctx !== null,
+      enabled,
+      state,
+      url: current?.url ?? null,
+      paused: current ? current.el.paused : null,
+      currentTime: current?.el.currentTime ?? 0,
+      voiceGain: current ? current.gain.gain.value : 0,
+      masterGain: musicMaster ? musicMaster.gain.value : 0,
+    };
+  },
 };
