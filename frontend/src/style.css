@@ -3307,9 +3307,14 @@ button.accent:hover:not(:disabled) {
   min-height: 640px;
   /* Even, premium felt: no bright center "spotlight" competing with the cards —
      a calm Chiribito green that recedes gently into a vignette at the rim so the
-     community cards are the brightest thing on the table. */
+     community cards are the brightest thing on the table.
+     Felt-L1 (premium perceptual phase): a refined, deeper, slightly desaturated
+     green, scoped to the table via local vars so the shared --felt-* (lobby / auth /
+     buttons) stay unchanged. Gradient geometry is identical — only the colors move. */
+  --felt-surface-main: #0e5642;
+  --felt-surface-rim: #08382b;
   background:
-    radial-gradient(ellipse 132% 112% at 50% 46%, var(--felt-main) 0%, var(--felt-main) 52%, var(--felt-dark) 100%);
+    radial-gradient(ellipse 132% 112% at 50% 46%, var(--felt-surface-main) 0%, var(--felt-surface-main) 52%, var(--felt-surface-rim) 100%);
   border-radius: 50% / 38%;
   padding: 44px 70px;
   position: relative;
