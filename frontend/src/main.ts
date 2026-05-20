@@ -1065,6 +1065,7 @@ backToAuthButton.addEventListener("click", () => {
 
 if (miRinconButton) {
   miRinconButton.addEventListener("click", () => {
+    setLobbyOverlayVisible(false);
     void openRincon({
       overlay: rinconOverlay,
       content: rinconContent,

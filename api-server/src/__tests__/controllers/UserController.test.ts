@@ -45,4 +45,10 @@ describe('UserController.getProfile', () => {
     await controller.getProfile(req as Request, res as Response);
     expect(res.status).toHaveBeenCalledWith(401);
   });
+
+  it('404s when the user is not found', async () => {
+    mockUserRepository.findOne.mockResolvedValue(null);
+    await controller.getProfile(req as Request, res as Response);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
 });
