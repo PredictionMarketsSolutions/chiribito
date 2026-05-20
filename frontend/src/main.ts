@@ -585,7 +585,12 @@ function resetRoomUi(message?: string) {
 function updateTurnTimer(state: RoomState) {
   const turnId = state.currentTurn ?? "";
   const roundActive = Boolean(state.roundStarted);
-  updateTurnTimerFn(turnTimerState, turnId, roundActive, turnTimerChip, TURN_TIMEOUT_MS);
+  updateTurnTimerFn(turnTimerState, turnId, roundActive, turnTimerChip, TURN_TIMEOUT_MS, (secondsLeft) => {
+    // Tension tick in the final seconds — only on the local player's own turn.
+    if (turnId === currentSessionId && secondsLeft >= 1 && secondsLeft <= 5) {
+      audio.playEffect("tick");
+    }
+  });
 }
 
 function clearAuthToken() {

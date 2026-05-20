@@ -14,17 +14,23 @@ export function startTurnTimer(
   turnId: string,
   timeoutMs: number,
   chipEl: HTMLElement,
-  deadlineMs?: number
+  deadlineMs?: number,
+  onSecond?: (secondsLeft: number) => void
 ): void {
   state.lastTurnId = turnId;
   state.lastTurnTimeoutMs = timeoutMs;
   state.turnDeadlineMs = typeof deadlineMs === "number" ? deadlineMs : Date.now() + timeoutMs;
 
+  let lastSecond = -1;
   const tick = () => {
     if (!state.turnDeadlineMs) return;
     const remainingMs = state.turnDeadlineMs - Date.now();
     const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
     chipEl.textContent = `${remainingSeconds}s`;
+    if (onSecond && remainingSeconds !== lastSecond) {
+      lastSecond = remainingSeconds;
+      onSecond(remainingSeconds);
+    }
   };
 
   if (state.turnTimerId !== null) {
@@ -50,13 +56,14 @@ export function updateTurnTimer(
   currentTurnId: string,
   roundActive: boolean,
   chipEl: HTMLElement,
-  defaultTimeoutMs: number
+  defaultTimeoutMs: number,
+  onSecond?: (secondsLeft: number) => void
 ): void {
   if (!roundActive || !currentTurnId) {
     stopTurnTimer(state, chipEl);
     return;
   }
   if (currentTurnId !== state.lastTurnId || state.turnDeadlineMs === null) {
-    startTurnTimer(state, currentTurnId, defaultTimeoutMs, chipEl);
+    startTurnTimer(state, currentTurnId, defaultTimeoutMs, chipEl, undefined, onSecond);
   }
 }

@@ -53,7 +53,8 @@ export type SoundEffect =
   | "click"
   | "hover"
   | "yourTurn"
-  | "perlaArrive";
+  | "perlaArrive"
+  | "tick";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";
 

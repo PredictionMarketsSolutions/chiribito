@@ -34,6 +34,7 @@ const simpleProfiles: Partial<Record<SoundEffect, SimpleProfile>> = {
   allIn: { frequency: 523, durationMs: 260, type: "triangle", volume: 0.11, body: true, glideTo: 784 },
   click: { frequency: 600, durationMs: 32, type: "triangle", volume: 0.045, cutoff: 1600 },
   hover: { frequency: 1100, durationMs: 18, type: "sine", volume: 0.015 },
+  tick: { frequency: 420, durationMs: 38, type: "triangle", volume: 0.05, cutoff: 1400 },
 };
 
 let audioContext: AudioContext | null = null;
