@@ -1074,6 +1074,37 @@ bindGameActionButtons(
   app?.classList.toggle("panel-collapsed");
 });
 
+const soundToggleButton = document.querySelector("#sound-toggle") as HTMLButtonElement | null;
+if (soundToggleButton) {
+  const SOUND_MUTED_KEY = "chiri_sound_muted";
+  const soundLabel = soundToggleButton.querySelector("[data-sound-label]");
+  const applySoundState = (muted: boolean) => {
+    audio.setEnabled(!muted);
+    soundToggleButton.setAttribute("aria-pressed", muted ? "true" : "false");
+    soundToggleButton.title = muted ? "Activar sonido" : "Silenciar";
+    soundToggleButton.classList.toggle("is-muted", muted);
+    if (soundLabel) soundLabel.textContent = muted ? "Silencio" : "Sonido";
+  };
+  let soundMuted = false;
+  try {
+    soundMuted = localStorage.getItem(SOUND_MUTED_KEY) === "1";
+  } catch {
+    /* storage unavailable — default to sound on */
+  }
+  applySoundState(soundMuted);
+  soundToggleButton.addEventListener("click", () => {
+    soundMuted = !soundMuted;
+    try {
+      localStorage.setItem(SOUND_MUTED_KEY, soundMuted ? "1" : "0");
+    } catch {
+      /* storage unavailable — state still applies for this session */
+    }
+    applySoundState(soundMuted);
+    // Unmuting is a user gesture — make sure the context is live so it's audible now.
+    if (!soundMuted) audio.init();
+  });
+}
+
 if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
   dom.idleTimeoutContinueButton.addEventListener("click", () => {
     dom.idleTimeoutModal!.classList.add("hidden");

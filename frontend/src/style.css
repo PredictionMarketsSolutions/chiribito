@@ -911,6 +911,12 @@ body {
   box-shadow: none;
 }
 
+/* Muted sound toggle: dimmed gold so the off-state reads at a glance. */
+.lobby-icon-btn.is-muted {
+  opacity: 0.55;
+  border-color: rgba(244, 196, 48, 0.12);
+}
+
 /* Hero — featured Crear mesa */
 .lobby-hero {
   position: relative;
