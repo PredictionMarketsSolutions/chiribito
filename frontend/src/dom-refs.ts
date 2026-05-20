@@ -69,4 +69,7 @@ export const dom = {
   yourTurnIndicator: getRef<HTMLDivElement>("#your-turn-indicator"),
   idleTimeoutModal: getRef<HTMLDivElement>("#idle-timeout-modal", false),
   idleTimeoutContinueButton: getRef<HTMLButtonElement>("#idle-timeout-continue", false),
+  rinconOverlay: getRef<HTMLDivElement>("#rincon-overlay"),
+  rinconContent: getRef<HTMLDivElement>("#rincon-content"),
+  miRinconButton: getRef<HTMLButtonElement>("#mi-rincon"),
 } as const;

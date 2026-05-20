@@ -60,7 +60,7 @@ export class UserController {
       }
       const user = await this.userRepository.findOne({ 
         where: { id: userId },
-        select: ['id', 'username', 'email', 'createdAt'] 
+        select: ['id', 'username', 'email', 'createdAt', 'gamesPlayed', 'gamesWon', 'totalChipsWon', 'lastPlayedAt']
       });
 
       if (!user) {
