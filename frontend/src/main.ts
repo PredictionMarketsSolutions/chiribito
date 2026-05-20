@@ -10,6 +10,7 @@ import type {
 } from "./types/room-messages";
 import { queueAction as queueActionFn, replayBufferedActions as replayBufferedActionsFn } from "./action-buffer";
 import { audio } from "./audio";
+import { music } from "./music";
 import { dom } from "./dom-refs";
 import {
   request,
@@ -919,6 +920,7 @@ reconnectDirector = createReconnectDirector({
     resetRoomUi(message);
     setLobbyOverlayVisible(true);
     setConnectionState("disconnected");
+    music.setState("lobby");
   },
   onAttemptChange: (state) => {
     // Keep the connection-indicator tooltip in sync with director attempts...
@@ -933,10 +935,12 @@ async function joinRoom(
   opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
 ) {
   await roomSessionController.joinRoom(forceReplace, opts);
+  if (room !== null) music.setState("mesa");
 }
 
 async function reconnectMesa(token: string): Promise<void> {
   await roomSessionController.reconnect(token);
+  if (room !== null) music.setState("mesa");
 }
 
 /** Single source of truth for the recovery decision deps. Used by:
@@ -983,6 +987,7 @@ async function openLobby() {
       shouldAutoReconnect = false;
       SecureStorage.clearLastRoomId();
       SecureStorage.clearReconnectionToken();
+      music.setState("lobby");
     },
     setJoinInProgress: (value) => {
       joinInProgress = value;
@@ -1051,6 +1056,7 @@ backToAuthButton.addEventListener("click", () => {
   lobbyPolling.stop();
   setLobbyOverlayVisible(false);
   setAuthOverlayVisible(true);
+  music.setState("lobby");
 });
 
 tournamentBackToLobbyButton.addEventListener("click", () => {
@@ -1085,6 +1091,7 @@ if (soundToggleButton) {
   const soundLabel = soundToggleButton.querySelector("[data-sound-label]");
   const applySoundState = (muted: boolean) => {
     audio.setEnabled(!muted);
+    music.setEnabled(!muted);
     soundToggleButton.setAttribute("aria-pressed", muted ? "true" : "false");
     soundToggleButton.title = muted ? "Activar sonido" : "Silenciar";
     soundToggleButton.classList.toggle("is-muted", muted);
@@ -1109,6 +1116,23 @@ if (soundToggleButton) {
     if (!soundMuted) audio.init();
   });
 }
+
+// Music layer: duck under moment SFX, and attach to the shared audio bus on the
+// first user gesture (browser autoplay policy requires a gesture before any audio).
+audio.setMomentEffectHandler(() => music.duck());
+let musicAttached = false;
+function ensureMusicAttached(): void {
+  if (musicAttached) return;
+  audio.init();
+  const tap = audio.getMusicTap();
+  if (!tap) return;
+  music.attach(tap.ctx, tap.node);
+  music.setState(room !== null ? "mesa" : "lobby");
+  musicAttached = true;
+}
+["pointerdown", "keydown", "touchstart"].forEach((evt) =>
+  window.addEventListener(evt, ensureMusicAttached, { capture: true, passive: true }),
+);
 
 if (dom.idleTimeoutModal && dom.idleTimeoutContinueButton) {
   dom.idleTimeoutContinueButton.addEventListener("click", () => {
