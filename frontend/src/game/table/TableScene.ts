@@ -89,6 +89,22 @@ export class TableScene implements TableSceneController {
     this.surfaceEl = opts.surfaceEl;
     this.seatsEl = opts.seatsEl;
 
+    // Render at the device pixel ratio so cards are crisp on HiDPI / retina
+    // screens. The Application is created at resolution 1, which leaves the
+    // canvas backing store at CSS-pixel size — the browser then upscales it to
+    // physical pixels and everything (cards, board) looks soft. Bumping the
+    // renderer resolution makes the backing store physical-pixel sized; the
+    // canvas keeps its logical display size via `#pixi-layer canvas{width:100%}`
+    // so no autoDensity is needed and layout math stays in logical pixels.
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    if (this.app.renderer.resolution !== dpr) {
+      this.app.renderer.resolution = dpr;
+      this.app.renderer.resize(
+        Math.max(1, this.surfaceEl.clientWidth),
+        Math.max(1, this.surfaceEl.clientHeight)
+      );
+    }
+
     this.root = new Container();
     this.holesContainer = new Container();
     this.boardContainer = new Container();
