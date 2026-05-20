@@ -28,3 +28,49 @@ describe("CarnetVivo", () => {
     expect(el.querySelector(".lacre")).not.toBeNull();
   });
 });
+
+import { StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa } from "./components";
+import type { RinconViewModel } from "./types";
+
+const vm: RinconViewModel = {
+  identidad,
+  gamesPlayed: 142, gamesWon: 38, winRate: 27, totalChipsWon: 18420, puesto: 7,
+  socioDesde: "marzo 2026", ultimaVez: "anoche", isEmpty: false,
+};
+
+describe("StatMarks", () => {
+  it("shows real stats; shows '—' for null puesto/winrate", () => {
+    expect(StatMarks(vm).textContent).toContain("142");
+    expect(StatMarks(vm).textContent).toContain("#7");
+    const empty = StatMarks({ ...vm, gamesPlayed: 0, gamesWon: 0, winRate: null, puesto: null });
+    expect(empty.textContent).toContain("—");
+  });
+});
+
+describe("HistoriaStrip", () => {
+  it("shows real recency + a future teaser, never fake entries", () => {
+    const h = HistoriaStrip(vm);
+    expect(h.textContent).toContain("marzo 2026");
+    expect(h.textContent?.toLowerCase()).toContain("pronto");
+  });
+  it("shows the day-one invitation when empty", () => {
+    expect(HistoriaStrip({ ...vm, isEmpty: true }).textContent).toContain("por escribirse");
+  });
+});
+
+describe("CompartirRincon", () => {
+  it("builds a quiet affordance with a non-personal blurb", () => {
+    const c = CompartirRincon({ identidad, gameUrl: "https://play.chiribito.com" });
+    expect(c.classList.contains("share-quiet")).toBe(true);
+    expect(c.dataset.blurb).toContain("La Sota de Oros");
+    expect(c.dataset.blurb).toContain("https://play.chiribito.com");
+  });
+});
+
+describe("PresenciaMesa", () => {
+  it("previews the seat mark with name + mote", () => {
+    const m = PresenciaMesa({ identidad });
+    expect(m.querySelector(".mesa__nm")?.textContent).toContain("lucia");
+    expect(m.querySelector(".lacre")).not.toBeNull();
+  });
+});
