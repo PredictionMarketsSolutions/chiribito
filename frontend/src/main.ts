@@ -1112,8 +1112,12 @@ if (soundToggleButton) {
       /* storage unavailable — state still applies for this session */
     }
     applySoundState(soundMuted);
-    // Unmuting is a user gesture — make sure the context is live so it's audible now.
-    if (!soundMuted) audio.init();
+    // Unmuting is a user gesture — make the context live and attach music now
+    // (the first-gesture attach is skipped while muted, so do it here too).
+    if (!soundMuted) {
+      audio.init();
+      ensureMusicAttached();
+    }
   });
 }
 
