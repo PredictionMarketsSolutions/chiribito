@@ -106,6 +106,16 @@ function wireDomFeedback(): void {
       (el) => el.classList.contains("has-perla"),
       () => audio.playEffect("perlaArrive"),
     );
+
+    // Hole cards dealt: fire the deal swoosh the moment the hand fills from empty
+    // (resets to silent between hands, so each new deal sounds once).
+    let handHadCards = countVisibleCards(handCards) > 0;
+    const dealObs = new MutationObserver(() => {
+      const hasCards = countVisibleCards(handCards) > 0;
+      if (hasCards && !handHadCards) audio.playEffect("deal");
+      handHadCards = hasCards;
+    });
+    dealObs.observe(handCards, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   }
 
   // Community cards: detect when a new card is added (street reveal)
