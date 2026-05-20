@@ -3357,15 +3357,24 @@ button.accent:hover:not(:disabled) {
   height: 100%;
 }
 
-/* Pixi dibuja cartas; mantener .seat-hand como hit area para el popover */
-.table-surface--pixi-cards .card-row .card,
-.table-surface--pixi-cards .seat-hand .card {
+/* Pixi draws the cards; the DOM rows stay hidden. */
+.table-surface--pixi-cards .card-row .card {
   visibility: hidden;
 }
 
+/* Pixi draws hole cards on the felt, so collapse the seat-hand's reserved card
+   space. That keeps the nameplate compact (less "dashboard", more table) and
+   stops the tall nameplate from occluding the on-felt cards. A thin strip
+   remains as the popover hover hit-area. */
+.table-surface--pixi-cards .seat-hand .card {
+  display: none;
+}
+
 .table-surface--pixi-cards .seat-hand {
-  min-width: 72px;
-  min-height: 52px;
+  min-width: 64px;
+  min-height: 18px;
+  padding: 2px 6px;
+  margin-bottom: 4px;
 }
 
 .table-header {
