@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="/brand/logo.png" />
     <title>CHIRIBITO</title>
     <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/src/app/rincon/rincon.css" />
   </head>
   <body>
     <div id="reconnect-banner" class="reconnect-banner reconnect-banner--hidden" role="status" aria-live="polite">
@@ -150,6 +151,9 @@
             <button id="sound-toggle" type="button" class="lobby-icon-btn" title="Silenciar" aria-pressed="false">
               <span class="lobby-icon-btn__label" data-sound-label>Sonido</span>
             </button>
+            <button id="mi-rincon" type="button" class="lobby-icon-btn" title="Mi Rincón">
+              <span class="lobby-icon-btn__label">Mi Rincón</span>
+            </button>
             <button id="back-to-auth" type="button" class="lobby-icon-btn" title="Salir">
               <span class="lobby-icon-btn__label">Salir</span>
             </button>
@@ -223,6 +227,15 @@
           </aside>
         </div>
       </div>
+    </div>
+    <div id="rincon-overlay" class="rincon-scene hidden">
+      <div class="rincon-scene__bg" aria-hidden="true">
+        <div class="rincon-scene__vignette"></div>
+        <div class="rincon-scene__glow rincon-scene__glow--gold"></div>
+        <div class="rincon-scene__glow rincon-scene__glow--felt"></div>
+        <div class="rincon-scene__grain"></div>
+      </div>
+      <div id="rincon-content"></div>
     </div>
     <div id="tournament-result-overlay" class="auth-overlay hidden">
       <div class="auth-card">

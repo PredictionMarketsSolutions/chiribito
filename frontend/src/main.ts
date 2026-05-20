@@ -74,6 +74,7 @@ import type { GameUiRefs, GameUiContext } from "./game/game-ui-types";
 import { TableScene } from "./game/table/TableScene";
 import { getWinnerDisplayFromRoundEnd } from "./game/round-end-winner";
 import { refreshWinnersRanking as refreshWinnersRankingFn } from "./app/winners-ranking";
+import { openRincon, setRinconOverlayVisible } from "./app/rincon/rincon-scene";
 import { createLobbyPollingController } from "./app/lobby-polling";
 import { bindGameActionButtons } from "./app/game-action-bindings";
 import { bindForgotPasswordUi } from "./app/forgot-password-ui";
@@ -146,6 +147,9 @@ const refreshRoomsButton = dom.refreshRoomsButton!;
 const tableNameInput = dom.tableNameInput!;
 const createTableButton = dom.createTableButton!;
 const backToAuthButton = dom.backToAuthButton!;
+const rinconOverlay = dom.rinconOverlay!;
+const rinconContent = dom.rinconContent!;
+const miRinconButton = dom.miRinconButton;
 const joinRoomIdInput = dom.joinRoomIdInput!;
 const joinByIdButton = dom.joinByIdButton!;
 const tournamentBackToLobbyButton = dom.tournamentBackToLobbyButton!;
@@ -1058,6 +1062,23 @@ backToAuthButton.addEventListener("click", () => {
   setAuthOverlayVisible(true);
   music.setState("lobby");
 });
+
+if (miRinconButton) {
+  miRinconButton.addEventListener("click", () => {
+    void openRincon({
+      overlay: rinconOverlay,
+      content: rinconContent,
+      apiUrl: API_URL,
+      fetchFn: fetch.bind(window),
+      gameUrl: "https://play.chiribito.com",
+      log,
+      onClose: () => {
+        setRinconOverlayVisible(rinconOverlay, false);
+        setLobbyOverlayVisible(true);
+      },
+    });
+  });
+}
 
 tournamentBackToLobbyButton.addEventListener("click", () => {
   tournamentEnded = false;
