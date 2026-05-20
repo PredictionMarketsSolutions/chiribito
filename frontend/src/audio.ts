@@ -9,20 +9,35 @@
  */
 import type { SoundEffect } from "./types";
 
-type SimpleProfile = { frequency: number; durationMs: number; type: OscillatorType; volume: number };
+type SimpleProfile = {
+  frequency: number;
+  durationMs: number;
+  type: OscillatorType;
+  volume: number;
+  /** Optional pitch glide target — adds expressive movement (rise = escalate, fall = release). */
+  glideTo?: number;
+  /** Optional lowpass cutoff override (Hz). Defaults to ~3.5× the highest pitch. */
+  cutoff?: number;
+  /** Add a quiet sub-oscillator an octave down for warm body. Skip for short UI ticks. */
+  body?: boolean;
+};
 
+// No square / sawtooth anywhere — those raw waveforms are the "arcade barato" timbre.
+// Triangle + sine through a warm lowpass, with octave-down body and pitch glides that
+// mirror the emotion of each move (call settles, raise climbs, fold sighs down).
 const simpleProfiles: Partial<Record<SoundEffect, SimpleProfile>> = {
-  bet: { frequency: 440, durationMs: 120, type: "sine", volume: 0.08 },
-  call: { frequency: 520, durationMs: 120, type: "triangle", volume: 0.08 },
-  raise: { frequency: 620, durationMs: 160, type: "triangle", volume: 0.1 },
-  check: { frequency: 360, durationMs: 90, type: "sine", volume: 0.06 },
-  fold: { frequency: 220, durationMs: 140, type: "sawtooth", volume: 0.08 },
-  allIn: { frequency: 740, durationMs: 220, type: "square", volume: 0.1 },
-  click: { frequency: 880, durationMs: 28, type: "square", volume: 0.04 },
-  hover: { frequency: 1320, durationMs: 18, type: "sine", volume: 0.015 },
+  bet: { frequency: 440, durationMs: 130, type: "triangle", volume: 0.08, body: true },
+  call: { frequency: 392, durationMs: 130, type: "triangle", volume: 0.08, body: true },
+  raise: { frequency: 587, durationMs: 170, type: "triangle", volume: 0.1, body: true, glideTo: 622 },
+  check: { frequency: 330, durationMs: 100, type: "sine", volume: 0.06, body: true },
+  fold: { frequency: 247, durationMs: 200, type: "triangle", volume: 0.07, glideTo: 165 },
+  allIn: { frequency: 523, durationMs: 260, type: "triangle", volume: 0.11, body: true, glideTo: 784 },
+  click: { frequency: 600, durationMs: 32, type: "triangle", volume: 0.045, cutoff: 1600 },
+  hover: { frequency: 1100, durationMs: 18, type: "sine", volume: 0.015 },
 };
 
 let audioContext: AudioContext | null = null;
+let masterGain: GainNode | null = null;
 let unlocked = false;
 let enabled = true;
 let masterVolume = 1;
@@ -34,23 +49,71 @@ function ensureContext(): AudioContext | null {
   return audioContext;
 }
 
+// Every voice connects here, never straight to ctx.destination — so the master
+// gain (volume) and compressor (glue + clip protection) sit on the whole mix.
+function busOut(ctx: AudioContext): AudioNode {
+  return masterGain ?? ctx.destination;
+}
+
+// Decaying noise impulse → an intimate room tail (reservado, not a cathedral).
+// Short duration + fast decay keeps it close and warm rather than washy.
+function buildRoomImpulse(ctx: AudioContext, durationSec: number, decay: number): AudioBuffer {
+  const rate = ctx.sampleRate;
+  const length = Math.max(1, Math.floor(rate * durationSec));
+  const impulse = ctx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch += 1) {
+    const data = impulse.getChannelData(ch);
+    for (let i = 0; i < length; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+  return impulse;
+}
+
 function playSimple(profile: SimpleProfile): void {
   const ctx = ensureContext();
   if (!ctx) return;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = profile.type;
-  osc.frequency.value = profile.frequency;
   const now = ctx.currentTime;
   const duration = profile.durationMs / 1000;
+  const top = Math.max(profile.frequency, profile.glideTo ?? profile.frequency);
+
+  // Warm lowpass strips the harsh upper harmonics that read as "cheap synth".
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = profile.cutoff ?? top * 3.5;
+  filter.Q.value = 0.7;
+
+  const gain = ctx.createGain();
   // Tiny attack + decay envelope to avoid clicks
   gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(profile.volume * masterVolume, now + 0.008);
+  gain.gain.linearRampToValueAtTime(profile.volume, now + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+
+  const osc = ctx.createOscillator();
+  osc.type = profile.type;
+  osc.frequency.setValueAtTime(profile.frequency, now);
+  if (profile.glideTo) {
+    osc.frequency.exponentialRampToValueAtTime(profile.glideTo, now + duration * 0.9);
+  }
+  osc.connect(filter);
   osc.start(now);
   osc.stop(now + duration + 0.02);
+
+  // Octave-down sine gives warm body without muddying short UI ticks.
+  if (profile.body) {
+    const sub = ctx.createOscillator();
+    sub.type = "sine";
+    sub.frequency.value = profile.frequency / 2;
+    const subGain = ctx.createGain();
+    subGain.gain.value = 0.45;
+    sub.connect(subGain);
+    subGain.connect(filter);
+    sub.start(now);
+    sub.stop(now + duration + 0.02);
+  }
+
+  filter.connect(gain);
+  gain.connect(busOut(ctx));
 }
 
 function playChord(freqs: number[], durationMs: number, type: OscillatorType, volume: number): void {
@@ -64,12 +127,12 @@ function playChord(freqs: number[], durationMs: number, type: OscillatorType, vo
     osc.type = type;
     osc.frequency.value = f;
     const delay = i * 0.04;
-    const startVol = (volume / Math.sqrt(freqs.length)) * masterVolume;
+    const startVol = (volume / Math.sqrt(freqs.length));
     gain.gain.setValueAtTime(0, now + delay);
     gain.gain.linearRampToValueAtTime(startVol, now + delay + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(busOut(ctx));
     osc.start(now + delay);
     osc.stop(now + delay + duration + 0.02);
   });
@@ -96,11 +159,11 @@ function playSwoosh(durationMs: number, volume: number): void {
   const gain = ctx.createGain();
   const now = ctx.currentTime;
   gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(volume * masterVolume, now + 0.02);
+  gain.gain.linearRampToValueAtTime(volume, now + 0.02);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + durationMs / 1000);
   noise.connect(filter);
   filter.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(busOut(ctx));
   noise.start(now);
   noise.stop(now + durationMs / 1000 + 0.02);
 }
@@ -137,16 +200,48 @@ export const audio = {
   },
   setMasterVolume(value: number): void {
     masterVolume = Math.max(0, Math.min(1, value));
+    if (masterGain && audioContext) {
+      masterGain.gain.setTargetAtTime(masterVolume, audioContext.currentTime, 0.04);
+    }
   },
   isUnlocked: (): boolean => unlocked,
   init(): void {
     if (!enabled || audioContext) return;
     try {
-      audioContext = new AudioContext();
-      if (audioContext.state === "suspended") void audioContext.resume();
+      const ctx = new AudioContext();
+      // Master bus: master gain → gentle compressor → speakers. The compressor
+      // glues simultaneous voices together and stops peaks from clipping.
+      const master = ctx.createGain();
+      master.gain.value = masterVolume;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18;
+      comp.knee.value = 24;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.18;
+      // Dry path: master → compressor → speakers.
+      master.connect(comp);
+      // Wet path (parallel): master → convolver → warm lowpass → wet trim → comp.
+      // A short, dark reverb places every voice in the same small room.
+      const convolver = ctx.createConvolver();
+      convolver.buffer = buildRoomImpulse(ctx, 0.8, 3);
+      const wetFilter = ctx.createBiquadFilter();
+      wetFilter.type = "lowpass";
+      wetFilter.frequency.value = 3200;
+      const wet = ctx.createGain();
+      wet.gain.value = 0.16;
+      master.connect(convolver);
+      convolver.connect(wetFilter);
+      wetFilter.connect(wet);
+      wet.connect(comp);
+      comp.connect(ctx.destination);
+      audioContext = ctx;
+      masterGain = master;
+      if (ctx.state === "suspended") void ctx.resume();
       unlocked = true;
     } catch {
       audioContext = null;
+      masterGain = null;
     }
   },
   playEffect(effect: SoundEffect): void {
