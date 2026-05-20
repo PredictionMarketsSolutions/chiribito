@@ -24,6 +24,10 @@ generated-schema/
 # Local dev stack (embedded Postgres data + binaries)
 .dev-stack/
 
+# Superpowers brainstorming companion artifacts (local only)
+.superpowers/
+_screenshots/
+
 # Logs
 logs/
 *.log
