@@ -39,6 +39,9 @@ const simpleProfiles: Partial<Record<SoundEffect, SimpleProfile>> = {
 
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
+let ambientSource: AudioBufferSourceNode | null = null;
+let ambientGain: GainNode | null = null;
+let ambientVisibilityWired = false;
 let unlocked = false;
 let enabled = true;
 let masterVolume = 1;
@@ -69,6 +72,61 @@ function buildRoomImpulse(ctx: AudioContext, durationSec: number, decay: number)
     }
   }
   return impulse;
+}
+
+// Continuous room tone: a whisper-level brown-noise bed, heavily lowpassed into a
+// warm low presence ("the room has its own air"), routed through the master bus so
+// it shares the reverb. Pauses when the tab is hidden; off when sound is muted.
+function buildBrownNoise(ctx: AudioContext, seconds: number): AudioBuffer {
+  const rate = ctx.sampleRate;
+  const length = Math.max(1, Math.floor(rate * seconds));
+  const buf = ctx.createBuffer(1, length, rate);
+  const data = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < length; i += 1) {
+    const white = Math.random() * 2 - 1;
+    last = (last + 0.02 * white) / 1.02;
+    data[i] = last * 3.5;
+  }
+  return buf;
+}
+
+function startAmbient(): void {
+  const ctx = audioContext;
+  if (!enabled || !ctx || ambientSource) return;
+  const src = ctx.createBufferSource();
+  src.buffer = buildBrownNoise(ctx, 6);
+  src.loop = true;
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 500;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, ctx.currentTime);
+  g.gain.setTargetAtTime(0.025, ctx.currentTime, 1.5); // gentle fade-in
+  src.connect(lp);
+  lp.connect(g);
+  g.connect(busOut(ctx));
+  src.start();
+  ambientSource = src;
+  ambientGain = g;
+}
+
+function stopAmbient(): void {
+  const src = ambientSource;
+  const ctx = audioContext;
+  if (!src) return;
+  ambientSource = null;
+  if (ctx && ambientGain) {
+    ambientGain.gain.setTargetAtTime(0, ctx.currentTime, 0.3); // gentle fade-out
+    ambientGain = null;
+  }
+  setTimeout(() => {
+    try {
+      src.stop();
+    } catch {
+      /* already stopped */
+    }
+  }, 600);
 }
 
 function playSimple(profile: SimpleProfile): void {
@@ -238,6 +296,8 @@ function playComplex(effect: SoundEffect): boolean {
 export const audio = {
   setEnabled(value: boolean): void {
     enabled = value;
+    if (value) startAmbient();
+    else stopAmbient();
   },
   setMasterVolume(value: number): void {
     masterVolume = Math.max(0, Math.min(1, value));
@@ -280,6 +340,14 @@ export const audio = {
       masterGain = master;
       if (ctx.state === "suspended") void ctx.resume();
       unlocked = true;
+      startAmbient();
+      if (!ambientVisibilityWired) {
+        ambientVisibilityWired = true;
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) stopAmbient();
+          else startAmbient();
+        });
+      }
     } catch {
       audioContext = null;
       masterGain = null;
