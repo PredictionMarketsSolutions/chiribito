@@ -14,20 +14,26 @@ import {
 
 import { getCardTextureUrl } from "../../card-texture-url";
 import { cardsEqual } from "../../ui-cards";
+import { isPerfEnabled } from "../../security/perf-mode";
 import type { RoomState } from "../../types";
 import type { GameUiTableSyncContext, TableSceneController } from "../game-ui-types";
-import { computeVisualSeatLayout, TOTAL_SEATS } from "../visual-layout";
+import { computeVisualSeatLayout, TOTAL_SEATS, TARGET_FRONT_INDEX } from "../visual-layout";
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "../room-state";
 import { isInWinnerPhase } from "../winner-display";
 
-const CARD_W = 60;
+const CARD_ASPECT = 2 / 3; // card width : height
+// Cards scale with the felt so they read large on desktop and still fit on
+// mobile (fixed px made desktop cards look tiny on the 948px canvas). The board
+// is the focal point — biggest; hole cards are secondary; the front (local)
+// seat gets a prominence bump so you read your own hand at a glance.
+const BOARD_H_FACTOR = 0.26;     // board card height / canvas height
+const HOLE_H_FACTOR = 0.205;     // hole card height / canvas height
+const BOARD_FIT_MARGIN = 0.92;   // board cluster max width / canvas width
+const BOARD_GAP_FACTOR = 0.12;   // gap between board cards / card width
+const HOLE_SPREAD_FACTOR = 0.42; // hole card x-offset / card width
+const FRONT_HOLE_SCALE = 1.22;   // local (front) seat hole-card prominence
+const CARD_W = 60; // base size before first layout measurement
 const CARD_H = 90;
-const BOARD_SPREAD = 67;
-const HOLE_SPREAD = 23;
-// Distance the hole-card cluster is pulled from the seat nameplate toward the
-// board center, onto open felt. Without it cards render at the nameplate center
-// (behind the higher z-index nameplate) or off-canvas for top/bottom seats.
-const HOLE_INSET = 104;
 const DEFAULT_ALL_IN_STEP_MS = 2000;
 
 export type TableSceneOptions = {
@@ -64,6 +70,15 @@ export class TableScene implements TableSceneController {
   private slotCenters: { x: number; y: number }[] = [];
   private boardCenter = { x: 0, y: 0 };
   private deckPos = { x: 0, y: 0 };
+
+  // Responsive card metrics, recomputed each measureLayout.
+  private boardCardW = CARD_W;
+  private boardCardH = CARD_H;
+  private holeCardW = CARD_W;
+  private holeCardH = CARD_H;
+  private boardSpread = CARD_W;
+  private holeSpread = CARD_W * HOLE_SPREAD_FACTOR;
+  private holeInset = 104;
 
   private prevCommunity: string[] = [];
   private prevHoles: (string | undefined)[][] = Array.from({ length: TOTAL_SEATS }, () => [undefined, undefined]);
@@ -196,19 +211,75 @@ export class TableScene implements TableSceneController {
       });
     }
 
-    // Compact Table sprint — desktop bajado al tercio medio, mobile preservado en
-    // baseline 0.44 para no comprometer la claridad vertical post-Phase-D-Primary.
+    // Desktop board sits a touch above center; mobile a bit higher so the
+    // bottom card zone stays clear.
     const mobile = typeof window !== "undefined" && window.innerWidth <= 768;
-    this.boardCenter = { x: w * 0.5, y: h * (mobile ? 0.44 : 0.48) };
+    this.boardCenter = { x: w * 0.5, y: h * (mobile ? 0.44 : 0.47) };
     this.deckPos = { x: w * 0.5, y: h * (mobile ? 0.36 : 0.40) };
+
+    this.computeCardMetrics(w, h);
+    this.applyCardSizes();
+    if (isPerfEnabled()) this.exposeLayoutDebug(w, h);
 
     this.layoutStaticUi();
     this.applyBoardPositions();
     this.applyHolePositions();
   }
 
+  private computeCardMetrics(w: number, h: number): void {
+    // Board = focal point: as tall as BOARD_H_FACTOR allows, but never so wide
+    // that 5 cards + gaps overflow the felt.
+    let boardW = h * BOARD_H_FACTOR * CARD_ASPECT;
+    const maxBoardW = (w * BOARD_FIT_MARGIN) / (5 + 4 * BOARD_GAP_FACTOR);
+    boardW = Math.min(boardW, maxBoardW);
+    this.boardCardW = boardW;
+    this.boardCardH = boardW / CARD_ASPECT;
+    this.boardSpread = boardW * (1 + BOARD_GAP_FACTOR);
+
+    // Hole cards: secondary, always smaller than the board for focal hierarchy.
+    let holeW = h * HOLE_H_FACTOR * CARD_ASPECT;
+    holeW = Math.min(holeW, boardW * 0.84);
+    this.holeCardW = holeW;
+    this.holeCardH = holeW / CARD_ASPECT;
+    this.holeSpread = holeW * HOLE_SPREAD_FACTOR;
+    // Pull cards far enough off the rim nameplate to clear it (incl. the larger
+    // front cards) and stay on the felt.
+    this.holeInset = Math.round(h * 0.12 + this.holeCardH * 0.72);
+  }
+
+  private applyCardSizes(): void {
+    for (let v = 0; v < TOTAL_SEATS; v += 1) {
+      const scale = v === TARGET_FRONT_INDEX ? FRONT_HOLE_SCALE : 1;
+      for (const s of this.holeSprites[v]) {
+        s.width = this.holeCardW * scale;
+        s.height = this.holeCardH * scale;
+      }
+    }
+    for (const s of this.boardSprites) {
+      s.width = this.boardCardW;
+      s.height = this.boardCardH;
+    }
+  }
+
+  private exposeLayoutDebug(w: number, h: number): void {
+    (window as unknown as { __tableLayout?: unknown }).__tableLayout = {
+      w,
+      h,
+      boardCenter: { x: Math.round(this.boardCenter.x), y: Math.round(this.boardCenter.y) },
+      boardCardW: Math.round(this.boardCardW),
+      boardCardH: Math.round(this.boardCardH),
+      boardSpread: Math.round(this.boardSpread),
+      holeCardW: Math.round(this.holeCardW),
+      holeCardH: Math.round(this.holeCardH),
+      holeSpread: Math.round(this.holeSpread),
+      holeInset: this.holeInset,
+      frontHoleScale: FRONT_HOLE_SCALE,
+      slotCenters: this.slotCenters.map((c) => ({ x: Math.round(c.x), y: Math.round(c.y) })),
+    };
+  }
+
   private layoutStaticUi(): void {
-    this.potText.position.set(this.boardCenter.x, this.boardCenter.y - CARD_H * 0.85);
+    this.potText.position.set(this.boardCenter.x, this.boardCenter.y - this.boardCardH * 0.85);
   }
 
   private applyBoardPositions(): void {
@@ -216,7 +287,7 @@ export class TableScene implements TableSceneController {
     const cy = this.boardCenter.y;
     for (let i = 0; i < 5; i += 1) {
       const spr = this.boardSprites[i];
-      spr.position.set(cx + (i - 2) * BOARD_SPREAD, cy);
+      spr.position.set(cx + (i - 2) * this.boardSpread, cy);
     }
   }
 
@@ -226,9 +297,10 @@ export class TableScene implements TableSceneController {
     const vx = this.boardCenter.x - base.x;
     const vy = this.boardCenter.y - base.y;
     const len = Math.hypot(vx, vy) || 1;
-    const cx = base.x + (vx / len) * HOLE_INSET;
-    const cy = base.y + (vy / len) * HOLE_INSET;
-    const dx = cardIndex === 0 ? -HOLE_SPREAD : HOLE_SPREAD;
+    const cx = base.x + (vx / len) * this.holeInset;
+    const cy = base.y + (vy / len) * this.holeInset;
+    const spread = visualSlot === TARGET_FRONT_INDEX ? this.holeSpread * FRONT_HOLE_SCALE : this.holeSpread;
+    const dx = cardIndex === 0 ? -spread : spread;
     return { x: cx + dx, y: cy };
   }
 
@@ -409,7 +481,7 @@ export class TableScene implements TableSceneController {
         spr.alpha = 0;
         continue;
       }
-      const pos = { x: this.boardCenter.x + (i - 2) * BOARD_SPREAD, y: this.boardCenter.y };
+      const pos = { x: this.boardCenter.x + (i - 2) * this.boardSpread, y: this.boardCenter.y };
       if (animateNew && !had) {
         spr.visible = true;
         spr.alpha = 1;
