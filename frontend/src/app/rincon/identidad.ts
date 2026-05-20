@@ -61,14 +61,15 @@ export function getMote(userId: number, suit: SuitCode): string {
 
 export function winRate(gamesPlayed: number, gamesWon: number): number | null {
   if (gamesPlayed <= 0) return null;
-  return Math.round((gamesWon / gamesPlayed) * 100);
+  // Clamp to 100: a >100% rate (e.g. corrupt won>played data) would read as broken/fake.
+  return Math.min(100, Math.round((gamesWon / gamesPlayed) * 100));
 }
 
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 export function formatSocioDesde(createdAt: string): string {
   const d = new Date(createdAt);
   if (isNaN(d.getTime())) return "—";
-  return `${MESES[d.getMonth()]} ${d.getFullYear()}`;
+  return `${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 export function formatUltimaVez(lastPlayedAt: string | null, now: Date = new Date()): string {

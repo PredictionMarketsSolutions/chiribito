@@ -48,11 +48,13 @@ describe("identity generators (deterministic)", () => {
     expect(getMote(7, "O")).toBe(getMote(7, "O"));
     expect(typeof getMote(7, "O")).toBe("string");
     expect(getMote(7, "O").length).toBeGreaterThan(0);
+    expect(getMote(0, "C")).toBe("La Sota de Copas"); // exercises the {palo} substitution
   });
 
   it("computes win rate, null when nothing played", () => {
     expect(winRate(0, 0)).toBeNull();
     expect(winRate(142, 38)).toBe(27);
+    expect(winRate(1, 2)).toBe(100); // clamped — never report >100%
   });
 
   it("formats socio-desde and última-vez honestly", () => {
