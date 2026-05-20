@@ -37,6 +37,15 @@ const CARD_W = 60; // base size before first layout measurement
 const CARD_H = 90;
 const DEFAULT_ALL_IN_STEP_MS = 2000;
 
+// Contact shadow (depth pass): an ultra-soft, grounded shadow drawn BEHIND each
+// card so it rests physically on the felt. Offset downward (a contact shadow,
+// not a floating halo) and low alpha (felt almost subconsciously). No blur
+// filter — a canvas-generated soft radial texture, sized per card.
+const SHADOW_ALPHA = 0.34;        // shadow opacity as a fraction of the card's alpha
+const SHADOW_W_SCALE = 0.9;       // shadow width / card width
+const SHADOW_H_SCALE = 0.52;      // shadow height / card height
+const SHADOW_DROP_FACTOR = 0.36;  // downward offset of shadow centre / card height
+
 export type TableSceneOptions = {
   app: Application;
   surfaceEl: HTMLElement;
@@ -57,6 +66,30 @@ function textureForUrl(url: string): Texture {
   return tex;
 }
 
+// One soft radial shadow texture, generated once and shared by every card's
+// contact shadow. Black at the centre fading to fully transparent — stretched
+// per card and offset down so only the grounded sliver shows beneath the card.
+let contactShadowTexture: Texture | null = null;
+function getContactShadowTexture(): Texture {
+  if (contactShadowTexture) return contactShadowTexture;
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const r = size / 2;
+    const grad = ctx.createRadialGradient(r, r, 0, r, r, r);
+    grad.addColorStop(0, "rgba(0, 0, 0, 1)");
+    grad.addColorStop(0.45, "rgba(0, 0, 0, 0.5)");
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+  }
+  contactShadowTexture = Texture.from(canvas);
+  return contactShadowTexture;
+}
+
 export class TableScene implements TableSceneController {
   private readonly app: Application;
   private readonly surfaceEl: HTMLElement;
@@ -66,9 +99,12 @@ export class TableScene implements TableSceneController {
   private readonly holesContainer: Container;
   private readonly boardContainer: Container;
   private readonly uiContainer: Container;
+  private readonly shadowsContainer: Container;
 
   private readonly holeSprites: Sprite[][] = [];
   private readonly boardSprites: Sprite[] = [];
+  private readonly holeShadows: Sprite[][] = [];
+  private readonly boardShadows: Sprite[] = [];
   private readonly potText: Text;
   private readonly dealerMarker: Graphics;
 
@@ -120,14 +156,20 @@ export class TableScene implements TableSceneController {
     this.holesContainer = new Container();
     this.boardContainer = new Container();
     this.uiContainer = new Container();
+    this.shadowsContainer = new Container();
 
     this.app.stage.addChild(this.root);
+    // Shadows render first (under every card), so the opaque card sprites cover
+    // all of each shadow except the grounded sliver at its base — a shadow can
+    // never bleed onto a card face or an overlapping neighbour.
+    this.root.addChild(this.shadowsContainer);
     this.root.addChild(this.holesContainer);
     this.root.addChild(this.boardContainer);
     this.root.addChild(this.uiContainer);
 
     for (let v = 0; v < TOTAL_SEATS; v += 1) {
       const pair: Sprite[] = [];
+      const shadowPair: Sprite[] = [];
       for (let c = 0; c < 2; c += 1) {
         const s = new Sprite(textureForUrl(getCardTextureUrl(undefined)));
         s.anchor.set(0.5);
@@ -137,8 +179,10 @@ export class TableScene implements TableSceneController {
         s.alpha = 0;
         this.holesContainer.addChild(s);
         pair.push(s);
+        shadowPair.push(this.createCardShadow());
       }
       this.holeSprites.push(pair);
+      this.holeShadows.push(shadowPair);
     }
 
     for (let i = 0; i < 5; i += 1) {
@@ -150,6 +194,7 @@ export class TableScene implements TableSceneController {
       s.alpha = 0;
       this.boardContainer.addChild(s);
       this.boardSprites.push(s);
+      this.boardShadows.push(this.createCardShadow());
     }
 
     this.potText = new Text("Pot: 0", { fill: 0xfff8dc, fontSize: 20, fontWeight: "bold" });
@@ -173,6 +218,11 @@ export class TableScene implements TableSceneController {
 
     this.measureLayout();
     this.setupResizeObserver();
+
+    // Mirror each card's transform onto its shadow every frame. Decoupled from
+    // the deal / reveal / layout code, so the shadow tracks GSAP tweens and
+    // resizes without that code needing to know shadows exist.
+    this.app.ticker.add(this.syncContactShadows, this);
   }
 
   isActive(): boolean {
@@ -196,6 +246,7 @@ export class TableScene implements TableSceneController {
   }
 
   destroy(): void {
+    this.app.ticker.remove(this.syncContactShadows, this);
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     gsap.killTweensOf([...this.collectAllCardSprites(), this.potText.scale]);
@@ -208,6 +259,39 @@ export class TableScene implements TableSceneController {
     this.holeSprites.forEach((pair) => pair.forEach((s) => out.push(s)));
     this.boardSprites.forEach((s) => out.push(s));
     return out;
+  }
+
+  private createCardShadow(): Sprite {
+    const sh = new Sprite(getContactShadowTexture());
+    sh.anchor.set(0.5);
+    sh.visible = false;
+    sh.alpha = 0;
+    this.shadowsContainer.addChild(sh);
+    return sh;
+  }
+
+  private syncContactShadows(): void {
+    for (let v = 0; v < TOTAL_SEATS; v += 1) {
+      this.mirrorShadow(this.holeSprites[v][0], this.holeShadows[v][0]);
+      this.mirrorShadow(this.holeSprites[v][1], this.holeShadows[v][1]);
+    }
+    for (let i = 0; i < this.boardSprites.length; i += 1) {
+      this.mirrorShadow(this.boardSprites[i], this.boardShadows[i]);
+    }
+  }
+
+  // A contact shadow, not a drop shadow: hugs the card, offset straight down so
+  // the card reads as resting on the felt rather than floating above it. Lives
+  // behind every card, so only the grounded sliver below the card is visible.
+  private mirrorShadow(card: Sprite, shadow: Sprite): void {
+    const shown = card.visible && card.alpha > 0.02;
+    shadow.visible = shown;
+    if (!shown) return;
+    shadow.alpha = card.alpha * SHADOW_ALPHA;
+    shadow.rotation = card.rotation;
+    shadow.width = card.width * SHADOW_W_SCALE;
+    shadow.height = card.height * SHADOW_H_SCALE;
+    shadow.position.set(card.x, card.y + card.height * SHADOW_DROP_FACTOR);
   }
 
   measureLayout(): void {
