@@ -3342,10 +3342,15 @@ button.accent:hover:not(:disabled) {
   position: absolute;
   inset: 34px;
   border-radius: 50% / 38%;
-  /* Clean felt: the off-center white highlight blobs read as smudges and
-     compete with the cards, so they're removed — the gradient + rim shadow
-     carry all the depth. */
-  background: none;
+  /* Felt-L2a (premium perceptual phase): micro tonal variation only. Two
+     ultra-faint GREEN-on-green zones (never white — white blobs read as smudges
+     and compete with the cards) give the felt gentle material unevenness so it
+     stops reading as a perfectly flat fill. Large, soft, asymmetric, very low
+     opacity, kept off the central card cluster — felt more than seen. No grain
+     or noise here; that risk is isolated to an optional later layer. */
+  background:
+    radial-gradient(ellipse 66% 52% at 33% 36%, rgba(20, 102, 80, 0.05), transparent 60%),
+    radial-gradient(ellipse 64% 52% at 70% 70%, rgba(5, 47, 36, 0.11), transparent 62%);
   pointer-events: none;
 }
 
