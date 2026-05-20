@@ -3305,9 +3305,11 @@ button.accent:hover:not(:disabled) {
   width: 100%;
   max-width: 980px;
   min-height: 640px;
-  /* Mesa más limpia y profesional: óvalo central con viñeteado suave */
+  /* Even, premium felt: no bright center "spotlight" competing with the cards —
+     a calm Chiribito green that recedes gently into a vignette at the rim so the
+     community cards are the brightest thing on the table. */
   background:
-    radial-gradient(ellipse 120% 100% at 50% 50%, #0f8f6a 0%, var(--felt-main) 45%, var(--felt-dark) 100%);
+    radial-gradient(ellipse 132% 112% at 50% 46%, var(--felt-main) 0%, var(--felt-main) 52%, var(--felt-dark) 100%);
   border-radius: 50% / 38%;
   padding: 44px 70px;
   position: relative;
@@ -3335,11 +3337,10 @@ button.accent:hover:not(:disabled) {
   position: absolute;
   inset: 34px;
   border-radius: 50% / 38%;
-  /* Sutil viñeteado interior, sin efecto de doble rectángulo */
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.06), transparent 45%),
-    radial-gradient(circle at 75% 30%, rgba(255, 255, 255, 0.03), transparent 50%);
-  opacity: 0.25;
+  /* Clean felt: the off-center white highlight blobs read as smudges and
+     compete with the cards, so they're removed — the gradient + rim shadow
+     carry all the depth. */
+  background: none;
   pointer-events: none;
 }
 
