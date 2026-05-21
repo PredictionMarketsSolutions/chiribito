@@ -52,6 +52,7 @@ export function runCountUp(
 
 /** Pointer-driven 3D tilt on the carnet holder. Sets --tiltX/--tiltY (deg) consumed by CSS. */
 export function attachCarnetTilt(holder: HTMLElement, opts: { reducedMotion?: boolean } = {}): void {
+  // Reduced motion: leave the holder flat. No reset needed — a fresh node has no tilt vars set.
   if (opts.reducedMotion ?? prefersReducedMotion()) return;
   const onMove = (e: PointerEvent) => {
     const rect = holder.getBoundingClientRect();

@@ -72,6 +72,20 @@ describe("attachCarnetTilt", () => {
   });
 });
 
+describe("attachCarnetTilt active path", () => {
+  it("sets --tiltX/--tiltY on pointermove and resets them on pointerleave", () => {
+    const holder = document.createElement("div");
+    holder.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 200, height: 300, right: 200, bottom: 300, x: 0, y: 0, toJSON() {} } as DOMRect);
+    attachCarnetTilt(holder, { reducedMotion: false });
+    holder.dispatchEvent(new MouseEvent("pointermove", { clientX: 200, clientY: 150 }));
+    expect(holder.style.getPropertyValue("--tiltY")).toBe("7.00deg");
+    holder.dispatchEvent(new MouseEvent("pointerleave"));
+    expect(holder.style.getPropertyValue("--tiltX")).toBe("0deg");
+    expect(holder.style.getPropertyValue("--tiltY")).toBe("0deg");
+  });
+});
+
 describe("attachLacreShine", () => {
   it("adds the alive class when motion is allowed", () => {
     const shine = document.createElement("span");
