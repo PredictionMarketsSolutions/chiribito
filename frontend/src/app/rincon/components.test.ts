@@ -27,6 +27,12 @@ describe("CarnetVivo", () => {
     expect(el.querySelector(".carnet-foot")?.textContent).toContain("anoche");
     expect(el.querySelector(".lacre")).not.toBeNull();
   });
+  it("wraps the holder in a stage and includes a lacre shine layer", () => {
+    const el = CarnetVivo({ identidad, ultimaVez: "anoche" });
+    expect(el.classList.contains("carnet-stage")).toBe(true);
+    expect(el.querySelector(".carnet-holder")).not.toBeNull();
+    expect(el.querySelector(".lacre__shine")).not.toBeNull();
+  });
 });
 
 import { StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa } from "./components";
@@ -39,11 +45,17 @@ const vm: RinconViewModel = {
 };
 
 describe("StatMarks", () => {
-  it("shows real stats; shows '—' for null puesto/winrate", () => {
-    expect(StatMarks(vm).textContent).toContain("142");
-    expect(StatMarks(vm).textContent).toContain("#7");
+  it("renders the 2x2 core grid with count-up data attributes", () => {
+    const s = StatMarks(vm);
+    expect(s.querySelector('[data-countup="142"]')).not.toBeNull();   // Manos
+    expect(s.querySelector('[data-countup-format="chips"]')).not.toBeNull(); // Fichas
+    expect(s.textContent).toContain("142");
+  });
+  it("shows '—' for null winRate and an explicit Puesto element", () => {
+    expect(StatMarks(vm).querySelector(".stat-puesto")?.textContent).toContain("#7");
     const empty = StatMarks({ ...vm, gamesPlayed: 0, gamesWon: 0, winRate: null, puesto: null });
     expect(empty.textContent).toContain("—");
+    expect(empty.querySelector(".stat-puesto")?.textContent?.toLowerCase()).toContain("sin clasificar");
   });
 });
 

@@ -21,6 +21,7 @@ export function LacrePersonal(props: { identidad: Identidad; sizePx?: number }):
   glyph.classList.add("lacre__glyph");
   seal.appendChild(glyph);
   seal.appendChild(el("span", "lacre__mono", identidad.monograma));
+  seal.appendChild(el("span", "lacre__shine")); // light-catch layer (CSS-driven)
   return seal;
 }
 
@@ -50,17 +51,24 @@ export function CarnetVivo(props: { identidad: Identidad; ultimaVez: string; soc
   face.appendChild(foot);
 
   holder.appendChild(face);
-  return holder;
+  const stage = el("div", "carnet-stage");
+  stage.appendChild(holder);
+  return stage;
 }
 
-function statTile(value: string, label: string): HTMLElement {
+function statTile(value: string, label: string, countup?: { target: number; format: "int" | "pct" | "chips" }): HTMLElement {
   const t = el("div", "stat");
-  t.appendChild(el("div", "stat__v", value));
+  const v = el("div", "stat__v", value);
+  if (countup) {
+    v.dataset.countup = String(countup.target);
+    v.dataset.countupFormat = countup.format;
+  }
+  t.appendChild(v);
   t.appendChild(el("div", "stat__k", label));
   return t;
 }
 
-function formatChips(n: number): string {
+export function formatChips(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K`;
   return String(n);
 }
@@ -69,12 +77,24 @@ export function StatMarks(vm: RinconViewModel): HTMLElement {
   const sec = el("div", "rincon-sec");
   sec.appendChild(el("div", "rincon-sec__t", "La hoja del socio"));
   const grid = el("div", "statg");
-  grid.appendChild(statTile(String(vm.gamesPlayed), "Manos"));
-  grid.appendChild(statTile(String(vm.gamesWon), "Ganadas"));
-  grid.appendChild(statTile(vm.winRate == null ? "—" : `${vm.winRate}%`, "Victorias"));
-  grid.appendChild(statTile(formatChips(vm.totalChipsWon), "Fichas"));
-  grid.appendChild(statTile(vm.puesto == null ? "—" : `#${vm.puesto}`, vm.puesto == null ? "Sin clasificar" : "En la casa"));
+  grid.appendChild(statTile(String(vm.gamesPlayed), "Manos", { target: vm.gamesPlayed, format: "int" }));
+  grid.appendChild(statTile(String(vm.gamesWon), "Ganadas", { target: vm.gamesWon, format: "int" }));
+  grid.appendChild(statTile(vm.winRate == null ? "—" : `${vm.winRate}%`, "Victorias",
+    vm.winRate == null ? undefined : { target: vm.winRate, format: "pct" }));
+  grid.appendChild(statTile(formatChips(vm.totalChipsWon), "Fichas", { target: vm.totalChipsWon, format: "chips" }));
   sec.appendChild(grid);
+
+  const puesto = el("div", "stat-puesto");
+  if (vm.puesto == null) {
+    puesto.appendChild(el("span", "stat-puesto__txt", "Sin clasificar aún"));
+  } else {
+    const v = el("span", "stat-puesto__v", `#${vm.puesto}`);
+    v.dataset.countup = String(vm.puesto);
+    v.dataset.countupFormat = "rank";
+    puesto.appendChild(v);
+    puesto.appendChild(el("span", "stat-puesto__txt", "en la casa"));
+  }
+  sec.appendChild(puesto);
   return sec;
 }
 
