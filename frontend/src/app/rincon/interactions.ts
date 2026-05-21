@@ -28,3 +28,44 @@ export function tiltFromPointer(
 export function applyRevealOrder(elements: HTMLElement[]): void {
   elements.forEach((el, i) => el.style.setProperty("--reveal-i", String(i)));
 }
+
+/** Animate a numeric count-up into an element, formatting every frame. Honest: ends on format(target). */
+export function runCountUp(
+  el: HTMLElement,
+  target: number,
+  format: (n: number) => string,
+  opts: { durationMs?: number; reducedMotion?: boolean } = {},
+): void {
+  const reduced = opts.reducedMotion ?? prefersReducedMotion();
+  if (reduced || target <= 0) { el.textContent = format(target); return; }
+  const duration = opts.durationMs ?? 700;
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = (now - start) / duration;
+    if (t >= 1) { el.textContent = format(target); return; }
+    el.textContent = format(countUpValueAt(target, t));
+    requestAnimationFrame(step);
+  };
+  el.textContent = format(0);
+  requestAnimationFrame(step);
+}
+
+/** Pointer-driven 3D tilt on the carnet holder. Sets --tiltX/--tiltY (deg) consumed by CSS. */
+export function attachCarnetTilt(holder: HTMLElement, opts: { reducedMotion?: boolean } = {}): void {
+  if (opts.reducedMotion ?? prefersReducedMotion()) return;
+  const onMove = (e: PointerEvent) => {
+    const rect = holder.getBoundingClientRect();
+    const { rotateX, rotateY } = tiltFromPointer(e.clientX, e.clientY, rect, 7);
+    holder.style.setProperty("--tiltX", `${rotateX.toFixed(2)}deg`);
+    holder.style.setProperty("--tiltY", `${rotateY.toFixed(2)}deg`);
+  };
+  const reset = () => { holder.style.setProperty("--tiltX", "0deg"); holder.style.setProperty("--tiltY", "0deg"); };
+  holder.addEventListener("pointermove", onMove);
+  holder.addEventListener("pointerleave", reset);
+}
+
+/** A slow idle drift + a one-time bloom on the lacre's specular highlight. */
+export function attachLacreShine(shine: HTMLElement, opts: { reducedMotion?: boolean } = {}): void {
+  if (opts.reducedMotion ?? prefersReducedMotion()) { shine.style.opacity = "0.5"; return; }
+  shine.classList.add("lacre__shine--alive"); // CSS owns the drift + bloom keyframes
+}

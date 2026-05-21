@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { prefersReducedMotion, countUpValueAt, tiltFromPointer, applyRevealOrder } from "./interactions";
+import { prefersReducedMotion, countUpValueAt, tiltFromPointer, applyRevealOrder, runCountUp, attachCarnetTilt } from "./interactions";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -47,5 +47,27 @@ describe("applyRevealOrder", () => {
     applyRevealOrder([a, b]);
     expect(a.style.getPropertyValue("--reveal-i")).toBe("0");
     expect(b.style.getPropertyValue("--reveal-i")).toBe("1");
+  });
+});
+
+describe("runCountUp", () => {
+  it("with reduced motion, sets the final formatted value immediately", () => {
+    const el = document.createElement("span");
+    runCountUp(el, 18420, (n) => `${(n / 1000).toFixed(1)}K`, { reducedMotion: true });
+    expect(el.textContent).toBe("18.4K");
+  });
+  it("with a non-positive target, shows the formatted target without animating", () => {
+    const el = document.createElement("span");
+    runCountUp(el, 0, (n) => String(n), { reducedMotion: false });
+    expect(el.textContent).toBe("0");
+  });
+});
+
+describe("attachCarnetTilt", () => {
+  it("does nothing under reduced motion (no transform var set)", () => {
+    const holder = document.createElement("div");
+    attachCarnetTilt(holder, { reducedMotion: true });
+    holder.dispatchEvent(new Event("pointermove"));
+    expect(holder.style.getPropertyValue("--tiltX")).toBe("");
   });
 });
