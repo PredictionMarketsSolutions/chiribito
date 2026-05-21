@@ -1,9 +1,9 @@
 import { decodeJWT, SecureStorage } from "../../security";
-import { CarnetVivo, StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa, formatChips } from "./components";
+import { CarnetVivo, StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa, formatCountup } from "./components";
 import { applyRevealOrder, attachCarnetTilt, attachLacreShine, runCountUp } from "./interactions";
 import { fetchMyRincon, fetchPuesto, type FetchLike } from "./data";
 import { buildRinconViewModel } from "./identidad";
-import type { RinconViewModel } from "./types";
+import type { RinconViewModel, CountupFormat } from "./types";
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -63,13 +63,8 @@ export function renderRincon(
   // Inscription: count up every numeric stat to its real value (format-preserving).
   container.querySelectorAll<HTMLElement>("[data-countup]").forEach((node) => {
     const target = Number(node.dataset.countup);
-    const fmt = node.dataset.countupFormat;
-    const format =
-      fmt === "chips" ? (n: number) => formatChips(n)
-      : fmt === "pct" ? (n: number) => `${n}%`
-      : fmt === "rank" ? (n: number) => `#${n}`
-      : (n: number) => String(n);
-    if (!Number.isNaN(target)) runCountUp(node, target, format);
+    const fmt = (node.dataset.countupFormat ?? "int") as CountupFormat;
+    if (!Number.isNaN(target)) runCountUp(node, target, (n) => formatCountup(n, fmt));
   });
 
   opts.playOpenCue?.();

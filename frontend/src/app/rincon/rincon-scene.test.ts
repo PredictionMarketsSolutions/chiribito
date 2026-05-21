@@ -44,4 +44,13 @@ describe("rincon scene", () => {
     (c.querySelector(".rincon-error button") as HTMLButtonElement).click();
     expect(onRetry).toHaveBeenCalled();
   });
+
+  it("count-up renders the final formatted value (reduced-motion path)", () => {
+    vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce"), media: q,
+      addEventListener() {}, removeEventListener() {} }));
+    const c = document.createElement("div");
+    renderRincon(c, vm, { gameUrl: "https://play.chiribito.com", onClose: vi.fn() });
+    expect(c.querySelector(".stat-puesto__v")?.textContent).toBe("#7");
+    vi.unstubAllGlobals();
+  });
 });

@@ -73,22 +73,32 @@ export function formatChips(n: number): string {
   return String(n);
 }
 
+/** Single formatter shared by the initial render and the count-up animation, keyed by CountupFormat. */
+export function formatCountup(value: number, format: CountupFormat): string {
+  switch (format) {
+    case "chips": return formatChips(value);
+    case "pct": return `${value}%`;
+    case "rank": return `#${value}`;
+    case "int": return String(value);
+  }
+}
+
 export function StatMarks(vm: RinconViewModel): HTMLElement {
   const sec = el("div", "rincon-sec");
   sec.appendChild(el("div", "rincon-sec__t", "La hoja del socio"));
   const grid = el("div", "statg");
-  grid.appendChild(statTile(String(vm.gamesPlayed), "Manos", { target: vm.gamesPlayed, format: "int" }));
-  grid.appendChild(statTile(String(vm.gamesWon), "Ganadas", { target: vm.gamesWon, format: "int" }));
-  grid.appendChild(statTile(vm.winRate == null ? "—" : `${vm.winRate}%`, "Victorias",
+  grid.appendChild(statTile(formatCountup(vm.gamesPlayed, "int"), "Manos", { target: vm.gamesPlayed, format: "int" }));
+  grid.appendChild(statTile(formatCountup(vm.gamesWon, "int"), "Ganadas", { target: vm.gamesWon, format: "int" }));
+  grid.appendChild(statTile(vm.winRate == null ? "—" : formatCountup(vm.winRate, "pct"), "Victorias",
     vm.winRate == null ? undefined : { target: vm.winRate, format: "pct" }));
-  grid.appendChild(statTile(formatChips(vm.totalChipsWon), "Fichas", { target: vm.totalChipsWon, format: "chips" }));
+  grid.appendChild(statTile(formatCountup(vm.totalChipsWon, "chips"), "Fichas", { target: vm.totalChipsWon, format: "chips" }));
   sec.appendChild(grid);
 
   const puesto = el("div", "stat-puesto");
   if (vm.puesto == null) {
     puesto.appendChild(el("span", "stat-puesto__txt", "Sin clasificar aún"));
   } else {
-    const v = el("span", "stat-puesto__v", `#${vm.puesto}`);
+    const v = el("span", "stat-puesto__v", formatCountup(vm.puesto, "rank"));
     v.dataset.countup = String(vm.puesto);
     const rankFmt: CountupFormat = "rank";
     v.dataset.countupFormat = rankFmt;
