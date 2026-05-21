@@ -19,14 +19,20 @@ describe("rincon scene", () => {
     expect(ov.classList.contains("hidden")).toBe(true);
   });
 
-  it("renders the full rincon (carnet + stats + historia + compartir + mesa)", () => {
+  it("renders the full rincon inside a ledger and stamps reveal order", () => {
     const c = document.createElement("div");
     renderRincon(c, vm, { gameUrl: "https://play.chiribito.com", onClose: vi.fn() });
     expect(c.querySelector(".carnet-name")?.textContent).toBe("lucia");
+    expect(c.querySelector(".rincon-ledger")).not.toBeNull();
     expect(c.textContent).toContain("La hoja del socio");
-    expect(c.textContent).toContain("Tu historia");
-    expect(c.querySelector(".share-quiet")).not.toBeNull();
-    expect(c.textContent).toContain("En la mesa apareces así");
+    expect((c.querySelector(".carnet-stage") as HTMLElement | null)?.style.getPropertyValue("--reveal-i")).not.toBe("");
+  });
+
+  it("plays the open cue once on a successful render path", () => {
+    const c = document.createElement("div");
+    const cue = vi.fn();
+    renderRincon(c, vm, { gameUrl: "https://play.chiribito.com", onClose: vi.fn(), playOpenCue: cue });
+    expect(cue).toHaveBeenCalledTimes(1);
   });
 
   it("renders loading and error with a retry", () => {

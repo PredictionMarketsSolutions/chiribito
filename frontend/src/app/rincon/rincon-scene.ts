@@ -1,5 +1,6 @@
 import { decodeJWT, SecureStorage } from "../../security";
-import { CarnetVivo, StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa } from "./components";
+import { CarnetVivo, StatMarks, HistoriaStrip, CompartirRincon, PresenciaMesa, formatChips } from "./components";
+import { applyRevealOrder, attachCarnetTilt, attachLacreShine, runCountUp } from "./interactions";
 import { fetchMyRincon, fetchPuesto, type FetchLike } from "./data";
 import { buildRinconViewModel } from "./identidad";
 import type { RinconViewModel } from "./types";
@@ -27,14 +28,51 @@ function topbar(onClose: () => void): HTMLElement {
   return top;
 }
 
-export function renderRincon(container: HTMLElement, vm: RinconViewModel, opts: { gameUrl: string; onClose: () => void }): void {
+export function renderRincon(
+  container: HTMLElement,
+  vm: RinconViewModel,
+  opts: { gameUrl: string; onClose: () => void; playOpenCue?: () => void },
+): void {
   container.innerHTML = "";
-  container.appendChild(topbar(opts.onClose));
-  container.appendChild(CarnetVivo({ identidad: vm.identidad, ultimaVez: vm.ultimaVez }));
-  container.appendChild(StatMarks(vm));
-  container.appendChild(HistoriaStrip(vm));
-  container.appendChild(CompartirRincon({ identidad: vm.identidad, gameUrl: opts.gameUrl }));
-  container.appendChild(PresenciaMesa({ identidad: vm.identidad }));
+  const top = topbar(opts.onClose);
+  const carnet = CarnetVivo({ identidad: vm.identidad, ultimaVez: vm.ultimaVez });
+
+  const ledger = el("div", "rincon-ledger");
+  const sections = [
+    StatMarks(vm),
+    HistoriaStrip(vm),
+    CompartirRincon({ identidad: vm.identidad, gameUrl: opts.gameUrl }),
+    PresenciaMesa({ identidad: vm.identidad }),
+  ];
+  sections.forEach((s) => ledger.appendChild(s));
+
+  container.appendChild(top);
+  container.appendChild(carnet);
+  container.appendChild(ledger);
+
+  // Ceremony: stamp reveal order on the top-level hero elements and the ledger's sections.
+  applyRevealOrder([top, carnet]);
+  applyRevealOrder(sections);
+
+  // Life: pointer tilt on the carnet holder, idle/bloom shine on the lacre.
+  const holder = carnet.querySelector<HTMLElement>(".carnet-holder");
+  if (holder) attachCarnetTilt(holder);
+  const shine = carnet.querySelector<HTMLElement>(".lacre__shine");
+  if (shine) attachLacreShine(shine);
+
+  // Inscription: count up every numeric stat to its real value (format-preserving).
+  container.querySelectorAll<HTMLElement>("[data-countup]").forEach((node) => {
+    const target = Number(node.dataset.countup);
+    const fmt = node.dataset.countupFormat;
+    const format =
+      fmt === "chips" ? (n: number) => formatChips(n)
+      : fmt === "pct" ? (n: number) => `${n}%`
+      : fmt === "rank" ? (n: number) => `#${n}`
+      : (n: number) => String(n);
+    if (!Number.isNaN(target)) runCountUp(node, target, format);
+  });
+
+  opts.playOpenCue?.();
 }
 
 export function renderRinconLoading(container: HTMLElement): void {
@@ -64,6 +102,7 @@ export interface OpenRinconDeps {
   gameUrl: string;
   log: (msg: string) => void;
   onClose: () => void;
+  playOpenCue?: () => void;
 }
 
 /** Open the scene, fetch data, render. Identity is client-derived so it never fully fails. */
@@ -83,7 +122,7 @@ export async function openRincon(deps: OpenRinconDeps): Promise<void> {
   try {
     const [me, puesto] = await Promise.all([fetchMyRincon(dataDeps), fetchPuesto(dataDeps, userId)]);
     const vm = buildRinconViewModel(me, puesto);
-    renderRincon(deps.content, vm, { gameUrl: deps.gameUrl, onClose: deps.onClose });
+    renderRincon(deps.content, vm, { gameUrl: deps.gameUrl, onClose: deps.onClose, playOpenCue: deps.playOpenCue });
   } catch (e) {
     deps.log(`Rincón error: ${e instanceof Error ? e.message : String(e)}`);
     renderRinconError(deps.content, () => void openRincon(deps));
