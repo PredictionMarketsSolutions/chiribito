@@ -1073,6 +1073,7 @@ if (miRinconButton) {
       fetchFn: fetch.bind(window),
       gameUrl: "https://play.chiribito.com",
       log,
+      playOpenCue: () => audio.playEffect("carnetOpen"),
       onClose: () => {
         setRinconOverlayVisible(rinconOverlay, false);
         setLobbyOverlayVisible(true);

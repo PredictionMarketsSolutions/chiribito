@@ -54,7 +54,8 @@ export type SoundEffect =
   | "hover"
   | "yourTurn"
   | "perlaArrive"
-  | "tick";
+  | "tick"
+  | "carnetOpen";
 
 export type ConnectionState = "disconnected" | "connecting" | "connected";
 
