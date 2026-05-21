@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { prefersReducedMotion, countUpValueAt, tiltFromPointer, applyRevealOrder, runCountUp, attachCarnetTilt } from "./interactions";
+import { prefersReducedMotion, countUpValueAt, tiltFromPointer, applyRevealOrder, runCountUp, attachCarnetTilt, attachLacreShine } from "./interactions";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -69,5 +69,19 @@ describe("attachCarnetTilt", () => {
     attachCarnetTilt(holder, { reducedMotion: true });
     holder.dispatchEvent(new Event("pointermove"));
     expect(holder.style.getPropertyValue("--tiltX")).toBe("");
+  });
+});
+
+describe("attachLacreShine", () => {
+  it("adds the alive class when motion is allowed", () => {
+    const shine = document.createElement("span");
+    attachLacreShine(shine, { reducedMotion: false });
+    expect(shine.classList.contains("lacre__shine--alive")).toBe(true);
+  });
+  it("falls back to a static opacity under reduced motion", () => {
+    const shine = document.createElement("span");
+    attachLacreShine(shine, { reducedMotion: true });
+    expect(shine.classList.contains("lacre__shine--alive")).toBe(false);
+    expect(shine.style.opacity).toBe("0.5");
   });
 });
