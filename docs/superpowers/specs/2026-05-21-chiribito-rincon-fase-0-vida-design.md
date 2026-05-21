@@ -1,7 +1,7 @@
 # Chiribito — Rincón del Jugador · Fase 0 "El Rincón cobra vida" — Design Spec
 
 - **Date:** 2026-05-21
-- **Status:** Draft — awaiting user review before writing-plans
+- **Status:** Approved 2026-05-21 — proceeding to writing-plans (audio §0.6 = Option B, locked)
 - **Repo HEAD at design time:** `0f89e85`
 - **Scope:** Perceptual polish of the existing Rincón del Jugador dashboard. Bring it to life (tactility, ceremony, hierarchy) without rebuilding any of its validated primitives.
 - **Surfaces touched:** `frontend/src/app/rincon/*` only (new `interactions.ts`, edits to `rincon.css`, `components.ts`, `rincon-scene.ts`). One flagged exception in §0.6 (audio cue).
@@ -117,13 +117,11 @@ frontend/src/app/rincon/
 **Acceptance:** after the carnet, the eye reads a coherent ledger with clear primary/secondary, not four equal cards; stat grid is visually balanced on mobile; back button is comfortably tappable; desktop no longer feels like a thin floating column.
 **Tests:** `components.test.ts` updated for new structure (2×2 + puesto element, ledger grouping). Composition = manual at 390×844 (mobile) and 1920×1080 (desktop).
 
-### 0.6 — Micro-audio (sello/carnet cue) — **flagged: one optional touch outside the Rincón**
+### 0.6 — Micro-audio (sello/carnet cue) — **confirmed: one additive touch outside the Rincón (`audio.ts`)**
 **Serves:** TÁCTIL, PREMIUM, "sella el mundo".
 
 - **Decoupling:** add optional `playOpenCue?: () => void` to `OpenRinconDeps`; the Rincón calls it on open, default **no-op** (tests/SSR unaffected). The Rincón stays decoupled from the audio module.
-- **The cue itself (decision point for review):**
-  - *Option A (zero shared edit):* `main.ts` wires `playOpenCue` to an **existing** `audio.playEffect(...)` (e.g. a soft existing effect). Reads slightly like a UI click, not wax.
-  - *Option B (recommended — one tiny additive profile):* add a single subtle "stamp/sello" procedural profile to `frontend/src/audio.ts` (`simpleProfiles`/`SoundEffect`) and wire it. Warmer, on-theme. **This is the only Fase 0 touch outside `rincon/*`** — it edits the shared (but non-mesa, non-style.css) `audio.ts`. Flagged for explicit approval.
+- **The cue — DECISION LOCKED 2026-05-21 (Option B):** add a single subtle "stamp/sello" procedural profile to `frontend/src/audio.ts` (one new `SoundEffect` + `simpleProfiles` entry; warm, low-level, on-theme) and wire it through `playOpenCue`. **This is the only Fase 0 edit outside `frontend/src/app/rincon/*`** — additive to the shared (non-mesa, non-`style.css`) `audio.ts`: one new profile, no existing sound altered. Option A (reuse an existing effect, zero shared edit) was considered and declined as too "UI click."
 - **Music bed:** the "Mi Rincón" handler (`main.ts:1067`) does **not** call `music.setState`, so lobby music persists into the Rincón. Confirm and **leave as-is** (do not restart music).
 - Audio is gesture-gated and respects `audio.setEnabled`; keep the cue one-shot and low-level.
 
