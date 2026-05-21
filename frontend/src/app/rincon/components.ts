@@ -1,5 +1,5 @@
 import { suitGlyph } from "./suits";
-import type { Identidad, RinconViewModel } from "./types";
+import type { Identidad, RinconViewModel, CountupFormat } from "./types";
 
 /** Tiny DOM helper. */
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -56,7 +56,7 @@ export function CarnetVivo(props: { identidad: Identidad; ultimaVez: string; soc
   return stage;
 }
 
-function statTile(value: string, label: string, countup?: { target: number; format: "int" | "pct" | "chips" }): HTMLElement {
+function statTile(value: string, label: string, countup?: { target: number; format: CountupFormat }): HTMLElement {
   const t = el("div", "stat");
   const v = el("div", "stat__v", value);
   if (countup) {
@@ -90,7 +90,8 @@ export function StatMarks(vm: RinconViewModel): HTMLElement {
   } else {
     const v = el("span", "stat-puesto__v", `#${vm.puesto}`);
     v.dataset.countup = String(vm.puesto);
-    v.dataset.countupFormat = "rank";
+    const rankFmt: CountupFormat = "rank";
+    v.dataset.countupFormat = rankFmt;
     puesto.appendChild(v);
     puesto.appendChild(el("span", "stat-puesto__txt", "en la casa"));
   }
