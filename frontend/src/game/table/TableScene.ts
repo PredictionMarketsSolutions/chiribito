@@ -22,6 +22,7 @@ import { computeVisualSeatLayout, TOTAL_SEATS, TARGET_FRONT_INDEX } from "../vis
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "../room-state";
 import { isInWinnerPhase } from "../winner-display";
 import { DEAL_EASE, HOLE_DEAL_PRE_ROT, restingRotationFor } from "./deal-motion";
+import { FLIP_DURATION, FLIP_EASE, flipState } from "./reveal-motion";
 
 const CARD_ASPECT = 2 / 3; // card width : height
 // Cards scale with the felt so they read large on desktop and still fit on
@@ -131,6 +132,9 @@ export class TableScene implements TableSceneController {
   private prevCommunity: string[] = [];
   private prevHoles: (string | undefined)[][] = Array.from({ length: TOTAL_SEATS }, () => [undefined, undefined]);
   private allInRevealTween: gsap.core.Tween | null = null;
+  // One in-flight reveal flip per board slot (0..4), or null. Tracked so every
+  // teardown path can cancel a flip mid-turn and restore a clean resting card.
+  private readonly boardFlipTweens: (gsap.core.Tween | null)[] = [null, null, null, null, null];
 
   constructor(opts: TableSceneOptions) {
     this.app = opts.app;
@@ -594,6 +598,56 @@ export class TableScene implements TableSceneController {
       spr.alpha = 0;
       spr.rotation = 0;
     }
+  }
+
+  private cancelBoardFlip(i: number): void {
+    const t = this.boardFlipTweens[i];
+    if (t) {
+      t.kill();
+      this.boardFlipTweens[i] = null;
+    }
+  }
+
+  private cancelAllBoardFlips(): void {
+    for (let i = 0; i < 5; i += 1) this.cancelBoardFlip(i);
+  }
+
+  // The shared "reveal-con-alma" gesture: the board card at slot `i` turns from
+  // its clean back to `faceId`'s face. Width animates (height held constant) so
+  // the back->face texture swap never changes the rendered height. Cancel-safe.
+  private flipReveal(i: number, faceId: string | undefined): void {
+    const spr = this.boardSprites[i];
+    const targetW = this.boardCardW;
+    const targetH = this.boardCardH;
+    const backTex = textureForUrl(getCardTextureUrl(undefined));
+    const faceTex = textureForUrl(getCardTextureUrl(faceId));
+
+    this.cancelBoardFlip(i);
+    gsap.killTweensOf(spr); // stop any in-flight slide/position tween on this sprite
+    spr.visible = true;
+    spr.alpha = 1;
+    spr.texture = backTex;
+    spr.width = targetW;
+    spr.height = targetH;
+
+    const proxy = { p: 0 };
+    this.boardFlipTweens[i] = gsap.to(proxy, {
+      p: 1,
+      duration: FLIP_DURATION,
+      ease: FLIP_EASE,
+      onUpdate: () => {
+        const { widthFactor, showFront } = flipState(proxy.p);
+        spr.texture = showFront ? faceTex : backTex; // swap first...
+        spr.width = targetW * widthFactor; // ...then size to current texture
+        spr.height = targetH;
+      },
+      onComplete: () => {
+        spr.texture = faceTex;
+        spr.width = targetW;
+        spr.height = targetH;
+        this.boardFlipTweens[i] = null;
+      },
+    });
   }
 
   private setBoardCards(cards: string[], animateNew: boolean): void {
