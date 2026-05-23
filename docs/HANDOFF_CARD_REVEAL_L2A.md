@@ -1,7 +1,9 @@
 # Chiribito — Card Reveal Materiality (L2a) Handoff
 
-> **STATUS: gate-APPROVED on device 2026-05-23. Merged FF to local `main`. push/deploy GATED**
-> (awaiting explicit operator OK — no auto-deploy). Branch `style/card-reveal-materiality`.
+> **STATUS: SHIPPED LIVE 2026-05-23.** Gate-APPROVED on device, merged FF to `main`, pushed to
+> `origin/main` (`bb0fca2`), deployed to production: `chiribito-play` deploy
+> `dpl_Dz3dAaKa53k9uPMmhL5NfSb9mR9J`, aliased **play.chiribito.com** (HTTP 200). Branch
+> `style/card-reveal-materiality` kept. Rollback: Vercel instant rollback + tag `pre-rincon-release-2026-05-23`.
 > Second step of the **Premium Table / Physicality Pass** milestone, after L1 (Card Deal Materiality).
 > Spec: `docs/superpowers/specs/2026-05-23-chiribito-card-reveal-materiality-l2a-design.md`.
 > Plan: `docs/superpowers/plans/2026-05-23-chiribito-card-reveal-materiality-l2a.md`.
@@ -82,8 +84,9 @@ intact.**
 
 ## Open items / next candidates
 
-- **push/deploy L2a** — GATED. Needs explicit operator OK: `git push origin main` + manual
-  `vercel --prod` (frontend → `chiribito-play` / play.chiribito.com, team `chiribito293-7173`).
+- **push/deploy L2a** — DONE 2026-05-23. Pushed (`origin/main` `bb0fca2`) + deployed via
+  `vercel --prod` (frontend → `chiribito-play` / play.chiribito.com, deploy
+  `dpl_Dz3dAaKa53k9uPMmhL5NfSb9mR9J`, HTTP 200).
 - **L2b** — reveal highlight MUY sutil (the deferred half of card materiality).
 - **Mobile reveal materiality** — the DOM card path (separate from Pixi).
 - **R1:** Render free Postgres expires **~2026-06-12** — upgrade to `starter` ($7/mo) before then.
