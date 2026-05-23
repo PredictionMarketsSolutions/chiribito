@@ -592,6 +592,7 @@ export class TableScene implements TableSceneController {
       gsap.killTweensOf(spr);
       spr.visible = false;
       spr.alpha = 0;
+      spr.rotation = 0;
     }
   }
 
@@ -613,7 +614,9 @@ export class TableScene implements TableSceneController {
         spr.visible = true;
         spr.alpha = 1;
         spr.position.set(this.deckPos.x, this.deckPos.y);
-        gsap.to(spr, { x: pos.x, y: pos.y, duration: 0.5, ease: "power2.out", delay: i * 0.06 });
+        // Weight only on the board — the focal row stays at 0deg for reading
+        // clarity (board micro-rotation is deferred to L2).
+        gsap.to(spr, { x: pos.x, y: pos.y, duration: 0.5, ease: DEAL_EASE, delay: i * 0.06 });
       } else {
         gsap.killTweensOf(spr);
         spr.position.set(pos.x, pos.y);
@@ -711,6 +714,7 @@ export class TableScene implements TableSceneController {
     this.collectAllCardSprites().forEach((s) => {
       s.visible = false;
       s.alpha = 0;
+      s.rotation = 0;
     });
     this.dealerMarker.visible = false;
     this.potText.text = "Pot: 0";
