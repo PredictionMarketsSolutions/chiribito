@@ -21,6 +21,7 @@ import type { GameUiTableSyncContext, TableSceneController } from "../game-ui-ty
 import { computeVisualSeatLayout, TOTAL_SEATS, TARGET_FRONT_INDEX } from "../visual-layout";
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "../room-state";
 import { isInWinnerPhase } from "../winner-display";
+import { DEAL_EASE, HOLE_DEAL_PRE_ROT, restingRotationFor } from "./deal-motion";
 
 const CARD_ASPECT = 2 / 3; // card width : height
 // Cards scale with the felt so they read large on desktop and still fit on
@@ -548,19 +549,34 @@ export class TableScene implements TableSceneController {
         if (!hasCard) {
           spr.visible = false;
           spr.alpha = 0;
+          spr.rotation = 0;
           gsap.killTweensOf(spr);
           this.prevHoles[v][c] = undefined;
         } else {
           const pos = this.holePosFor(v, c);
+          const restRot = restingRotationFor(v, c);
           const isNew = prevSlot === undefined && hasCard && Boolean(state.roundStarted);
           if (isNew) {
             spr.visible = true;
             spr.alpha = 1;
             spr.position.set(this.deckPos.x, this.deckPos.y);
-            gsap.to(spr, { x: pos.x, y: pos.y, duration: 0.45, ease: "power2.out", delay: c * 0.08 });
+            // Carry a touch more rotation in flight, shed into the resting angle
+            // as it settles — a hand turning the card down onto the felt. The
+            // pre-rotation extends the resting lean so the card unwinds toward,
+            // never past, its final angle (no overshoot).
+            spr.rotation = restRot + Math.sign(restRot || 1) * HOLE_DEAL_PRE_ROT;
+            gsap.to(spr, {
+              x: pos.x,
+              y: pos.y,
+              rotation: restRot,
+              duration: 0.45,
+              ease: DEAL_EASE,
+              delay: c * 0.08,
+            });
           } else {
             gsap.killTweensOf(spr);
             spr.position.set(pos.x, pos.y);
+            spr.rotation = restRot;
             spr.visible = true;
             spr.alpha = 1;
           }
