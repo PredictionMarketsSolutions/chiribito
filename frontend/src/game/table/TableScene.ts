@@ -658,6 +658,7 @@ export class TableScene implements TableSceneController {
       const has = Boolean(id);
       spr.texture = textureForUrl(getCardTextureUrl(id));
       if (!has) {
+        this.cancelBoardFlip(i);
         gsap.killTweensOf(spr);
         spr.visible = false;
         spr.alpha = 0;
@@ -665,12 +666,27 @@ export class TableScene implements TableSceneController {
       }
       const pos = { x: this.boardCenter.x + (i - 2) * this.boardSpread, y: this.boardCenter.y };
       if (animateNew && !had) {
+        // L2a: deal the card to its slot as its clean BACK using the EXACT shipped
+        // L1 weight (unchanged ease/duration/delay), then turn it face-up on arrival.
+        this.cancelBoardFlip(i);
         spr.visible = true;
         spr.alpha = 1;
+        spr.texture = textureForUrl(getCardTextureUrl(undefined)); // travel as back
+        spr.width = this.boardCardW;
+        spr.height = this.boardCardH;
         spr.position.set(this.deckPos.x, this.deckPos.y);
-        // Weight only on the board — the focal row stays at 0deg for reading
-        // clarity (board micro-rotation is deferred to L2).
-        gsap.to(spr, { x: pos.x, y: pos.y, duration: 0.5, ease: DEAL_EASE, delay: i * 0.06 });
+        const faceId = id;
+        gsap.to(spr, {
+          x: pos.x,
+          y: pos.y,
+          duration: 0.5,
+          ease: DEAL_EASE,
+          delay: i * 0.06,
+          onComplete: () => this.flipReveal(i, faceId),
+        });
+      } else if (this.boardFlipTweens[i]) {
+        // A reveal flip is mid-turn for this card — let it finish; do not snap it.
+        spr.position.set(pos.x, pos.y);
       } else {
         gsap.killTweensOf(spr);
         spr.position.set(pos.x, pos.y);
