@@ -371,7 +371,9 @@ export class TableScene implements TableSceneController {
         s.height = this.holeCardH * scale;
       }
     }
-    for (const s of this.boardSprites) {
+    for (let i = 0; i < this.boardSprites.length; i += 1) {
+      if (this.boardFlipTweens[i]) continue; // a flip owns this sprite's size right now
+      const s = this.boardSprites[i];
       s.width = this.boardCardW;
       s.height = this.boardCardH;
     }
@@ -701,6 +703,7 @@ export class TableScene implements TableSceneController {
       onComplete();
       return;
     }
+    this.cancelAllBoardFlips();
     this.isRoundEndAnimating = true;
     const sprites = this.collectAllCardSprites().filter((s) => s.visible);
     const cx = this.boardCenter.x;
@@ -745,15 +748,8 @@ export class TableScene implements TableSceneController {
         return;
       }
       const slice = cards.slice(0, index + 1);
-      this.setBoardCards(slice, false);
-      for (let j = 0; j < 5; j += 1) {
-        const spr = this.boardSprites[j];
-        if (j < slice.length && slice[j]) {
-          spr.alpha = 0;
-          spr.visible = true;
-          gsap.to(spr, { alpha: 1, duration: 0.25 });
-        }
-      }
+      this.setBoardCards(slice, false); // earlier cards instant face-up; new one set below
+      this.flipReveal(index, cards[index]); // the same shared flip, in place (no slide)
       index += 1;
       if (index >= cards.length) {
         this.allInRevealTween = null;
@@ -769,6 +765,7 @@ export class TableScene implements TableSceneController {
   cancelAllInReveal(): void {
     this.allInRevealTween?.kill();
     this.allInRevealTween = null;
+    this.cancelAllBoardFlips();
   }
 
   reset(): void {
@@ -776,6 +773,7 @@ export class TableScene implements TableSceneController {
     this.potNumberTween?.kill();
     this.potNumberTween = null;
     gsap.killTweensOf(this.collectAllCardSprites());
+    this.cancelAllBoardFlips();
     this.isRoundEndAnimating = false;
     this.prevCommunity = [];
     for (let v = 0; v < TOTAL_SEATS; v += 1) {
