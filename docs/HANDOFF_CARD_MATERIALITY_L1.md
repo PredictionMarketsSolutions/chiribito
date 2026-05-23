@@ -1,8 +1,11 @@
 # Chiribito — Card Deal Materiality (L1) Handoff
 
-> **STATUS: merge candidate. Perceptual gate APPROVED on device 2026-05-23.**
-> Branch `style/card-deal-materiality`. `main` untouched, nothing pushed, no deploy.
-> First step of the **Premium Table / Physicality Pass** milestone.
+> **STATUS: SHIPPED LIVE 2026-05-23.** Perceptual gate APPROVED on device. Merged FF to `main`,
+> pushed to `origin/main` (`8c43530`), deployed to production: `chiribito-play` deploy
+> `dpl_3ygdJVmm9HancHrx7wPwcWPriXsB`, aliased **play.chiribito.com** (HTTP 200).
+> Rollback: tag `pre-rincon-release-2026-05-23` + Vercel instant rollback to the previous deployment.
+> Branch `style/card-deal-materiality` kept (local).
+> First step of the **Premium Table / Physicality Pass** milestone. Next: L2 reveal-con-alma.
 
 ---
 
