@@ -7,6 +7,7 @@ import { CARD_BACK_URL, getCardTextureUrl, listAllCardImageUrls } from "./card-t
 export function createCardElement(card: string | undefined): HTMLDivElement {
   const el = document.createElement("div");
   el.classList.add("card");
+  el.dataset.card = card ?? ""; // reconcile key: the card id, or "" for a face-down back
 
   const img = document.createElement("img");
   img.alt = card ? `Carta ${card}` : "Carta oculta";
@@ -51,12 +52,32 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
   return el;
 }
 
+/**
+ * Render `slots` cards into `el`, reconciling against the existing nodes by key
+ * so an unchanged card keeps its exact DOM node (and already-loaded image)
+ * instead of being destroyed and recreated. The resulting DOM is identical to a
+ * full rebuild — only the *changed* slots churn. Key = the card id, or "" for a
+ * face-down back. This node persistence is the foundation later materiality
+ * (e.g. a reveal flip) builds on: you cannot animate a node that gets thrown
+ * away on every render.
+ */
 export function renderCardRow(el: HTMLElement, cards: string[], slots: number): void {
-  el.innerHTML = "";
   for (let i = 0; i < slots; i += 1) {
-    const card = cards[i];
-    const cardEl = createCardElement(card);
-    el.appendChild(cardEl);
+    const desired = cards[i];
+    const key = desired ?? "";
+    const existing = el.children[i] as HTMLElement | undefined;
+    if (existing && existing.dataset.card === key) {
+      continue; // same card in this slot — keep the node untouched
+    }
+    const next = createCardElement(desired);
+    if (existing) {
+      el.replaceChild(next, existing);
+    } else {
+      el.appendChild(next);
+    }
+  }
+  while (el.children.length > slots) {
+    el.removeChild(el.lastElementChild as Element);
   }
 }
 
