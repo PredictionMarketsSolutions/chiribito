@@ -15,6 +15,7 @@ import type { JoinMode } from "./room-join";
 import { validateJoinRequest, handleJoinError } from "./room-join";
 import { applyPostJoinSetup, finalizeJoinAttempt } from "./join-room-lifecycle";
 import { handleRoomLeave } from "./room-leave-handler";
+import { flipRevealDomCard } from "../ui-cards-flip";
 import { attachPerfWsCounters } from "../connection";
 import {
   handleGameResultMessage,
@@ -126,7 +127,12 @@ export type JoinRoomSessionControllerDeps = {
 
   // Card + history
   schemaArrayToCards: (value: unknown) => string[];
-  renderCardRow: (containerEl: HTMLElement, cards: string[], count: number) => void;
+  renderCardRow: (
+    containerEl: HTMLElement,
+    cards: string[],
+    count: number,
+    opts?: { onReveal?: (node: HTMLElement, faceId: string) => void }
+  ) => void;
   preloadCardImages: () => void;
   clearHandHistory: () => void;
   renderHandHistoryUi: () => void;
@@ -458,7 +464,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
           deps.setAllInCardsRevealedByServer(true);
           deps.gameUiContext.previousCommunityCards = [...cards];
           if (!deps.gameUiContext.tableScene?.isActive()) {
-            deps.renderCardRow(deps.communityCardsEl, cards, 5);
+            deps.renderCardRow(deps.communityCardsEl, cards, 5, { onReveal: flipRevealDomCard });
           }
           deps.syncTableCommunityCards?.(cards);
           const shown = cards.filter(Boolean);

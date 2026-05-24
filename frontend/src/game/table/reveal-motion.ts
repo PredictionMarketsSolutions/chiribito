@@ -30,13 +30,23 @@ export interface FlipState {
  *   p >= 0.5:  face shown, width grows FLIP_MIN_WIDTH_FACTOR -> 1
  * Depends only on its input.
  */
-export function flipState(progress: number): FlipState {
+export function flipState(progress: number, minWidthFactor: number = FLIP_MIN_WIDTH_FACTOR): FlipState {
   const p = progress < 0 ? 0 : progress > 1 ? 1 : progress;
-  const floor = FLIP_MIN_WIDTH_FACTOR;
+  const floor = minWidthFactor;
   if (p < 0.5) {
     const k = p / 0.5; // 0 -> 1 across the first half
     return { widthFactor: 1 - (1 - floor) * k, showFront: false };
   }
   const k = (p - 0.5) / 0.5; // 0 -> 1 across the second half
   return { widthFactor: floor + (1 - floor) * k, showFront: true };
+}
+
+/**
+ * Quadratic ease-in-out (power2.inOut) — the same easing the desktop flip drives
+ * with via GSAP's "power2.inOut", exposed pure so the mobile DOM flip can sample
+ * the identical curve with a rAF loop. Clamped to [0, 1]; no overshoot, no bounce.
+ */
+export function flipEaseInOut(t: number): number {
+  const x = t < 0 ? 0 : t > 1 ? 1 : t;
+  return x < 0.5 ? 2 * x * x : 1 - ((-2 * x + 2) ** 2) / 2;
 }

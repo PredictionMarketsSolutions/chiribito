@@ -61,7 +61,25 @@ export function createCardElement(card: string | undefined): HTMLDivElement {
  * (e.g. a reveal flip) builds on: you cannot animate a node that gets thrown
  * away on every render.
  */
-export function renderCardRow(el: HTMLElement, cards: string[], slots: number): void {
+export interface RenderCardRowOptions {
+  /**
+   * Called once when EXACTLY ONE face-down slot turns into a face in this render
+   * — i.e. a single community reveal. Deliberately NOT called for a bulk fill
+   * (resync / reconnect renders several faces at once), a fresh build (no
+   * pre-existing back node), or a reset (face -> back). `node` is the freshly
+   * created face card; `faceId` is its card id. This is the single hook the
+   * mobile reveal flip rides on, so it never fires on reconnect resync.
+   */
+  onReveal?: (node: HTMLElement, faceId: string) => void;
+}
+
+export function renderCardRow(
+  el: HTMLElement,
+  cards: string[],
+  slots: number,
+  opts?: RenderCardRowOptions
+): void {
+  const revealed: Array<{ node: HTMLElement; faceId: string }> = [];
   for (let i = 0; i < slots; i += 1) {
     const desired = cards[i];
     const key = desired ?? "";
@@ -69,15 +87,24 @@ export function renderCardRow(el: HTMLElement, cards: string[], slots: number): 
     if (existing && existing.dataset.card === key) {
       continue; // same card in this slot — keep the node untouched
     }
+    const wasFaceDown = existing?.dataset.card === "";
     const next = createCardElement(desired);
     if (existing) {
       el.replaceChild(next, existing);
     } else {
       el.appendChild(next);
     }
+    if (opts?.onReveal && wasFaceDown && key !== "") {
+      revealed.push({ node: next, faceId: key });
+    }
   }
   while (el.children.length > slots) {
     el.removeChild(el.lastElementChild as Element);
+  }
+  // Single back->face transition === a real one-card reveal. Several at once is a
+  // resync/bulk fill; zero means a fresh build or reset — neither should flip.
+  if (opts?.onReveal && revealed.length === 1) {
+    opts.onReveal(revealed[0].node, revealed[0].faceId);
   }
 }
 

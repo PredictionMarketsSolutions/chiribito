@@ -7,6 +7,7 @@ import type { GameUiRefs, GameUiContext, ActionButtonsEnabled, GameUiTableSyncCo
 import { getUserEntries, isPlayerState, schemaArrayToCards } from "./room-state";
 import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
+import { flipRevealDomCard } from "../ui-cards-flip";
 import { markPerlaIfApplicable } from "./perla";
 import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
@@ -259,7 +260,7 @@ export function renderState(
   if (!ctx.allInRevealInProgress) {
     if (!cardsEqual(community, ctx.previousCommunityCards)) {
       if (!pixiCards || narrowViewport) {
-        renderCardRow(refs.communityCardsEl, community, 5);
+        renderCardRow(refs.communityCardsEl, community, 5, { onReveal: flipRevealDomCard });
       }
       ctx.previousCommunityCards.length = 0;
       ctx.previousCommunityCards.push(...community);

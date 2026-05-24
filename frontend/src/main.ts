@@ -47,6 +47,7 @@ import {
   renderHandHistory
 } from "./hand-history";
 import { renderCardRow, preloadCardImages } from "./ui-cards";
+import { flipRevealDomCard } from "./ui-cards-flip";
 import { installFeedback } from "./feedback";
 import { attemptTokenRefresh } from "./auth/token-refresh";
 import { recoverMesaOrOpenLobby } from "./auth/recover-or-lobby";
@@ -494,7 +495,7 @@ function revealAllInCards(cards: string[], onComplete?: () => void) {
   const revealNext = () => {
     if (allInCardIndex < cards.length) {
       const cardsToShow = cards.slice(0, allInCardIndex + 1);
-      renderCardRow(communityCardsEl, cardsToShow, 5);
+      renderCardRow(communityCardsEl, cardsToShow, 5, { onReveal: flipRevealDomCard });
       allInCardIndex++;
       allInAnimationTimeoutId = window.setTimeout(revealNext, 2000);
       return;
