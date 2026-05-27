@@ -121,10 +121,11 @@ function wireDomFeedback(): void {
       if (current > previousVisibleCount) {
         audio.playEffect("reveal");
         // The reveal MOTION is owned by the mobile flip driver (flipRevealDomCard,
-        // wired through renderCardRow's onReveal). We deliberately do NOT trigger the
-        // old `.is-revealing` CSS flip here: it is a flashier 3D rotateY turn, and a
-        // running CSS animation would override the sober scaleX turn. (Card-node
-        // reconcile now persists nodes, so that old animation would actually play.)
+        // wired through renderCardRow's onReveal). We deliberately do NOT tag cards
+        // with a CSS flip class here: a running CSS animation would override the
+        // sober scaleX turn (and now that node-reconcile persists nodes, it would
+        // actually play). The old flashier `.is-revealing` 3D rotateY CSS was
+        // removed in P1 Fase 4.
       }
       previousVisibleCount = current;
     });

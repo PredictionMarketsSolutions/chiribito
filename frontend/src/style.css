@@ -2446,37 +2446,23 @@ body {
   50% { transform: translateX(-50%) scale(1.06); }
 }
 
-/* Card reveal hook (Fase 5 GSAP will trigger this class) */
-.card.is-revealing {
-  animation: card-flip-reveal 700ms var(--ease-out-expo) both;
-  backface-visibility: hidden;
-}
-
-@keyframes card-flip-reveal {
-  0% { opacity: 0; transform: rotateY(-110deg) scale(0.85) translateY(-12px); }
-  60% { opacity: 1; transform: rotateY(8deg) scale(1.02); }
-  100% { opacity: 1; transform: rotateY(0) scale(1) translateY(0); }
-}
-
-/* Card deal animation hook */
-.card.is-dealing {
-  animation: card-deal-in 500ms var(--ease-out-expo) both;
-}
-
-@keyframes card-deal-in {
-  0% { opacity: 0; transform: translateY(-60px) translateX(-20px) rotate(-12deg) scale(0.6); }
-  100% { opacity: 1; transform: translateY(0) translateX(0) rotate(0) scale(1); }
-}
-
 /* Reduced motion respect */
 @media (prefers-reduced-motion: reduce) {
   .card.is-perla,
   .has-perla .card.mini,
   .has-perla > .card,
   .seat.has-perla::after,
-  .card.is-revealing,
-  .card.is-dealing,
   .card-row--community .card.card-back {
+    animation: none !important;
+  }
+
+  /* P1 Fase 4 — the DOM table cards never move under reduced motion. The mobile
+     reveal-flip driver (ui-cards-flip.ts) already no-ops in JS; this is the
+     table-scoped CSS belt-and-suspenders, killing the .card ease-spring
+     transition so a reveal resolves straight to a static face. */
+  .card-row .card,
+  .card-row--community .card {
+    transition: none !important;
     animation: none !important;
   }
 }
