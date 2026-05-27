@@ -1,8 +1,9 @@
 # Chiribito — Mobile Card Materiality (P1) Handoff
 
-> **STATUS 2026-05-24: Fase 0 + Fase 1 + Fase 3 SHIPPED-LOCAL on branch
-> `feat/mobile-card-reconcile`, each perceptual-gate-validated. NOT pushed, NOT merged,
-> NOT deployed.** Branch off `8266e93`. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3).
+> **STATUS 2026-05-27: Fase 0 + 1 + 3 + 4 SHIPPED-LOCAL on branch
+> `feat/mobile-card-reconcile`, each gate/runtime-validated. NOT pushed, NOT merged,
+> NOT deployed.** Branch off `8266e93`. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) →
+> `b242093` (Fase 4 — dead-CSS cleanup + table-scoped reduced-motion guard).
 > Milestone direction: "misma alma, distinto medium" + **"la mesa respira, nunca actúa."**
 
 ---
@@ -15,10 +16,10 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
 
 ## 1. Current REAL state
 - Branch `feat/mobile-card-reconcile` (off `main` `8266e93`). `main` untouched.
-- `8266e93` → `99795ff` (Fase 1 reconcile) → `d584ad8` (Fase 3 flip).
-- Working tree: clean except the intentional untracked `docs/POSTGRES_MIGRATION_CHECKLIST.md`
-  (separate ops track) and gitignored `.dev-stack/` artifacts.
-- Tests: **312/312 vitest**. `tsc --noEmit`: 12 pre-existing errors, **0 in touched files**.
+- `8266e93` → `99795ff` (Fase 1 reconcile) → `d584ad8` (Fase 3 flip) → `b242093` (Fase 4 cleanup + guard).
+- Working tree: clean. The `docs/POSTGRES_MIGRATION_CHECKLIST.md` (R1 ops track) now lives committed
+  on the separate branch `chore/postgres-starter-r1` (`4ca7097`), not here; `.dev-stack/` stays gitignored.
+- Tests: **312/312 vitest**, prod build clean. `tsc --noEmit`: 12 pre-existing errors, **0 in touched files**.
 - Production (`play.chiribito.com`) is UNCHANGED — nothing shipped to it.
 
 ## 2. What is perceptually VALIDATED (do not re-litigate)
@@ -40,11 +41,16 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
 - The validated perceptual philosophy + "una variable por gate" discipline.
 
 ## 4. What's left to do
-- **Fase 4 (next):** integration pass — consecutive hands + reconnect re-check on mobile;
-  add a table-scoped `prefers-reduced-motion` guard at the CSS level (the driver already guards in
-  JS); low-end-device perf pass; **delete the now-orphaned dead CSS** `.card.is-revealing` +
-  `@keyframes card-flip-reveal` in `style.css` (nothing adds the class anymore — verified).
-- **Deferred (after Fase 4 or its own gated cut):** settle-on-deal — bring weighted deal +
+- **Fase 4 — DONE 2026-05-27 (`b242093`).** Deleted the orphaned dead CSS (`.card.is-revealing` +
+  `@keyframes card-flip-reveal`, plus the sibling `.card.is-dealing` + `@keyframes card-deal-in` —
+  same dead Fase-5-GSAP pattern, grep-verified 0 usages); added a table-scoped
+  `prefers-reduced-motion` guard on `#community-cards`/`#hand-cards` rows (`transition`/`animation`
+  → none) since the JS driver already no-ops. Runtime-validated (Playwright + dev:stack): reduced
+  motion suppresses the flip, the table-card transition computes to `0s`, faces still render, a
+  reconnect reload leaves no stuck card; the normal flip still fires (scaleX→0.19) and survives a
+  4x CPU throttle (scaleX→0.17). 312/312 vitest, prod build clean, tsc unchanged. Harness:
+  `.dev-stack/cardmat-fase4-verify.ts` (gitignored).
+- **Deferred (its own gated cut):** settle-on-deal — bring weighted deal +
   resting micro-rotation to the mobile DOM hole cards (reuse `restingRotationFor`). ONE variable,
   its own gate.
 - **Ship P1:** push branch + open PR (or FF to main) + manual `vercel --prod` — all gated, after
@@ -62,8 +68,9 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
 - Mobile flip verified via Playwright on Pixel 5 emulation, not yet on a physical low-end device.
 
 ## 6. Recommended next milestone
-**Fase 4 (integration + reduced-motion + low-end perf + dead-code cleanup)** to close P1 cleanly,
-then the **deferred settle-on-deal** as its own gated variable. Only after that: ship P1 (gated).
+**Fase 4 is done.** Remaining for P1: the **deferred settle-on-deal** (its own gated variable),
+then **ship P1** (push + PR/FF + manual `vercel --prod`, gated). Either can lead — settle-on-deal
+completes the mobile materiality story; shipping realizes Fase 0/1/3/4 for real (mobile) users now.
 
 ## 7. What NOT to touch
 - Don't reopen validated gates (Fase 0/1/3) or the perceptual philosophy.
