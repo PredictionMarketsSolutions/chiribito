@@ -8,6 +8,7 @@ import { getUserEntries, isPlayerState, schemaArrayToCards } from "./room-state"
 import { isInWinnerPhase } from "./winner-display";
 import { createCardElement, renderCardRow, cardsEqual } from "../ui-cards";
 import { flipRevealDomCard } from "../ui-cards-flip";
+import { applyHoleCardRest } from "../ui-cards-rest";
 import { markPerlaIfApplicable } from "./perla";
 import { getCurrentHandName } from "./current-hand";
 import { TOTAL_SEATS, computeVisualSeatLayout } from "./visual-layout";
@@ -295,6 +296,11 @@ export function renderState(
   }
   if (!pixiCards || narrowViewport) {
     renderCardRow(refs.handCardsEl, handForZone, 2);
+    // Mobile DOM hole cards rest at their deterministic "placed by a hand" angle —
+    // the desktop Pixi materiality brought to the DOM path. Static + transforms only,
+    // applied synchronously so a freshly-rendered card is born already tilted (no
+    // `.card` transition fires → a clean rest, never a settle). Board row untouched.
+    applyHoleCardRest(refs.handCardsEl);
   }
   markPerlaIfApplicable(refs.handCardsEl, handForZone);
   renderSeats(state, refs, ctx);

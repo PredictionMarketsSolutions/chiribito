@@ -1,10 +1,12 @@
 # Chiribito — Mobile Card Materiality (P1) Handoff
 
-> **STATUS 2026-05-27: Fase 0 + 1 + 3 + 4 SHIPPED-LOCAL on branch
-> `feat/mobile-card-reconcile`, each gate/runtime-validated. NOT pushed, NOT merged,
-> NOT deployed.** Branch off `8266e93`. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) →
-> `b242093` (Fase 4 — dead-CSS cleanup + table-scoped reduced-motion guard).
-> Milestone direction: "misma alma, distinto medium" + **"la mesa respira, nunca actúa."**
+> **STATUS 2026-06-02: Fase 0 + 1 + 3 + 4 + settle-on-deal (RESTING half) SHIPPED-LOCAL on
+> branch `feat/mobile-card-reconcile`. NOT pushed, NOT merged, NOT deployed.** Branch off
+> `8266e93`. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) → `b242093` (Fase 4) →
+> + the settle-on-deal resting tilt (this change). Fases 0/1/3/4 gate/runtime-validated; the
+> resting tilt is unit-tested (319/319 vitest) + coherence-validated, **AWAITING the operator
+> perceptual gate on device** (no runtime capture this pass — see §5). Milestone direction:
+> "misma alma, distinto medium" + **"la mesa respira, nunca actúa."**
 
 ---
 
@@ -50,9 +52,21 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
   reconnect reload leaves no stuck card; the normal flip still fires (scaleX→0.19) and survives a
   4x CPU throttle (scaleX→0.17). 312/312 vitest, prod build clean, tsc unchanged. Harness:
   `.dev-stack/cardmat-fase4-verify.ts` (gitignored).
-- **Deferred (its own gated cut):** settle-on-deal — bring weighted deal +
-  resting micro-rotation to the mobile DOM hole cards (reuse `restingRotationFor`). ONE variable,
-  its own gate.
+- **settle-on-deal — RESTING half DONE 2026-06-02 (awaiting operator gate).** The mobile DOM hole
+  cards now rest at their deterministic "placed by a hand" angle (`restingRotationFor` — the SAME
+  source desktop Pixi uses at `TableScene.ts`), as a STATIC tilt: transforms only, ≤1.5°, pivot
+  centre, board row untouched (stays 0°). Static by design — a card at rest is a STATE, not an
+  animation, so it carries weight/presence without movement → cannot read app-y/casino and needs no
+  reduced-motion guard. Applied synchronously right after `renderCardRow`, so the node is born
+  tilted (no `.card` ease-spring transition fires → no overshoot, a clean rest not a settle).
+  Deterministic → reconnect/resync re-applies the identical angle, never jitters. New pure module
+  `frontend/src/ui-cards-rest.ts` (+ `ui-cards-rest.test.ts`, 7 cases); wired at the
+  `frontend/src/game/game-ui.ts` hand-row render (1 import + 1 call). 319/319 vitest, tsc unchanged
+  (12 pre-existing, 0 in touched files), prettier clean.
+- **Deferred (still — its own future gate):** the MOTION half of settle-on-deal — an optional
+  weighted *settle* (the card easing into its resting angle on deal, e.g. `power3.out` +
+  `HOLE_DEAL_PRE_ROT`). Held back on purpose: it adds movement = a NEW perceptual variable. Open it
+  only if the operator wants more life *after* gating the static rest. ONE variable per gate.
 - **Ship P1:** push branch + open PR (or FF to main) + manual `vercel --prod` — all gated, after
   operator OK. Nothing is pushed/deployed yet.
 
@@ -66,6 +80,15 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
   Fase 0 "baseline" was characterized from code + a resting still, not a frame-watch — it may have
   intermittently shown that old 3D flip on mobile. The real before/after is the two webms below.
 - Mobile flip verified via Playwright on Pixel 5 emulation, not yet on a physical low-end device.
+- **Resting tilt (2026-06-02): coherence-validated only — NO runtime capture this pass.** dev:stack
+  was down; mounting the full game (postgres+api+colyseus, 2-player deal) for a static ≤1.5° tilt was
+  judged disproportionate AND no substitute for the on-device gate. Covered instead by: 7 unit tests,
+  the deterministic reuse of `restingRotationFor`, and a by-construction no-overshoot argument (sync
+  pre-paint application). **Operator gate (canonical):** `npm run dev:stack` → join a 2-player mesa
+  on a mobile viewport (Pixel 5 / a real phone) → deal a hand → confirm the two hole cards rest very
+  slightly, asymmetrically off-flat (weight/presence), stay fully legible, do NOT settle/bounce on
+  appearance, and do NOT jitter across a reconnect. Optional objective capture available on request
+  (a Playwright transform-sampler mirroring `.dev-stack/cardmat-mobile-flip-verify.ts`).
 
 ## 6. Recommended next milestone
 **Fase 4 is done.** Remaining for P1: the **deferred settle-on-deal** (its own gated variable),
