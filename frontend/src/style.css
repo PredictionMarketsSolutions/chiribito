@@ -3310,8 +3310,18 @@ button.accent:hover:not(:disabled) {
      buttons) stay unchanged. Gradient geometry is identical — only the colors move. */
   --felt-surface-main: #0e5642;
   --felt-surface-rim: #08382b;
-  background:
+  /* Table Presence M1 — woven baize: a faint GREEN-on-green fibre — a tiled fractal noise
+     tinted around the felt's OWN colour and composited at low alpha — so the green reads as
+     woven cloth, not a flat fill, WITHOUT shifting the felt's tone (a soft-light pass
+     lightened the dark felt; this green-on-green tint, like the ::after micro-variation, is
+     mean-neutral). Static, ultra-faint, matte — "the green now looks like paño". Kept
+     low-contrast so it never reads as grain / a pattern / a digital filter, never competes
+     with the cards, and preserves the felt gradient (only ~0.18 alpha sits over it). */
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='w' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncR type='linear' slope='0.072' intercept='0.019'/><feFuncG type='linear' slope='0.438' intercept='0.118'/><feFuncB type='linear' slope='0.337' intercept='0.091'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23w)' opacity='0.30'/></svg>"),
     radial-gradient(ellipse 132% 112% at 50% 46%, var(--felt-surface-main) 0%, var(--felt-surface-main) 52%, var(--felt-surface-rim) 100%);
+  background-size: 240px 240px, auto;
+  background-repeat: repeat, no-repeat;
   border-radius: 50% / 38%;
   padding: 44px 70px;
   position: relative;
