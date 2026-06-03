@@ -1,12 +1,17 @@
 # Chiribito — Mobile Card Materiality (P1) Handoff
 
-> **STATUS 2026-06-02: Fase 0 + 1 + 3 + 4 + settle-on-deal (RESTING half) SHIPPED-LOCAL on
-> branch `feat/mobile-card-reconcile`. NOT pushed, NOT merged, NOT deployed.** Branch off
-> `8266e93`. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) → `b242093` (Fase 4) →
-> + the settle-on-deal resting tilt (this change). Fases 0/1/3/4 gate/runtime-validated; the
-> resting tilt is unit-tested (319/319 vitest) + coherence-validated, **AWAITING the operator
-> perceptual gate on device** (no runtime capture this pass — see §5). Milestone direction:
-> "misma alma, distinto medium" + **"la mesa respira, nunca actúa."**
+> **STATUS 2026-06-03: P1 SHIP-READY — operator perceptual gate PASSED.** Fase 0 + 1 + 3 + 4 +
+> settle-on-deal (RESTING half) SHIPPED-LOCAL on `feat/mobile-card-reconcile` (`ac381a4`, 6 ahead
+> of `main` `8266e93`, tree clean). **NOT pushed, NOT merged, NOT deployed — each step gated on the
+> operator's explicit OK.** Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) → `b242093` (Fase 4)
+> → `ac381a4` (settle-on-deal resting tilt). Verified: **319/319 vitest, prod build clean**. The
+> resting tilt is now RUNTIME-gated (closes the old §5 gap): objective capture
+> `.dev-stack/cardmat-rest-capture.ts` (Pixel 5, real modules — hole `[−1.350°, +0.750°]` = module
+> intent, asymmetric, ≤1.5°, board 0°, idempotent) + recorded real check-only gameplay
+> `.dev-stack/cardmat-gate-table.ts` → `gate-mobile.webm`. Operator verdict: **PASS** ("ok está
+> bien", 2026-06-03). The MOTION half of settle-on-deal stays deferred (own future gate); operator
+> chose to SHIP P1 now. Milestone direction: "misma alma, distinto medium" + **"la mesa respira,
+> nunca actúa."**
 
 ---
 
@@ -80,20 +85,27 @@ translate the *feel*, not the desktop choreography; mobile is more sober than de
   Fase 0 "baseline" was characterized from code + a resting still, not a frame-watch — it may have
   intermittently shown that old 3D flip on mobile. The real before/after is the two webms below.
 - Mobile flip verified via Playwright on Pixel 5 emulation, not yet on a physical low-end device.
-- **Resting tilt (2026-06-02): coherence-validated only — NO runtime capture this pass.** dev:stack
-  was down; mounting the full game (postgres+api+colyseus, 2-player deal) for a static ≤1.5° tilt was
-  judged disproportionate AND no substitute for the on-device gate. Covered instead by: 7 unit tests,
-  the deterministic reuse of `restingRotationFor`, and a by-construction no-overshoot argument (sync
-  pre-paint application). **Operator gate (canonical):** `npm run dev:stack` → join a 2-player mesa
-  on a mobile viewport (Pixel 5 / a real phone) → deal a hand → confirm the two hole cards rest very
-  slightly, asymmetrically off-flat (weight/presence), stay fully legible, do NOT settle/bounce on
-  appearance, and do NOT jitter across a reconnect. Optional objective capture available on request
-  (a Playwright transform-sampler mirroring `.dev-stack/cardmat-mobile-flip-verify.ts`).
+- **Resting tilt — RUNTIME-GATED + OPERATOR-APPROVED 2026-06-03 (the old "no runtime capture" gap is
+  CLOSED).** Two new gitignored harnesses produced the evidence: (1) `.dev-stack/cardmat-rest-capture.ts`
+  — renders the REAL production modules (`ui-cards.renderCardRow` + `ui-cards-rest.applyHoleCardRest`)
+  in a real Chromium at Pixel 5, production-faithful (fresh nodes, sync apply → born tilted, no `.card`
+  0.2s transition): hole angles `[−1.350°, +0.750°]` = exact module intent, asymmetric, ≤1.5°, board 0°,
+  idempotent across reconnect/resync (before/after stills in `.dev-stack/diag/rest-materiality/p1-settle-rest/`).
+  (2) `.dev-stack/cardmat-gate-table.ts` — a self-running, NEVER-ENDING **check-only** 2-bot mesa
+  (winner-take-all + stack 1000 + no blinds means a single bet = all-in = instant game-over, so the gate
+  MUST be check-only) recorded to `.dev-stack/diag/rest-materiality/p1-gate-live/gate-mobile.webm`
+  (deal → hole tilt → board fills FLAT → showdown, ×3 hands). Operator watched + judged: **PASS**
+  (materiality/presence/legibility OK, board stays flat). Headful live-watch was unavailable (this
+  env can't spawn a GUI browser — `spawn UNKNOWN`), hence the recorded webm.
 
-## 6. Recommended next milestone
-**Fase 4 is done.** Remaining for P1: the **deferred settle-on-deal** (its own gated variable),
-then **ship P1** (push + PR/FF + manual `vercel --prod`, gated). Either can lead — settle-on-deal
-completes the mobile materiality story; shipping realizes Fase 0/1/3/4 for real (mobile) users now.
+## 6. Next action — SHIP P1 (operator-decided 2026-06-03)
+Gate passed → operator chose to **ship P1 now** (the deferred MOTION half of settle-on-deal is parked
+for its own future gate). Ship = **FF `feat/mobile-card-reconcile` → `main`** (clean FF: main is at
+`8266e93`, 0 behind) **then manual `vercel --prod`** from the Chiribito team `chiribito293-7173` →
+play.chiribito.com. **Both steps gated on the operator's explicit OK, one at a time** (Chiribito
+manual-deploy rule). Rollback: Vercel instant rollback + the pre-existing release tag. After ship,
+the next perceptual milestone is **Table Presence** (the operator-confirmed "Premium Table /
+Physicality Pass" — start with "el tapete respira", CSS felt so it reaches mobile+desktop).
 
 ## 7. What NOT to touch
 - Don't reopen validated gates (Fase 0/1/3) or the perceptual philosophy.
