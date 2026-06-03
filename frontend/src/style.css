@@ -3321,6 +3321,43 @@ button.accent:hover:not(:disabled) {
   overflow: visible;
 }
 
+/* Table Presence L1 — "el tapete respira": a dedicated, GPU-composited shadow layer
+   behind the felt (z-index:-1, so its centre is occluded by the opaque felt and only
+   the soft halo around the table reads). ONLY its opacity breathes on a slow cycle, so
+   there is no box-shadow repaint — compositor-cheap (~60fps) on desktop + mobile. The
+   fade-in gently DEEPENS the table's resting drop shadow: weight + atmosphere, never
+   motion. The felt, gradient, centre, wood and gold rim never change. Must read "felt
+   more than seen"; if consciously noticed it is too strong. */
+.table-breath {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50% / 38%;
+  box-shadow: 0 40px 110px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+  animation: table-breathe 10s ease-in-out infinite;
+}
+
+@keyframes table-breathe {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion: the table never breathes — the breath layer stays fully at rest. */
+@media (prefers-reduced-motion: reduce) {
+  .table-breath {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
 .table-surface::before {
   content: "";
   position: absolute;
