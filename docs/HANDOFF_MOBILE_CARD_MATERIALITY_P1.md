@@ -1,9 +1,10 @@
 # Chiribito — Mobile Card Materiality (P1) Handoff
 
-> **STATUS 2026-06-03: P1 SHIP-READY — operator perceptual gate PASSED.** Fase 0 + 1 + 3 + 4 +
-> settle-on-deal (RESTING half) SHIPPED-LOCAL on `feat/mobile-card-reconcile` (`ac381a4`, 6 ahead
-> of `main` `8266e93`, tree clean). **NOT pushed, NOT merged, NOT deployed — each step gated on the
-> operator's explicit OK.** Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) → `b242093` (Fase 4)
+> **STATUS 2026-06-03: P1 SHIPPED LIVE — gate PASSED, merged + deployed.** Fase 0 + 1 + 3 + 4 +
+> settle-on-deal (RESTING half) FF-merged `feat/mobile-card-reconcile` → `origin/main`
+> (`8266e93`→`a99f99f`) then deployed via `vercel --prod` (team `chiribito293-7173`, project
+> `chiribito-play`, `dpl_47XKxMgr1QkpXzP5r1AELy8D9nys`) — **aliased play.chiribito.com (HTTP 200)**.
+> Mobile users now have the card materiality. Commits: `99795ff` (Fase 1) → `d584ad8` (Fase 3) → `b242093` (Fase 4)
 > → `ac381a4` (settle-on-deal resting tilt). Verified: **319/319 vitest, prod build clean**. The
 > resting tilt is now RUNTIME-gated (closes the old §5 gap): objective capture
 > `.dev-stack/cardmat-rest-capture.ts` (Pixel 5, real modules — hole `[−1.350°, +0.750°]` = module
