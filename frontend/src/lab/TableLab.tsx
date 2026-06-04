@@ -113,6 +113,30 @@ function woodCoamingProfile(): THREE.Vector2[] {
   return pts;
 }
 
+/**
+ * Cross-section of the table BODY — a molded wood apron + plinth foot, so the table reads
+ * as a real piece of furniture with mass UNDER the rail, not a thin disc floating in a void.
+ * The rail's wood lip overhangs the fascia slightly (a shadow reveal); a stepped molding,
+ * a tapered apron, then a plinth foot resting on the floor. Revolved + scaled into the oval.
+ */
+function bodyProfile(): THREE.Vector2[] {
+  const fascia = FELT_R * 1.14; // ~5.93, sits just inside the rail's outer lip
+  const stepIn = FELT_R * 1.1; // the molding reveal under the rail
+  const waist = FELT_R * 1.085; // the apron tapers gently to its waist
+  const plinth = FELT_R * 1.135; // flares back out into a plinth foot
+  const v = (x: number, y: number) => new THREE.Vector2(x, y);
+  return [
+    v(fascia, -0.12), // top, tucked under the rail lip
+    v(fascia, -0.36), // upper fascia
+    v(stepIn, -0.44), // step in — a reveal/shadow line (structural, not decoration)
+    v(stepIn, -0.54),
+    v(waist, -1.05), // the apron body, gently tapered
+    v(plinth, -1.2), // flare into the plinth
+    v(plinth, -1.44), // plinth fascia (the foot)
+    v(plinth - 0.16, -1.5), // chamfer onto the floor
+  ];
+}
+
 interface ChipKit {
   body: THREE.LatheGeometry;
   face: THREE.PlaneGeometry;
@@ -228,7 +252,7 @@ function Table({
   logoImg: HTMLImageElement | null;
   aceImgs: Partial<Record<SuitCode, HTMLImageElement | null>>;
 }) {
-  const { felt, leatherMat, woodMat, brassMat, baseMat, leatherPoints, woodPoints } = useMemo(() => {
+  const { felt, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
     const feltKind = qp("felt");
     const feltMat =
       feltKind === "magenta"
@@ -275,12 +299,22 @@ function Table({
       metalness: 1,
       roughness: 0.34,
     });
-    const baseMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#2a1810"),
-      roughness: 0.6,
-      metalness: 0.1,
+    // the body is the same mahogany as the rail, scaled for the larger apron surface,
+    // a touch matter (it sits in shadow below the lit rail)
+    const bodyWood = woodTexture();
+    bodyWood.repeat.set(24, 4);
+    const bodyMat = new THREE.MeshPhysicalMaterial({
+      map: bodyWood,
+      color: new THREE.Color("#ffffff"),
+      roughness: 0.48,
+      metalness: 0,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.3,
+      envMapIntensity: 0.5,
+      side: THREE.DoubleSide,
     });
-    return { felt: feltMat, leatherMat, woodMat, brassMat, baseMat, leatherPoints, woodPoints };
+    const bodyPoints = bodyProfile();
+    return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints };
   }, [logoImg, aceImgs]);
 
   return (
@@ -309,11 +343,11 @@ function Table({
         <primitive object={woodMat} attach="material" />
       </mesh>
 
-      {/* table body — thickness so it is not a floating disc; its top cap sits below the
-         felt (y=0) so the two discs don't z-fight (that was the old radial-ray artifact). */}
-      <mesh position={[0, -0.55, 0]} castShadow>
-        <cylinderGeometry args={[FELT_R * 1.07, FELT_R * 0.85, 0.9, 96]} />
-        <primitive object={baseMat} attach="material" />
+      {/* the table BODY — a molded wood apron + plinth foot: a piece of furniture with
+         real mass under the rail, not a thin disc floating in a void. */}
+      <mesh castShadow receiveShadow>
+        <latheGeometry args={[bodyPoints, 96]} />
+        <primitive object={bodyMat} attach="material" />
       </mesh>
     </group>
   );
@@ -435,7 +469,7 @@ function Scene() {
       </group>
 
       {/* warm wooden floor — the table now sits in a room, not a black void */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.05, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
         <planeGeometry args={[70, 70]} />
         <meshStandardMaterial color="#140d08" roughness={0.92} metalness={0} />
       </mesh>
@@ -443,7 +477,7 @@ function Scene() {
       {/* grounded contact shadow under the table */}
       {qp("cs") !== "off" && (
         <ContactShadows
-          position={[0, -1.03, 0]}
+          position={[0, -1.48, 0]}
           scale={FELT_R * 3}
           resolution={1024}
           blur={2.8}
