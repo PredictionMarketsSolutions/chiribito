@@ -93,6 +93,36 @@ neon / ostentatious gold.
 
 ---
 
+## OPEN ARTISTIC QUESTION — the elegance check (recorded 2026-06-04; do NOT act yet)
+
+The operator validated the current direction (3D, premium, tactile, physical presence, perceived
+quality) and does NOT want to abandon it. But he has a standing intuition to verify before the
+artistic direction is considered **closed**:
+
+> "I think an earlier iteration felt **more elegant** — not more detailed, not more premium, just
+> more elegant: visually lighter, more refined, more special."
+
+The hypothesis worth checking: as we added **mass** (the big two-part leather bumper, the heavy
+mahogany body/plinth, the warm-room atmosphere) we gained richness/"fabricated" quality — but we may
+have traded away some **lightness/elegance**. The current reference is richer and heavier than the
+early polished oval.
+
+**The concrete question for a FUTURE session (a deliberate review, not an auto-revert):**
+> *Have we gained quality WITHOUT losing elegance?* The end goal is a table that combines **elegance
+> + presence + personality + perceived quality** — not merely richer materials.
+
+**Suggested comparison set** (open these side by side; all in `.dev-stack/diag/table-3d/`):
+- Lighter / earlier "elegant" candidates: `elev/00-base-wide.png`, `elev/05-leather-hero.png` (rail
+  done, before the heavy body), `elev/09-leatherfinish-hero.png`, and the pre-body chip beauty shots
+  `final-hero.png` / `final-wide.png` (thin-rail era).
+- Current reference: `elev/REFERENCE-{hero,eye,wide,room}.png` and `elev/12-backdrop-*`.
+
+**Do NOT auto-revert.** If the current reference is still the strongest overall, keep it. This is a
+yes/no elegance audit to run before locking the direction, NOT a regression. The current premium
+table stays the protected reference until/unless this review concludes otherwise.
+
+---
+
 ## Lab structure (committed)
 
 - `frontend/table-lab.html` — isolated entry (**NOT in the production `vite build`** — index.html only).
@@ -203,10 +233,14 @@ gated on operator go. No part of this requires touching the game.
   small, all isolated, none required.
 - **D) Mobile / perf hardening** of the table (chip instancing, baked shadows, dpr caps) — valuable
   regardless and a prerequisite for A (publish) and B-on-mobile.
+- **E) Elegance check** (operator-requested gate — see "OPEN ARTISTIC QUESTION" above): a quick
+  side-by-side audit of the strongest historical captures vs the current reference to answer "did we
+  gain quality without losing elegance?" before the artistic direction is locked. A review, NOT a revert.
 
-**Recommendation:** next session, decide between **A (publish)** and **B (occupants)**. The table is
-done + protected; everything else is optional polish or the open presence question. If publishing,
-do **D** first (mobile hardening) so the demo is good on phones.
+**Recommendation:** next session, first run **E (the elegance check)** — it is quick and the operator
+flagged it as a gate before closing the direction. Then decide between **A (publish)** and
+**B (occupants)**. The table is done + protected; everything else is optional polish or open questions.
+If publishing, do **D** first (mobile hardening) so the demo is good on phones.
 
 ---
 
