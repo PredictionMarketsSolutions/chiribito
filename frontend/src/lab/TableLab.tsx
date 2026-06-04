@@ -522,6 +522,8 @@ function Scene() {
       rail: { pos: [0, 2.4, 9.6], target: [0, 0.15, 4.9], fov: 32 },
       // pulled back to read the whole gathering — table + the presence around it
       gather: { pos: [0, 6.8, 20.5], target: [0, 0.2, 0], fov: 40 },
+      // eye-level among the players — the most telling angle for "are people playing?"
+      eye: { pos: [4.5, 2.7, 12.5], target: [-0.5, 0.5, -1], fov: 44 },
     };
     return presets[key] || presets.wide;
   }, []);
@@ -583,8 +585,10 @@ function Scene() {
           </>
         )}
 
-        {/* human presence around the oval */}
-        {qp("seats") !== "off" && <Seats />}
+        {/* human presence around the oval — OPT-IN (?seats=on) and fully isolated, so the
+           default lab view is always the protected premium table. Occupant/seat work is an
+           experimental, reversible layer; it must never degrade the table reference. */}
+        {qp("seats") === "on" && <Seats />}
       </group>
 
       {/* the floor as a warm pool of light — the table stands in an intimate room */}
