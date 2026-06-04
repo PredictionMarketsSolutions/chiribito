@@ -665,6 +665,57 @@ export function leatherBump(): THREE.CanvasTexture {
   return gray(c);
 }
 
+/**
+ * The floor as a warm POOL of light — the table stands in an intimate warm circle that
+ * falls to darkness, so the scene reads as a room (a portada), not a render on black.
+ * A faint warm-board drift keeps it from being a dead flat gradient. Castizo, never casino.
+ */
+export function floorTexture(): THREE.CanvasTexture {
+  const S = 1024;
+  const { c, ctx } = makeCanvas(S, S);
+  const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.03, S / 2, S / 2, S * 0.52);
+  g.addColorStop(0, "#3c2716"); // warm pool right under the table
+  g.addColorStop(0.32, "#241710");
+  g.addColorStop(0.62, "#110b07");
+  g.addColorStop(1, "#070504"); // falls to intimate darkness
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  // faint warm boards radiating warmth — kept very subtle
+  ctx.globalAlpha = 0.06;
+  for (let i = 0; i < 60; i++) {
+    const y = (i / 60) * S;
+    ctx.strokeStyle = i % 2 ? "#4a3320" : "#0c0805";
+    ctx.lineWidth = 2 + (i % 3);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(S, y + Math.sin(i) * 4);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  speckle(ctx, S, S, 6);
+  return srgb(c);
+}
+
+/**
+ * Room backdrop wrapping the scene — dark above, warming toward the floor so the table
+ * sits inside an intimate warm-dark room (a tavern, not a casino), with depth instead of
+ * a flat black void. Mapped onto a back-side skydome (v=0 top → v=1 bottom).
+ */
+export function backdropTexture(): THREE.CanvasTexture {
+  const W = 64;
+  const H = 512;
+  const { c, ctx } = makeCanvas(W, H);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#050302"); // top — near black
+  g.addColorStop(0.55, "#0c0805");
+  g.addColorStop(0.82, "#1a1108"); // toward the horizon — warm
+  g.addColorStop(1, "#241710"); // bottom — merges with the floor pool
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  speckle(ctx, W, H, 4);
+  return srgb(c);
+}
+
 // --- arced text helpers ---
 
 function arcTextTop(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, text: string, fontPx: number, color: string): void {

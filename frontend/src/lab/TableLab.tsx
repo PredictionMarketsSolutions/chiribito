@@ -33,6 +33,8 @@ import {
   woodTexture,
   leatherTexture,
   leatherBump,
+  floorTexture,
+  backdropTexture,
 } from "./textures";
 import { TableVariant } from "./TableVariant";
 import type { Silhouette } from "./silhouettes";
@@ -436,10 +438,25 @@ function Scene() {
     return presets[key] || presets.wide;
   }, []);
 
+  const floorMat = useMemo(
+    () => new THREE.MeshStandardMaterial({ map: floorTexture(), roughness: 0.9, metalness: 0 }),
+    [],
+  );
+  const backdropMat = useMemo(
+    () => new THREE.MeshBasicMaterial({ map: backdropTexture(), side: THREE.BackSide, fog: false }),
+    [],
+  );
+
   return (
     <>
-      <color attach="background" args={["#0a0806"]} />
-      <fog attach="fog" args={["#0a0806", 16, 38]} />
+      <color attach="background" args={["#060403"]} />
+      <fog attach="fog" args={["#141009", 20, 60]} />
+
+      {/* warm-dark room backdrop wrapping the scene — depth instead of a flat black void */}
+      <mesh>
+        <sphereGeometry args={[44, 32, 16]} />
+        <primitive object={backdropMat} attach="material" />
+      </mesh>
 
       <PerspectiveCamera makeDefault position={cam.pos} fov={cam.fov} />
       <OrbitControls
@@ -479,10 +496,10 @@ function Scene() {
         )}
       </group>
 
-      {/* warm wooden floor — the table now sits in a room, not a black void */}
+      {/* the floor as a warm pool of light — the table stands in an intimate room */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
         <planeGeometry args={[70, 70]} />
-        <meshStandardMaterial color="#140d08" roughness={0.92} metalness={0} />
+        <primitive object={floorMat} attach="material" />
       </mesh>
 
       {/* grounded contact shadow under the table */}
