@@ -500,26 +500,54 @@ export function feltTexture(
   return srgb(c);
 }
 
-/** Warm varnished-wood grain for the rail. */
+/**
+ * Premium mahogany / walnut for the rail — a real fabricated turned-wood frame, not the
+ * default-brown 3D look. Deep board tone, long flowing dual-tone grain that runs AROUND
+ * the rail, and a few darker open-pore streaks for figure. Reads varnished under the key
+ * light (the material adds a strong clearcoat). Baked at final tone → tinted white.
+ */
 export function woodTexture(): THREE.CanvasTexture {
-  const W = 1024;
+  const W = 2048;
   const H = 512;
   const { c, ctx } = makeCanvas(W, H);
-  ctx.fillStyle = "#6a4226";
+
+  // mahogany board with a gentle tonal drift across the width
+  const base = ctx.createLinearGradient(0, 0, 0, H);
+  base.addColorStop(0, "#56331f");
+  base.addColorStop(0.5, "#48291a");
+  base.addColorStop(1, "#3a2013");
+  ctx.fillStyle = base;
   ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < 150; i++) {
-    const y = (i / 150) * H;
-    const shade = 18 + Math.sin(i * 1.7) * 14;
-    ctx.strokeStyle = `rgba(${128 + shade}, ${82 + shade * 0.6}, ${44 + shade * 0.4}, 0.5)`;
-    ctx.lineWidth = 1 + (i % 3);
+
+  // long grain — fine dual-tone fibres flowing around the rail
+  for (let i = 0; i < 240; i++) {
+    const y = (i / 240) * H;
+    const warm = i % 2 === 0;
+    const a = 0.16 + (Math.sin(i * 1.3) * 0.5 + 0.5) * 0.16;
+    ctx.strokeStyle = warm ? `rgba(140,90,54,${a})` : `rgba(28,16,9,${a + 0.12})`;
+    ctx.lineWidth = warm ? 1 : 1 + (i % 3);
     ctx.beginPath();
-    for (let x = 0; x <= W; x += 8) {
-      const yy = y + Math.sin(x * 0.012 + i) * 6 + Math.sin(x * 0.05 + i * 2) * 2;
+    for (let x = 0; x <= W; x += 6) {
+      const yy = y + Math.sin(x * 0.008 + i * 0.7) * 5 + Math.sin(x * 0.033 + i) * 1.5;
       x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
     }
     ctx.stroke();
   }
-  speckle(ctx, W, H, 16);
+
+  // darker open-pore streaks — the figure that makes it read as real cut timber
+  for (let i = 0; i < 48; i++) {
+    const y = (Math.sin(i * 5.13) * 0.5 + 0.5) * H;
+    const x0 = (Math.sin(i * 3.7) * 0.5 + 0.5) * W;
+    const len = 50 + (Math.sin(i * 2.2) * 0.5 + 0.5) * 220;
+    ctx.strokeStyle = "rgba(16,9,4,0.5)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x0, y);
+    ctx.lineTo(x0 + len, y + Math.sin(i) * 3);
+    ctx.stroke();
+  }
+
+  speckle(ctx, W, H, 10);
   const t = srgb(c);
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.RepeatWrapping;

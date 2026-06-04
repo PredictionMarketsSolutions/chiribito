@@ -217,15 +217,15 @@ function Table({
               alphaTest: 0.5,
             });
     const wood = woodTexture();
-    wood.repeat.set(18, 2);
+    wood.repeat.set(13, 1);
     const woodMat = new THREE.MeshPhysicalMaterial({
       map: wood,
-      color: new THREE.Color("#9a5f33"),
-      roughness: 0.42,
+      color: new THREE.Color("#ffffff"), // tone is baked in the texture
+      roughness: 0.38,
       metalness: 0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.45,
-      envMapIntensity: 0.5,
+      clearcoat: 0.72, // varnish — a real polished highlight runs along the rail
+      clearcoatRoughness: 0.2,
+      envMapIntensity: 0.65,
       side: THREE.DoubleSide,
     });
     const railPoints = railProfile();
@@ -340,6 +340,8 @@ function Scene() {
       top: { pos: [0, 12, 0.001], target: [0, 0, 0], fov: 30 },
       macro: { pos: [-1.7, 1.7, 2.4], target: [-1.55, 0.05, 1.05], fov: 26 },
       room: { pos: [0, 9.5, 16], target: [0, -0.3, 0], fov: 35 },
+      // low grazing look at the near rail edge — judges the rail's mass, materials + section
+      rail: { pos: [0, 2.4, 9.6], target: [0, 0.15, 4.9], fov: 32 },
     };
     return presets[key] || presets.wide;
   }, []);
