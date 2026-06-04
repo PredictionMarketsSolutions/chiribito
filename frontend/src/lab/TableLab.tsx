@@ -289,15 +289,15 @@ function Table({
     const leatherMat = new THREE.MeshPhysicalMaterial({
       map: leatherTexture(),
       bumpMap: leatherBump(),
-      bumpScale: 0.014,
+      bumpScale: 0.016,
       color: new THREE.Color("#ffffff"), // cordobán tone is baked in the texture
-      roughness: 0.55,
+      roughness: 0.64, // matter — a broken-in, much-touched roll, not showroom gloss
       metalness: 0,
-      sheen: 0.6, // waxed leather catches a soft, broad sheen — never a hard casino gloss
-      sheenColor: new THREE.Color("#caa07a"),
-      sheenRoughness: 0.5,
-      clearcoat: 0.12,
-      clearcoatRoughness: 0.6,
+      sheen: 0.4, // a whisper of waxed sheen, no more (richness is not the point)
+      sheenColor: new THREE.Color("#b08a64"),
+      sheenRoughness: 0.6,
+      clearcoat: 0.08,
+      clearcoatRoughness: 0.7,
       side: THREE.DoubleSide,
     });
     const leatherPoints = leatherProfile();

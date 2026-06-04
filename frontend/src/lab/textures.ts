@@ -621,8 +621,22 @@ export function leatherTexture(): THREE.CanvasTexture {
   ctx.globalAlpha = 1;
   speckle(ctx, W, H, 7);
 
-  // one restrained waxed-thread seam near the inner shoulder of the roll
-  drawStitchSeam(ctx, W, H * 0.3, hexA("#c9a06e", 0.85), hexA("#2a160d", 0.5));
+  // bake soft ambient occlusion along the section: deep valleys at the inner crease and
+  // the outer tuck, a gently lifted crown — the cushion reads as compressed padding
+  // (valle oscuro + corona iluminada), robust to lighting. This is what says "rest here".
+  const ao = ctx.createLinearGradient(0, 0, 0, H);
+  ao.addColorStop(0.0, "rgba(0,0,0,0.34)");
+  ao.addColorStop(0.16, "rgba(0,0,0,0.15)");
+  ao.addColorStop(0.34, "rgba(0,0,0,0.04)");
+  ao.addColorStop(0.52, "rgba(255,238,214,0.07)");
+  ao.addColorStop(0.72, "rgba(0,0,0,0.05)");
+  ao.addColorStop(1.0, "rgba(0,0,0,0.36)");
+  ctx.fillStyle = ao;
+  ctx.fillRect(0, 0, W, H);
+
+  // one restrained waxed-thread seam near the inner shoulder of the roll (kept subtle —
+  // it is a detail of use, not a display of saddlery)
+  drawStitchSeam(ctx, W, H * 0.3, hexA("#c9a06e", 0.78), hexA("#2a160d", 0.55));
 
   const t = srgb(c);
   t.wrapS = THREE.RepeatWrapping;
