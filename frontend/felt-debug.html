@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; background: #333; }
+      canvas { width: 760px; height: 760px; display: block; image-rendering: auto; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="1024" height="1024"></canvas>
+    <script type="module">
+      import { feltTexture } from "/src/lab/textures.ts";
+      const tex = feltTexture();
+      const ctx = document.getElementById("c").getContext("2d");
+      // draw the raw generated texture canvas 1:1 — no three.js, no WebGL, no sampling
+      ctx.drawImage(tex.image, 0, 0, 1024, 1024);
+    </script>
+  </body>
+</html>
