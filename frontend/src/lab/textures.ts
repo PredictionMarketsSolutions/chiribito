@@ -554,6 +554,103 @@ export function woodTexture(): THREE.CanvasTexture {
   return t;
 }
 
+/** A restrained saddle-stitch seam running across the texture at height `yc`. */
+function drawStitchSeam(ctx: CanvasRenderingContext2D, W: number, yc: number, thread: string, channel: string): void {
+  // the recessed channel the thread pulls the leather into
+  ctx.strokeStyle = channel;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(0, yc);
+  ctx.lineTo(W, yc);
+  ctx.stroke();
+  // angled stitches (saddler's two-needle look)
+  const n = 90;
+  const sw = W / n;
+  ctx.lineCap = "round";
+  for (let i = 0; i < n; i++) {
+    const x = i * sw + sw * 0.5;
+    ctx.strokeStyle = thread;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(x - sw * 0.22, yc - 5);
+    ctx.lineTo(x + sw * 0.22, yc + 5);
+    ctx.stroke();
+  }
+}
+
+/**
+ * Cordobán (Spanish cognac leather) for the padded armrest bumper — pebbled grain, soft
+ * tonal mottling, faint creases, and ONE restrained saddle-stitch seam along the inner
+ * shoulder of the roll. Castizo + premium; never a glossy casino vinyl. Tone baked → white.
+ */
+export function leatherTexture(): THREE.CanvasTexture {
+  const W = 2048;
+  const H = 512;
+  const { c, ctx } = makeCanvas(W, H);
+
+  const base = ctx.createLinearGradient(0, 0, 0, H);
+  base.addColorStop(0, "#5e3525");
+  base.addColorStop(0.5, "#6b3e2c");
+  base.addColorStop(1, "#532e20");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, W, H);
+
+  // pebbled grain — soft overlapping blotches (deterministic so captures are stable)
+  for (let i = 0; i < 1500; i++) {
+    const x = (Math.sin(i * 12.9367) * 0.5 + 0.5) * W;
+    const y = (Math.sin(i * 78.233) * 0.5 + 0.5) * H;
+    const rr = 3 + (Math.sin(i * 3.31) * 0.5 + 0.5) * 9;
+    ctx.fillStyle = Math.sin(i * 2.11) > 0 ? "rgba(40,22,14,0.06)" : "rgba(152,106,72,0.06)";
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, TAU);
+    ctx.fill();
+  }
+  // faint long creases
+  ctx.globalAlpha = 0.5;
+  for (let i = 0; i < 28; i++) {
+    const y = (Math.sin(i * 5.7) * 0.5 + 0.5) * H;
+    ctx.strokeStyle = "rgba(34,18,11,0.10)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 10) {
+      const yy = y + Math.sin(x * 0.01 + i) * 3;
+      x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  speckle(ctx, W, H, 7);
+
+  // one restrained waxed-thread seam near the inner shoulder of the roll
+  drawStitchSeam(ctx, W, H * 0.3, hexA("#c9a06e", 0.85), hexA("#2a160d", 0.5));
+
+  const t = srgb(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}
+
+/** Relief map for the leather — pebble bumps + the seam (channel recessed, thread proud). */
+export function leatherBump(): THREE.CanvasTexture {
+  const W = 2048;
+  const H = 512;
+  const { c, ctx } = makeCanvas(W, H);
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 2600; i++) {
+    const x = (Math.sin(i * 12.9367) * 0.5 + 0.5) * W;
+    const y = (Math.sin(i * 78.233) * 0.5 + 0.5) * H;
+    const rr = 2 + (Math.sin(i * 3.31) * 0.5 + 0.5) * 6;
+    ctx.fillStyle = Math.sin(i * 2.11) > 0 ? "rgba(176,176,176,0.08)" : "rgba(58,58,58,0.08)";
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, TAU);
+    ctx.fill();
+  }
+  speckle(ctx, W, H, 16);
+  drawStitchSeam(ctx, W, H * 0.3, "#cfcfcf", "#4a4a4a");
+  return gray(c);
+}
+
 // --- arced text helpers ---
 
 function arcTextTop(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, text: string, fontPx: number, color: string): void {

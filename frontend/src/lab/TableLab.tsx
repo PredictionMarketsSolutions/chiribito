@@ -31,6 +31,8 @@ import {
   chipEdgeTexture,
   feltTexture,
   woodTexture,
+  leatherTexture,
+  leatherBump,
 } from "./textures";
 import { TableVariant } from "./TableVariant";
 import type { Silhouette } from "./silhouettes";
@@ -66,24 +68,48 @@ function chipProfile(steps = 6): THREE.Vector2[] {
   return pts;
 }
 
-/** Cross-section of the turned wood rail (a padded, rounded armrest), revolved into a ring. */
-function railProfile(): THREE.Vector2[] {
-  const inner = FELT_R * 0.985;
-  const outer = FELT_R * 1.15;
-  const yTop = 0.48;
-  const yBot = -0.08;
-  const b = 0.1;
+// A real card-table rail is TWO parts: an inner padded leather bumper (the cushioned roll
+// you rest your arms on) framed by an outer turned-wood coaming. Two revolved cross-sections.
+
+/** Cross-section of the padded leather armrest bumper — a fat rounded cushion roll. */
+function leatherProfile(): THREE.Vector2[] {
+  const rIn = FELT_R * 0.962; // ~5.0, meets the brass reveal at the felt edge
+  const rOut = FELT_R * 1.072; // ~5.57, meets the wood coaming
+  const yBase = 0.0;
+  const yInner = 0.13;
+  const peak = 0.66; // the cushion rises proud above the wood frame
   const v = (x: number, y: number) => new THREE.Vector2(x, y);
-  const pts: THREE.Vector2[] = [v(inner, yBot), v(inner, yTop - b)];
+  const pts: THREE.Vector2[] = [v(rIn, yBase), v(rIn, yInner)];
+  const N = 26;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const r = rIn + (rOut - rIn) * t;
+    const y = yInner + (peak - yInner) * Math.sin(Math.PI * t); // rounded roll
+    pts.push(v(r, y));
+  }
+  pts.push(v(rOut, yBase));
+  pts.push(v(rIn, yBase)); // close the section
+  return pts;
+}
+
+/** Cross-section of the outer turned-wood coaming that frames the leather. */
+function woodCoamingProfile(): THREE.Vector2[] {
+  const rIn = FELT_R * 1.072; // meets the leather outer
+  const rOut = FELT_R * 1.17; // ~6.08
+  const yTop = 0.34; // sits below the leather peak so the cushion reads proud
+  const yBot = -0.12;
+  const b = 0.08;
+  const v = (x: number, y: number) => new THREE.Vector2(x, y);
+  const pts: THREE.Vector2[] = [v(rIn, yBot), v(rIn, yTop - b)];
   for (let i = 0; i <= 6; i++) {
     const t = Math.PI - (Math.PI / 2) * (i / 6);
-    pts.push(v(inner + b + b * Math.cos(t), yTop - b + b * Math.sin(t)));
+    pts.push(v(rIn + b + b * Math.cos(t), yTop - b + b * Math.sin(t)));
   }
   for (let i = 0; i <= 6; i++) {
     const t = (Math.PI / 2) * (1 - i / 6);
-    pts.push(v(outer - b + b * Math.cos(t), yTop - b + b * Math.sin(t)));
+    pts.push(v(rOut - b + b * Math.cos(t), yTop - b + b * Math.sin(t)));
   }
-  pts.push(v(outer, yBot));
+  pts.push(v(rOut, yBot));
   return pts;
 }
 
@@ -202,7 +228,7 @@ function Table({
   logoImg: HTMLImageElement | null;
   aceImgs: Partial<Record<SuitCode, HTMLImageElement | null>>;
 }) {
-  const { felt, woodMat, brassMat, baseMat, railPoints } = useMemo(() => {
+  const { felt, leatherMat, woodMat, brassMat, baseMat, leatherPoints, woodPoints } = useMemo(() => {
     const feltKind = qp("felt");
     const feltMat =
       feltKind === "magenta"
@@ -228,7 +254,22 @@ function Table({
       envMapIntensity: 0.65,
       side: THREE.DoubleSide,
     });
-    const railPoints = railProfile();
+    const leatherMat = new THREE.MeshPhysicalMaterial({
+      map: leatherTexture(),
+      bumpMap: leatherBump(),
+      bumpScale: 0.014,
+      color: new THREE.Color("#ffffff"), // cordobán tone is baked in the texture
+      roughness: 0.55,
+      metalness: 0,
+      sheen: 0.6, // waxed leather catches a soft, broad sheen — never a hard casino gloss
+      sheenColor: new THREE.Color("#caa07a"),
+      sheenRoughness: 0.5,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.6,
+      side: THREE.DoubleSide,
+    });
+    const leatherPoints = leatherProfile();
+    const woodPoints = woodCoamingProfile();
     const brassMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color("#b8915a"),
       metalness: 1,
@@ -239,7 +280,7 @@ function Table({
       roughness: 0.6,
       metalness: 0.1,
     });
-    return { felt: feltMat, woodMat, brassMat, baseMat, railPoints };
+    return { felt: feltMat, leatherMat, woodMat, brassMat, baseMat, leatherPoints, woodPoints };
   }, [logoImg, aceImgs]);
 
   return (
@@ -250,24 +291,28 @@ function Table({
         <primitive object={felt} attach="material" />
       </mesh>
 
-      {/* brass inlay line where felt meets the rail */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
-        <torusGeometry args={[FELT_R * 0.965, 0.018, 16, 120]} />
+      {/* brass reveal where the felt meets the leather */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]}>
+        <torusGeometry args={[FELT_R * 0.957, 0.02, 16, 180]} />
         <primitive object={brassMat} attach="material" />
       </mesh>
 
-      {/* turned wood rail — a real revolved cross-section (lathe), not a torus */}
+      {/* padded leather armrest bumper — the cushioned inner roll */}
       <mesh castShadow receiveShadow>
-        <latheGeometry args={[railPoints, 160]} />
+        <latheGeometry args={[leatherPoints, 220]} />
+        <primitive object={leatherMat} attach="material" />
+      </mesh>
+
+      {/* outer turned-wood coaming framing the leather */}
+      <mesh castShadow receiveShadow>
+        <latheGeometry args={[woodPoints, 220]} />
         <primitive object={woodMat} attach="material" />
       </mesh>
 
-      {/* table body — thickness, so it is not a floating disc. Its top cap sits
-         0.1 BELOW the felt (felt at y=0) so the two coplanar discs don't z-fight —
-         that fight was the radial "rays" (the base's triangle-fan cap bleeding
-         through the felt in wedges). */}
+      {/* table body — thickness so it is not a floating disc; its top cap sits below the
+         felt (y=0) so the two discs don't z-fight (that was the old radial-ray artifact). */}
       <mesh position={[0, -0.55, 0]} castShadow>
-        <cylinderGeometry args={[FELT_R * 1.0, FELT_R * 0.82, 0.9, 80]} />
+        <cylinderGeometry args={[FELT_R * 1.07, FELT_R * 0.85, 0.9, 96]} />
         <primitive object={baseMat} attach="material" />
       </mesh>
     </group>
