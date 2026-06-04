@@ -3308,8 +3308,8 @@ button.accent:hover:not(:disabled) {
      Felt-L1 (premium perceptual phase): a refined, deeper, slightly desaturated
      green, scoped to the table via local vars so the shared --felt-* (lobby / auth /
      buttons) stay unchanged. Gradient geometry is identical — only the colors move. */
-  --felt-surface-main: #0e5642;
-  --felt-surface-rim: #08382b;
+  --felt-surface-main: #198057;
+  --felt-surface-rim: #063a2a;
   /* Table Presence M1 — woven baize: a faint GREEN-on-green fibre — a tiled fractal noise
      tinted around the felt's OWN colour and composited at low alpha — so the green reads as
      woven cloth, not a flat fill, WITHOUT shifting the felt's tone (a soft-light pass
@@ -3318,16 +3318,45 @@ button.accent:hover:not(:disabled) {
      low-contrast so it never reads as grain / a pattern / a digital filter, never competes
      with the cards, and preserves the felt gradient (only ~0.18 alpha sits over it). */
   background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='w' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncR type='linear' slope='0.072' intercept='0.019'/><feFuncG type='linear' slope='0.438' intercept='0.118'/><feFuncB type='linear' slope='0.337' intercept='0.091'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23w)' opacity='0.30'/></svg>"),
-    radial-gradient(ellipse 132% 112% at 50% 46%, var(--felt-surface-main) 0%, var(--felt-surface-main) 52%, var(--felt-surface-rim) 100%);
-  background-size: 240px 240px, auto;
-  background-repeat: repeat, no-repeat;
+    /* Art-direction pass — warm tavern light: a soft warm pool over the centre, like a
+       lamp hung above the table (castizo warmth, never a cold casino spotlight). It lifts
+       the centre so it reads luminous + appetising, and fades before the cards. */
+    radial-gradient(ellipse 80% 64% at 50% 40%, rgba(255, 242, 210, 0.2), transparent 60%),
+    /* Rim vignette — a deep shadow hugging the oval edge for premium depth + contrast,
+       so the eye is drawn into the lit centre. */
+    radial-gradient(ellipse 126% 110% at 50% 49%, transparent 48%, rgba(0, 0, 0, 0.34) 82%, rgba(0, 0, 0, 0.54) 100%),
+    /* Art-direction pass — a faint green glow lifting the centre above the texture. */
+    radial-gradient(ellipse 70% 56% at 50% 42%, rgba(64, 196, 144, 0.22), transparent 58%),
+    /* The REAL woven felt — a procedurally generated per-pixel fabric (fibre + weave +
+       tonal mottle), far beyond a CSS gradient. */
+    url("/textures/felt.png"),
+    /* The REAL varnished wood — a procedurally generated grain texture filling the 16px
+       rail via border-box clip (border is transparent). */
+    url("/textures/wood.png");
+  background-size: auto, auto, auto, cover, cover;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-clip: padding-box, padding-box, padding-box, padding-box, border-box;
   border-radius: 50% / 38%;
   padding: 44px 70px;
   position: relative;
   box-shadow:
-    0 32px 88px rgba(0, 0, 0, 0.65);
-  border: 16px solid var(--wood-mid);
+    /* drop shadow (unchanged) — the table sits on the room */
+    0 32px 88px rgba(0, 0, 0, 0.65),
+    /* Table Presence A — recessed felt: the cloth is sunk below the wood lip. A
+       deeper shade at the top (light from above) + a softer one at the base,
+       concentrated at the rim via negative spread so the centre stays clean and
+       the cards stay the most legible thing on the table. */
+    inset 0 21px 40px -12px rgba(0, 0, 0, 0.62),
+    inset 0 -14px 32px -12px rgba(0, 0, 0, 0.42),
+    inset 0 0 58px -6px rgba(0, 0, 0, 0.34),
+    /* Table Presence A — carved wood rail: a warm highlight on the inner top edge
+       of the rail catching the overhead light + a dark seam where felt meets wood,
+       so the rail reads as a solid turned frame, not a flat painted band. */
+    inset 0 2px 0 rgba(255, 216, 168, 0.2),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(255, 226, 184, 0.1);
+  border: 16px solid transparent;
   overflow: visible;
 }
 
@@ -3368,6 +3397,118 @@ button.accent:hover:not(:disabled) {
   }
 }
 
+/* Table Presence B — woven crest: the Chiribito identity ENGRAVED tone-on-tone into
+   the felt. A noble emblem (the back-clean losange + wordmark + "La Perla" canon),
+   NOT the ornate gold/red casino badge. Centred and very faint, it is occluded by the
+   community cards mid-hand so it never competes — "seen when you look, gone when you
+   play". The deboss (dark below + faint light above) presses it into the weave. */
+.table-crest {
+  position: absolute;
+  top: 47%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+  max-width: 392px;
+  aspect-ratio: 1 / 1;
+  z-index: 1;
+  pointer-events: none;
+  /* Art-direction pass — the emblem is now the central brand mark, embroidered in warm
+     cream-gold thread (matte, premium, castizo — never casino glow). Present + beautiful
+     at rest, still occluded by the community cards mid-hand. */
+  color: rgba(235, 217, 173, 0.46);
+  filter:
+    drop-shadow(0 1px 0.5px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 -0.5px 0.4px rgba(255, 242, 205, 0.16));
+}
+.table-crest svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.crest-word {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  fill: currentColor;
+}
+.crest-sub {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 7px;
+  fill: currentColor;
+}
+
+/* Table Presence K — hand-stitched trim: a tone-on-tone ring of "thread" stitches just
+   inside the felt edge, so the table reads as a crafted, SEWN cloth object — artisanal,
+   unique, unmistakably Chiribito. Behind cards + crest, above the felt; the dashed ellipse
+   is stretched to follow the oval. */
+.table-trim {
+  position: absolute;
+  inset: 40px;
+  z-index: 1;
+  pointer-events: none;
+  color: rgba(230, 218, 188, 0.22);
+  filter: drop-shadow(0 0.5px 0 rgba(0, 0, 0, 0.45));
+}
+.table-trim svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Table Presence N — the four Spanish-deck suits (oros · copas · espadas · bastos)
+   engraved as tone-on-tone watermarks framing the felt. Each is a square SVG placed by
+   percentage so it scales without distortion and never competes with the centre. This is
+   what makes a screenshot instantly read as Chiribito. */
+.table-suits {
+  /* Art-direction pass — corner suits removed: dispersed identity reads as noise.
+     Chiribito identity now concentrates in the central emblem (clean hierarchy). */
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  color: rgba(184, 228, 206, 0.12);
+  filter: drop-shadow(0 1px 0.5px rgba(0, 0, 0, 0.42));
+}
+.table-suits .suit {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%);
+}
+.suit--oros {
+  top: 20%;
+  left: 25%;
+}
+.suit--copas {
+  top: 20%;
+  left: 75%;
+}
+.suit--espadas {
+  top: 72%;
+  left: 25%;
+}
+.suit--bastos {
+  top: 72%;
+  left: 75%;
+}
+@media (max-width: 768px) {
+  .table-suits .suit {
+    width: 36px;
+  }
+  .suit--oros,
+  .suit--copas {
+    top: 15%;
+  }
+  .suit--espadas,
+  .suit--bastos {
+    top: 77%;
+  }
+}
+
 .table-surface::before {
   content: "";
   position: absolute;
@@ -3394,7 +3535,14 @@ button.accent:hover:not(:disabled) {
      or noise here; that risk is isolated to an optional later layer. */
   background:
     radial-gradient(ellipse 66% 52% at 33% 36%, rgba(20, 102, 80, 0.05), transparent 60%),
-    radial-gradient(ellipse 64% 52% at 70% 70%, rgba(5, 47, 36, 0.11), transparent 62%);
+    radial-gradient(ellipse 64% 52% at 70% 70%, rgba(5, 47, 36, 0.11), transparent 62%),
+    /* Table Presence A — felt wear: faint, asymmetric "polished by years of play"
+       patches (slightly lifted green) where hands and cards have brushed the cloth.
+       Green-on-green, off-centre, never white (white reads as a smudge), kept clear
+       of the central card cluster — a used table, felt more than seen. */
+    radial-gradient(ellipse 26% 16% at 50% 80%, rgba(72, 152, 122, 0.045), transparent 70%),
+    radial-gradient(ellipse 19% 13% at 23% 60%, rgba(70, 148, 118, 0.032), transparent 72%),
+    radial-gradient(ellipse 16% 12% at 79% 41%, rgba(62, 140, 112, 0.03), transparent 72%);
   pointer-events: none;
 }
 
@@ -3512,7 +3660,25 @@ button.accent:hover:not(:disabled) {
 }
 
 .badge-pot--pulse {
-  transform: scale(1.06);
+  /* Table Presence D — pot settle: chips land in the pot with weight — a small
+     impulse, then a damped settle with a micro overshoot — instead of a flat scale
+     pulse. Reuses the existing pot-change trigger in game-ui.ts (one-shot, re-armed
+     by its off→reflow→on toggle). Transform-only, ~60fps, compositor-cheap. */
+  animation: pot-settle 380ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
+@keyframes pot-settle {
+  0% { transform: scale(1) translateY(0); }
+  26% { transform: scale(1.06) translateY(-1.5px); }
+  58% { transform: scale(0.992) translateY(0.5px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* Reduced motion: the pot updates instantly, no settle. */
+@media (prefers-reduced-motion: reduce) {
+  .badge-pot--pulse {
+    animation: none;
+  }
 }
 
 .badge-pot span {
@@ -3706,6 +3872,173 @@ button.accent:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(244, 196, 48, 0.3);
   font-weight: 700;
+}
+
+/* Table Presence C — physical chips: the numeric chip/pot counters gain a REAL poker
+   chip as an object — radial volume (top sheen + base shade), a notched crema edge
+   over Chiribito burgundy (matching back-clean.svg), and a contact shadow so it sits
+   ON the felt. The count now reads as a tactile object resting on the table, never a
+   digital glow. Size is in `em` so it scales with each counter's own type. */
+.seat-chip::before,
+.table-header .badge-pot::before {
+  content: "";
+  display: inline-block;
+  vertical-align: -0.3em;
+  width: 1.18em;
+  height: 1.18em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255, 246, 236, 0.55), transparent 44%),
+    radial-gradient(circle, #8a2738 0%, #8a2738 66%, transparent 69%),
+    repeating-conic-gradient(from 0deg, #efe6d6 0deg 11deg, #7c2233 11deg 30deg);
+  box-shadow:
+    /* chip THICKNESS — the side wall, stacked in progressively darker burgundy so the
+       chip reads as a solid object with real height, not a flat disc. */
+    0 0.07em 0 #5e1824,
+    0 0.14em 0 #561521,
+    0 0.21em 0 #4d121d,
+    0 0.28em 0 #440f19,
+    /* contact shadow cast on the felt beneath the chip — grounds its weight. */
+    0 0.46em 0.42em rgba(0, 0, 0, 0.6),
+    0 0.22em 0.22em rgba(0, 0, 0, 0.42),
+    /* face volume: crema rim + top sheen + base shade. */
+    inset 0 0 0 0.12em rgba(244, 230, 200, 0.62),
+    inset 0 -0.1em 0.18em rgba(0, 0, 0, 0.4),
+    inset 0 0.12em 0.16em rgba(255, 255, 255, 0.28);
+}
+
+/* The pot is the social centre — a larger, thicker chip and a grounded matte contact
+   shadow instead of the old casino glow (not a jackpot). */
+.table-header .badge-pot {
+  box-shadow:
+    0 5px 13px rgba(0, 0, 0, 0.52),
+    0 0 9px rgba(244, 196, 48, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.table-header .badge-pot::before {
+  width: 1.42em;
+  height: 1.42em;
+  vertical-align: -0.36em;
+  margin-right: 0.55em;
+}
+
+/* Table Presence F — a physical chip IN FLIGHT: same materiality as the counter chips
+   (thickness + notched crema edge + contact shadow), positioned per-frame by the
+   chip-fly driver (transform). Above the felt + cards, below the seats. Reduced motion
+   skips it entirely (driver no-ops), so no guard needed. */
+.chip-fly {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 14;
+  will-change: transform, opacity;
+  /* defaults to burgundy; `.chip-fly--*` swap the denomination colour mid-flight */
+  --chip-face: #8a2738;
+  --chip-edge: #6d1c2c;
+  --chip-side: #4d121d;
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255, 246, 236, 0.6), transparent 44%),
+    radial-gradient(circle, var(--chip-face) 0%, var(--chip-face) 66%, transparent 69%),
+    repeating-conic-gradient(from 0deg, #efe6d6 0deg 11deg, var(--chip-edge) 11deg 30deg);
+  box-shadow:
+    0 2px 0 var(--chip-side),
+    0 4px 0 var(--chip-side),
+    0 6px 0 var(--chip-side),
+    0 8px 11px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 3px rgba(244, 230, 200, 0.62),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 3px 4px rgba(255, 255, 255, 0.28);
+}
+.chip-fly--gold {
+  --chip-face: #b9892f;
+  --chip-edge: #8a6420;
+  --chip-side: #6e4f19;
+}
+.chip-fly--night {
+  --chip-face: #2e4a6b;
+  --chip-edge: #1f3450;
+  --chip-side: #162844;
+}
+.chip-fly--green {
+  --chip-face: #0c6b4f;
+  --chip-edge: #084a37;
+  --chip-side: #063528;
+}
+.chip-fly--burgundy {
+  --chip-face: #8a2738;
+  --chip-edge: #6d1c2c;
+  --chip-side: #4d121d;
+}
+
+/* Table Presence I — the physical POT PILE: real chip stacks accumulating in the centre
+   of the felt, grown from the pot by `pot-pile.ts`/`chip-stack.ts`. Denominations carry
+   their own castizo colour (latón · azul noche · verde Chiribito · burgundy) so a big pot
+   reads as a rich, full centre — the table's signature, never a casino spray. */
+.pot-pile {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 0;
+  height: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+.pot-chip {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background:
+    /* specular glint — a crisp soft highlight where the light hits the top-left */
+    radial-gradient(circle at 33% 26%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 32%),
+    /* cream inlay band painted on the face */
+    radial-gradient(circle at 50% 50%, transparent 0 40%, rgba(247, 238, 217, 0.85) 41% 47%, transparent 48%),
+    /* domed lit face — bright at top, deepening to the edge; transparent at the very rim */
+    radial-gradient(circle at 50% 37%, var(--chip-face-lit) 0%, var(--chip-face) 50%, var(--chip-edge) 80%, transparent 83%),
+    /* fine notches around the rim */
+    repeating-conic-gradient(from 4deg, rgba(247, 238, 217, 0.92) 0deg 4deg, var(--chip-edge) 4deg 9deg);
+  box-shadow:
+    /* thickness — the chip's side wall */
+    0 2px 0 var(--chip-side),
+    0 4px 0 var(--chip-side),
+    0 6px 0 var(--chip-side),
+    /* soft contact shadow on the felt */
+    0 9px 10px rgba(0, 0, 0, 0.52),
+    /* rounded bevel — bright top lip, dark base, crisp edge */
+    inset 0 2px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+}
+.pot-chip--gold {
+  --chip-face: #b9892f;
+  --chip-face-lit: #e0ad4f;
+  --chip-edge: #835f1d;
+  --chip-side: #5f4516;
+}
+.pot-chip--night {
+  --chip-face: #2e4a6b;
+  --chip-face-lit: #4a7099;
+  --chip-edge: #1c3149;
+  --chip-side: #142339;
+}
+.pot-chip--green {
+  --chip-face: #0c6b4f;
+  --chip-face-lit: #16a178;
+  --chip-edge: #074734;
+  --chip-side: #053023;
+}
+.pot-chip--burgundy {
+  --chip-face: #8a2738;
+  --chip-face-lit: #b93e52;
+  --chip-edge: #66192a;
+  --chip-side: #46101c;
 }
 
 .seat.you {
