@@ -71,25 +71,33 @@ function chipProfile(steps = 6): THREE.Vector2[] {
 // A real card-table rail is TWO parts: an inner padded leather bumper (the cushioned roll
 // you rest your arms on) framed by an outer turned-wood coaming. Two revolved cross-sections.
 
-/** Cross-section of the padded leather armrest bumper — a fat rounded cushion roll. */
+/**
+ * Cross-section of the padded leather armrest bumper — a broken-in, COMPRESSED roll:
+ * a tight crease at the inner edge (the dark valley), a broad, gently flattened crown
+ * (the part arms press — restable, not a taut showroom tube), tucking down to the wood
+ * outside. The comfort reads from the shape; gloss is not what sells it.
+ */
 function leatherProfile(): THREE.Vector2[] {
   const rIn = FELT_R * 0.962; // ~5.0, meets the brass reveal at the felt edge
   const rOut = FELT_R * 1.072; // ~5.57, meets the wood coaming
-  const yBase = 0.0;
-  const yInner = 0.13;
-  const peak = 0.66; // the cushion rises proud above the wood frame
-  const v = (x: number, y: number) => new THREE.Vector2(x, y);
-  const pts: THREE.Vector2[] = [v(rIn, yBase), v(rIn, yInner)];
-  const N = 26;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const r = rIn + (rOut - rIn) * t;
-    const y = yInner + (peak - yInner) * Math.sin(Math.PI * t); // rounded roll
-    pts.push(v(r, y));
-  }
-  pts.push(v(rOut, yBase));
-  pts.push(v(rIn, yBase)); // close the section
-  return pts;
+  const span = rOut - rIn;
+  const p = (t: number, y: number) => new THREE.Vector2(rIn + span * t, y);
+  return [
+    new THREE.Vector2(rIn, 0.0),
+    p(0.03, 0.07), // tight inner wall → a real crease/valley at the base
+    p(0.09, 0.24),
+    p(0.17, 0.4),
+    p(0.26, 0.49), // inner shoulder — the saddle-stitch seam sits here
+    p(0.37, 0.545),
+    p(0.49, 0.565),
+    p(0.6, 0.56), // broad, slightly flattened crown — compressed by use
+    p(0.71, 0.535),
+    p(0.81, 0.46), // outer shoulder
+    p(0.9, 0.3),
+    p(0.97, 0.12),
+    new THREE.Vector2(rOut, 0.0),
+    new THREE.Vector2(rIn, 0.0), // close the section
+  ];
 }
 
 /** Cross-section of the outer turned-wood coaming that frames the leather. */
