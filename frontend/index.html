@@ -316,6 +316,69 @@
         </div>
         <div class="table-surface">
           <div class="table-breath" aria-hidden="true"></div>
+          <div class="table-trim" aria-hidden="true">
+            <svg viewBox="0 0 1000 640" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="500" cy="320" rx="486" ry="306" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round" />
+              <ellipse cx="500" cy="320" rx="470" ry="292" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 12" stroke-linecap="round" opacity="0.6" />
+            </svg>
+          </div>
+          <div class="table-suits" aria-hidden="true">
+            <svg class="suit suit--oros" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <g fill="none" stroke="currentColor" stroke-width="2"><circle cx="24" cy="24" r="20" /><circle cx="24" cy="24" r="12" /></g>
+              <circle cx="24" cy="24" r="3" fill="currentColor" />
+            </svg>
+            <svg class="suit suit--copas" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 14 H35" /><path d="M14 15 A11 13 0 0 0 34 15" /><path d="M24 27 V37" /><path d="M16 40 H32" />
+              </g>
+            </svg>
+            <svg class="suit suit--espadas" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M24 7 V33" /><path d="M14 27 H34" /><path d="M24 7 l5 6 M24 7 l-5 6" /><path d="M24 33 V40" />
+              </g>
+            </svg>
+            <svg class="suit suit--bastos" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 36 L36 12" /><path d="M12 36 l-3 3 M36 12 l3 -3" /><path d="M20 28 l5 5 M28 20 l5 5" />
+              </g>
+            </svg>
+          </div>
+          <div class="table-crest" aria-hidden="true">
+            <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <path id="crest-arc-top" d="M40 120 A80 80 0 0 1 200 120" />
+                <path id="crest-arc-bot" d="M52 120 A68 68 0 0 0 188 120" />
+              </defs>
+              <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="120" cy="120" r="104" />
+                <circle cx="120" cy="120" r="95" stroke-width="1" />
+                <path d="M120 80 L148 120 L120 160 L92 120 Z" />
+                <path d="M120 97 L136 120 L120 143 L104 120 Z" stroke-width="1.3" />
+                <!-- Spanish-deck suits engraved at the diagonals: oros · copas · espadas · bastos -->
+                <g stroke-width="1.5">
+                  <circle cx="164" cy="76" r="8" />
+                  <circle cx="164" cy="76" r="3.4" />
+                  <path d="M157 161 A7 7 0 0 0 171 161" />
+                  <path d="M164 167 V173" />
+                  <path d="M159 174 H169" />
+                  <path d="M76 156 V172" />
+                  <path d="M71 163 H81" />
+                  <path d="M76 156 l2.4 2.6 M76 156 l-2.4 2.6" />
+                  <path d="M70 82 L82 70" />
+                  <path d="M68 84 l-2 2 M84 68 l2 -2" />
+                  <path d="M73 79 l2.4 2.4 M77 75 l2.4 2.4" />
+                </g>
+              </g>
+              <circle cx="120" cy="120" r="3.6" fill="currentColor" />
+              <text class="crest-word" text-anchor="middle">
+                <textPath href="#crest-arc-top" startOffset="50%">CHIRIBITO</textPath>
+              </text>
+              <text class="crest-sub" text-anchor="middle">
+                <textPath href="#crest-arc-bot" startOffset="50%">· LA PERLA ·</textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="pot-pile" id="pot-pile" aria-hidden="true"></div>
           <div class="table-header">
             <div class="table-header-row table-header-row--pot">
               <div class="badge badge-pot">Bote <span id="pot-chip">0</span></div>
