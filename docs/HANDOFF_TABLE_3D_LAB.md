@@ -36,7 +36,10 @@ cd frontend && npm run dev
 ```
 - **Local URL:** `http://localhost:5173/table-lab.html` — the protected premium table (default).
   (Vite uses **5174** if 5173 is occupied by another dev server — check the `npm run dev` output.)
-- Drag to orbit; it auto-rotates gently. The default view is the protected reference.
+- **⚠️ The lab is at the `/table-lab.html` PATH.** The bare root `http://localhost:5173/` serves the
+  **GAME** (index.html), NOT the lab. Opening the bare host shows the game — always include
+  `/table-lab.html`. (This caught the operator once; both ports serve the lab at that path.)
+- Drag to orbit; it auto-rotates gently. The default view is the protected reference (no occupants).
 
 URL params:
 - `?cam=wide|hero|close|macro|top|room|rail|gather|eye` — camera presets.
