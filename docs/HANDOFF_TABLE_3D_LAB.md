@@ -93,33 +93,44 @@ neon / ostentatious gold.
 
 ---
 
-## OPEN ARTISTIC QUESTION — the elegance check (recorded 2026-06-04; do NOT act yet)
+## OPEN ARTISTIC QUESTION — the elegance check, LOCALIZED TO THE EDGE/RAIL (recorded 2026-06-04; do NOT act yet)
 
-The operator validated the current direction (3D, premium, tactile, physical presence, perceived
-quality) and does NOT want to abandon it. But he has a standing intuition to verify before the
-artistic direction is considered **closed**:
+The operator validated the current direction (3D, depth, materials, premium feel) and does NOT want
+to abandon it. After viewing the live table he **localized** a standing elegance intuition — and it
+is specific to the table's **edge**, not the table overall:
 
-> "I think an earlier iteration felt **more elegant** — not more detailed, not more premium, just
-> more elegant: visually lighter, more refined, more special."
+> "The general direction is right. But I recall an earlier version where the **edge of the table and
+> the exterior silhouette** felt more elegant — more *poker table*, more refined. We may have gained
+> presence / mass / perceived-quality but lost some elegance **in the rail or the outer contour**.
+> The difference is NOT the 3D, NOT the chips, NOT the atmosphere — it is the **character of the
+> table's edge**."
 
-The hypothesis worth checking: as we added **mass** (the big two-part leather bumper, the heavy
-mahogany body/plinth, the warm-room atmosphere) we gained richness/"fabricated" quality — but we may
-have traded away some **lightness/elegance**. The current reference is richer and heavier than the
-early polished oval.
+**Well-founded hypothesis (it matches the build history):** the rail got much heavier mid-session.
+- *Earlier, slimmer edge:* the original polished oval used a **single slim turned-wood rail**
+  (`railProfile`, inner `FELT_R*0.985` → outer `*1.15`, low) — a thin, refined "poker-table" edge.
+- *Current, heavier edge:* R2 replaced it with a **two-part rail** — a fat leather bumper
+  (`FELT_R*0.962` → `*1.072`, rising to ~0.56–0.66) + a wood coaming (`*1.072` → `*1.17`) — and R3a
+  added the **apron + plinth body** below. The outer contour is now considerably **thicker / more
+  massive**. So the trade is real and locatable: **mass + materials gained at the cost of edge
+  thinness / contour elegance.**
 
-**The concrete question for a FUTURE session (a deliberate review, not an auto-revert):**
-> *Have we gained quality WITHOUT losing elegance?* The end goal is a table that combines **elegance
-> + presence + personality + perceived quality** — not merely richer materials.
+**The question for a FUTURE session (a deliberate review, NOT an auto-revert):**
+> *Have we gained quality WITHOUT losing elegance?* Goal = elegance + presence + personality +
+> perceived quality — not merely richer materials.
 
-**Suggested comparison set** (open these side by side; all in `.dev-stack/diag/table-3d/`):
-- Lighter / earlier "elegant" candidates: `elev/00-base-wide.png`, `elev/05-leather-hero.png` (rail
-  done, before the heavy body), `elev/09-leatherfinish-hero.png`, and the pre-body chip beauty shots
-  `final-hero.png` / `final-wide.png` (thin-rail era).
-- Current reference: `elev/REFERENCE-{hero,eye,wide,room}.png` and `elev/12-backdrop-*`.
+**Look specifically at (operator's emphasis):** exterior silhouette · rail proportions · visual
+thickness of the edge · general elegance of the contour.
 
-**Do NOT auto-revert.** If the current reference is still the strongest overall, keep it. This is a
-yes/no elegance audit to run before locking the direction, NOT a regression. The current premium
-table stays the protected reference until/unless this review concludes otherwise.
+**Comparison set** (side by side; in `.dev-stack/diag/table-3d/`):
+- *Slimmer / elegant edge (earlier):* `elev/00-base-wide.png`, `elev/00-base-empty.png`,
+  `elev/04-wood-wide.png` (slim single-wood rail), and `final-wide.png` (thin-rail era).
+- *Heavier edge (current):* `elev/05-leather-wide.png` (two-part rail introduced),
+  `elev/REFERENCE-wide.png`, `elev/12-backdrop-wide.png` (current contour).
+
+**If the review concludes the edge lost elegance,** the lever is the **rail / contour ONLY** — e.g. a
+slimmer leather bumper + a thinner wood coaming, or a refined outer-edge profile — WITHOUT touching
+the chips, atmosphere, or the 3D direction, and WITHOUT auto-reverting. The current premium table
+stays the protected reference until/unless this review decides otherwise.
 
 ---
 
