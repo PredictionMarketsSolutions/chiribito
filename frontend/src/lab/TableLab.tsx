@@ -378,6 +378,9 @@ function Lights() {
       <spotLight position={[-7, 6, -1]} angle={0.8} penumbra={1} intensity={0.7} decay={0} color="#ffd9a0" />
       {/* gentle back rim for separation against the dark room (lightly cool, low) */}
       <directionalLight position={[-3, 4, -7]} intensity={0.26} color="#bcc6dc" />
+      {/* low warm wash raking the table BODY — reveals the apron + plinth so the
+         furniture reads as mass (a warm floor bounce, never a casino uplight) */}
+      <pointLight position={[0, -0.25, 11]} intensity={0.5} distance={34} decay={0} color="#ffcd95" />
     </>
   );
 }
