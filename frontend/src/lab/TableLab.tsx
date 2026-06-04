@@ -19,6 +19,7 @@ import {
   Environment,
   Lightformer,
   ContactShadows,
+  RoundedBox,
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -363,6 +364,81 @@ function Table({
   );
 }
 
+// --- seating: the FIRST appearance of human presence around the oval ---
+// Not "a chair" — soft masses that read as people gathered: backs rising above the rail,
+// hugging the table, evenly spaced. A massing/presence study; detail + material come later.
+const SEAT_COUNT = 6;
+
+interface SeatPose {
+  x: number;
+  z: number;
+  rot: number;
+  lean: number;
+}
+
+function seatLayout(): SeatPose[] {
+  const ax = FELT_R * 1.17 * OVAL_X + 0.35; // hug the rail (people leaning in)
+  const az = FELT_R * 1.17 + 0.35;
+  const out: SeatPose[] = [];
+  for (let i = 0; i < SEAT_COUNT; i++) {
+    const a = (i / SEAT_COUNT) * Math.PI * 2 + Math.PI / SEAT_COUNT; // offset: none dead-centre
+    const wob = Math.sin(i * 2.3) * 0.05; // a little human irregularity, not a robotic ring
+    const x = Math.cos(a) * ax * (1 + wob);
+    const z = Math.sin(a) * az * (1 + wob);
+    out.push({
+      x,
+      z,
+      rot: Math.atan2(x, z) + Math.sin(i * 1.7) * 0.07, // each turned a touch differently
+      lean: 0.12 + Math.sin(i * 3.1) * 0.03, // leaning into the game
+    });
+  }
+  return out;
+}
+
+function Seat({ x, z, rot, lean, mat }: SeatPose & { mat: THREE.Material }) {
+  return (
+    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+      {/* the presence of an occupant — a tall, soft, round-shouldered back that rises well
+         above the rail and leans IN toward the table (engaged, not a formal empty chair) */}
+      <RoundedBox
+        args={[2.1, 2.5, 0.62]}
+        radius={0.5}
+        smoothness={4}
+        position={[0, 1.05, 0.5]}
+        rotation={[-lean, 0, 0]}
+        material={mat}
+        castShadow
+        receiveShadow
+      />
+      {/* the seat the body rests on, tucked to the table */}
+      <RoundedBox
+        args={[1.9, 0.46, 1.05]}
+        radius={0.22}
+        smoothness={4}
+        position={[0, -0.2, -0.1]}
+        material={mat}
+        castShadow
+        receiveShadow
+      />
+    </group>
+  );
+}
+
+function Seats() {
+  const mat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: new THREE.Color("#5a2e30"), roughness: 0.85, metalness: 0 }),
+    [],
+  );
+  const seats = useMemo(seatLayout, []);
+  return (
+    <group>
+      {seats.map((s, i) => (
+        <Seat key={i} x={s.x} z={s.z} rot={s.rot} lean={s.lean} mat={mat} />
+      ))}
+    </group>
+  );
+}
+
 function Lights() {
   return (
     <>
@@ -434,6 +510,8 @@ function Scene() {
       room: { pos: [0, 9.5, 16], target: [0, -0.3, 0], fov: 35 },
       // low grazing look at the near rail edge — judges the rail's mass, materials + section
       rail: { pos: [0, 2.4, 9.6], target: [0, 0.15, 4.9], fov: 32 },
+      // pulled back to read the whole gathering — table + the presence around it
+      gather: { pos: [0, 6.8, 20.5], target: [0, 0.2, 0], fov: 40 },
     };
     return presets[key] || presets.wide;
   }, []);
@@ -494,6 +572,9 @@ function Scene() {
             <Chip kit={kit} denom="C" position={[-1.4, 0.055, 1.25]} rotationY={1.4} />
           </>
         )}
+
+        {/* human presence around the oval */}
+        {qp("seats") !== "off" && <Seats />}
       </group>
 
       {/* the floor as a warm pool of light — the table stands in an intimate room */}
