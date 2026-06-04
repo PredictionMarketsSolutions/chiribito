@@ -19,7 +19,6 @@ import {
   Environment,
   Lightformer,
   ContactShadows,
-  RoundedBox,
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -374,6 +373,8 @@ interface SeatPose {
   z: number;
   rot: number;
   lean: number;
+  tilt: number;
+  scale: number;
 }
 
 function seatLayout(): SeatPose[] {
@@ -388,52 +389,61 @@ function seatLayout(): SeatPose[] {
     out.push({
       x,
       z,
-      rot: Math.atan2(x, z) + Math.sin(i * 1.7) * 0.07, // each turned a touch differently
-      lean: 0.12 + Math.sin(i * 3.1) * 0.03, // leaning into the game
+      rot: Math.atan2(x, z) + Math.sin(i * 1.7) * 0.09, // each turned a touch differently
+      lean: 0.2 + Math.sin(i * 3.1) * 0.06, // leaning INTO the game (engaged hunch)
+      tilt: Math.sin(i * 5.3) * 0.08, // a slight side-lean — nobody sits perfectly square
+      scale: 0.93 + Math.sin(i * 1.9) * 0.1, // different builds, not identical clones
     });
   }
   return out;
 }
 
-function Seat({ x, z, rot, lean, mat }: SeatPose & { mat: THREE.Material }) {
+// The suggestion of a back + shoulders — NOT a person, NOT a chair. Narrow at the base,
+// widening to a soft shoulder line, rounding to a headless top. Revolved, then flattened
+// front-to-back so it reads as a torso, and leaned into the table. The aim: "people playing",
+// not "six pretty chairs".
+function occupantProfile(): THREE.Vector2[] {
+  const v = (r: number, y: number) => new THREE.Vector2(r, y);
+  return [
+    v(0.0, 0.0),
+    v(0.56, 0.04),
+    v(0.72, 0.42),
+    v(0.95, 0.84),
+    v(1.12, 1.2), // shoulders — wider + higher, a clear shoulder line
+    v(1.0, 1.46),
+    v(0.6, 1.68), // upper back / nape rounding in (no head)
+    v(0.0, 1.8),
+  ];
+}
+
+function Occupant({ pose, geo, mat }: { pose: SeatPose; geo: THREE.BufferGeometry; mat: THREE.Material }) {
   return (
-    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
-      {/* the presence of an occupant — a tall, soft, round-shouldered back that rises well
-         above the rail and leans IN toward the table (engaged, not a formal empty chair) */}
-      <RoundedBox
-        args={[1.85, 1.4, 0.52]}
-        radius={0.42}
-        smoothness={4}
-        position={[0, 0.5, 0.42]}
-        rotation={[-lean, 0, 0]}
-        material={mat}
-        castShadow
-        receiveShadow
-      />
-      {/* the seat the body rests on, tucked to the table */}
-      <RoundedBox
-        args={[1.7, 0.42, 0.95]}
-        radius={0.2}
-        smoothness={4}
-        position={[0, -0.24, -0.05]}
-        material={mat}
-        castShadow
-        receiveShadow
-      />
+    <group position={[pose.x, -0.05, pose.z]} rotation={[0, pose.rot, 0]}>
+      {/* lean into the table + a slight side-lean; flattened front-to-back = a torso, not a column */}
+      <group rotation={[-pose.lean, 0, pose.tilt]}>
+        <mesh
+          geometry={geo}
+          material={mat}
+          scale={[1.12 * pose.scale, pose.scale, 0.6 * pose.scale]}
+          castShadow
+          receiveShadow
+        />
+      </group>
     </group>
   );
 }
 
 function Seats() {
   const mat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: new THREE.Color("#47262a"), roughness: 0.88, metalness: 0 }),
+    () => new THREE.MeshStandardMaterial({ color: new THREE.Color("#47262a"), roughness: 0.9, metalness: 0 }),
     [],
   );
+  const geo = useMemo(() => new THREE.LatheGeometry(occupantProfile(), 40), []);
   const seats = useMemo(seatLayout, []);
   return (
     <group>
       {seats.map((s, i) => (
-        <Seat key={i} x={s.x} z={s.z} rot={s.rot} lean={s.lean} mat={mat} />
+        <Occupant key={i} pose={s} geo={geo} mat={mat} />
       ))}
     </group>
   );
