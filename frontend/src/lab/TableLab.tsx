@@ -27,6 +27,8 @@ import {
   type SuitCode,
   CHIP_PALETTES,
   chipFaceTexture,
+  chipFaceBump,
+  chipEdgeTexture,
   feltTexture,
   woodTexture,
 } from "./textures";
@@ -101,21 +103,29 @@ function useChipKit(cImg: HTMLImageElement | null): ChipKit {
     const mats: ChipKit["mats"] = {};
     for (const suit of CHIP_SUITS) {
       const p = CHIP_PALETTES[suit];
+      // the rolled clay edge carries its shading + cream inserts in the texture, so the
+      // tint is white (the map IS the colour); double-darkening would muddy it.
+      const edge = chipEdgeTexture(suit);
+      edge.repeat.set(1, 1);
       const bodyMat = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color(p.face),
-        roughness: 0.52,
+        map: edge,
+        color: new THREE.Color("#ffffff"),
+        roughness: 0.5,
         metalness: 0,
-        clearcoat: 0.4,
-        clearcoatRoughness: 0.5,
-        sheen: 0.45,
+        clearcoat: 0.42,
+        clearcoatRoughness: 0.46,
+        sheen: 0.5,
         sheenColor: new THREE.Color(p.faceLit),
       });
       const faceMat = new THREE.MeshPhysicalMaterial({
         map: chipFaceTexture(suit, cImg),
-        roughness: 0.5,
+        // the C + rim are tooled into the clay (recessed) — a real edge of light, not a print
+        bumpMap: chipFaceBump(cImg),
+        bumpScale: 0.025,
+        roughness: 0.46,
         metalness: 0,
-        clearcoat: 0.28,
-        clearcoatRoughness: 0.4,
+        clearcoat: 0.32,
+        clearcoatRoughness: 0.36,
         alphaTest: 0.5,
       });
       mats[suit] = { body: bodyMat, face: faceMat };

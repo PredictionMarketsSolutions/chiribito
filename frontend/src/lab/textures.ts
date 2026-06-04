@@ -45,6 +45,11 @@ const CHIRI_GOLD_D = "#7a5a22";
 const CHIRI_GOLD = "#b2883d";
 const CHIRI_GOLD_L = "#d9b45e";
 
+// The Chiribito "C" arc geometry — shared by the painted colour face AND the relief
+// (bump) map so the gold C and its tooled groove register pixel-exactly. Fractions of
+// the medallion radius R.
+const C_ARC = { rFrac: 0.45, widthFrac: 0.22, start: Math.PI * 0.3, end: Math.PI * 1.7 };
+
 /**
  * The Chiribito "C" medallion — a faithful HIGH-RES rebuild of the official 48px
  * favicon (chiribito.com/favicon.ico): a green coin, a beveled gold ring, a bold gold
@@ -88,9 +93,9 @@ function drawChiriC(ctx: CanvasRenderingContext2D, cx: number, cy: number, size:
 
   // the "C" — bold but refined, with breathing room from both the ring and the centre,
   // and soft (round) terminals so it reads elegant, not cut off
-  const cR = R * 0.45;
+  const cR = R * C_ARC.rFrac;
   ctx.lineCap = "round";
-  ctx.lineWidth = R * 0.22;
+  ctx.lineWidth = R * C_ARC.widthFrac;
   const cgrad = ctx.createLinearGradient(-cR, -cR, cR, cR);
   cgrad.addColorStop(0, CHIRI_GOLD_L);
   cgrad.addColorStop(0.5, CHIRI_GOLD);
@@ -99,7 +104,14 @@ function drawChiriC(ctx: CanvasRenderingContext2D, cx: number, cy: number, size:
   ctx.beginPath();
   // longer travel at both terminals so the C "embraces" the circle and reads finished
   // (gap ~108° on the right) — still clearly a C, never an O.
-  ctx.arc(0, 0, cR, Math.PI * 0.3, Math.PI * 1.7, false);
+  ctx.arc(0, 0, cR, C_ARC.start, C_ARC.end, false);
+  ctx.stroke();
+  // a fine inner highlight catching the upper-left light — gives the gold real round
+  // body instead of a flat painted stroke (kills the "sticker" read).
+  ctx.lineWidth = R * C_ARC.widthFrac * 0.26;
+  ctx.strokeStyle = hexA("#f4dca0", 0.55);
+  ctx.beginPath();
+  ctx.arc(0, 0, cR + R * C_ARC.widthFrac * 0.22, C_ARC.start + 0.12, C_ARC.end - 0.5, false);
   ctx.stroke();
 
   ctx.restore();
@@ -133,6 +145,14 @@ function speckle(ctx: CanvasRenderingContext2D, w: number, h: number, amount: nu
 function srgb(c: HTMLCanvasElement): THREE.CanvasTexture {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+/** Grayscale data texture (bump / roughness) — LINEAR, never sRGB. */
+function gray(c: HTMLCanvasElement): THREE.CanvasTexture {
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.NoColorSpace;
   t.anisotropy = 8;
   return t;
 }
@@ -228,7 +248,7 @@ function studRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, rad: nu
  */
 export function chipFaceTexture(suit: SuitCode, cImg?: HTMLImageElement | null): THREE.CanvasTexture {
   const p = CHIP_PALETTES[suit];
-  const S = 1024; // high-res so studs, ring and the C stay crisp
+  const S = 2048; // very high-res so the C + rim stay crisp even at macro zoom
   const { c, ctx } = makeCanvas(S, S);
   const r = S / 2;
 
@@ -274,30 +294,118 @@ export function chipFaceTexture(suit: SuitCode, cImg?: HTMLImageElement | null):
     drawChiriC(ctx, r, r, cSize);
   }
 
+  // a final whisper of dither breaks 8-bit gradient banding on the gold C + ring
+  speckle(ctx, S, S, 4);
+
   return srgb(c);
 }
 
-/** Chip side — clay body with cream edge spots. Repeats around the lathe. */
+/**
+ * Relief (bump) map for the chip face — the C and the rim line are TOOLED INTO the clay
+ * (recessed grooves) and the field carries faint clay micro-grain. Fed to `bumpMap` so
+ * the C catches a real edge of light along its groove instead of reading like a printed
+ * sticker. Drawn at the SAME coordinates as chipFaceTexture (shared C_ARC) so they register.
+ */
+export function chipFaceBump(cImg?: HTMLImageElement | null): THREE.CanvasTexture {
+  const S = 2048;
+  const { c, ctx } = makeCanvas(S, S);
+  const r = S / 2;
+
+  // clay field = mid height, with faint micro-relief so the surface is never glassy
+  ctx.fillStyle = "#808080";
+  ctx.beginPath();
+  ctx.arc(r, r, r, 0, TAU);
+  ctx.fill();
+  speckle(ctx, S, S, 18);
+
+  // the refined brass rim line, sunk as a shallow groove (matches chipFaceTexture's r*0.93)
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#5c5c5c";
+  ctx.lineWidth = S * 0.007;
+  ctx.beginPath();
+  ctx.arc(r, r, r * 0.93, 0, TAU);
+  ctx.stroke();
+
+  // the C, tooled into the clay
+  const cSize = r * 1.26;
+  ctx.save();
+  ctx.translate(r, r);
+  const RR = cSize / 2; // mirrors drawChiriC's internal R = size/2
+  if (cImg) {
+    // literal-favicon fallback: just sink the disc a touch so it doesn't read flat
+    ctx.fillStyle = "#6c6c6c";
+    ctx.beginPath();
+    ctx.arc(0, 0, RR * 0.62, 0, TAU);
+    ctx.fill();
+  } else {
+    // recessed groove
+    ctx.lineCap = "round";
+    ctx.lineWidth = RR * C_ARC.widthFrac;
+    ctx.strokeStyle = "#454545";
+    ctx.beginPath();
+    ctx.arc(0, 0, RR * C_ARC.rFrac, C_ARC.start, C_ARC.end, false);
+    ctx.stroke();
+    // a thin bright shoulder just inside the groove → a tooled bevel that catches light
+    ctx.lineWidth = RR * C_ARC.widthFrac * 0.3;
+    ctx.strokeStyle = "#a6a6a6";
+    ctx.beginPath();
+    ctx.arc(0, 0, RR * C_ARC.rFrac * 0.86, C_ARC.start + 0.08, C_ARC.end - 0.3, false);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  return gray(c);
+}
+
+/**
+ * Chip side — rolled clay edge with the classic cream inserts ("spots"), restrained so
+ * they read craft, not casino. The lathe maps uv.y ≈ 0.5 to the chip's outer wall, so the
+ * spot row is centred vertically and wraps gently onto the rounded bevels — exactly how a
+ * real clay chip's edge spots look. Repeats once around the circumference.
+ */
 export function chipEdgeTexture(suit: SuitCode): THREE.CanvasTexture {
   const p = CHIP_PALETTES[suit];
-  const W = 1024;
-  const H = 96;
+  const W = 2048;
+  const H = 256;
   const { c, ctx } = makeCanvas(W, H);
+
+  // clay shading across the rolled edge (lit top → shadowed bottom)
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, p.faceLit);
   g.addColorStop(0.5, p.face);
   g.addColorStop(1, p.edge);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
-  speckle(ctx, W, H, 12);
-  const groups = 12;
-  const gw = W / groups;
-  ctx.fillStyle = p.cream;
-  for (let i = 0; i < groups; i++) {
-    const x = i * gw + gw * 0.5;
-    ctx.fillRect(x - gw * 0.13, H * 0.18, gw * 0.26, H * 0.22);
-    ctx.fillRect(x - gw * 0.13, H * 0.6, gw * 0.26, H * 0.22);
+
+  // faint vertical striations — the rolled clay catches light in fine ribs, never a dead band
+  ctx.globalAlpha = 0.08;
+  for (let x = 0; x < W; x += 7) {
+    ctx.strokeStyle = x % 14 === 0 ? p.faceLit : p.edge;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
   }
+  ctx.globalAlpha = 1;
+  speckle(ctx, W, H, 10);
+
+  // a single centred row of cream inserts, each sunk with a soft shadow lip
+  const groups = 10;
+  const gw = W / groups;
+  const sw = gw * 0.3;
+  const sh = H * 0.42;
+  for (let i = 0; i < groups; i++) {
+    const cx = i * gw + gw * 0.5;
+    ctx.fillStyle = hexA(p.ink, 0.45);
+    ctx.fillRect(cx - sw / 2 - 3, H * 0.5 - sh / 2 - 3, sw + 6, sh + 6);
+    ctx.fillStyle = p.cream;
+    ctx.fillRect(cx - sw / 2, H * 0.5 - sh / 2, sw, sh);
+    // a hair of top-lit bevel on each insert
+    ctx.fillStyle = hexA("#ffffff", 0.18);
+    ctx.fillRect(cx - sw / 2, H * 0.5 - sh / 2, sw, sh * 0.16);
+  }
+
   const t = srgb(c);
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.ClampToEdgeWrapping;
