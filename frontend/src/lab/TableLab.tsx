@@ -377,8 +377,8 @@ interface SeatPose {
 }
 
 function seatLayout(): SeatPose[] {
-  const ax = FELT_R * 1.17 * OVAL_X + 0.35; // hug the rail (people leaning in)
-  const az = FELT_R * 1.17 + 0.35;
+  const ax = FELT_R * 1.17 * OVAL_X + 0.2; // hug the rail close — the presence accompanies it
+  const az = FELT_R * 1.17 + 0.2;
   const out: SeatPose[] = [];
   for (let i = 0; i < SEAT_COUNT; i++) {
     const a = (i / SEAT_COUNT) * Math.PI * 2 + Math.PI / SEAT_COUNT; // offset: none dead-centre
@@ -401,10 +401,10 @@ function Seat({ x, z, rot, lean, mat }: SeatPose & { mat: THREE.Material }) {
       {/* the presence of an occupant — a tall, soft, round-shouldered back that rises well
          above the rail and leans IN toward the table (engaged, not a formal empty chair) */}
       <RoundedBox
-        args={[2.1, 2.5, 0.62]}
-        radius={0.5}
+        args={[1.85, 1.4, 0.52]}
+        radius={0.42}
         smoothness={4}
-        position={[0, 1.05, 0.5]}
+        position={[0, 0.5, 0.42]}
         rotation={[-lean, 0, 0]}
         material={mat}
         castShadow
@@ -412,10 +412,10 @@ function Seat({ x, z, rot, lean, mat }: SeatPose & { mat: THREE.Material }) {
       />
       {/* the seat the body rests on, tucked to the table */}
       <RoundedBox
-        args={[1.9, 0.46, 1.05]}
-        radius={0.22}
+        args={[1.7, 0.42, 0.95]}
+        radius={0.2}
         smoothness={4}
-        position={[0, -0.2, -0.1]}
+        position={[0, -0.24, -0.05]}
         material={mat}
         castShadow
         receiveShadow
@@ -426,7 +426,7 @@ function Seat({ x, z, rot, lean, mat }: SeatPose & { mat: THREE.Material }) {
 
 function Seats() {
   const mat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: new THREE.Color("#5a2e30"), roughness: 0.85, metalness: 0 }),
+    () => new THREE.MeshStandardMaterial({ color: new THREE.Color("#47262a"), roughness: 0.88, metalness: 0 }),
     [],
   );
   const seats = useMemo(seatLayout, []);
