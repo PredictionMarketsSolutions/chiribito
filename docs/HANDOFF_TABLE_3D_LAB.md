@@ -2,7 +2,8 @@
 
 **Date:** 2026-06-04 (premium elevation + protection + close-out)
 **Branch:** `spike/table-3d-hero` (off `9344453` on `style/table-breathe`) — **LOCAL only**
-**Tip:** `d17df37` · **Reference tag:** `table-3d-premium-reference-2026-06-04` (→ `d17df37`)
+**Branch tip:** HEAD of `spike/table-3d-hero` (latest commit = this handoff doc).
+**Reference tag:** `table-3d-premium-reference-2026-06-04` → `d17df37` (the protection commit).
 **Status:** Isolated 3D table laboratory (React Three Fiber). **NOT integrated. No push, no deploy,
 no merge.** `main` and the live product (`play.chiribito.com` / `chiribito.com`) are unaffected.
 This document is written so a future session can resume EXACTLY here with no context loss.
@@ -247,7 +248,8 @@ do **D** first (mobile hardening) so the demo is good on phones.
 | `929acbf` | scene atmosphere — warm room (floor pool + backdrop) |
 | `a0ee933` / `fe2a114` / `ae60c85` | occupants — massing → accompany → occupant presence |
 | `f464616` | **protect the premium table (default view; occupants opt-in)** |
-| `d17df37` | **docs — declare the premium table the protected reference** ← TIP |
+| `d17df37` | **docs — declare the premium table the protected reference** (= the reference tag) |
+| (latest) | docs — exhaustive final session handoff (this file) |
 
 **Tags:** `table-3d-premium-reference-2026-06-04` (protected reference, → `d17df37`) ·
 `table-3d-lab-checkpoint-2026-06-04` (earlier spike checkpoint).
