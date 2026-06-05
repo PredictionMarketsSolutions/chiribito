@@ -1,5 +1,14 @@
 # HANDOFF — Table 3D Lab (final session handoff, exhaustive)
 
+> **⚠️ SUPERSEDED BY STRATEGY 2026-06-05 — read `docs/ROADMAP_TABLE_3D_PRODUCTION.md` FIRST.**
+> The operator promoted this 3D lab from "paused spike / passive reference" to a **long-term STRATEGIC
+> ASSET under a fortification program (M0–M8)**. This handoff stays ACCURATE for the LAB INTERNALS (how
+> to run it, what the premium table is, the protected reference, the capture harness, the lessons).
+> But the "NEXT-SESSION options" near the end are SUPERSEDED: the next step is **M1 — the card as the
+> absolute protagonist** (the scene renders ZERO cards today). The old options map into the program:
+> *elegance check* → **M5**, *occupants* → **M4**, *publish demo* → post-**M8**, *mobile hardening* →
+> **M6**. The live 2D table stays production; nothing is integrated today.
+
 **Date:** 2026-06-04 (premium elevation + protection + close-out)
 **Branch:** `spike/table-3d-hero` (off `9344453` on `style/table-breathe`) — **LOCAL only**
 **Branch tip:** HEAD of `spike/table-3d-hero` (latest commit = this handoff doc).
