@@ -137,3 +137,39 @@ The protected reference (`table-3d-premium-reference-2026-06-04`) is never degra
 `git checkout spike/table-3d-hero` → `cd frontend && npm run dev` → `http://localhost:5173/table-lab.html`.
 Capture via `.dev-stack/lab-shot.mjs` (`--use-angle=d3d11 --enable-gpu`). Next concrete step: **M1**
 (the card as protagonist). See `docs/HANDOFF_TABLE_3D_LAB.md` for the lab internals.
+
+---
+
+## SESSION CHECKPOINT — 2026-06-05 (formal close) · RESUME FROM HERE
+
+- **Branch:** `spike/table-3d-hero` · **tip:** `d5aad26` · working tree **clean** · **nothing pushed/merged/deployed**.
+- **Commits this session:** `ce3c371` (this roadmap) · `d5aad26` (redirect lab handoff to M0–M8).
+- **Decided:** 3D = long-term **strategic asset**, fortify via **M0–M8**, **identity before technology**, the **card = absolute protagonist**. Live 2D stays production.
+- **Discarded:** "3D as the production table NOW", "3D as a passive reference only", and "bury the 3D". Also: no integration / no replacement today.
+- **Protected:** premium reference (tag `table-3d-premium-reference-2026-06-04`) · all prior lab work · engine/gameplay/Colyseus/geometry **FROZEN** (visual-only) · the live 2D table.
+- **Docs updated today:** this file (new) · `docs/HANDOFF_TABLE_3D_LAB.md` (redirect banner) · `~/.claude/ceo-os/chiribito/roadmap.md` (strategy status) · project memory `project_chiribito_table_3d_reset.md` (banner) + `MEMORY.md` index line.
+
+### NEXT SESSION → M1: THE CARD AS ABSOLUTE PROTAGONIST (start here, no re-analysis needed)
+
+**Why first:** the scene renders **zero cards** (verified: `grep card/carta/hand` in `frontend/src/lab` = comments only). A 3D Chiribito table with no cards is not Chiribito. M1 turns the chip still-life into a hand of cards.
+
+**Objective:** Spanish Fournier cards as the dominant objects — community cards centred + the player's hole cards legible — chips demoted to a modest accent pot, camera re-aimed to serve card legibility.
+
+**Approach (confirm in a short brainstorm before building):**
+- Cards = textured planes (`PlaneGeometry`) using the REAL Fournier `.webp` faces the game already ships (reuse the game's card assets; **do NOT redraw official cards — locked**). A card = thin rounded plane (front `.webp` + `back-clean` back), on/just off the felt.
+- Reuse the lab's material discipline (PBR, the ONE warm light, `alphaTest` for rounded corners like the chip faces). Mirror the `useChipKit`/`Chip`/`ChipStack` pattern with a `useCardKit`/`Card`/`Hand`.
+- Camera: add a stable card-reading player-POV preset; demote `autoRotate` for M1 captures (full kill is M3).
+- Chips: shrink the central pile to an accent so cards dominate — **do NOT delete chips** (they're identity too), just re-rank.
+- Files: `frontend/src/lab/TableLab.tsx` (+ a `Cards`/`Hand` component & card kit) and `frontend/src/lab/textures.ts` (card texture loading if needed). Isolated; touches nothing in the game.
+
+**Gate (objective — all must pass to close M1):**
+1. In the hero + a new player-POV capture, cards' projected screen area **≥ 2×** the chips'.
+2. Rank + suit **legible at 1080p downscaled** (mobile-legibility bar).
+3. Blind read = "a hand of Spanish cards", NOT "casino chips".
+4. Operator on-device perceptual gate. **Stop-on-ambiguous → STOP.**
+
+**Discipline:** brainstorm (brief) → spec → TDD the pure pieces (card layout / placement / legibility) → build isolated → apples-to-apples capture (`.dev-stack/lab-shot.mjs`, D3D11) → operator gate. No merge/push/deploy.
+
+**Two operator inputs still open:**
+- Confirm **GO to start M1** (build the cards in the lab).
+- Pick the **reference mid-range phone** for M6's ≥55–60fps numeric gate (or accept a defined baseline).
