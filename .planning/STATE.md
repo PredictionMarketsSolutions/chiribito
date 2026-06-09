@@ -97,6 +97,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-09T15:58:42.215Z
-Stopped at: Plan 01-04 complete (TP0b integrity metrics M9/M7/M12 + M1/M2 seam, meta-gate ADMITTED)
+Last session: 2026-06-09
+Stopped at: TP0 W1–W3 COMPLETE (rig + full metric kit), **PAUSED at W4 — the BLOCKING on-device operator gate (plan 01-05)**. Built: deps+harness+rollback tag (01-01), ?stats probe + frozen presets + 15-elem scorecard (01-02), 8 metrics ADMITTED [M3/M4/M5/M6/+B/M10/M9/M7/M12] + 4 informational [M8/+A need TP6 vignette; M1/M2 need operator confirm] (01-03/04). Zero-visual-change PROVEN (HERO byte-identical to HEAD). Honest finding: draw-calls OVER ceiling at baseline (HERO 237, expected → TP3 instancing).
+Awaiting OPERATOR (on-device, BLOCKING, plan 01-05): (1) TP0.0 — confirm M1 cards-as-protagonist read; (2) bless the 3 money shots incl. **POV fov 40-keep vs 37-tighten** (the ONE allowed refinement, locks at baseline freeze); (3) confirm M1 legibility; (4) M11 frame-time read. THEN plan 01-06 freezes the baseline (irreversible) → phase verification.
+Branch/merge: work lives on `claude/cranky-volhard-dd8b01` (FF'd from `spike/table-3d-hero`), ISOLATED, all LOCAL commits (no push). use_worktrees=false (GPU/dev-server program → sequential). Merge back to spike only with operator confirmation.
 Resume file: None
