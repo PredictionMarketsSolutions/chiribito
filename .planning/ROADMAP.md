@@ -19,6 +19,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases (1, 2, 3): Planned milestone work. Here Phase N = **TP(N−1)** (Phase 1 = TP0 … Phase 10 = TP9).
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED).
 
@@ -36,128 +37,180 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 ## Phase Details
 
 ### Phase 1: TP0 — Eval Rig & Baseline (BLOCKING)
+
 **Goal**: Lock the frozen eval rig (3 money shots, frozen scene, 15-element scorecard, 12-metric kit) and a complete baseline of the CURRENT state so every later gate is apples-to-apples and the protected reference is provably never degraded. Includes TP0.0 (operator confirms M1 cards-as-protagonist on-device), TP0a (cheap must-have rig, zero visual change), TP0b (tiered metric tooling, each validated against positive+negative control frames). Full spec: `docs/ROADMAP_TABLE_3D_PERFECTION.md` §TP0 + §4.
 **Depends on**: Nothing (first phase)
 **Success Criteria** (what must be TRUE):
+
   1. The 3 presets (HERO 32 / POV 37 / MACRO 26), Perla staged hand and demoted pot are frozen and recorded verbatim; baseline captured at HEAD AND at the protected tag; anchor corpus persisted to a tracked location (`docs/table-3d/anchors/`).
   2. Draw-call + frame-time baseline recorded (`renderer.info` + `?stats`, vsync OFF); the 15-element scorecard authored with baseline scores.
   3. Every admitted metric (SSOT §4.5) passes its positive AND negative control frame before being allowed to gate; un-validated metrics are informational only.
   4. **[OPERATOR GATE — manual/on-device]** TP0.0: operator confirms the M1 cards-as-protagonist read on-device; AND operator blesses the 3 money shots as the canonical views (incl. POV fov 37 vs 40 — one refinement allowed, then locked). BLOCKING: never proceed on a broken instrument or a failed M1 read.
-**Plans**: 6 plans (5 waves)
 
-Plans:
+**Plans**: 6 plans (5 waves)
+Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Wave-0 foundation: install frontend deps, restore the Playwright harness, smoke-verify the 3 shots, cut the tp0-before-rig rollback tag, re-assert prod-build isolation
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-02-PLAN.md — Dependency-free ?stats StatsProbe (renders null, zero visual change) + freeze the 3 presets verbatim + author the 15-element scorecard
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 01-03-PLAN.md — TP0b T1 pure-pixel metrics (M3/M4/M5/M6/M8/+A/+B + M10) with exact §4.5 thresholds + positive/negative control-frame meta-gate
 - [ ] 01-04-PLAN.md — TP0b integrity metrics: M9 determinism + M7 bloom-absence code-assert + M12 regional-MSE zero-visual-change proof + M1/M2 operator seam
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 01-05-PLAN.md — OPERATOR GATE (autonomous:false): TP0.0 M1 precondition + money-shot blessing (POV fov 37-vs-40) + M1-legibility + M11 on-device read
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 01-06-PLAN.md — IRREVERSIBLE baseline freeze: capture HEAD + protected-tag corpus (throwaway worktree), downscale + persist to docs/table-3d/anchors/, scorecard baseline, region rects
 
 ### Phase 2: TP1 — Felt / Tapete Materiality (the stage)
+
 **Goal**: Turn the largest, weakest surface into believable woven baize — directional nap sheen, micro-relief normal, restrained anisotropy — with the identity mark kept born-in the cloth, green in-palette, and depth moved out of baked albedo into material/light so it relights. Full spec: §TP1.
 **Depends on**: Phase 1
 **Success Criteria** (what must be TRUE):
+
   1. Felt → MeshPhysicalMaterial with a Charlie sheen lobe (sheen 0.6–0.85, lighter-green sheenColor, sheenRoughness 0.55–0.8) + tiled tangent-space nap normalMap (built via the shared height→normal helper) + low anisotropy 0.15–0.4; metric +B passes ("fuzz" not "satin"); roughness kept 0.90–0.94.
   2. Radial vignette removed from albedo but a light-RESPONSIVE micro edge-darkening kept so felt never regresses below reference between TP1 and TP5/TP6; M3 felt-hue PASS; M5 highlight-clip on felt PASS; MACRO inlay sharpness ≥ baseline; mark stays born-in (no floating decal / z-fight).
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at POV + MACRO: reads as real woven baize without satin/casino-green (materiality ONLY; grounding/depth deferred to TP5/TP6). Stop-on-ambiguous → iterate ≤2 then roll back (non-blocking: keep current felt, proceed).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)
+
 **Goal**: Push the protagonist from "good decal" to real card STOCK — faint face micro-relief + coated sheen, max-anisotropy crispness, a cheap paper-edge read, tighter contact, restrained dealt variance — without ever softening hole-card legibility. Full spec: §TP2.
 **Depends on**: Phase 1, Phase 2
 **Success Criteria** (what must be TRUE):
+
   1. Face anisotropy raised to max (cap 16) + mipmaps confirmed; faint card-stock micro-relief normal + a whisper of clearcoat (0.12–0.18, clearcoatRoughness 0.5–0.6) — NOT glossy; paper-edge via a CHEAP fake (no transmission material); face-to-bevel seam fixed (no cream rim / z-fight at MACRO; CARD_CORNER 0.17 unchanged).
   2. Restrained dealt variance (per-card micro-tilt/yaw ≤ ~1.5–2°, frozen deterministically — M9); near-edge contact-shadow tightened (M6); M1 legibility MUST NOT regress; M2 cards-vs-chips ≥ 2× maintained.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at POV + MACRO: physical printed STOCK while razor-legible. Stop-on-ambiguous: any legibility loss OR more plastic/laminated → STOP and revert that lever (non-blocking, flag).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)
+
 **Goal**: Re-author chips as matte worn clay that recedes as a quiet accent, lock the chip↔card hierarchy, AND fix the program's #1 perf liability by instancing — protecting identity and the later mobile gate together. Full spec: §TP3.
 **Depends on**: Phase 1, Phase 2
 **Success Criteria** (what must be TRUE):
+
   1. De-Vegas material (matte clay seal 0.32–0.42, gloss killed, micro-grain, C/rim tooled as a RECESSED mark via the shared bump→normal helper, face logo desaturated+shrunk); accent recedes (chroma muted ~15–20%, value lowered) so M2 ≥ 2× holds and chips are no longer the second-brightest/most-saturated object after cards.
   2. PERF: stacks converted to InstancedMesh/drei Instances per denomination, bottom face dropped, chip textures right-sized; demoted-pot chip draws ~42 → ≤ ~10; `?chips=full` back within < 220; M10 PASS; MACRO chip quality ≥ baseline.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at HERO + MACRO: worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss. Stop-on-ambiguous: chips pull the eye / read plastic → STOP. Rollback SPLIT: de-Vegas non-blocking (keep current); instancing must-ship-or-revert (net-positive perf or don't ship).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)
+
 **Goal**: Adjudicate the recorded elegance question (two-part rail + apron gained mass, possibly lost the slim refined edge) and add the flagged craft details — as a REVIEW, not an auto-revert. The body already exists; "table floats" is a LIGHTING problem fixed in TP5, NOT missing geometry. TP4 may only REFINE existing profiles, never ADD furniture mass. Full spec: §TP4.
 **Depends on**: Phase 1, Phase 2
 **Success Criteria** (what must be TRUE):
+
   1. VERDICT FIRST: a structured side-by-side of the frozen shots, current contour vs the recorded slim-rail set, recorded as "edge elegance lost / acceptable / lost-in-specific-respect". If "lost": surgically slim leather/wood/outer profiles toward edge thinness without deleting the material story or the mass (reversible).
   2. Craft details land where they pass independently: welt/cord at the felt-to-rail seam; wood/leather/brass normalMaps (shared helper) + per-arc-length UV (no oval-end grain stretch); brass → aged-brass within the single locked M4 HSV target (M4 PASS); rail outer wall reads as a curved volume; no perf regression.
   3. **[OPERATOR GATE — manual verdict]** Operator verdict at HERO + a rail/eye view: "recovered edge elegance WITHOUT losing material/mass?" Stop-on-ambiguous → DEFAULT STOP and KEEP the current validated contour (non-blocking; ship only independent craft upgrades that passed).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)
+
 **Goal**: Shape the warm key into a gentle warm gradient that keeps the WHOLE table read (NOT a casino cone), add per-material specular + felt green-bounce, and upgrade grounding with PCSS soft shadows + baked ContactShadows — so every TP1–TP4 material reads under ONE coherent warm light with honest contact and zero casino harshness. TP5 owns ONLY light+shadow grounding deliverable with no postprocessing; ALL screen-space/crevice AO moves to TP6. Full spec: §TP5.
 **Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5
 **Success Criteria** (what must be TRUE):
+
   1. Key reframed as a warm gradient toward the rail with generous fill preserved (a key-to-fill ratio ceiling so it can never collapse to a cone); warm/cool dimensionality via a low cool fill + light rim; PER-MATERIAL specular tuning (NOT a global IBL/exposure bump) so chips/brass/rim/card-edges throw crisp small highlights without tipping wood→wet or brass→gold (re-run M4 at the END of TP5); felt green-bounce on undersides; apron/rail outer wall lit as a volume (resolves "table floats").
   2. Grounding: drei SoftShadows (PCSS, size 25–35, samples ~16) contact-hard near / soft far; key shadow-mapSize 2048 tuned (no acne/peter-pan); ContactShadows frames={1} (baked once → M11 improves); crushed blacks lifted into WARM graded shadow (metric +A). Anti-casino: no single hard white cone; NO bloom (M7); M5 highlight-clip PASS; M6 contact-shadow presence PASS under every object; no new shadow-casting light.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at all 3 shots: every material under ONE warm motivated light, honest grounding, restrained highlights, no casino harshness/cold void. Stop-on-ambiguous: pool reads as a spotlight OR specular tips glossy → STOP (non-blocking, flag: ship grounding, keep prior key if pool-shaping fails).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 7: TP6 — Profundidad & Composición (depth ON the table)
+
 **Goal**: Install the in-scope restrained postprocessing stack (first time it exists) for photographic depth ON/around the table — N8AO + a whisper of DOF on the hole cards + table-edge vignette/fog + a faint filmic grade — and resolve composition (kill empty-felt zones via CENTER table-STATE, lock cards>board>rail). NO environment is built. TP6 owns ALL screen-space/crevice AO. Full spec: §TP6.
 **Depends on**: Phase 1, Phase 2, Phase 3, Phase 6
 **Success Criteria** (what must be TRUE):
+
   1. Install `@react-three/postprocessing` + `postprocessing`; EffectComposer (enableNormalPass, MSAA 4) behind a `?fx` flag (A/Bs + freezes for capture). N8AO honest crevice darkening under cards/chips/rail; DepthOfField focused on the hole cards — hole cards stay razor-sharp (M1 HARD gate); restrained Vignette (M8 band 8–20%) + tuned fog; faint filmic grade + grain (metric +A).
   2. Composition: empty-felt zones killed with CENTER-OF-TABLE table-STATE only (face-down deck stub + dealer button, at most a center discard); NO opponent hand / per-seat object (negative check). cards>board>rail reinforced via focus/exposure. HARD anti-casino: NO Bloom mounted (M7); no glow halos; DOF never softens the hero. M11 within floor.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B (`?fx` off vs on) at all 3 shots: cinematic-premium honest depth, hero tack-sharp, no dead zones, no glow/gimmick. Stop-on-ambiguous: DOF gimmicky OR hero softens OR "effect-y" → STOP and reduce each effect (non-blocking, flag: cut the weakest, keep table without `?fx`).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 8: TP7 — Cámaras (lock the canonical money shots)
+
 **Goal**: CONFIRM the TP0-frozen HERO/POV/MACRO presets against the upgraded table (cameras were decided at TP0 — no mid-program re-baseline), and optionally add a non-canonical restrained cinematic flythrough that freezes to the canonical still under the capture flag. Full spec: §TP7.
 **Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7
 **Success Criteria** (what must be TRUE):
+
   1. The 3 presets re-evaluated on the finished materials/light/depth and reconfirmed LOCKED (longer-lens, distortion-free, ~50–85 mm-equiv; never fisheye; top-down only as a layout diagnostic). Protagonist hole cards compose as a dominant lower-third mass; `autoRotate` OFF for capture (M9); M1/M2 still PASS at the final HERO/POV.
   2. **[OPERATOR GATE — manual on-device]** Operator confirms the canonical hero on-device: "is THIS the money shot of the finished table?" Stop-on-ambiguous: if no preset clearly wins, keep the TP0 set; do not invent new framing late.
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)
+
 **Goal**: Add restrained micro-life that sells weight without ever being consciously noticed (card settle, chip-land settle, a breathing stillness) and complete the SHARED mid-play social read via table-STATE only (center game-state + staged mid-hand + demoted live-stakes pot), castizo + premium-artisanal feel integrated — gated behind prefers-reduced-motion AND frozen under the capture flag. Full spec: §TP8.
 **Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 6, Phase 7
 **Success Criteria** (what must be TRUE):
+
   1. Sub-threshold micro-motion on hero objects only (amplitude < ~0.01 world units / < ~0.5°, settle 0.2–0.4 s, idle period 6–12 s) via useFrame + easing; ALL micro-motion freezes under matchMedia(prefers-reduced-motion) AND the capture flag → M9 determinism HARD; amplitude bound enforced by operator-live-view + a static CODE assertion that easing constants ≤ the documented thresholds.
   2. Social read via CENTER table-STATE only (deck stub / button / center discard); NO modeled humans (`?seats` opt-in/never default); M2 ≥ 2× holds; castizo/artisanal lives in the OBJECT under warm light (no room, no decor); no flip/spin/glow FX, no bouncy easing.
   3. **[OPERATOR GATE — LIVE view, not a still]** Does it feel ALIVE and weighty + read as a shared mid-play game, with NO motion consciously noticeable? Stop-on-ambiguous: any visible wobble → HALVE it; if still seen → remove it (restrained stillness beats visible motion; non-blocking: keep the static-but-complete table).
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ### Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)
+
 **Goal**: Run the full multi-camera A/B, drive the scorecard all-green, finalize grade/tone-map consistency, confirm perf within guardrail, verify "mesa terminada", take the operator's final gate, and promote the result to the NEW protected table reference (old tag retained). Full spec: §TP9 + §8.
 **Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7, Phase 8, Phase 9
 **Success Criteria** (what must be TRUE):
+
   1. Full A/B matrix at the 3 locked shots: NEW vs TP0-baseline AND vs the correct comparison basis (vs the M1 captures for card/composition/protagonist; vs the protected tag for felt/rail/chips/lighting). Scorecard every element ≥ 4/5; ALL §4.5 metrics PASS simultaneously at the locked shots (single consolidated run); ACES vs AgX decision finalized + recorded; perf within guardrail (M10 + M11); "mesa terminada" (§8) checked item-by-item.
   2. **[OPERATOR GATE — final on-device verdict]** Operator final verdict across all 3 shots + a live view: "AAA, premium, castizo, hand-fabricated table, and clearly better than the reference?" Stop-on-ambiguous: ANYTHING ambiguous → do NOT promote; return to the specific failing phase.
   3. On an unambiguous operator yes: create a NEW git tag as the new protected reference; update the SSOT doc; retain the old tag forever. (Cannot promote on any below-green element / failed metric / ambiguous verdict.)
+
 **Plans**: TBD
 
 Plans:
+
 - [ ] TBD during planning
 
 ## Progress
