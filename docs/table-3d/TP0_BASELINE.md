@@ -69,20 +69,61 @@ This invariant must be re-verified at TP9 (SSOT §5.8 + PROJECT.md Constraints).
 
 ## Frozen Presets (verbatim)
 
-> **TO BE FILLED by plan 02 (TP0a-2: StatsProbe + preset freeze).**
-> The POV fov 37-vs-40 operator gate and the verbatim preset values will be recorded here
-> after the operator blesses the 3 money shots.
+> Recorded by plan 02 (TP0a-2). Values are EXACTLY what the code contains today — no changes baked.
+> The fov-37 candidate is an operator-gate decision deferred to plan 05; it is NOT in the code yet.
 
-| Shot | Camera preset key | Position | Target | FOV | Status |
-|------|-------------------|----------|--------|-----|--------|
-| HERO | `hero` | `[1.2, 5.0, 8.2]` | `[0, 0.5, 0]` | 32 | Confirmed in code (TableLab.tsx:620) |
-| POV | `card` | `[0, 4.7, 10.6]` | `[0, 0.25, 1.2]` | **40** (37 candidate — operator gate) | Pending operator gate |
-| MACRO | `macro` | `[-1.7, 1.7, 2.4]` | `[-1.55, 0.05, 1.05]` | 26 | Confirmed in code (TableLab.tsx:623) |
+### Camera presets (TableLab.tsx lines 616–631)
 
-Staged scene (FROZEN, SSOT §5.1):
-- Community: `["1E","12C","11B"]` = As Espadas · Rey Copas · Caballo Bastos (3 cards face-up)
-- Hole (la Perla de Oros): `["10O","7O"]` = Sota + 7 de Oros (2 cards face-up)
-- Demoted accent pot: `<group position={[2.7, 0, 1.5]} scale={0.66}>` (C×6 + B×4 + E×3 + 1 O chip)
+| Shot | URL param | Preset key | Position | Target | FOV (code) | Code line | Notes |
+|------|-----------|------------|----------|--------|-----------|-----------|-------|
+| HERO | `?cam=hero` | `hero` | `[1.2, 5.0, 8.2]` | `[0, 0.5, 0]` | **32** | 620 | Matches SSOT |
+| POV  | `?cam=card` | `card` | `[0, 4.7, 10.6]` | `[0, 0.25, 1.2]` | **40** | 618 | See note below |
+| MACRO | `?cam=macro` | `macro` | `[-1.7, 1.7, 2.4]` | `[-1.55, 0.05, 1.05]` | **26** | 623 | Matches SSOT |
+
+> **POV fov — operator-gate note (SSOT §4.1 + §Ordering constraint):**
+> The code today is `fov: 40` (line 618). The SSOT specifies "tightened 40→37" but explicitly
+> allows this as the ONE permitted TP0 refinement, applied LAST — after the operator blesses the
+> three money shots on-device — and BEFORE the irreversible baseline freeze (plan 06).
+> **Do NOT bake fov 37 until the operator confirms.** This record captures fov 40 as the
+> current code reality. The refinement to 37 is the operator's decision (plan 05).
+
+### Staged scene (FROZEN, SSOT §4.2 + §5.1)
+
+Defined verbatim in `TableLab.tsx:60–61`:
+
+```ts
+const LAB_COMMUNITY = ["1E", "12C", "11B"]; // As de Espadas · Rey de Copas · Caballo de Bastos
+const LAB_HOLE      = ["10O", "7O"];         // La Perla de Oros — Sota + 7 de Oros
+```
+
+- **Community cards (3, FACE-UP):** `["1E","12C","11B"]` = As Espadas · Rey Copas · Caballo Bastos
+  - Layout: flat on felt, centered row (`communityLayout()` → `COMMUNITY_Z = -0.55`, rotation `−π/2`)
+- **Hole cards / La Perla (2, FACE-UP):** `["10O","7O"]` = Sota + 7 de Oros
+  - Layout: fanned + lifted toward POV camera (`holeLayout()` → `HOLE_Z = 3.95`, `HOLE_LIFT = 0.46`)
+- **Demoted accent pot:** `<group position={[2.7, 0, 1.5]} scale={0.66}>` (TableLab.tsx:702)
+  - Contents: C×6 stacks + B×4 + E×3 + 1 O chip — set off to the side, smaller than the full pot
+- **Invariant:** NO face-down card and NO 6th card are added to the Perla hand.
+  Any deck-stub is a TP6 center-of-table prop, never a 6th hole card (preserves SSIM/MSE anchor validity).
+
+---
+
+## StatsProbe — Zero-Visual-Change Proof (plan 02)
+
+**Verified:** 2026-06-09 (plan 02, commit c9ef9a8)
+
+The `?stats` overlay renders `null` — it adds ZERO pixels to the captured frame.
+Proven by md5 byte-identity between two captures of `?cam=card` (with and without `?stats`):
+
+| Capture | URL | md5 |
+|---------|-----|-----|
+| Without `?stats` | `?cam=card` (harness auto-appends `&spin=off`) | `3b7480d7d1a9bab8c6f015637fe93b79` |
+| With `?stats` | `?cam=card&stats` | `3b7480d7d1a9bab8c6f015637fe93b79` |
+
+**Result: IDENTICAL — zero-visual-change CONFIRMED (T-02-01 mitigated)**
+
+Determinism (M9) also confirmed: two consecutive `?cam=card` captures → same md5 (`3b7480d7d1a9bab8c6f015637fe93b79`).
+
+Scratch PNGs: `.dev-stack/diag/table-3d/tp0-smoke/card-nostats.png` + `card-stats.png` (gitignored).
 
 ---
 
