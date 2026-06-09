@@ -659,16 +659,21 @@ function Scene() {
       </mesh>
 
       <PerspectiveCamera makeDefault position={cam.pos} fov={cam.fov} />
+      {/* Azimuth CLAMPED to the readable front arc (±~0.85 rad around the preset). The old 360°
+          auto-rotate swung the camera behind the board, where the player-oriented cards read
+          upside down — physically unavoidable from the far side. Default is now a static hero
+          front view; manual orbit stays within the arc where the cards read correctly. */}
       <OrbitControls
         makeDefault
         target={cam.target}
         enablePan={false}
         enableDamping
         dampingFactor={0.08}
-        autoRotate={qp("spin") !== "off"}
-        autoRotateSpeed={0.4}
+        autoRotate={false}
         minPolarAngle={0.45}
         maxPolarAngle={1.45}
+        minAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) - 0.85}
+        maxAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) + 0.85}
         minDistance={4}
         maxDistance={18}
       />
@@ -705,14 +710,15 @@ function Scene() {
           </>
         ) : qp("chips") !== "off" ? (
           // demoted accent pot — fewer, smaller stacks set off to the side
-          <group position={[2.9, 0, 1.45]} scale={0.62}>
-            {/* tidy non-intersecting cluster: stack centers ≥ ~2.1 apart (chip radius R=1), so the
-               stacks read as distinct denominations, not an interpenetrating mash. Loose chip set
-               clearly apart. Pot nudged out (x 2.7→2.9) to clear the rightmost community card. */}
-            <ChipStack kit={chipKit} denom="C" count={6} position={[-1.05, 0.06, -0.65]} />
-            <ChipStack kit={chipKit} denom="E" count={3} position={[1.05, 0.06, -0.65]} />
-            <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.2]} />
-            <Chip kit={chipKit} denom="O" position={[-2.15, 0.055, 1.7]} rotationY={0.6} />
+          <group position={[2.9, 0, 1.45]} scale={0.55}>
+            {/* tidy non-intersecting cluster: stack centers ~3.0 apart in LOCAL space → at this
+               scale they keep a clear ~0.5-world gap, so they read as distinct denominations and
+               never interpenetrate from any orbit angle (the earlier ~0.06-world gap let them
+               merge at grazing angles). Loose chip set well clear. */}
+            <ChipStack kit={chipKit} denom="C" count={6} position={[-1.5, 0.06, -0.85]} />
+            <ChipStack kit={chipKit} denom="E" count={3} position={[1.5, 0.06, -0.85]} />
+            <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.7]} />
+            <Chip kit={chipKit} denom="O" position={[-2.8, 0.055, 1.9]} rotationY={0.6} />
           </group>
         ) : null}
 
