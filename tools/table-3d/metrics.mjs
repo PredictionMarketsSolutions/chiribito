@@ -77,23 +77,39 @@ export const FRAME = Object.freeze({ width: 2880, height: 1800 });
 
 export const REGIONS = Object.freeze({
   // Open green felt, clear of cards/chips/logo/inlay — upper-left table surface (HERO).
-  feltHero: { left: 360, top: 470, width: 320, height: 200 },
-  // Aged-brass inlay arc (the gold ring around the community cards) — HERO.
-  brassHero: { left: 1230, top: 690, width: 260, height: 110 },
-  // Whole-frame corners (each 360×260) for vignette / warm-corner.
+  // Calibrated against the real HERO baseline: clean woven green, M3 ΔE≈8.5 (<12). [TP0b]
+  feltHero: { left: 760, top: 500, width: 200, height: 120 },
+  // Aged-brass inlay reveal (the gold band by the community cards) — HERO.
+  // Calibrated: H≈40° · S≈0.47 · V≈0.73 — the table's aged brass, NOT the bright gold
+  // of the painted court cards (which sit at S≈0.70 and would read as gold). [TP0b]
+  brassHero: { left: 1240, top: 820, width: 140, height: 60 },
+  // Whole-frame corners (each 360×260).
+  // NOTE (TP0b honest calibration): on the CURRENT baseline the table fills the BOTTOM
+  // corners with lit felt while the TOP corners are the dark room backdrop. The vignette
+  // falloff the SSOT M8/+A target lives in the TOP corners; the bottom corners are felt,
+  // not surround. M8/+A therefore sample the TOP corners (cornerTL/cornerTR) for the
+  // framing read. The restrained 8–20% vignette is a TP6 deliverable — see METRICS_ADMISSION.
   cornerTL: { left: 0, top: 0, width: 360, height: 260 },
   cornerTR: { left: FRAME.width - 360, top: 0, width: 360, height: 260 },
   cornerBL: { left: 0, top: FRAME.height - 260, width: 360, height: 260 },
   cornerBR: { left: FRAME.width - 360, top: FRAME.height - 260, width: 360, height: 260 },
-  // Center reference patch (open felt around the table middle) for vignette ratio.
+  // Center reference patch (lit felt/cards around the table middle) for vignette ratio.
   centerHero: { left: FRAME.width / 2 - 180, top: FRAME.height / 2 - 130, width: 360, height: 260 },
   // M6: a rect directly under a hole card vs an adjacent open-felt rect (HERO).
+  // Calibrated: under-card luma ≈172 vs adjacent felt ≈200 → ≈14% darker (≥12% gate). [TP0b]
   underCardHero: { left: 360, top: 1230, width: 220, height: 90 },
   feltAdjacentHero: { left: 360, top: 1090, width: 220, height: 90 },
 
   // PROVISIONAL POV rects (fov 40, NOT operator-locked). Finalized in plan 06.
   feltPovProvisional: { left: 380, top: 560, width: 320, height: 200 },
 });
+
+/**
+ * Corner sets for the framing metrics. The CURRENT baseline has felt in the bottom
+ * corners, so the vignette/warm read uses the TOP corners (the dark surround). Plan 06
+ * may revisit once TP6 adds a true restrained vignette to all four corners.
+ */
+export const FRAMING_CORNERS = Object.freeze(["cornerTL", "cornerTR"]);
 
 /* ------------------------------------------------------------------ *
  *  COLOR-SPACE HELPERS  (sRGB 8-bit → linear/Lab/HSV; standard math)
@@ -317,13 +333,12 @@ export async function m6ContactShadow(
   };
 }
 
-/** M8 — vignette hierarchy: mean corner luma 8–20% below center. */
+/** M8 — vignette hierarchy: mean corner luma 8–20% below center.
+ *  Uses the FRAMING_CORNERS (top corners on the current baseline — see REGIONS note). */
 export async function m8Vignette(pngPath, regions = REGIONS) {
   const center = meanLuma(await regionBuffer(pngPath, regions.centerHero));
   const corners = await Promise.all(
-    [regions.cornerTL, regions.cornerTR, regions.cornerBL, regions.cornerBR].map((c) =>
-      regionBuffer(pngPath, c).then(meanLuma),
-    ),
+    FRAMING_CORNERS.map((k) => regionBuffer(pngPath, regions[k]).then(meanLuma)),
   );
   const cornerMean = corners.reduce((a, b) => a + b, 0) / corners.length;
   const belowPct = center > 0 ? ((center - cornerMean) / center) * 100 : 0;
@@ -336,12 +351,11 @@ export async function m8Vignette(pngPath, regions = REGIONS) {
   };
 }
 
-/** +A — warm-corner floor: corner luma ≥ floor AND corner hue warm (not neutral). */
+/** +A — warm-corner floor: corner luma ≥ floor AND corner hue warm (not neutral).
+ *  Uses the FRAMING_CORNERS (top corners on the current baseline — see REGIONS note). */
 export async function aWarmCorner(pngPath, regions = REGIONS) {
   const cornerBufs = await Promise.all(
-    [regions.cornerTL, regions.cornerTR, regions.cornerBL, regions.cornerBR].map((c) =>
-      regionBuffer(pngPath, c),
-    ),
+    FRAMING_CORNERS.map((k) => regionBuffer(pngPath, regions[k])),
   );
   const means = cornerBufs.map(meanRgb);
   const lumas = means.map((m) => luma8(m.r, m.g, m.b));
