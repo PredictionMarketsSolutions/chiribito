@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-09T14:57:06Z"
-last_activity: 2026-06-09 -- Plan 01-01 complete (eval rig foundation)
+last_updated: "2026-06-09T15:10:11.558Z"
+last_activity: 2026-06-09
 progress:
   total_phases: 10
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
-  percent: 2
+  completed_plans: 2
+  percent: 0
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 ## Current Position
 
 Phase: 1 (TP0 — Eval Rig & Baseline (BLOCKING)) — EXECUTING
-Plan: 2 of 6
-Status: Plan 01-01 complete — proceeding to Plan 01-02
-Last activity: 2026-06-09 -- Plan 01-01 complete (eval rig foundation)
+Plan: 3 of 6
+Status: Ready to execute
+Last activity: 2026-06-09
 
-Progress: [█░░░░░░░░░] 2%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [█░░░░░░░░░] 2%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01-tp0-eval-rig-baseline-blocking P02 | 12 min | - tasks | - files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - Plan 01-01: Tracked rig dirs created in wave-1 so wave-3 plans 03/04 only WRITE (no race on creation).
 - Plan 01-01: Harness restored by single-file copy from main checkout (not re-authored).
 - Plan 01-01: Smoke PNGs in gitignored .dev-stack/diag/ scratch only — baseline freeze deferred to plan 06.
+- [Phase ?]: Plan 01-02: StatsProbe returns null, zero-visual-change proven via md5 (3b7480d7d1a9bab8c6f015637fe93b79); POV fov 40 recorded verbatim; fov-37 deferred to plan-05 operator gate; SCORECARD_TABLE_3D.md baseline column uses _TP0_ placeholders
 
 ### Pending Todos
 
@@ -86,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-09
-Stopped at: Plan 01-01 (eval rig foundation) complete. Commits: 05df493 (Task 1) + 970678a (Task 2). Summary: .planning/phases/01-tp0-eval-rig-baseline-blocking/01-01-SUMMARY.md. Frontend deps installed, harness restored, 3 tracked rig dirs created, smoke-captured 3 money shots (2880x1800 ERRORS []) on RTX 4060 D3D11, rollback tag tp0-before-rig cut, TP0_BASELINE.md skeleton created. Proceeding to Plan 01-02.
+Last session: 2026-06-09T15:10:11.552Z
+Stopped at: Plan 01-02 complete (StatsProbe + frozen presets + scorecard)
 Resume file: None

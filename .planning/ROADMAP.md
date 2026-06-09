@@ -51,11 +51,11 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Wave-0 foundation: install frontend deps, restore the Playwright harness, smoke-verify the 3 shots, cut the tp0-before-rig rollback tag, re-assert prod-build isolation
+- [x] 01-01-PLAN.md — Wave-0 foundation: install frontend deps, restore the Playwright harness, smoke-verify the 3 shots, cut the tp0-before-rig rollback tag, re-assert prod-build isolation
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Dependency-free ?stats StatsProbe (renders null, zero visual change) + freeze the 3 presets verbatim + author the 15-element scorecard
+- [x] 01-02-PLAN.md — Dependency-free ?stats StatsProbe (renders null, zero visual change) + freeze the 3 presets verbatim + author the 15-element scorecard
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -220,7 +220,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 0/6 | Not started | - |
+| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 2/6 | In Progress|  |
 | 2. TP1 — Felt Materiality | 0/TBD | Not started | - |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
