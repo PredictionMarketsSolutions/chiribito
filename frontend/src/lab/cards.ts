@@ -69,22 +69,34 @@ export function communityLayout(ids: string[]): CardPose[] {
 
 // Hole cards: the player's two cards, near their edge of the felt, lifted toward the
 // camera and gently fanned so rank + suit read large — the protagonist of the POV shot.
-const HOLE_Z = 3.95;
-const HOLE_PITCH = CARD_W * 0.66; // overlap into a held pair
-const HOLE_LIFT = 0.46; // raise the far edge toward the player camera
-const HOLE_FAN = 0.16; // a soft fan between the two
+const HOLE_Z = 3.35; // pulled back from 3.95 so the near edge no longer clips the POV/close frame bottom
+const HOLE_PITCH = CARD_W * 0.73; // ≈1.75 — balanced held-pair: slight overlap, both ranks legible (operator-picked variant B)
+const HOLE_LIFT = 0.42; // raise the far edge toward the player camera (eased from 0.46 to keep the pair fully framed)
+const HOLE_FAN = 0.14; // a soft fan between the two (operator-picked variant B)
+
+/** Optional per-render overrides for hole-pair composition (variant exploration; defaults = the baked constants). */
+export interface HoleOpts {
+  pitch?: number;
+  fan?: number;
+  z?: number;
+  lift?: number;
+}
 
 /** The player's hole cards, fanned + lifted toward the player camera for legibility. */
-export function holeLayout(ids: string[]): CardPose[] {
+export function holeLayout(ids: string[], opts: HoleOpts = {}): CardPose[] {
+  const pitch = opts.pitch ?? HOLE_PITCH;
+  const fan = opts.fan ?? HOLE_FAN;
+  const z = opts.z ?? HOLE_Z;
+  const lift = opts.lift ?? HOLE_LIFT;
   const n = ids.length;
-  const xs = rowPositionsX(n, HOLE_PITCH);
+  const xs = rowPositionsX(n, pitch);
   return ids.map((id, i) => {
     const dir = n === 1 ? 0 : i - (n - 1) / 2; // -0.5 / +0.5 for a pair
     return {
       id,
-      position: [xs[i], FELT_REST_Y + 0.02, HOLE_Z],
+      position: [xs[i], FELT_REST_Y + 0.02, z],
       // lifted toward the player camera (front face up-and-toward +Z), gently fanned
-      rotation: [-Math.PI / 2 + HOLE_LIFT, 0, dir * HOLE_FAN],
+      rotation: [-Math.PI / 2 + lift, 0, dir * fan],
     };
   });
 }

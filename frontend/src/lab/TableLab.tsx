@@ -609,7 +609,12 @@ function Scene() {
   const cardKit = useCardKit();
   const cardFaces = useCardFaces(LAB_HAND_IDS);
   const community = useMemo(() => communityLayout(LAB_COMMUNITY), []);
-  const hole = useMemo(() => holeLayout(LAB_HOLE), []);
+  // hole-pair composition: defaults to the baked constants; ?hpitch/?hfan/?hz/?hlift override
+  // them for variant exploration (default scene unchanged when no param is present).
+  const hole = useMemo(() => {
+    const num = (k: string) => (qp(k) != null ? Number(qp(k)) : undefined);
+    return holeLayout(LAB_HOLE, { pitch: num("hpitch"), fan: num("hfan"), z: num("hz"), lift: num("hlift") });
+  }, []);
 
   // camera preset via ?cam=wide|hero|close|top — lets us capture several angles
   const cam = useMemo<CamPreset>(() => {
@@ -700,11 +705,14 @@ function Scene() {
           </>
         ) : qp("chips") !== "off" ? (
           // demoted accent pot — fewer, smaller stacks set off to the side
-          <group position={[2.7, 0, 1.5]} scale={0.66}>
-            <ChipStack kit={chipKit} denom="C" count={6} position={[-0.5, 0.06, 0.0]} />
-            <ChipStack kit={chipKit} denom="B" count={4} position={[0.55, 0.06, -0.32]} />
-            <ChipStack kit={chipKit} denom="E" count={3} position={[0.08, 0.06, 0.5]} />
-            <Chip kit={chipKit} denom="O" position={[-1.05, 0.055, 0.45]} rotationY={0.6} />
+          <group position={[2.9, 0, 1.45]} scale={0.62}>
+            {/* tidy non-intersecting cluster: stack centers ≥ ~2.1 apart (chip radius R=1), so the
+               stacks read as distinct denominations, not an interpenetrating mash. Loose chip set
+               clearly apart. Pot nudged out (x 2.7→2.9) to clear the rightmost community card. */}
+            <ChipStack kit={chipKit} denom="C" count={6} position={[-1.05, 0.06, -0.65]} />
+            <ChipStack kit={chipKit} denom="E" count={3} position={[1.05, 0.06, -0.65]} />
+            <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.2]} />
+            <Chip kit={chipKit} denom="O" position={[-2.15, 0.055, 1.7]} rotationY={0.6} />
           </group>
         ) : null}
 
