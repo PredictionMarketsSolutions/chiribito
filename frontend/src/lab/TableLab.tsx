@@ -670,12 +670,12 @@ function Scene() {
         enableDamping
         dampingFactor={0.08}
         autoRotate={false}
-        minPolarAngle={0.45}
-        maxPolarAngle={1.45}
-        minAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) - 0.85}
-        maxAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) + 0.85}
-        minDistance={4}
-        maxDistance={18}
+        minPolarAngle={0.62}
+        maxPolarAngle={1.12}
+        minAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) - 0.5}
+        maxAzimuthAngle={Math.atan2(cam.pos[0] - cam.target[0], cam.pos[2] - cam.target[2]) + 0.5}
+        minDistance={5}
+        maxDistance={13}
       />
 
       <Lights />
@@ -710,15 +710,14 @@ function Scene() {
           </>
         ) : qp("chips") !== "off" ? (
           // demoted accent pot — fewer, smaller stacks set off to the side
-          <group position={[2.9, 0, 1.45]} scale={0.55}>
-            {/* tidy non-intersecting cluster: stack centers ~3.0 apart in LOCAL space → at this
-               scale they keep a clear ~0.5-world gap, so they read as distinct denominations and
-               never interpenetrate from any orbit angle (the earlier ~0.06-world gap let them
-               merge at grazing angles). Loose chip set well clear. */}
-            <ChipStack kit={chipKit} denom="C" count={6} position={[-1.5, 0.06, -0.85]} />
-            <ChipStack kit={chipKit} denom="E" count={3} position={[1.5, 0.06, -0.85]} />
+          <group position={[3.0, 0, 1.5]} scale={0.5}>
+            {/* demoted accent — three SHORT stacks, centers ~3 units apart in local space so even
+               at this scale they keep a clear ~0.45-world gap and never interpenetrate from any
+               reachable orbit angle. No loose chip (it muddied the read). They recede behind the
+               cards as quiet stakes. */}
+            <ChipStack kit={chipKit} denom="C" count={5} position={[-1.6, 0.06, -0.7]} />
+            <ChipStack kit={chipKit} denom="E" count={3} position={[1.6, 0.06, -0.7]} />
             <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.7]} />
-            <Chip kit={chipKit} denom="O" position={[-2.8, 0.055, 1.9]} rotationY={0.6} />
           </group>
         ) : null}
 
