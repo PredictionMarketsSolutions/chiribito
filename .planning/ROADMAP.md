@@ -43,10 +43,15 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
   2. Draw-call + frame-time baseline recorded (`renderer.info` + `?stats`, vsync OFF); the 15-element scorecard authored with baseline scores.
   3. Every admitted metric (SSOT §4.5) passes its positive AND negative control frame before being allowed to gate; un-validated metrics are informational only.
   4. **[OPERATOR GATE — manual/on-device]** TP0.0: operator confirms the M1 cards-as-protagonist read on-device; AND operator blesses the 3 money shots as the canonical views (incl. POV fov 37 vs 40 — one refinement allowed, then locked). BLOCKING: never proceed on a broken instrument or a failed M1 read.
-**Plans**: TBD
+**Plans**: 6 plans (5 waves)
 
 Plans:
-- [ ] TBD during planning
+- [ ] 01-01-PLAN.md — Wave-0 foundation: install frontend deps, restore the Playwright harness, smoke-verify the 3 shots, cut the tp0-before-rig rollback tag, re-assert prod-build isolation
+- [ ] 01-02-PLAN.md — Dependency-free ?stats StatsProbe (renders null, zero visual change) + freeze the 3 presets verbatim + author the 15-element scorecard
+- [ ] 01-03-PLAN.md — TP0b T1 pure-pixel metrics (M3/M4/M5/M6/M8/+A/+B + M10) with exact §4.5 thresholds + positive/negative control-frame meta-gate
+- [ ] 01-04-PLAN.md — TP0b integrity metrics: M9 determinism + M7 bloom-absence code-assert + M12 regional-MSE zero-visual-change proof + M1/M2 operator seam
+- [ ] 01-05-PLAN.md — OPERATOR GATE (autonomous:false): TP0.0 M1 precondition + money-shot blessing (POV fov 37-vs-40) + M1-legibility + M11 on-device read
+- [ ] 01-06-PLAN.md — IRREVERSIBLE baseline freeze: capture HEAD + protected-tag corpus (throwaway worktree), downscale + persist to docs/table-3d/anchors/, scorecard baseline, region rects
 
 ### Phase 2: TP1 — Felt / Tapete Materiality (the stage)
 **Goal**: Turn the largest, weakest surface into believable woven baize — directional nap sheen, micro-relief normal, restrained anisotropy — with the identity mark kept born-in the cloth, green in-palette, and depth moved out of baked albedo into material/light so it relights. Full spec: §TP1.
@@ -162,7 +167,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 0/TBD | Not started | - |
+| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 0/6 | Not started | - |
 | 2. TP1 — Felt Materiality | 0/TBD | Not started | - |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |

@@ -22,6 +22,34 @@ Three parts (SSOT §TP0):
 <decisions>
 ## Implementation Decisions
 
+> **Decision ledger (D-IDs).** This phase is spec-complete: the CONTEXT recorded the SSOT-baked decisions rather than re-deciding. The bullets below assign stable, trackable D-IDs to each baked decision/constraint so the plans cite them for traceability (decision-coverage gate). Each points at its authoritative SSOT/CONTEXT source; the SSOT wins on any conflict. The prose subsections that follow restate the same decisions in narrative form.
+
+### Baked decisions (trackable D-IDs)
+
+- **D-01:** ZERO visual/material change in TP0 — the rig measures, never edits a default pixel (provable via M12 regional MSE ~= 0 vs HEAD). [SSOT §TP0; CONTEXT Phase Boundary]
+- **D-02:** 3 canonical money shots FROZEN at TP0, reused verbatim at every gate — HERO fov 32 / POV(card) fov 37-or-40 / MACRO fov 26, via ?cam= + ?spin=off. [SSOT §4.1]
+- **D-03:** A dependency-free ?stats reader (useThree+useFrame) exposes gl.info.render.calls + frame-time on window.__labStats and renders NULL (no on-canvas widget; not drei <Stats>). [SSOT §4.5 M10/M11; RESEARCH Pattern 1]
+- **D-04:** 15-element AAA scorecard (0-5 each), baseline scored at TP0; green = >=4/5 every element at TP9. [SSOT §4.4]
+- **D-05:** Draw-call + frame-time baseline read via renderer.info + ?stats, vsync OFF (M10 <150 hero/POV/macro & ?chips=full <220; M11 <8ms HERO RTX4060). [SSOT §4.5 M10/M11, §5.1]
+- **D-06:** Metric kit = 12+2 with concrete baked §4.5 thresholds (M1..M12,+A,+B); SSIM proxy = sharp MSE; legibility = px-height + manual (no OCR hard gate). [SSOT §4.5]
+- **D-07:** Red-team META-GATE: a metric is admitted to the gate-set ONLY after PASS-on-good AND FAIL-on-bad control frames; until validated it is informational-only. [SSOT §4.5; §8 DoD #13]
+- **D-08:** Frontend deps must be installed (frontend/node_modules empty) so the Vite dev server serves /table-lab.html. [RESEARCH Env Availability]
+- **D-09:** The Playwright/D3D11 harness (.dev-stack/lab-shot.mjs) is the only WebGL capture path (IDE preview times out); restore one file or run from main checkout. [SSOT §4.3/§11; RESEARCH Q3]
+- **D-10:** Anchor corpus + instrument code persist to TRACKED locations (docs/table-3d/anchors/ + tools/table-3d/), NOT gitignored .dev-stack/, so they survive a clean checkout. [SSOT §4.3; RESEARCH structure/Q7]
+- **D-11:** ?stats mounts ONLY when present; the default captured scene is byte-for-byte unchanged. [RESEARCH Q2/Pitfall 3]
+- **D-12:** Zero-visual-change is provable — md5(default)==md5(?stats) and M12 regional MSE ~= 0 on must-not-change regions vs HEAD. [SSOT §5.2/§5.6; VALIDATION]
+- **D-13:** Captures run on the real local RTX 4060 via the harness; an executor may run the command + Read the PNG to assert dimensions/no-console-errors. [SSOT §4.3; RESEARCH Q3]
+- **D-14:** M9 determinism — two consecutive captures byte-identical (md5) under &spin=off + reduced-motion; no useFrame motion at TP0. [SSOT §4.5 M9, §5.6]
+- **D-15:** Per-phase rollback tag tp0-before-rig created BEFORE edits; TP0 rollback disposition = BLOCKING (broken instrument halts the program). [SSOT §5.3]
+- **D-16:** The lab stays OUT of the prod vite build (no table-lab input in vite.config.ts); re-assert isolation. [SSOT §5.8; RESEARCH Q7]
+- **D-17:** TP0.0 — operator confirms the M1 cards-as-protagonist read on-device BEFORE any TP1+ materiality work. [SSOT §TP0 TP0.0]
+- **D-18:** TP0.0 is BLOCKING — on M1-read FAIL, halt before TP1 (refine M1), never proceed on a failed read. [SSOT §TP0; §5.3]
+- **D-19:** The POV fov is the ONE allowed TP0 refinement (40 keep or 37 tighten), an OPERATOR decision applied as the LAST reversible edit before the irreversible freeze; then locked. [SSOT §4.1; CONTEXT Ordering constraint]
+- **D-20:** Baseline captured at the frozen-rig worktree HEAD AND at the protected tag table-3d-premium-reference-2026-06-04 (d17df37). [SSOT §TP0; RESEARCH Q5]
+- **D-21:** Protected tag captured via a throwaway detached git worktree removed cleanly; the immutable tag is NEVER mutated (reference never degraded). [SSOT §5.2; RESEARCH Q5]
+- **D-22:** Committed anchors are DOWNSCALED (~1280w, corpus < ~10MB) to avoid repo bloat; full-res working copies stay in gitignored .dev-stack/. [SSOT §4.3 (small PNGs); RESEARCH Pitfall 5]
+- **D-23:** Metric region rects are authored against the FINAL blessed frame (after the operator locks the POV fov), so they read the correct pixels. [RESEARCH A3/Q4]
+
 ### Anchored to the SSOT (already baked — do NOT re-litigate)
 - **3 canonical money shots (FROZEN at TP0, reused verbatim at every gate):** HERO `?cam=hero` (¾, **fov 32**) · POV `?cam=card` (player POV, **fov 37** — tightened from 40) · MACRO `?cam=macro` (**fov 26**). All driven by `?cam=` + `?spin=off`.
 - **Fixed staged scene (FROZEN):** `LAB_COMMUNITY = [1E,12C,11B]` (As Espadas · Rey Copas · Caballo Bastos) · `LAB_HOLE = [10O,7O]` (la Perla de Oros, Sota+7) — all 5 cards FACE-UP · demoted accent pot at `group[2.7,0,1.5] scale 0.66`. **No face-down card is added to the Perla hand** (keeps the SSIM/MSE anchor valid; any deck-stub is a TP6 center-of-table prop, never a 6th card).
