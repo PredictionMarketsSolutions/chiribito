@@ -59,7 +59,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — TP0b T1 pure-pixel metrics (M3/M4/M5/M6/M8/+A/+B + M10) with exact §4.5 thresholds + positive/negative control-frame meta-gate
+- [x] 01-03-PLAN.md — TP0b T1 pure-pixel metrics (M3/M4/M5/M6/M8/+A/+B + M10) with exact §4.5 thresholds + positive/negative control-frame meta-gate
 - [ ] 01-04-PLAN.md — TP0b integrity metrics: M9 determinism + M7 bloom-absence code-assert + M12 regional-MSE zero-visual-change proof + M1/M2 operator seam
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -220,7 +220,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 2/6 | In Progress|  |
+| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 3/6 | In Progress|  |
 | 2. TP1 — Felt Materiality | 0/TBD | Not started | - |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
