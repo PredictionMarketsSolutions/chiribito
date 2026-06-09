@@ -13,6 +13,7 @@
  */
 import { useMemo, Suspense } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
+import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
   PerspectiveCamera,
@@ -747,6 +748,10 @@ function Scene() {
           <Lightformer form="ring" intensity={0.35} color="#9fb8ff" position={[6, 4, -5]} scale={[4, 4, 1]} />
         </Environment>
       )}
+
+      {/* M10/M11 instrumentation — renders null (zero pixels); writes window.__labStats.
+          Mounted ONLY when ?stats is present so the default captured scene is untouched. */}
+      {qp("stats") !== null && <StatsProbe />}
     </>
   );
 }
