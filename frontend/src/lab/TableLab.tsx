@@ -38,6 +38,15 @@ import {
 } from "./textures";
 import { TableVariant } from "./TableVariant";
 import type { Silhouette } from "./silhouettes";
+import {
+  CARD_FACE_Z,
+  cardBodyGeometry,
+  cardFaceGeometry,
+  communityLayout,
+  holeLayout,
+  labCardFaceUrl,
+  type CardPose,
+} from "./cards";
 
 // --- proportions (chip radius = 1 world unit) ---
 const R = 1;
@@ -45,6 +54,12 @@ const H = 0.1; // chip thickness — thin, so a stack reads as many crisp layers
 const BEVEL = 0.03;
 const FELT_R = 5.2;
 const OVAL_X = 1.22; // table stretched on X into an oval (chips stay un-stretched)
+
+// --- M1 staged hand — real Fournier faces. The player holds the Perla de Oros (Sota + 7
+// of Oros, the strongest hole pair); three community cards sit on the board. ---
+const LAB_COMMUNITY = ["1E", "12C", "11B"]; // As de Espadas · Rey de Copas · Caballo de Bastos
+const LAB_HOLE = ["10O", "7O"]; // La Perla de Oros — Sota + 7 de Oros
+const LAB_HAND_IDS = [...LAB_COMMUNITY, ...LAB_HOLE];
 
 /** read a query param — debug toggles for isolating issues in the lab */
 function qp(name: string): string | null {
@@ -253,6 +268,87 @@ function ChipStack({
     );
   }
   return <group>{chips}</group>;
+}
+
+// --- M1: the cards — the absolute protagonist ---------------------------------------
+// Real Fournier faces on warm card stock with rounded corners + a real beveled edge, so a
+// card reads as a physical object (catches rim light, casts a contact shadow). Mirrors the
+// chip-kit pattern: shared body + face geometry, a shared stock material, per-card face map.
+
+interface CardKit {
+  body: THREE.ExtrudeGeometry;
+  face: THREE.ShapeGeometry;
+  stock: THREE.Material;
+}
+
+function useCardKit(): CardKit {
+  return useMemo(() => {
+    const stock = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color("#f1e7cf"), // warm ivory card stock
+      roughness: 0.62,
+      metalness: 0,
+      clearcoat: 0.16, // a faint coated sheen on the stock
+      clearcoatRoughness: 0.5,
+      sheen: 0.22,
+      sheenColor: new THREE.Color("#fff6e0"),
+    });
+    return { body: cardBodyGeometry(), face: cardFaceGeometry(), stock };
+  }, []);
+}
+
+/** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp). */
+function useCardFaces(ids: string[]): Record<string, THREE.Texture> {
+  const texs = useLoader(THREE.TextureLoader, ids.map(labCardFaceUrl)) as THREE.Texture[];
+  return useMemo(() => {
+    const map: Record<string, THREE.Texture> = {};
+    ids.forEach((id, i) => {
+      const t = texs[i];
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8; // keep rank + suit crisp at the grazing table angle (legibility gate)
+      t.needsUpdate = true;
+      map[id] = t;
+    });
+    return map;
+  }, [ids, texs]);
+}
+
+function Card({ kit, faceTex, pose }: { kit: CardKit; faceTex: THREE.Texture; pose: CardPose }) {
+  const faceMat = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        map: faceTex,
+        roughness: 0.52,
+        metalness: 0,
+        clearcoat: 0.1, // a whisper of coated-card gloss, not plastic
+        clearcoatRoughness: 0.55,
+        side: THREE.DoubleSide, // never cull the face — the card is read from either side
+      }),
+    [faceTex],
+  );
+  return (
+    <group position={pose.position} rotation={pose.rotation}>
+      <mesh geometry={kit.body} material={kit.stock} castShadow receiveShadow />
+      <mesh geometry={kit.face} material={faceMat} position={[0, 0, CARD_FACE_Z]} castShadow />
+    </group>
+  );
+}
+
+function CardGroup({
+  kit,
+  faces,
+  poses,
+}: {
+  kit: CardKit;
+  faces: Record<string, THREE.Texture>;
+  poses: CardPose[];
+}) {
+  return (
+    <group>
+      {poses.map((pose, i) => (
+        <Card key={i} kit={kit} faceTex={faces[pose.id]} pose={pose} />
+      ))}
+    </group>
+  );
 }
 
 function Table({
@@ -506,12 +602,20 @@ function Scene() {
   );
   // ?c=literal → the literal 48px favicon (soft). Default → faithful HD rebuild (crisp).
   const cImg = qp("c") === "literal" ? ((cTex.image as HTMLImageElement) ?? null) : null;
-  const kit = useChipKit(cImg);
+  const chipKit = useChipKit(cImg);
+
+  // M1 — the cards: shared kit + the staged hand's real faces, laid out on the felt.
+  const cardKit = useCardKit();
+  const cardFaces = useCardFaces(LAB_HAND_IDS);
+  const community = useMemo(() => communityLayout(LAB_COMMUNITY), []);
+  const hole = useMemo(() => holeLayout(LAB_HOLE), []);
 
   // camera preset via ?cam=wide|hero|close|top — lets us capture several angles
   const cam = useMemo<CamPreset>(() => {
-    const key = new URLSearchParams(window.location.search).get("cam") || "wide";
+    const key = new URLSearchParams(window.location.search).get("cam") || "card";
     const presets: Record<string, CamPreset> = {
+      // M1 player POV — hole cards large in the foreground, the board read beyond them
+      card: { pos: [0, 4.7, 10.6], target: [0, 0.25, 1.2], fov: 40 },
       wide: { pos: [0, 7.0, 11.5], target: [0, 0.1, 0], fov: 34 },
       hero: { pos: [1.2, 5.0, 8.2], target: [0, 0.5, 0], fov: 32 },
       close: { pos: [1.6, 3.0, 5.4], target: [0.1, 0.6, 0.2], fov: 36 },
@@ -572,18 +676,36 @@ function Scene() {
           <Table logoImg={logoImg} aceImgs={aceImgs} />
         )}
 
-        {qp("chips") !== "off" && (
+        {/* M1 — the cards are the protagonist (default on; ?cards=off restores the pre-card
+           table). Community cards on the board + the player's hole cards (the Perla) up front. */}
+        {qp("cards") !== "off" && (
           <>
-            {/* the pot — hand-stacked clay stacks. Each denomination IS a Spanish suit. */}
-            <ChipStack kit={kit} denom="C" count={17} position={[-0.55, 0.06, 0.2]} />
-            <ChipStack kit={kit} denom="B" count={12} position={[0.7, 0.06, -0.35]} />
-            <ChipStack kit={kit} denom="E" count={14} position={[0.1, 0.06, 0.95]} />
-            <ChipStack kit={kit} denom="O" count={9} position={[1.05, 0.06, 0.7]} />
-            {/* two loose chips lying flat — show a face */}
-            <Chip kit={kit} denom="O" position={[-1.7, 0.055, 1.0]} rotationY={0.6} />
-            <Chip kit={kit} denom="C" position={[-1.4, 0.055, 1.25]} rotationY={1.4} />
+            <CardGroup kit={cardKit} faces={cardFaces} poses={community} />
+            <CardGroup kit={cardKit} faces={cardFaces} poses={hole} />
           </>
         )}
+
+        {/* the pot — clay stacks, each denomination a Spanish suit. M1 DEMOTES it to a modest
+           accent so the cards dominate. ?chips=full restores the old heavy central pot;
+           ?chips=off clears it. Chips are identity — demoted, never deleted. */}
+        {qp("chips") === "full" ? (
+          <>
+            <ChipStack kit={chipKit} denom="C" count={17} position={[-0.55, 0.06, 0.2]} />
+            <ChipStack kit={chipKit} denom="B" count={12} position={[0.7, 0.06, -0.35]} />
+            <ChipStack kit={chipKit} denom="E" count={14} position={[0.1, 0.06, 0.95]} />
+            <ChipStack kit={chipKit} denom="O" count={9} position={[1.05, 0.06, 0.7]} />
+            <Chip kit={chipKit} denom="O" position={[-1.7, 0.055, 1.0]} rotationY={0.6} />
+            <Chip kit={chipKit} denom="C" position={[-1.4, 0.055, 1.25]} rotationY={1.4} />
+          </>
+        ) : qp("chips") !== "off" ? (
+          // demoted accent pot — fewer, smaller stacks set off to the side
+          <group position={[2.7, 0, 1.5]} scale={0.66}>
+            <ChipStack kit={chipKit} denom="C" count={6} position={[-0.5, 0.06, 0.0]} />
+            <ChipStack kit={chipKit} denom="B" count={4} position={[0.55, 0.06, -0.32]} />
+            <ChipStack kit={chipKit} denom="E" count={3} position={[0.08, 0.06, 0.5]} />
+            <Chip kit={chipKit} denom="O" position={[-1.05, 0.055, 0.45]} rotationY={0.6} />
+          </group>
+        ) : null}
 
         {/* human presence around the oval — OPT-IN (?seats=on) and fully isolated, so the
            default lab view is always the protected premium table. Occupant/seat work is an
