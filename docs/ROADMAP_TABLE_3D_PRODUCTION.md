@@ -12,6 +12,16 @@
 > integration come AFTER identity and feel are proven. Reward = rareza + carta + alma, NEVER money.
 > No casino / Vegas / neon / crypto. Cards over chips, always.
 
+> **⟹ SOURCE OF TRUTH FOR TABLE-OBJECT WORK = `docs/ROADMAP_TABLE_3D_PERFECTION.md` (2026-06-09).**
+> A focused TP0–TP9 program perfects the table OBJECT (mesa · tapete · cartas · fichas · materialidad ·
+> luz · sombras · profundidad · composición · cámaras · presencia física · táctil · social-via-table-state ·
+> castizo · premium artesanal) to AAA, with an eval rig, baked metric thresholds, perceptual gates,
+> rollback dispositions and a "mesa terminada" definition. It absorbs/deepens this program's **M1**
+> (cards, shipped-local), **M3-feel** (table-only slice) and **M5** (rail/contour). The milestones below
+> that remain are the **non-table** ones — **M2 (castizo room), M4 (occupant/social environment),
+> M6 (mobile perf gate), M7 (game integration), M8 (candidacy A/B)** — which resume AFTER the PERFECTION
+> program completes. Run PERFECTION first.
+
 ---
 
 ## How we got here (decision log)
