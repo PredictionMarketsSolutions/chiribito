@@ -84,8 +84,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- **[OPEN — TP0.0 precondition]** The M1 cards-as-protagonist on-device operator perceptual gate is still OPEN. It must PASS before any materiality work (TP1+). The autonomous loop will stop at this gate.
-- **[OPEN — operator]** POV fov 37 vs 40 + the 3 money shots blessing — the one allowed TP0 preset refinement, then locked. Operator confirms at the TP0 gate.
+- **[GATE — awaiting freeze GO]** Operator's on-device M1 gate (2026-06-09): M1 read GOOD/direction right but freeze NOT approved → opened an M1 refinement (clipping/chip-intersection/composition). Desktop M1 refinement now COMPLETE (operator delegated → judged PASS; commit d57e177). **Awaiting the operator's explicit GO to run the baseline freeze (plan 01-06).**
+- **[OPEN — operator, at freeze]** POV fov: KEEPING 40 (no un-blessed change); 37 remains a one-line option the operator can call at the freeze go. Mobile-responsive DEFERRED (see Deferred Items).
 - **[INVARIANT]** NO push / deploy / merge without explicit operator confirmation (Chiribito manual-deploy policy, Vercel team `chiribito293-7173`). Atomic LOCAL commits only.
 - **[OPERATIONAL — session rooting]** The GSD autonomous loop + its skills are repo-root-relative (verified: workflows use relative `.planning/` paths). To run the loop reliably the session MUST be rooted at `Documents\CHIRIBITO\chiri-infrastructure\chiri-app`, not the home folder. Bootstrap was done with absolute paths + SDK validation; execution needs repo rooting.
 
@@ -93,12 +93,12 @@ None yet.
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Mobile | Responsive camera framing — portrait/tight-landscape side-clip the wide card layout; needs aspect-aware fov/distance. Geometry sound, camera-only. | Deferred | 2026-06-09 (M1 refinement; SSOT defers mobile-as-deliverable) |
 
 ## Session Continuity
 
 Last session: 2026-06-09
-Stopped at: TP0 W1–W3 COMPLETE (rig + full metric kit), **PAUSED at W4 — the BLOCKING on-device operator gate (plan 01-05)**. Built: deps+harness+rollback tag (01-01), ?stats probe + frozen presets + 15-elem scorecard (01-02), 8 metrics ADMITTED [M3/M4/M5/M6/+B/M10/M9/M7/M12] + 4 informational [M8/+A need TP6 vignette; M1/M2 need operator confirm] (01-03/04). Zero-visual-change PROVEN (HERO byte-identical to HEAD). Honest finding: draw-calls OVER ceiling at baseline (HERO 237, expected → TP3 instancing).
-Awaiting OPERATOR (on-device, BLOCKING, plan 01-05): (1) TP0.0 — confirm M1 cards-as-protagonist read; (2) bless the 3 money shots incl. **POV fov 40-keep vs 37-tighten** (the ONE allowed refinement, locks at baseline freeze); (3) confirm M1 legibility; (4) M11 frame-time read. THEN plan 01-06 freezes the baseline (irreversible) → phase verification.
+Stopped at: TP0 W1–W3 done (rig + metric kit: 8 ADMITTED, 4 informational; zero-visual-change PROVEN; honest finding draw-calls OVER ceiling HERO 237 → TP3). The W4 on-device operator gate ran: M1 read GOOD but freeze NOT approved → **M1 refinement** (docs/table-3d/M1_REFINEMENT.md) fixed card clipping + chip intersections + baked the operator-picked **"B" balanced Perla** (HOLE_Z 3.95→3.35, pitch ≈1.75, fan 0.14; pot re-spaced non-intersecting). **Desktop M1 COMPLETE** (commit d57e177) — cards dominate, money shots clean. Mobile portrait → responsive-camera finding, DEFERRED.
+Awaiting OPERATOR: explicit **GO to run plan 01-06** (baseline freeze at fov 40 — persist anchors to docs/table-3d/anchors/, finalize POV rects + scorecard; LOCAL + reversible, no push) → then TP0 verification → TP0 complete → pause before TP1 (materiality). Operator may instead say "use 37" / "do mobile first" / request desktop tweaks. (M1 refinement evidence: .dev-stack/diag/table-3d/m1-final/ + m1-mobile/.)
 Branch/merge: work lives on `claude/cranky-volhard-dd8b01` (FF'd from `spike/table-3d-hero`), ISOLATED, all LOCAL commits (no push). use_worktrees=false (GPU/dev-server program → sequential). Merge back to spike only with operator confirmation.
 Resume file: None
