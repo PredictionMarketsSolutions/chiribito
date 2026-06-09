@@ -65,6 +65,8 @@ The protected reference (`table-3d-premium-reference-2026-06-04`) is never degra
   byte-comparably; this doc exists and is the single source of program truth.
 
 ### M1 — The card becomes the absolute protagonist *(IDENTITY #1 — blocking)*
+> **✅ IMPLEMENTED + SELF-VALIDATED (shipped-local) 2026-06-09 — `854231c`. Objective gates pass
+> decisively; awaiting the operator on-device perceptual gate. See `docs/HANDOFF_TABLE_3D_M1_CARDS.md`.**
 - **Objective:** model the Spanish Fournier cards in 3D (textured planes with the real card faces),
   large, fronto-parallel to the player camera, fully legible — community cards centred, hole cards
   read clearly. **Demote the chips to an accent**; the pot becomes modest and legible, not a tower.
@@ -173,3 +175,23 @@ Capture via `.dev-stack/lab-shot.mjs` (`--use-angle=d3d11 --enable-gpu`). Next c
 **Two operator inputs still open:**
 - Confirm **GO to start M1** (build the cards in the lab).
 - Pick the **reference mid-range phone** for M6's ≥55–60fps numeric gate (or accept a defined baseline).
+
+---
+
+## SESSION CHECKPOINT — 2026-06-09 (M1 implemented-local) · RESUME FROM HERE
+
+- **Branch:** `spike/table-3d-hero` · **tip:** `854231c` (feat) → docs commit follows · working tree clean ·
+  **nothing pushed/merged/deployed.**
+- **Done:** **M1 — cards as the absolute protagonist** built + self-validated. Real Fournier faces on
+  rounded card stock; staged hand (community `1E/12C/11B` + hole = la Perla de Oros `10O/7O`); chips
+  demoted to an accent pot; new player-POV `card` camera (default). Isolated to `/table-lab.html`.
+  Full record: **`docs/HANDOFF_TABLE_3D_M1_CARDS.md`**.
+- **M1 objective gates:** ✅ cards' screen area ≫ 2× chips' · ✅ rank+suit legible at 1080p ·
+  ✅ blind read = "a hand of Spanish cards". Captures: `.dev-stack/diag/table-3d/m1/{card,hero,wide}.png`.
+- **Verification:** frontend 362/362 vitest (9 new) · tsc clean in `src/lab/` · `vite build` green ·
+  lab still NOT in the prod bundle (production unaffected).
+- **OPEN (operator):** (1) the **M1 on-device perceptual gate** (stop-on-ambiguous); (2) the **M6
+  reference phone**. New escape hatches: `?cards=off`, `?chips=full`, `?chips=off`.
+- **NEXT (if M1 passes the gate) → M2: the castizo room** — replace the `#060403` black void with a
+  warm madrileño-tavern room (wood, warm lamp light, a suggestion of wall/window); A/B vs the current
+  black background; zero casino/Vegas drift; operator gate. The cards + table stay as the protagonist.
