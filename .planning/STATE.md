@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-09T14:47:05.575Z"
-last_activity: 2026-06-09 -- Phase 1 planning complete
+last_updated: "2026-06-09T14:57:06Z"
+last_activity: 2026-06-09 -- Plan 01-01 complete (eval rig foundation)
 progress:
   total_phases: 10
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 2
 ---
 
 # Project State
@@ -20,34 +20,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 1 — TP0 (Eval Rig & Baseline, BLOCKING)
+**Current focus:** Phase 1 — TP0 — Eval Rig & Baseline (BLOCKING)
 
 ## Current Position
 
-Phase: 1 of 10 (TP0 — Eval Rig & Baseline · BLOCKING)
-Plan: 0 of TBD in current phase
-Status: Ready to execute
-Last activity: 2026-06-09 -- Phase 1 planning complete
+Phase: 1 (TP0 — Eval Rig & Baseline (BLOCKING)) — EXECUTING
+Plan: 2 of 6
+Status: Plan 01-01 complete — proceeding to Plan 01-02
+Last activity: 2026-06-09 -- Plan 01-01 complete (eval rig foundation)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 2%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: — min
+- Total plans completed: 1
+- Average duration: 4 min
 - Total execution time: 0 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| Phase 1 (TP0) | 1/6 | 4 min | 4 min |
 
 **Recent Trend:**
 
-- Last 5 plans: —
+- Last 5 plans: Plan 01-01 (4 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -62,6 +62,10 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - TP0→TP9 mapped to GSD Phase 1→10 (Phase = TP + 1); each phase name carries "TPx".
 - Each phase's operator perceptual gate is a HUMAN verification checkpoint — the GSD↔Chiribito integration seam (combine, don't replace).
 - Cameras frozen at TP0; MSE-as-SSIM-proxy + px-height+manual legibility; ALL crevice AO owned by TP6.
+- Plan 01-01: Rollback tag cut at pre-edit HEAD (f807d6f) before any edits — SSOT §5.3.
+- Plan 01-01: Tracked rig dirs created in wave-1 so wave-3 plans 03/04 only WRITE (no race on creation).
+- Plan 01-01: Harness restored by single-file copy from main checkout (not re-authored).
+- Plan 01-01: Smoke PNGs in gitignored .dev-stack/diag/ scratch only — baseline freeze deferred to plan 06.
 
 ### Pending Todos
 
@@ -83,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-06-09
-Stopped at: GSD `.planning/` bootstrap authored from the SSOT, SDK-validated (`init.milestone-op` + `roadmap.analyze` + `get-phase 1` all clean) and committed locally (`2ec9b2e`). To CONTINUE: open the Claude workspace ROOTED at this repo (`Documents\CHIRIBITO\chiri-infrastructure\chiri-app`, not home — GSD skills are repo-relative) and run `/gsd-autonomous`. The loop starts at Phase 1 (TP0, BLOCKING); it will build TP0a/TP0b then PAUSE at the TP0.0 on-device M1 operator gate.
+Stopped at: Plan 01-01 (eval rig foundation) complete. Commits: 05df493 (Task 1) + 970678a (Task 2). Summary: .planning/phases/01-tp0-eval-rig-baseline-blocking/01-01-SUMMARY.md. Frontend deps installed, harness restored, 3 tracked rig dirs created, smoke-captured 3 money shots (2880x1800 ERRORS []) on RTX 4060 D3D11, rollback tag tp0-before-rig cut, TP0_BASELINE.md skeleton created. Proceeding to Plan 01-02.
 Resume file: None
