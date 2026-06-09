@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070d" />
+    <title>Chiribito · Preview mesa — Physicality Pass</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
+    <style>
+      /* Preview chrome ONLY — not part of the product. Dev tool for the on-device gate. */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(ellipse 90% 60% at 50% -10%, #0d1524, #05070d 72%);
+        font-family: "Manrope", system-ui, sans-serif;
+        color: #cdd6e4;
+        -webkit-text-size-adjust: 100%;
+      }
+      .pv-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 12px;
+        background: rgba(5, 8, 14, 0.88);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(244, 196, 48, 0.18);
+      }
+      .pv-bar h1 {
+        font-family: "Cinzel", Georgia, serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin: 0 8px 0 0;
+        color: #f4ecd8;
+        font-weight: 700;
+      }
+      .pv-btn {
+        padding: 9px 15px;
+        border-radius: 999px;
+        border: 1px solid rgba(244, 196, 48, 0.4);
+        background: rgba(10, 15, 26, 0.9);
+        color: #f4ecd8;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .pv-btn:active { transform: scale(0.96); }
+      .pv-btn[data-on="true"] { border-color: var(--gold, #f4c430); background: rgba(244, 196, 48, 0.16); }
+      .pv-hint { font-size: 12px; opacity: 0.66; width: 100%; text-align: center; margin: 2px 0 0; }
+      .pv-stage { display: flex; justify-content: center; padding: 26px 14px 70px; }
+      .pv-stage .table-surface { margin: 0 auto; }
+      /* Centre the sample card cluster like an in-hand table (preview only). */
+      .pv-cards {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 34px;
+        z-index: 12;
+        pointer-events: none;
+        transition: opacity 0.32s ease;
+      }
+      .pv-cards .card-row { display: flex; justify-content: center; gap: 8px; }
+      .pv-cards[hidden] { display: flex; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="pv-bar">
+      <h1>CHIRIBITO · Mesa</h1>
+      <button class="pv-btn" id="pv-toggle" data-on="true">Cartas: en juego</button>
+      <button class="pv-btn" id="pv-pot">Sumar al bote +750</button>
+      <button class="pv-btn" id="pv-deliver">Entregar al ganador</button>
+      <button class="pv-btn" id="pv-deal">Repartir mano</button>
+      <p class="pv-hint">Preview local del Physicality Pass · sin backend · móvil + desktop. En reposo verás el sello grabado; en juego queda bajo las cartas.</p>
+    </div>
+
+    <div class="pv-stage">
+      <div class="table-surface" id="pv-surf">
+        <div class="table-breath" aria-hidden="true"></div>
+        <div class="table-trim" aria-hidden="true">
+          <svg viewBox="0 0 1000 640" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="500" cy="320" rx="486" ry="306" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round" />
+            <ellipse cx="500" cy="320" rx="470" ry="292" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 12" stroke-linecap="round" opacity="0.6" />
+          </svg>
+        </div>
+        <div class="table-suits" aria-hidden="true">
+          <svg class="suit suit--oros" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="currentColor" stroke-width="2"><circle cx="24" cy="24" r="20" /><circle cx="24" cy="24" r="12" /></g>
+            <circle cx="24" cy="24" r="3" fill="currentColor" />
+          </svg>
+          <svg class="suit suit--copas" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 14 H35" /><path d="M14 15 A11 13 0 0 0 34 15" /><path d="M24 27 V37" /><path d="M16 40 H32" />
+            </g>
+          </svg>
+          <svg class="suit suit--espadas" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M24 7 V33" /><path d="M14 27 H34" /><path d="M24 7 l5 6 M24 7 l-5 6" /><path d="M24 33 V40" />
+            </g>
+          </svg>
+          <svg class="suit suit--bastos" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 36 L36 12" /><path d="M12 36 l-3 3 M36 12 l3 -3" /><path d="M20 28 l5 5 M28 20 l5 5" />
+            </g>
+          </svg>
+        </div>
+        <div class="table-crest" aria-hidden="true">
+          <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <path id="crest-arc-top" d="M40 120 A80 80 0 0 1 200 120" />
+              <path id="crest-arc-bot" d="M52 120 A68 68 0 0 0 188 120" />
+            </defs>
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="120" cy="120" r="104" />
+              <circle cx="120" cy="120" r="95" stroke-width="1" />
+              <path d="M120 80 L148 120 L120 160 L92 120 Z" />
+              <path d="M120 97 L136 120 L120 143 L104 120 Z" stroke-width="1.3" />
+              <g stroke-width="1.5">
+                <circle cx="164" cy="76" r="8" />
+                <circle cx="164" cy="76" r="3.4" />
+                <path d="M157 161 A7 7 0 0 0 171 161" />
+                <path d="M164 167 V173" />
+                <path d="M159 174 H169" />
+                <path d="M76 156 V172" />
+                <path d="M71 163 H81" />
+                <path d="M76 156 l2.4 2.6 M76 156 l-2.4 2.6" />
+                <path d="M70 82 L82 70" />
+                <path d="M68 84 l-2 2 M84 68 l2 -2" />
+                <path d="M73 79 l2.4 2.4 M77 75 l2.4 2.4" />
+              </g>
+            </g>
+            <circle cx="120" cy="120" r="3.6" fill="currentColor" />
+            <text class="crest-word" text-anchor="middle">
+              <textPath href="#crest-arc-top" startOffset="50%">CHIRIBITO</textPath>
+            </text>
+            <text class="crest-sub" text-anchor="middle">
+              <textPath href="#crest-arc-bot" startOffset="50%">· LA PERLA ·</textPath>
+            </text>
+          </svg>
+        </div>
+        <div class="pot-pile" id="pv-pile" aria-hidden="true"></div>
+        <div class="table-header">
+          <div class="table-header-row table-header-row--pot">
+            <div class="badge badge-pot">Bote <span id="pv-pot-chip">0</span></div>
+          </div>
+        </div>
+        <div id="pv-seats" class="seats"></div>
+        <div class="pv-cards" id="pv-cards">
+          <div class="card-row card-row--community" id="pv-comm"></div>
+          <div class="card-row" id="pv-hand"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { renderCardRow } from "/src/ui-cards.ts";
+      import { flyChips } from "/src/game/table/chip-fly.ts";
+      import { renderPotPile } from "/src/game/table/pot-pile.ts";
+      import { chipBurstCount } from "/src/game/table/chip-motion.ts";
+      import { potChipLayout } from "/src/game/table/chip-stack.ts";
+      import { deliverPotToWinner } from "/src/game/table/pot-delivery.ts";
+
+      const BOARD = ["1O", "11E", "5B"];
+      const HOLE = ["7O", "12C"];
+      const SEATS = [
+        { seat: 0, name: "Paco", chips: 5000, bet: 250 },
+        { seat: 1, name: "Lola", chips: 3200, bet: 250 },
+        { seat: 4, name: "Tú", chips: 8150, bet: 0, you: true },
+      ];
+
+      // Populate a few seats so the physical chips show in context.
+      const seatsRoot = document.getElementById("pv-seats");
+      for (const s of SEATS) {
+        const seat = document.createElement("div");
+        seat.className = "seat" + (s.you ? " you" : "");
+        seat.dataset.seat = String(s.seat);
+        seat.innerHTML =
+          '<div class="seat-badge">Seat ' + (s.seat + 1) + "</div>" +
+          '<div class="seat-name">' + s.name + "</div>" +
+          '<div class="seat-meta"></div>';
+        const meta = seat.querySelector(".seat-meta");
+        const chip = document.createElement("span");
+        chip.className = "seat-chip";
+        chip.textContent = "Fichas " + s.chips;
+        const bet = document.createElement("span");
+        bet.className = "seat-bet";
+        bet.textContent = "Apuesta " + s.bet;
+        meta.append(chip, bet);
+        seatsRoot.appendChild(seat);
+      }
+
+      const comm = document.getElementById("pv-comm");
+      const hand = document.getElementById("pv-hand");
+      function deal() {
+        comm.innerHTML = "";
+        hand.innerHTML = "";
+        renderCardRow(comm, BOARD, 5);
+        renderCardRow(hand, HOLE, 2);
+      }
+      deal();
+
+      // Toggle resting / in-hand so the crest read is easy to judge.
+      const cards = document.getElementById("pv-cards");
+      const toggle = document.getElementById("pv-toggle");
+      toggle.addEventListener("click", () => {
+        const on = toggle.dataset.on !== "true";
+        toggle.dataset.on = String(on);
+        toggle.textContent = on ? "Cartas: en juego" : "Cartas: reposo";
+        cards.style.opacity = on ? "1" : "0";
+      });
+
+      // Pot pile grows + a rich chip burst slides into the centre — same shape as game-ui.ts.
+      const surf = document.getElementById("pv-surf");
+      const pile = document.getElementById("pv-pile");
+      const potChip = document.getElementById("pv-pot-chip");
+      let pot = 0;
+      let betFrom = 0;
+      document.getElementById("pv-pot").addEventListener("click", () => {
+        pot += 750;
+        potChip.textContent = String(pot);
+        renderPotPile(pile, pot);
+        const badge = potChip.parentElement;
+        badge.classList.remove("badge-pot--pulse");
+        void badge.offsetWidth;
+        badge.classList.add("badge-pot--pulse");
+        // Rich burst sliding from a rotating seat into the centre pile.
+        try {
+          const seats = surf.querySelectorAll(".seat");
+          const seat = seats[betFrom % Math.max(1, seats.length)];
+          betFrom++;
+          const sr = surf.getBoundingClientRect();
+          const to = { x: sr.width * 0.5 - 13, y: sr.height * 0.6 - 13 };
+          let from = { x: sr.width * 0.5 - 13, y: sr.height * 0.82 };
+          if (seat) {
+            const qr = seat.getBoundingClientRect();
+            from = { x: qr.left - sr.left + qr.width / 2 - 13, y: qr.top - sr.top + qr.height / 2 - 13 };
+          }
+          const colors = [...new Set(potChipLayout(750).map((c) => c.color))];
+          flyChips(surf, from, to, { count: chipBurstCount(750, { max: 14, step: 70 }), staggerMs: 45, colors });
+        } catch (e) {
+          /* decorative */
+        }
+      });
+      // Showdown — the pot slides to a winning seat, then the centre clears.
+      document.getElementById("pv-deliver").addEventListener("click", () => {
+        if (pot <= 0) return;
+        try {
+          const seats = surf.querySelectorAll(".seat");
+          const seat = seats[(betFrom + 1) % Math.max(1, seats.length)];
+          const sr = surf.getBoundingClientRect();
+          const from = { x: sr.width * 0.5 - 13, y: sr.height * 0.6 - 13 };
+          let to = { x: sr.width * 0.5 - 13, y: sr.height * 0.45 - 13 };
+          if (seat) {
+            seats.forEach((s) => s.classList.remove("winner"));
+            seat.classList.add("winner");
+            const qr = seat.getBoundingClientRect();
+            to = { x: qr.left - sr.left + qr.width / 2 - 13, y: qr.top - sr.top + qr.height / 2 - 13 };
+          }
+          deliverPotToWinner(surf, pile, from, to, pot);
+          pot = 0;
+          potChip.textContent = "0";
+        } catch (e) {
+          /* decorative */
+        }
+      });
+      document.getElementById("pv-deal").addEventListener("click", () => {
+        pot = 0;
+        potChip.textContent = "0";
+        renderPotPile(pile, 0);
+        surf.querySelectorAll(".seat").forEach((s) => s.classList.remove("winner"));
+      });
+
+      document.getElementById("pv-deal").addEventListener("click", deal);
+    </script>
+  </body>
+</html>

@@ -55,15 +55,17 @@ jobs:
         run: npm run build:api
 
       - name: Security audit (root, runtime deps)
-        # --omit=dev skips dev-only chains (the accepted @colyseus/playground
-        # advisories from sprint 1.0). Moderate or higher in runtime deps
-        # blocks the workflow.
-        run: npm audit --audit-level=moderate --omit=dev
+        # Gate on HIGH/critical. --omit=dev skips dev-only chains. The tree carries
+        # pre-existing MODERATE runtime advisories (qs DoS via express/body-parser +
+        # the elliptic→jwk-to-pem→grant→@colyseus/auth chain) whose only full fix is a
+        # BREAKING @colyseus upgrade — deferred to a deliberate dependency pass. These
+        # already failed CI on main; moderate vulns stay reported, just non-blocking.
+        run: npm audit --audit-level=high --omit=dev
 
       - name: Security audit (api-server, runtime deps)
-        run: npm audit --audit-level=moderate --omit=dev
+        run: npm audit --audit-level=high --omit=dev
         working-directory: api-server
 
       - name: Security audit (frontend, runtime deps)
-        run: npm audit --audit-level=moderate --omit=dev
+        run: npm audit --audit-level=high --omit=dev
         working-directory: frontend

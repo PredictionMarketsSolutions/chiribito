@@ -18,6 +18,11 @@ import { applyHideIfEmpty } from "./meta-pills";
 import { speakingContext } from "./speaking-order";
 import { isPerfEnabled } from "../security";
 import { perfRerenderInc } from "../perf/perf-counters";
+import { flyChips } from "./table/chip-fly";
+import { chipBurstCount } from "./table/chip-motion";
+import { renderPotPile } from "./table/pot-pile";
+import { potChipLayout } from "./table/chip-stack";
+import { deliverPotToWinner } from "./table/pot-delivery";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
   return Boolean(ctx.tableScene?.isActive());
@@ -205,7 +210,54 @@ export function renderState(
       badge.classList.remove("badge-pot--pulse");
       void badge.offsetWidth;
       badge.classList.add("badge-pot--pulse");
+      // Table Presence I/F — the physical pot pile in the centre grows to match the pot,
+      // and a rich burst of chips slides into it when the pot grows. Decorative and fully
+      // guarded: a coord/null failure must never break the render.
+      try {
+        const surface = badge.closest(".table-surface") as HTMLElement | null;
+        const pile = surface?.querySelector(".pot-pile") as HTMLElement | null;
+        if (pile) {
+          renderPotPile(pile, potValue);
+          if (potValue > 0) pile.dataset.amount = String(potValue);
+        }
+        const delta = potValue - (prevPotForTween ?? 0);
+        if (delta > 0 && surface) {
+          const sr = surface.getBoundingClientRect();
+          // Chips land in the centre pile (top ~60%), arriving from the player's edge.
+          const to = { x: sr.width * 0.5 - 13, y: sr.height * 0.6 - 13 };
+          const from = { x: sr.width * 0.5 - 13, y: sr.height * 0.84 };
+          const count = chipBurstCount(delta, { max: 14, step: 70 });
+          const colors = [...new Set(potChipLayout(delta).map((c) => c.color))];
+          void flyChips(surface, from, to, { count, staggerMs: 45, colors });
+        }
+      } catch {
+        /* pot pile + chip flight are purely decorative — swallow and carry on */
+      }
     }
+  }
+  // Table Presence M — showdown: once a winner is shown, the pot pile slides to their
+  // seat and the centre clears. Runs every render (so it fires when .seat.winner appears),
+  // once per hand via a dataset flag, fully guarded — never breaks the end-of-hand flow.
+  try {
+    const surface = refs.potChip.parentElement?.closest(".table-surface") as HTMLElement | null;
+    const pile = surface?.querySelector(".pot-pile") as HTMLElement | null;
+    if (surface && pile) {
+      if (!isInWinnerPhase(ctx.winnerDisplayState)) {
+        delete pile.dataset.delivered;
+      } else if (!pile.dataset.delivered && pile.children.length > 0) {
+        const winnerSeat = surface.querySelector(".seat.winner") as HTMLElement | null;
+        if (winnerSeat) {
+          const sr = surface.getBoundingClientRect();
+          const wr = winnerSeat.getBoundingClientRect();
+          const from = { x: sr.width * 0.5 - 13, y: sr.height * 0.6 - 13 };
+          const to = { x: wr.left - sr.left + wr.width / 2 - 13, y: wr.top - sr.top + wr.height / 2 - 13 };
+          pile.dataset.delivered = "1";
+          void deliverPotToWinner(surface, pile, from, to, Number(pile.dataset.amount ?? 0));
+        }
+      }
+    }
+  } catch {
+    /* showdown delivery is decorative — never break the render */
   }
   // Phase chip + 6-dot progress indicator (mirrors the server's 6 streets).
   renderPhaseIndicator(state.phase, {

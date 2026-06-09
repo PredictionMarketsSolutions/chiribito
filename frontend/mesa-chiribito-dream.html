@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Mesa Chiribito — La Perla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --cream: #f5ecd6;
+        --gold-hi: #fbeebc;
+        --gold-1: #e7c97e;
+        --gold-2: #c89a48;
+        --gold-3: #9a7327;
+        --gold-deep: #6c4d1c;
+        --leather-hi: #93384a;
+        --leather-1: #6f2231;
+        --leather-2: #531623;
+        --leather-3: #350d16;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        font-family: "Manrope", system-ui, sans-serif;
+        color: var(--cream);
+        background:
+          radial-gradient(ellipse 70% 55% at 50% 8%, #3d2716 0%, #20130a 36%, #0c0704 72%, #050302 100%);
+        overflow: hidden;
+        min-height: 100vh;
+      }
+      /* the hanging lamp + its warm pool of light */
+      .room {
+        position: fixed; inset: 0; pointer-events: none; z-index: 1;
+        background:
+          radial-gradient(ellipse 40% 34% at 50% 34%, rgba(255, 216, 150, 0.20), transparent 60%),
+          radial-gradient(circle 5px at 50% 2.2%, rgba(255, 232, 178, 1), transparent 60%),
+          radial-gradient(ellipse 14% 9% at 50% 3%, rgba(255, 220, 160, 0.5), transparent 70%);
+      }
+      .room::after { /* faint dust in the light */
+        content: ""; position: absolute; inset: 0; opacity: 0.35; mix-blend-mode: screen;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='d'><feTurbulence baseFrequency='0.9' numOctaves='1'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='discrete' tableValues='0 0 0 0 0 0 0 0 0 1'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23d)'/></svg>");
+      }
+
+      .stage {
+        position: relative; z-index: 2; min-height: 100vh;
+        display: flex; align-items: center; justify-content: center; padding: 44px 22px;
+      }
+
+      .table {
+        position: relative;
+        width: min(94vw, 980px);
+        aspect-ratio: 1.52 / 1;
+        border-radius: 50% / 50%;
+        filter: drop-shadow(0 64px 76px rgba(0,0,0,0.74));
+      }
+
+      /* ---- LEATHER + BRASS RAIL --------------------------------------------- */
+      .rail {
+        position: absolute; inset: 0; border-radius: 50% / 50%;
+        background:
+          radial-gradient(ellipse 58% 34% at 50% 7%, rgba(255, 206, 160, 0.24), transparent 58%),
+          radial-gradient(ellipse 132% 132% at 50% 12%, var(--leather-hi) 0%, var(--leather-1) 30%, var(--leather-2) 62%, var(--leather-3) 100%);
+        box-shadow:
+          0 0 0 2px var(--gold-1), 0 0 0 4px var(--gold-3), 0 0 0 6px var(--gold-deep), 0 0 0 7px rgba(0,0,0,0.7),
+          inset 0 6px 14px rgba(255,205,160,0.22), inset 0 -18px 38px rgba(0,0,0,0.64);
+      }
+      /* brass nailhead ring */
+      .studs {
+        position: absolute; inset: 7.5%; border-radius: 50% / 50%; pointer-events: none;
+        background: repeating-conic-gradient(from 0deg at 50% 50%, var(--gold-hi) 0deg 0.6deg, transparent 0.6deg 5deg);
+        -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 48.8%, #000 49% 50.6%, transparent 50.8%);
+        mask: radial-gradient(circle at 50% 50%, transparent 0 48.8%, #000 49% 50.6%, transparent 50.8%);
+        filter: drop-shadow(0 1px 0.5px rgba(0,0,0,0.7));
+      }
+
+      /* ---- FELT (a designed piece) ------------------------------------------ */
+      .felt {
+        position: absolute; inset: 7.4%; border-radius: 50% / 50%; overflow: hidden;
+        background:
+          radial-gradient(ellipse 54% 48% at 50% 41%, rgba(255, 232, 188, 0.16), transparent 56%),
+          radial-gradient(ellipse 116% 110% at 50% 50%, transparent 40%, rgba(0,0,0,0.52) 84%, rgba(0,0,0,0.76) 100%),
+          radial-gradient(ellipse 100% 86% at 50% 42%, rgba(16,116,82,0.5) 0%, rgba(8,72,50,0.46) 56%, rgba(3,38,26,0.72) 100%),
+          url("/textures/felt.png");
+        background-size: auto, auto, auto, cover;
+        background-position: center;
+        box-shadow:
+          inset 0 0 0 2px rgba(0,0,0,0.5), inset 0 0 0 4px var(--gold-deep),
+          inset 0 18px 40px rgba(0,0,0,0.55), inset 0 -8px 24px rgba(0,0,0,0.42);
+      }
+      /* the ornamental "betting line" — a fine gold filigree ring */
+      .felt-ring {
+        position: absolute; inset: 12%; border-radius: 50% / 50%; pointer-events: none;
+        border: 1.5px solid rgba(231,201,126,0.30);
+        box-shadow: 0 0 0 5px rgba(231,201,126,0.05), inset 0 0 22px rgba(0,0,0,0.18);
+      }
+      .felt-ring::before {
+        content: ""; position: absolute; inset: 6px; border-radius: 50% / 50%;
+        border: 1px solid rgba(231,201,126,0.16);
+      }
+
+      /* ---- THE EMBLEM (brand born into the felt) ---------------------------- */
+      .emblem {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+        width: 47%; aspect-ratio: 1; z-index: 3; pointer-events: none;
+        color: var(--gold-1);
+        filter: drop-shadow(0 2px 1px rgba(0,0,0,0.55)) drop-shadow(0 -1px 0.5px rgba(255,244,210,0.18));
+      }
+      .emblem svg { width: 100%; height: 100%; display: block; }
+
+      /* ---- CARDS ------------------------------------------------------------ */
+      .cards { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); z-index: 6; display: flex; gap: 9px; }
+      .card { width: clamp(46px, 8vw, 76px); aspect-ratio: 0.68; border-radius: 7px; background: #f7f3ea center/cover no-repeat;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.3), 0 12px 16px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.15); }
+      .card--back { background: linear-gradient(150deg, #7c2233, #561522);
+        box-shadow: 0 1px 1px rgba(0,0,0,0.3), 0 12px 16px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(216,181,106,0.55); }
+
+      /* ---- JEWEL CHIPS ------------------------------------------------------ */
+      .pot { position: absolute; left: 50%; top: 63%; transform: translateX(-50%); z-index: 5;
+        display: flex; gap: 9px; align-items: flex-end; filter: drop-shadow(0 12px 12px rgba(0,0,0,0.55)); }
+      .stack { position: relative; width: 52px; }
+      .chip { position: absolute; left: 0; width: 52px; height: 52px; }
+      .chip svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 0 var(--chip-wall)); }
+
+      /* ---- PLAYER PLATES ---------------------------------------------------- */
+      .seat { position: absolute; z-index: 7; display: flex; align-items: center; gap: 9px;
+        padding: 6px 14px 6px 6px; border-radius: 999px; transform: translate(-50%,-50%);
+        background: linear-gradient(180deg, rgba(30,19,11,0.94), rgba(15,9,5,0.96));
+        box-shadow: 0 0 0 1px var(--gold-3), 0 0 0 2px rgba(0,0,0,0.6), 0 12px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,220,170,0.18); }
+      .seat .ava { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+        font-family: "Cinzel", serif; font-weight: 800; color: var(--gold-hi); font-size: 16px;
+        background: radial-gradient(circle at 38% 32%, #2f6b54, #0b3526);
+        box-shadow: 0 0 0 2px var(--gold-2), inset 0 2px 4px rgba(255,255,255,0.22), inset 0 -3px 5px rgba(0,0,0,0.5); }
+      .seat .info { display: flex; flex-direction: column; line-height: 1.15; }
+      .seat .nm { font-weight: 800; font-size: 13px; color: var(--cream); letter-spacing: 0.3px; }
+      .seat .st { font-size: 12.5px; color: var(--gold-1); font-weight: 700; display: flex; align-items: center; gap: 5px; }
+      .seat .st::before { content: ""; width: 12px; height: 12px; border-radius: 50%;
+        background: radial-gradient(circle at 34% 30%, #fbeebc, #c89a48 58%, #6c4d1c);
+        box-shadow: inset 0 0 0 1.5px #9a7327, 0 0 0 1px rgba(0,0,0,0.4); }
+      .seat--you { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 22px rgba(231,201,126,0.42), 0 12px 24px rgba(0,0,0,0.55); }
+      .seat--dealer .ava::after { content: "D"; position: absolute; }
+      .s-n { top: -2%; left: 50%; } .s-ne { top: 25%; left: 95%; } .s-se { top: 75%; left: 95%; }
+      .s-s { top: 102%; left: 50%; } .s-sw { top: 75%; left: 5%; } .s-nw { top: 25%; left: 5%; }
+
+      .tag { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 20;
+        font-family: "Cinzel", serif; font-size: 11px; letter-spacing: 3px; color: rgba(231,201,126,0.5); }
+
+      /* ===== reusable suit + ornament definitions ===== */
+    </style>
+  </head>
+  <body>
+    <div class="room"></div>
+    <div class="stage">
+      <div class="table">
+        <div class="rail"></div>
+        <div class="studs"></div>
+        <div class="felt">
+          <div class="felt-ring"></div>
+          <div class="emblem">
+            <svg viewBox="0 0 440 440" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="gold" x1="0" y1="0" x2="0.4" y2="1">
+                  <stop offset="0" stop-color="#fbeebc"/><stop offset="0.4" stop-color="#d9b069"/>
+                  <stop offset="0.7" stop-color="#9a7327"/><stop offset="1" stop-color="#e7c97e"/>
+                </linearGradient>
+                <radialGradient id="pearl" cx="0.4" cy="0.33" r="0.8">
+                  <stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#f3ecde"/>
+                  <stop offset="0.7" stop-color="#d8c9ad"/><stop offset="1" stop-color="#9c8a64"/>
+                </radialGradient>
+                <path id="arcTop" d="M70 220 A150 150 0 0 1 370 220"/>
+                <path id="arcBot" d="M88 220 A132 132 0 0 0 352 220"/>
+              </defs>
+
+              <g fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round">
+                <!-- outer rings -->
+                <circle cx="220" cy="220" r="208" stroke-width="2.5"/>
+                <circle cx="220" cy="220" r="198" stroke-width="1"/>
+                <!-- beaded ring -->
+                <circle cx="220" cy="220" r="203" stroke-width="3" stroke-dasharray="0.6 7.4"/>
+                <!-- inner ornament ring -->
+                <circle cx="220" cy="220" r="150" stroke-width="1.4"/>
+                <circle cx="220" cy="220" r="142" stroke-width="0.8"/>
+              </g>
+
+              <!-- wordmarks -->
+              <text font-family="Cinzel, serif" font-weight="800" font-size="26" letter-spacing="6"
+                    fill="url(#gold)" text-anchor="middle"><textPath href="#arcTop" startOffset="50%">CHIRIBITO</textPath></text>
+              <text font-family="Cinzel, serif" font-weight="700" font-size="15" letter-spacing="9"
+                    fill="url(#gold)" text-anchor="middle"><textPath href="#arcBot" startOffset="50%">LA PERLA</textPath></text>
+
+              <!-- four Spanish suits at the cardinals -->
+              <g fill="url(#gold)" stroke="url(#gold)" stroke-width="1.4" stroke-linejoin="round">
+                <!-- OROS (top) -->
+                <g transform="translate(220,96)">
+                  <circle r="19" fill="none" stroke-width="2.4"/><circle r="12" fill="none" stroke-width="1.4"/>
+                  <path d="M0,-9 L2.4,-2.4 L9,0 L2.4,2.4 L0,9 L-2.4,2.4 L-9,0 L-2.4,-2.4 Z" stroke="none"/>
+                </g>
+                <!-- COPAS (right) -->
+                <g transform="translate(344,220)">
+                  <path d="M-15,-12 H15" stroke-width="2.2"/>
+                  <path d="M-13,-11 C-12,5 12,5 13,-11" fill="none" stroke-width="2.2"/>
+                  <path d="M0,5 V15" stroke-width="2.2"/>
+                  <path d="M-10,19 Q0,13 10,19" fill="none" stroke-width="2.2"/>
+                  <circle cy="9" r="2.4" stroke="none"/>
+                </g>
+                <!-- ESPADAS (bottom) -->
+                <g transform="translate(220,344)">
+                  <path d="M0,-20 L3,-14 V12 L0,16 L-3,12 V-14 Z" stroke="none"/>
+                  <path d="M-13,-4 H13" stroke-width="2.6"/>
+                  <path d="M0,16 V22" stroke-width="2.6"/>
+                  <circle cy="25" r="2.6" stroke="none"/>
+                </g>
+                <!-- BASTOS (left) -->
+                <g transform="translate(96,220)">
+                  <path d="M-4,18 L4,18 L6,-14 Q0,-20 -6,-14 Z" stroke="none"/>
+                  <circle cx="-7" cy="-6" r="3" stroke="none"/><circle cx="7" cy="-2" r="3" stroke="none"/>
+                  <circle cx="-6" cy="8" r="2.6" stroke="none"/><circle cx="7" cy="11" r="2.6" stroke="none"/>
+                </g>
+              </g>
+
+              <!-- scroll flourishes at the diagonals -->
+              <g fill="none" stroke="url(#gold)" stroke-width="1.6" stroke-linecap="round">
+                <g transform="translate(308,132) rotate(45)"><path d="M0,0 C12,-5 17,5 9,12 C4,16 -3,13 0,7 C2,3 7,5 5,9"/></g>
+                <g transform="translate(308,308) rotate(135)"><path d="M0,0 C12,-5 17,5 9,12 C4,16 -3,13 0,7 C2,3 7,5 5,9"/></g>
+                <g transform="translate(132,308) rotate(225)"><path d="M0,0 C12,-5 17,5 9,12 C4,16 -3,13 0,7 C2,3 7,5 5,9"/></g>
+                <g transform="translate(132,132) rotate(315)"><path d="M0,0 C12,-5 17,5 9,12 C4,16 -3,13 0,7 C2,3 7,5 5,9"/></g>
+              </g>
+
+              <!-- central cartouche + LA PERLA -->
+              <g>
+                <circle cx="220" cy="220" r="74" fill="rgba(3,40,28,0.55)" stroke="url(#gold)" stroke-width="2.4"/>
+                <circle cx="220" cy="220" r="66" fill="none" stroke="url(#gold)" stroke-width="1"/>
+                <!-- prongs -->
+                <g fill="url(#gold)">
+                  <circle cx="220" cy="172" r="4"/><circle cx="268" cy="220" r="4"/>
+                  <circle cx="220" cy="268" r="4"/><circle cx="172" cy="220" r="4"/>
+                </g>
+                <!-- the pearl -->
+                <circle cx="220" cy="220" r="40" fill="url(#pearl)"/>
+                <ellipse cx="206" cy="204" rx="11" ry="7" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="234" cy="234" r="3.5" fill="rgba(255,255,255,0.5)"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card" id="c1"></div><div class="card" id="c2"></div><div class="card" id="c3"></div>
+          <div class="card card--back"></div><div class="card card--back"></div>
+        </div>
+
+        <div class="pot" id="pot"></div>
+
+        <div class="seat s-n"><div class="ava">P</div><div class="info"><span class="nm">Paco</span><span class="st">5.000</span></div></div>
+        <div class="seat s-ne"><div class="ava">L</div><div class="info"><span class="nm">Lola</span><span class="st">3.200</span></div></div>
+        <div class="seat s-sw"><div class="ava">M</div><div class="info"><span class="nm">Manolo</span><span class="st">7.450</span></div></div>
+        <div class="seat seat--you s-s"><div class="ava">T</div><div class="info"><span class="nm">Tú</span><span class="st">8.150</span></div></div>
+      </div>
+    </div>
+    <div class="tag">CHIRIBITO · LA PERLA</div>
+
+    <script type="module">
+      // real Chiribito community cards
+      try {
+        const cards = await import("/src/ui-cards.ts");
+        const probe = document.createElement("div");
+        cards.renderCardRow(probe, ["1O", "11E", "5B"], 3);
+        [...probe.querySelectorAll("img")].forEach((im, i) => {
+          const el = document.getElementById("c" + (i + 1));
+          if (el && im.src) el.style.backgroundImage = `url('${im.src}')`;
+        });
+      } catch (e) {}
+
+      // ---- jewel chip: brass rim + enamel face + edge spots + suit inlay + glint ----
+      const SUITS = {
+        oros: '<circle r="6.5" fill="none" stroke="#fbeebc" stroke-width="1.6"/><path d="M0,-3 L0.9,-0.9 L3,0 L0.9,0.9 L0,3 L-0.9,0.9 L-3,0 L-0.9,-0.9 Z" fill="#fbeebc"/>',
+        copas: '<path d="M-5,-4 H5 M-4.4,-3.6 C-4,2 4,2 4.4,-3.6 M0,2 V6 M-3.4,7 Q0,4.6 3.4,7" fill="none" stroke="#fbeebc" stroke-width="1.5" stroke-linecap="round"/>',
+        espadas: '<path d="M0,-7 L1.1,-4.8 V4 L0,5.6 L-1.1,4 V-4.8 Z" fill="#fbeebc"/><path d="M-4.6,-1.4 H4.6 M0,5.6 V8" stroke="#fbeebc" stroke-width="1.5" stroke-linecap="round"/>',
+        bastos: '<path d="M-1.4,6 L1.4,6 L2.2,-5 Q0,-7.2 -2.2,-5 Z" fill="#fbeebc"/><circle cx="-2.6" cy="-2" r="1.1" fill="#fbeebc"/><circle cx="2.6" cy="-0.6" r="1.1" fill="#fbeebc"/>',
+      };
+      function chipInner(suit, enamel, enamelLit, enamelDk) {
+        let spots = "";
+        for (let k = 0; k < 6; k++) {
+          const a = (k * 60) * Math.PI / 180;
+          const x = 60 + Math.cos(a) * 47, y = 60 + Math.sin(a) * 47;
+          spots += `<rect x="${(x - 7).toFixed(1)}" y="${(y - 4.5).toFixed(1)}" width="14" height="9" rx="3" transform="rotate(${k * 60} ${x.toFixed(1)} ${y.toFixed(1)})" fill="#f3ead2"/>`;
+        }
+        return `<svg viewBox="0 0 120 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="fc" cx="0.42" cy="0.34" r="0.8"><stop offset="0" stop-color="${enamelLit}"/><stop offset="0.6" stop-color="${enamel}"/><stop offset="1" stop-color="${enamelDk}"/></radialGradient>
+            <linearGradient id="gc" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0" stop-color="#fbeebc"/><stop offset="0.5" stop-color="#c89a48"/><stop offset="1" stop-color="#e7c97e"/></linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="58" fill="url(#gc)"/>
+          <circle cx="60" cy="60" r="51" fill="url(#fc)"/>
+          ${spots}
+          <circle cx="60" cy="60" r="44" fill="none" stroke="url(#gc)" stroke-width="2"/>
+          <circle cx="60" cy="60" r="27" fill="url(#gc)"/>
+          <circle cx="60" cy="60" r="23" fill="${enamelDk}"/>
+          <g transform="translate(60,60) scale(2.1)">${SUITS[suit]}</g>
+          <ellipse cx="44" cy="40" rx="22" ry="13" fill="rgba(255,255,255,0.2)"/>
+        </svg>`;
+      }
+      const TYPES = {
+        oros:  { m: chipInner("oros", "#caa24f", "#ecd08a", "#7a5a22"), wall: "#5f4516" },
+        night: { m: chipInner("espadas", "#274a72", "#4f7bab", "#16304e"), wall: "#13243b" },
+        wine:  { m: chipInner("copas", "#7e2236", "#b13f57", "#4d1320"), wall: "#42101c" },
+        green: { m: chipInner("bastos", "#0b6e4f", "#16a87c", "#053a2a"), wall: "#053023" },
+      };
+      const pot = document.getElementById("pot");
+      const stacks = [{ t: "oros", n: 6 }, { t: "night", n: 9 }, { t: "wine", n: 5 }, { t: "green", n: 7 }];
+      for (const s of stacks) {
+        const st = document.createElement("div");
+        st.className = "stack";
+        const T = TYPES[s.t];
+        st.style.height = 52 + (s.n - 1) * 5.5 + "px";
+        for (let z = 0; z < s.n; z++) {
+          const ch = document.createElement("div");
+          ch.className = "chip";
+          ch.style.bottom = z * 5.5 + "px";
+          ch.style.zIndex = String(z);
+          ch.style.setProperty("--chip-wall", T.wall);
+          ch.innerHTML = T.m;
+          st.appendChild(ch);
+        }
+        pot.appendChild(st);
+      }
+    </script>
+  </body>
+</html>
