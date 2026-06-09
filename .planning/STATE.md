@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 Phase: 1 of 10 (TP0 — Eval Rig & Baseline · BLOCKING)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-06-09 — GSD `.planning/` bootstrapped from `docs/ROADMAP_TABLE_3D_PERFECTION.md` (SSOT). TP0→TP9 mapped to Phase 1→10.
+Last activity: 2026-06-09 — GSD `.planning/` bootstrapped from `docs/ROADMAP_TABLE_3D_PERFECTION.md` (SSOT), SDK-validated (10 phases parse) and committed locally (`2ec9b2e`). TP0→TP9 mapped to Phase 1→10. Next: run `/gsd-autonomous` repo-rooted → Phase 1 (TP0).
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -77,5 +77,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-06-09
-Stopped at: GSD `.planning/` bootstrap authored (PROJECT.md + ROADMAP.md + STATE.md) from the SSOT; SDK validation + first phase pending.
+Stopped at: GSD `.planning/` bootstrap authored from the SSOT, SDK-validated (`init.milestone-op` + `roadmap.analyze` + `get-phase 1` all clean) and committed locally (`2ec9b2e`). To CONTINUE: open the Claude workspace ROOTED at this repo (`Documents\CHIRIBITO\chiri-infrastructure\chiri-app`, not home — GSD skills are repo-relative) and run `/gsd-autonomous`. The loop starts at Phase 1 (TP0, BLOCKING); it will build TP0a/TP0b then PAUSE at the TP0.0 on-device M1 operator gate.
 Resume file: None
