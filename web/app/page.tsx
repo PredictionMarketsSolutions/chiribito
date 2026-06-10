@@ -1,6 +1,5 @@
 import dynamic from "next/dynamic"
 import { SocialBar } from "@/components/social-bar"
-import { AudioPlayer } from "@/components/audio-player"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { HistorySection } from "@/components/history-section"
@@ -30,7 +29,6 @@ export default function Home() {
   return (
     <main className="relative">
       <ScrollToTop />
-      <AudioPlayer />
       <SocialBar />
       <Navbar />
       <HeroSection />
