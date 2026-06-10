@@ -45,6 +45,12 @@ const events = [
     description:
       "El Chiribito pervive como un tesoro cultural, un juego que conecta generaciones y mantiene viva la tradición del póker español.",
   },
+  {
+    year: "2026",
+    title: "El renacer",
+    description:
+      "Eclipsado durante años por el Texas Hold'em, el Chiribito parecía condenado al olvido. En 2026 renace como un proyecto vivo y abierto: la mesa que vivía en los sótanos cabe ahora en una pantalla, al alcance de cualquiera. Lo que se jugaba a escondidas vuelve a repartirse, con la misma alma castiza de siempre.",
+  },
 ]
 
 export function TimelineSection() {
@@ -66,7 +72,7 @@ export function TimelineSection() {
             Cronología
           </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 text-balance">
-            De 1950 a 2005
+            De 1950 a hoy
           </h2>
           <div className="w-24 h-px bg-primary mx-auto mt-6" />
         </motion.div>
