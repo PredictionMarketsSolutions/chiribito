@@ -48,7 +48,8 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
   4. **[OPERATOR GATE — manual/on-device]** TP0.0: operator confirms the M1 cards-as-protagonist read on-device; AND operator blesses the 3 money shots as the canonical views (incl. POV fov 37 vs 40 — one refinement allowed, then locked). BLOCKING: never proceed on a broken instrument or a failed M1 read.
 
 **Plans**: 6 plans (5 waves)
-Plans:
+
+Plans:
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Wave-0 foundation: install frontend deps, restore the Playwright harness, smoke-verify the 3 shots, cut the tp0-before-rig rollback tag, re-assert prod-build isolation
@@ -80,11 +81,25 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
   2. Radial vignette removed from albedo but a light-RESPONSIVE micro edge-darkening kept so felt never regresses below reference between TP1 and TP5/TP6; M3 felt-hue PASS; M5 highlight-clip on felt PASS; MACRO inlay sharpness ≥ baseline; mark stays born-in (no floating decal / z-fight).
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at POV + MACRO: reads as real woven baize without satin/casino-green (materiality ONLY; grounding/depth deferred to TP5/TP6). Stop-on-ambiguous → iterate ≤2 then roll back (non-blocking: keep current felt, proceed).
 
-**Plans**: TBD
+**Plans**: 4 plans (4 waves)
 
 Plans:
 
-- [ ] TBD during planning
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Foundation: cut tp1-before-felt rollback tag (pre-edit HEAD) + resolve A1 (aoMap uv/uv2 from three source) + author the shared height→normal Sobel helper (FIRST USE) + its Vitest unit test
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 02-02-PLAN.md — textures.ts: feltTexture S→2048 (D-04) + remove baked vignette (D-03, M3 gradient untouched); new feltNapNormalMap (D-01 concentric/oval, LINEAR, repeat 8) + feltEdgeAoMap (D-03 subtle, LINEAR)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 02-03-PLAN.md — TableLab felt → MeshPhysicalMaterial (D-02 sheen ~0.70/sheenColor lighter-green/sheenRoughness 0.65/anisotropy 0.25, roughness 0.93) + aoMap uv wiring per A1; capture HERO/MACRO/POV + M3/M5/+B gates PASS
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 02-04-PLAN.md — OPERATOR GATE (autonomous:false): materiality-only A/B at POV+MACRO vs anchors/head + never below anchors/reference-tag (D-05); stop-on-ambiguous → ≤2 iterations then non-blocking rollback
 
 ### Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)
 
@@ -221,7 +236,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
-| 2. TP1 — Felt Materiality | 0/TBD | Not started | - |
+| 2. TP1 — Felt Materiality | 0/4 | Planned (4 plans, 4 waves) | - |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
