@@ -151,3 +151,21 @@ Additional per-level notes:
 4. Replace each baseline placeholder in the Baseline column with your score.
 5. Commit: `git commit -F <msgfile>` (avoid double-quotes in PowerShell here-strings — HANDOFF §11.6).
 6. The baseline is now locked. Any future regression in a scored element is a TP regression.
+
+---
+
+## TP progression log
+
+> The **Baseline** column above stays LOCKED at the TP0 values. Post-phase scores are recorded here as
+> each TP ships (operator-gated). Final all-green scoring happens at TP9.
+
+| TP / Phase | Date | Element | Baseline → Post | Basis |
+|------------|------|---------|:---------------:|-------|
+| TP1 / Phase 2 (felt) | 2026-06-10 | **felt** | 3 → **4** | Operator A/B APPROVED (`TP1_OPERATOR_AB.md`). Nap sheen + micro-relief + relight; M3/M5/+B PASS. Meets ≥4 target; AAA(5) deferred to TP9. Accepted "suficiente", no further materiality iteration. |
+
+**TP1 operator forward feedback (steers TP2+, does NOT reopen TP1):** cards stay the absolute
+protagonist · the hand must read complete (currently too cropped) · the whole table must be visible
+(currently too partial/small) · a full-scene composition validation (table + community + hands + global
+comp + camera↔table↔cards) is wanted BEFORE more local detail. See `TP1_OPERATOR_AB.md` §forward feedback
+and STATE.md Blockers/Concerns. Relevant scorecard elements to watch: **composition (11)**, **cameras
+(12)**, **social-read (14)**, **cards (2)**.

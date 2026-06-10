@@ -24,7 +24,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED).
 
 - [x] **Phase 1: TP0 — Eval Rig & Baseline (BLOCKING)** - Lock the frozen rig + baseline + M1 precondition gate before any visual work. ✅ COMPLETE 2026-06-10.
-- [ ] **Phase 2: TP1 — Felt / Tapete Materiality (the stage)** - Turn the largest, weakest surface into believable woven baize that relights.
+- [x] **Phase 2: TP1 — Felt / Tapete Materiality (the stage)** - Turn the largest, weakest surface into believable woven baize that relights. ✅ COMPLETE 2026-06-10 (operator APPROVED; felt shipped as reference baseline).
 - [ ] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility.
 - [ ] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk).
 - [ ] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details.
@@ -99,7 +99,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 02-04-PLAN.md — OPERATOR GATE (autonomous:false): materiality-only A/B at POV+MACRO vs anchors/head + never below anchors/reference-tag (D-05); stop-on-ambiguous → ≤2 iterations then non-blocking rollback
+- [x] 02-04-PLAN.md — OPERATOR GATE (autonomous:false): materiality-only A/B at POV+MACRO vs anchors/head + never below anchors/reference-tag (D-05); stop-on-ambiguous → ≤2 iterations then non-blocking rollback. ✅ APPROVED 2026-06-10 (0 iterations, ship) → docs/table-3d/TP1_OPERATOR_AB.md. Operator added forward composition feedback for TP2+ (see that doc + STATE.md).
 
 ### Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)
 
@@ -236,7 +236,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
-| 2. TP1 — Felt Materiality | 3/4 | In Progress|  |
+| 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
