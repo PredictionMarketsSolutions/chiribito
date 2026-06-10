@@ -27,7 +27,7 @@ export function labCardFaceUrl(id: string): string {
 // --- card physical proportions (world units; a chip radius = 1, so a chip is 2 wide) ---
 // A real baraja española card ≈ 62×95 mm. We size it large and deliberate so a hand of
 // cards out-masses the pot — the M1 identity gate (cards' screen area ≥ 2× the chips').
-export const CARD_W = 2.4;
+export const CARD_W = 2.05; // ENCUADRE diag: a touch smaller so the full 5-card board fits + hand reads complete
 export const CARD_H = CARD_W * 1.42; // ≈3.41 — the baraja ratio, a hair tightened for the felt
 export const CARD_T = 0.055; // stock thickness — enough to throw a real contact edge
 export const CARD_CORNER = 0.17; // rounded corners (Fournier radius)
@@ -69,9 +69,9 @@ export function communityLayout(ids: string[]): CardPose[] {
 
 // Hole cards: the player's two cards, near their edge of the felt, lifted toward the
 // camera and gently fanned so rank + suit read large — the protagonist of the POV shot.
-const HOLE_Z = 3.35; // pulled back from 3.95 so the near edge no longer clips the POV/close frame bottom
-const HOLE_PITCH = CARD_W * 0.73; // ≈1.75 — balanced held-pair: slight overlap, both ranks legible (operator-picked variant B)
-const HOLE_LIFT = 0.42; // raise the far edge toward the player camera (eased from 0.46 to keep the pair fully framed)
+const HOLE_Z = 2.3; // ENCUADRE diag: hand sits clearly central on the bigger felt — whole, well clear of the frame bottom
+const HOLE_PITCH = CARD_W * 0.98; // ENCUADRE diag: near-separated pair so BOTH hole cards read WHOLE (operator: "cartas de la mano enteras")
+const HOLE_LIFT = 0.2; // ENCUADRE diag: laid flatter so the whole card reads in the conjunto/social overhead-ish framings
 const HOLE_FAN = 0.14; // a soft fan between the two (operator-picked variant B)
 // The pair OVERLAPS in x (HOLE_PITCH < CARD_W) — the blessed variant-B composition. Two cards
 // overlapping at the SAME height are COPLANAR: the depth buffer can't separate them, so the

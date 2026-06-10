@@ -55,12 +55,12 @@ import {
 const R = 1;
 const H = 0.1; // chip thickness — thin, so a stack reads as many crisp layers
 const BEVEL = 0.03;
-const FELT_R = 5.2;
+const FELT_R = 6.5; // ENCUADRE diag: bigger table — more felt around the cards + the 6 occupants spread apart
 const OVAL_X = 1.22; // table stretched on X into an oval (chips stay un-stretched)
 
 // --- M1 staged hand — real Fournier faces. The player holds the Perla de Oros (Sota + 7
 // of Oros, the strongest hole pair); three community cards sit on the board. ---
-const LAB_COMMUNITY = ["1E", "12C", "11B"]; // As de Espadas · Rey de Copas · Caballo de Bastos
+const LAB_COMMUNITY = ["1E", "12C", "11B", "5C", "7E"]; // ENCUADRE diag: full 5-card board (As Espadas · Rey Copas · Caballo Bastos · 5 Copas · 7 Espadas)
 const LAB_HOLE = ["10O", "7O"]; // La Perla de Oros — Sota + 7 de Oros
 const LAB_HAND_IDS = [...LAB_COMMUNITY, ...LAB_HOLE];
 
@@ -557,6 +557,40 @@ function Seats() {
   );
 }
 
+// Face-down opponent hands at the seats — a ROUGH multi-hand social-staging preview.
+// Opt-in (rendered only with ?seats=on), reversible, isolated: just the card STOCK body laid flat
+// (no face mesh, no opponent textures) = a believable face-down back. Never alters the default
+// scene or the frozen money shots.
+function SeatHands({ kit }: { kit: CardKit }) {
+  const seats = useMemo(seatLayout, []);
+  return (
+    <group>
+      {seats.map((s, i) => {
+        if (i === 1) return null; // skip the protagonist's front seat — the Perla lives there
+        const hx = s.x * 0.7; // sit near the rail, in front of the occupant (not crowding the board)
+        const hz = s.z * 0.72;
+        const yaw = Math.atan2(s.x, s.z); // turn the pair to face its occupant
+        // scale < 1 keeps opponent hands subordinate to the protagonist Perla (visual hierarchy)
+        return (
+          <group key={i} position={[hx, 0.04, hz]} rotation={[0, yaw, 0]} scale={0.62}>
+            {[-0.78, 0.78].map((dx, j) => (
+              <mesh
+                key={j}
+                geometry={kit.body}
+                material={kit.stock}
+                position={[dx, 0, 0]}
+                rotation={[-Math.PI / 2, 0, j === 0 ? 0.16 : -0.16]}
+                castShadow
+                receiveShadow
+              />
+            ))}
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function Lights() {
   return (
     <>
@@ -604,12 +638,15 @@ function Scene() {
   ]);
   const logoImg = (logoTex.image as HTMLImageElement) ?? null;
   const aceImgs = useMemo<Partial<Record<SuitCode, HTMLImageElement | null>>>(
-    () => ({
-      O: (oTex.image as HTMLImageElement) ?? null,
-      C: (cuTex.image as HTMLImageElement) ?? null,
-      E: (eTex.image as HTMLImageElement) ?? null,
-      B: (bTex.image as HTMLImageElement) ?? null,
-    }),
+    () =>
+      qp("marks") === "off"
+        ? {} // ENCUADRE diag: hide the felt suit-emblem decals for a clean composition read (felt material untouched)
+        : {
+            O: (oTex.image as HTMLImageElement) ?? null,
+            C: (cuTex.image as HTMLImageElement) ?? null,
+            E: (eTex.image as HTMLImageElement) ?? null,
+            B: (bTex.image as HTMLImageElement) ?? null,
+          },
     [oTex, cuTex, eTex, bTex],
   );
   // ?c=literal → the literal 48px favicon (soft). Default → faithful HD rebuild (crisp).
@@ -651,6 +688,9 @@ function Scene() {
       gather: { pos: [0, 6.8, 20.5], target: [0, 0.2, 0], fov: 40 },
       // eye-level among the players — the most telling angle for "are people playing?"
       eye: { pos: [4.5, 2.7, 12.5], target: [-0.5, 0.5, -1], fov: 44 },
+      // —— ENCUADRE-PRIMERO diagnostic framings (NOT money shots; the frozen 3 card/hero/macro untouched) ——
+      conjunto: { pos: [1.0, 8.0, 16.5], target: [0, 0.05, 1.9], fov: 37 },
+      social: { pos: [0, 9.0, 17.6], target: [0, 0, 1.6], fov: 39 },
     };
     return presets[key] || presets.wide;
   }, []);
@@ -741,7 +781,12 @@ function Scene() {
         {/* human presence around the oval — OPT-IN (?seats=on) and fully isolated, so the
            default lab view is always the protected premium table. Occupant/seat work is an
            experimental, reversible layer; it must never degrade the table reference. */}
-        {qp("seats") === "on" && <Seats />}
+        {qp("seats") === "on" && (
+          <>
+            <Seats />
+            <SeatHands kit={cardKit} />
+          </>
+        )}
       </group>
 
       {/* the floor as a warm pool of light — the table stands in an intimate room */}
