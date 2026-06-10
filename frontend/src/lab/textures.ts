@@ -541,6 +541,33 @@ export function feltNapNormalMap(): THREE.CanvasTexture {
 }
 
 /**
+ * Very-subtle light-responsive edge-darken AO map for the felt (D-03).
+ *
+ * Replaces the baked black vignette removed from feltTexture().  This is a radial
+ * grayscale texture: white (no AO) through most of the surface, dipping to a gentle
+ * ~25% darken only at the absolute edge.  Wired as aoMap + aoMapIntensity in 02-03.
+ *
+ * A1-uv1 decision (docs/table-3d/TP1_A1_AOMAP_UV.md): aoMap reads UV channel 0 (uv)
+ * in three.js 0.169 — no uv2 attribute needed on PlaneGeometry.
+ *
+ * D-03 compliance: edge stop #c0c0c0 = ~25% AO. aoMapIntensity 0.18 (tuned in 02-03,
+ * max 0.25).  This is physical depth only — NOT a premium vignette (that is TP6).
+ */
+export function feltEdgeAoMap(): THREE.CanvasTexture {
+  const S = 512;
+  const { c, ctx } = makeCanvas(S, S);
+  const r = S / 2;
+  // White center (full indirect light) → very subtle darken only at absolute edge
+  const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, "#ffffff"); // no AO at center
+  g.addColorStop(0.7, "#ffffff"); // keep felt clean through most of the surface
+  g.addColorStop(1, "#c0c0c0"); // ~25% AO at absolute edge (D-03 "barely reads")
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
+  return gray(c); // NoColorSpace — AO map is LINEAR data, NOT a color texture
+}
+
+/**
  * Premium mahogany / walnut for the rail — a real fabricated turned-wood frame, not the
  * default-brown 3D look. Deep board tone, long flowing dual-tone grain that runs AROUND
  * the rail, and a few darker open-pore streaks for figure. Reads varnished under the key
