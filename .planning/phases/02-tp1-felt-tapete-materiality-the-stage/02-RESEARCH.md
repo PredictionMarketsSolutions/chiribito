@@ -379,18 +379,18 @@ cd frontend && npm run dev
 
 # 3. HERO capture (fov32):
 LAB_URL="http://localhost:5173/table-lab.html?cam=hero" \
-  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1-hero.png
+  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1/hero.png
 
 # 4. MACRO capture (fov26) — primary for inlay sharpness:
 LAB_URL="http://localhost:5173/table-lab.html?cam=macro" \
-  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1-macro.png
+  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1/macro.png
 
 # 5. POV capture (fov40) — primary for sheen/nap read:
 LAB_URL="http://localhost:5173/table-lab.html?cam=card" \
-  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1-pov.png
+  node .dev-stack/lab-shot.mjs .dev-stack/diag/table-3d/tp1/card.png
 
 # 6. Run admitted metrics over HERO:
-node tools/table-3d/run-metrics.mjs .dev-stack/diag/table-3d/tp1-hero.png
+node tools/table-3d/run-metrics.mjs .dev-stack/diag/table-3d/tp1
 # Must PASS: M3 (felt-hue ΔE<12), M5 (highlight-clip), +B (fuzz not satin)
 # Must NOT regress: M4, M6, M8, +A (unchanged geometry/scene)
 
@@ -623,7 +623,12 @@ export function heightToNormalMap(
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> **All three RESOLVED (2026-06-10):**
+> (1) **aoMap UV channel** → disposition: runtime branch in plan **02-01-T1**, which reads `aomap_pars_fragment.glsl.js` + `uv_pars_vertex.glsl.js` and decides A1-uv2 (`geometry.setAttribute('uv2', uv)` via a JSX ref) / A1-uv1 / A1-albedo-fallback (subtle albedo edge-darken, D-03-compliant); recorded in `docs/table-3d/TP1_A1_AOMAP_UV.md`.
+> (2) **normalScale × sheen** → disposition: start `normalScale=0.25` + `sheen=0.70` (set in 02-03-T1); the **+B gate in 02-03-T2** is the automated arbiter — reduce normalScale before sheen if +B fails.
+> (3) **concentric vs tiled read at POV** → disposition: `ringFreq` + `repeat=8` (per §2 / Pitfall 8); the **POV capture in 02-03-T2** + the **operator A/B in 02-04** are the empirical checks; add noise modulation if rings read busy.
 
 1. **aoMap UV channel behavior in three.js 0.169**
    - What we know: `aoMap` is standard in MeshStandardMaterial/MeshPhysicalMaterial; `PlaneGeometry` emits only `uv` (no `uv2`)
@@ -673,7 +678,7 @@ export function heightToNormalMap(
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| TP1-M3 | Felt-hue ΔE < 12 from anchors after material swap | Pixel metric | `node tools/table-3d/run-metrics.mjs .dev-stack/diag/table-3d/tp1-hero.png` | ✅ (run-metrics.mjs) |
+| TP1-M3 | Felt-hue ΔE < 12 from anchors after material swap | Pixel metric | `node tools/table-3d/run-metrics.mjs .dev-stack/diag/table-3d/tp1` | ✅ (run-metrics.mjs) |
 | TP1-M5 | Highlight-clip < 0.5% on felt after sheen added | Pixel metric | Same run-metrics invocation | ✅ |
 | TP1-+B | Fuzz not satin (sheen fraction ≤ 8%) | Pixel metric | Same run-metrics invocation | ✅ |
 | TP1-VISUAL | Operator A/B at POV + MACRO: real woven baize, no satin/casino-green? | Manual perceptual gate | HERO+MACRO+POV captures → operator review | Manual only |
