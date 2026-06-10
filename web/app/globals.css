@@ -89,6 +89,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Visible keyboard focus ring (gold) — not overridden by component animations */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
 }
 
 /* Shimmer text effect */
@@ -206,10 +212,22 @@
 
 /* Felt texture pattern */
 .felt-texture {
-  background-image: 
+  background-image:
     radial-gradient(circle at 25% 25%, oklch(0.35 0.08 155 / 0.3) 1px, transparent 1px),
     radial-gradient(circle at 75% 75%, oklch(0.35 0.08 155 / 0.2) 1px, transparent 1px);
   background-size: 8px 8px;
+}
+
+/* Felt bed — the whole site sits on a green table (B1).
+   Warm cenital wash over the charcoal base + subtle felt grain.
+   Kept dark toward the edges to preserve AA text contrast. */
+.felt-bed {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 130% 90% at 50% 20%, oklch(0.30 0.055 155 / 0.55) 0%, oklch(0.22 0.03 158 / 0.28) 44%, transparent 74%),
+    radial-gradient(circle at 25% 25%, oklch(0.42 0.09 155 / 0.06) 1px, transparent 1.5px),
+    radial-gradient(circle at 75% 75%, oklch(0.42 0.09 155 / 0.05) 1px, transparent 1.5px);
+  background-size: 100% 100%, 7px 7px, 7px 7px;
 }
 
 /* Art Deco frame */

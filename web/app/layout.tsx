@@ -30,6 +30,8 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="font-sans antialiased">
+        {/* Felt bed — the whole site sits on the green table (B1) */}
+        <div aria-hidden="true" className="fixed inset-0 -z-10 felt-bed" />
         {children}
         <Analytics />
       </body>
