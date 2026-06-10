@@ -87,7 +87,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Foundation: cut tp1-before-felt rollback tag (pre-edit HEAD) + resolve A1 (aoMap uv/uv2 from three source) + author the shared height→normal Sobel helper (FIRST USE) + its Vitest unit test
+- [x] 02-01-PLAN.md — Foundation: cut tp1-before-felt rollback tag (pre-edit HEAD) + resolve A1 (aoMap uv/uv2 from three source) + author the shared height→normal Sobel helper (FIRST USE) + its Vitest unit test
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -236,7 +236,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
-| 2. TP1 — Felt Materiality | 0/4 | Planned (4 plans, 4 waves) | - |
+| 2. TP1 — Felt Materiality | 1/4 | In Progress|  |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
