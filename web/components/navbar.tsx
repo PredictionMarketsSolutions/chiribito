@@ -48,7 +48,7 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-8 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+      className={`fixed top-11 left-0 right-0 z-50 transition-all duration-500 ${scrolled
           ? "bg-background/80 backdrop-blur-xl border-b border-primary/10 shadow-lg shadow-background/50"
           : "bg-transparent"
         }`}
@@ -56,18 +56,15 @@ export function Navbar() {
       <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3 group flex-shrink-0">
-          <div style={{ position: "relative", display: "inline-block", maxWidth: "100px" }}>
-            <Image
-              src="/logo-chiribito-horizontal.png"
-              alt="Chiribito"
-              width={200}
-              height={100}
-              priority
-              loading="eager"
-              className="group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
-              style={{ width: "auto", height: "auto" }}
-            />
-          </div>
+          <Image
+            src="/logo-chiribito-horizontal.png"
+            alt="Chiribito"
+            width={100}
+            height={100}
+            priority
+            loading="eager"
+            className="h-12 w-12 group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+          />
         </a>
 
         {/* Desktop links */}
@@ -120,10 +117,10 @@ export function Navbar() {
         {/* Mobile menu button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden text-foreground p-1"
+          className="md:hidden text-foreground p-2.5 -mr-2.5"
           aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
         >
-          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
@@ -142,9 +139,9 @@ export function Navbar() {
                 <Image
                   src="/logo-chiribito-horizontal.png"
                   alt="Chiribito"
-                  width={200}
+                  width={100}
                   height={100}
-                  className="drop-shadow-lg w-full max-w-xs h-auto"
+                  className="drop-shadow-lg h-20 w-20"
                 />
               </div>
               {links.map((link) => {

@@ -76,7 +76,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={social.name}
-                className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all duration-300"
+                className="w-11 h-11 rounded-lg bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all duration-300"
               >
                 {social.icon}
               </a>
@@ -85,11 +85,11 @@ export function Footer() {
 
           <div className="w-16 h-px bg-primary/30" />
 
-          <div className="flex items-center gap-6 text-xs text-muted-foreground">
-            <Link href="/contacto" className="hover:text-primary transition-colors duration-300">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link href="/contacto" className="inline-flex items-center min-h-[44px] px-2 hover:text-primary transition-colors duration-300">
               Contacto
             </Link>
-            <span>{"support@chiribito.com"}</span>
+            <span className="px-2">{"support@chiribito.com"}</span>
           </div>
 
           <div className="text-xs text-muted-foreground/70 pt-4">
