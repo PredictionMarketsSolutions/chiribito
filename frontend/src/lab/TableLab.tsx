@@ -31,6 +31,8 @@ import {
   chipFaceBump,
   chipEdgeTexture,
   feltTexture,
+  feltNapNormalMap,
+  feltEdgeAoMap,
   woodTexture,
   leatherTexture,
   leatherBump,
@@ -366,8 +368,17 @@ function Table({
         ? new THREE.MeshBasicMaterial({ color: 0xff00ff })
         : feltKind === "basic"
           ? new THREE.MeshBasicMaterial({ map: feltTexture(logoImg, aceImgs), alphaTest: 0.5 })
-          : new THREE.MeshStandardMaterial({
+          : new THREE.MeshPhysicalMaterial({
               map: feltTexture(logoImg, aceImgs),
+              normalMap: feltNapNormalMap(),
+              normalScale: new THREE.Vector2(0.25, 0.25),
+              aoMap: feltEdgeAoMap(),
+              aoMapIntensity: 0.18,
+              sheen: 0.70,
+              sheenColor: new THREE.Color("#2aad7a"),
+              sheenRoughness: 0.65,
+              anisotropy: 0.25,
+              anisotropyRotation: 0,
               roughness: 0.93,
               metalness: 0,
               envMapIntensity: 0.3,
