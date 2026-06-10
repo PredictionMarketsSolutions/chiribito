@@ -95,7 +95,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 02-03-PLAN.md — TableLab felt → MeshPhysicalMaterial (D-02 sheen ~0.70/sheenColor lighter-green/sheenRoughness 0.65/anisotropy 0.25, roughness 0.93) + aoMap uv wiring per A1; capture HERO/MACRO/POV + M3/M5/+B gates PASS
+- [x] 02-03-PLAN.md — TableLab felt → MeshPhysicalMaterial (D-02 sheen ~0.70/sheenColor lighter-green/sheenRoughness 0.65/anisotropy 0.25, roughness 0.93) + aoMap uv wiring per A1; capture HERO/MACRO/POV + M3/M5/+B gates PASS
 
 **Wave 4** *(blocked on Wave 3)*
 
@@ -236,7 +236,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
-| 2. TP1 — Felt Materiality | 2/4 | In Progress|  |
+| 2. TP1 — Felt Materiality | 3/4 | In Progress|  |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |

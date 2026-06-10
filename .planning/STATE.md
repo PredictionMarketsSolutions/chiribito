@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-10T14:48:57.738Z"
+last_updated: "2026-06-10T14:59:46.561Z"
 last_activity: 2026-06-10
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 10
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 ## Current Position
 
 Phase: 2 (TP1 — Felt / Tapete Materiality (the stage)) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
 Status: Ready to execute
 Last activity: 2026-06-10
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 80%
 | Phase 1 P3 | 38 min | 2 tasks | 9 files |
 | Phase 1 P04 | 12 min | 2 tasks | 15 files |
 | Phase 02 P02 | 6 | 3 tasks | 1 files |
+| Phase 02 P03 | 8 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 1]: Plan 01-04: M1 (px-height>=22px + requiresOperatorConfirm, no OCR) and M2 (cards-vs-chips>=2.0x, manual-polygon fallback) recorded informational with operator/manual seam -- not auto-admitted
 - [Phase 1]: Plan 01-04: M12 churn floor=1.0 MSE; reused plan 01-03 sharp helpers (metrics.mjs) WITHOUT modifying them; integrity ledger separate (METRICS_ADMISSION_INTEGRITY.md)
 - [Phase ?]: D-03 aoMap path (A1-uv1): feltEdgeAoMap gray() LINEAR, no uv2 needed, wire aoMap + aoMapIntensity 0.18 in 02-03
+- [Phase ?]: Plan 02-03: felt MeshPhysicalMaterial with sheen 0.70/#2aad7a/0.65, anisotropy 0.25, roughness 0.93, normalScale 0.25 — M3/M5/+B all PASS on first capture, zero tuning iterations
 
 ### Pending Todos
 
@@ -100,8 +102,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-10T14:48:57.729Z
-Stopped at: Completed 02-02: felt textures — S=2048, vignette removed, feltNapNormalMap+feltEdgeAoMap added
+Last session: 2026-06-10T14:59:46.552Z
+Stopped at: Completed 02-03: felt MeshPhysicalMaterial swap — sheen/nap/aniso/aoMap wired; M3/M5/+B PASS; 3 GPU-faithful captures in tp1/; zero tuning iterations
 Two pre-freeze fixes (operator-found at the M1 gate, all LOCAL): hole-pair z-fighting → along-normal height stagger (HOLE_STACK 0.10, commit 57a4da6); As de Espadas asset was rotated 180° → restored pristine canonical, single-origin fix for 2D (DOM+Pixi) + 3D (commit 70bb7de); anchors re-captured (56520a1); freeze package (21aba04).
 Phase 2 (TP1 — Felt materiality): **operator AUTHORIZED 2026-06-10**; discuss-phase done → `02-CONTEXT.md` (D-01 nap concentric/oval · D-02 sheen ~0.65–0.75 anti-satin · D-03 edge-darkening very subtle · D-04 MACRO inlay sharper · D-05 no-Vegas). Next: plan Phase 2 (`/gsd-plan-phase 2`). Still LOCAL — no push/merge/deploy. Do NOT execute TP1 code changes until the PLAN is reviewed by the operator.
 Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
