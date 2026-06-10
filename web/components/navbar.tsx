@@ -113,7 +113,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2 rounded-lg hover:brightness-110 transition-all duration-300"
           >
-            Juega Ya
+            Jugar ahora
           </a>
         </div>
 
@@ -170,7 +170,7 @@ export function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="text-sm font-bold bg-primary text-primary-foreground px-5 py-2 rounded-lg hover:brightness-110 transition-all duration-300 mt-2 text-center"
               >
-                Juega Ya
+                Jugar ahora
               </a>
             </div>
           </motion.div>
