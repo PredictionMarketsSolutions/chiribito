@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: paused
-last_updated: "2026-06-10"
+last_updated: "2026-06-10T13:04:08.899Z"
 last_activity: 2026-06-10
 progress:
   total_phases: 10
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 1 (TP0) ✅ COMPLETE — baseline FROZEN + operator-signed-off 2026-06-10. PAUSED before Phase 2 (TP1, felt materiality) pending explicit operator authorization.
+**Current focus:** Phase 1 (TP0) ✅ COMPLETE/frozen. **Phase 2 (TP1 — felt materiality): operator AUTHORIZED; context gathered (`02-CONTEXT.md`) — ready to plan.**
 
 ## Current Position
 
-Phase: 1 (TP0 — Eval Rig & Baseline (BLOCKING)) — ✅ COMPLETE (frozen + signed off)
-Plan: 6 of 6 complete
-Status: TP0 baseline LOCKED — PAUSED before Phase 2 (TP1), awaiting operator GO
+Phase: 2 (TP1 — Felt / Tapete Materiality) — context gathered, ready to plan
+  (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
+Status: TP1 `02-CONTEXT.md` captured (operator decided all 4 gray areas). Next: `/gsd-plan-phase 2`
 Last activity: 2026-06-10
 
-Progress: [██████████] 100% (Phase 1) · milestone 1/10 phases
+Progress: milestone 1/10 phases complete · Phase 2 planning not yet started
 
 ## Performance Metrics
 
@@ -97,10 +97,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-10
-Stopped at: **TP0 / Phase 1 COMPLETE — baseline FROZEN + operator-signed-off ("Baseline locked").** All 6 plans done. Plan 01-05 operator gate: M1 cards-as-protagonist PASS (after the 2 fixes below) · 3 money shots blessed · POV fov LOCKED at 40 · M1-legibility PASS-WITH-NOTE (~17px @1080p, non-blocking) · M11 PASS (~1.3ms). Plan 01-06 freeze: protected-tag corpus captured (tag d17df37 NEVER mutated) · region-rects.json finalized (POV→FINAL) · M12 zero-change CLOSED (HERO+MACRO+POV fov40 all MSE 0) · 15-element scorecard baselined (avg ≈ 3.4) · perf recorded (M10 217/637 → TP3 info · M11 PASS).
+Last session: 2026-06-10T13:04:08.891Z
+Stopped at: Phase 2 (TP1) context gathered — ready to plan
 Two pre-freeze fixes (operator-found at the M1 gate, all LOCAL): hole-pair z-fighting → along-normal height stagger (HOLE_STACK 0.10, commit 57a4da6); As de Espadas asset was rotated 180° → restored pristine canonical, single-origin fix for 2D (DOM+Pixi) + 3D (commit 70bb7de); anchors re-captured (56520a1); freeze package (21aba04).
-PAUSED before Phase 2 (TP1 — Felt materiality). **Operator has NOT authorized TP1.** Do NOT start TP1 / push / merge / deploy without an explicit operator GO — operator wants to review the final TP0 state first.
+Phase 2 (TP1 — Felt materiality): **operator AUTHORIZED 2026-06-10**; discuss-phase done → `02-CONTEXT.md` (D-01 nap concentric/oval · D-02 sheen ~0.65–0.75 anti-satin · D-03 edge-darkening very subtle · D-04 MACRO inlay sharper · D-05 no-Vegas). Next: plan Phase 2 (`/gsd-plan-phase 2`). Still LOCAL — no push/merge/deploy. Do NOT execute TP1 code changes until the PLAN is reviewed by the operator.
 Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
 Branch: `spike/table-3d-hero` (== `claude/cranky-volhard-dd8b01`), all LOCAL commits (no push). use_worktrees=false (GPU/dev-server → sequential).
-Resume file: docs/table-3d/TP0_BASELINE.md (freeze record) + docs/table-3d/TP0_OPERATOR_GATE.md (gate record)
+Resume file: .planning/phases/02-tp1-felt-tapete-materiality-the-stage/02-CONTEXT.md
