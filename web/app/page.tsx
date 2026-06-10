@@ -11,7 +11,6 @@ import { TipsSection } from "@/components/tips-section"
 import { NewsletterSection } from "@/components/newsletter-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
-import { ScrollToTop } from "@/components/scroll-to-top"
 import { SectionSeparator } from "@/components/section-separator"
 
 // Lazy load heavy interactive components
@@ -28,7 +27,6 @@ const RankingsSection = dynamic(
 export default function Home() {
   return (
     <main className="relative">
-      <ScrollToTop />
       <SocialBar />
       <Navbar />
       <HeroSection />
