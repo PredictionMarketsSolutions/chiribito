@@ -129,16 +129,22 @@ Scratch PNGs: `.dev-stack/diag/table-3d/tp0-smoke/card-nostats.png` + `card-stat
 
 ## Draw-Call / Frame-Time Baseline
 
-> **TO BE FILLED by plan 06 (TP0a-3 + operator gate).**
-> After the `?stats` StatsProbe (plan 02) is in place and the operator blesses the money shots,
-> the draw-call + frame-time numbers are recorded here.
+> Filled 2026-06-10 (plan 06). M10 read via `tools/table-3d/stats-read.mjs`; M11 via an uncapped
+> (vsync + frame-rate-limit OFF) headless frame-time probe — both on the real RTX 4060 (ANGLE
+> D3D11). The M11 Δ is a CONSERVATIVE upper bound (includes JS + composite; true GPU render < these).
 
-| Shot | Draw calls (M10) | Frame-time median ms (M11) | Threshold |
-|------|-----------------|---------------------------|-----------|
-| HERO | TBD | TBD | <150 draws / <8 ms |
-| POV (`?cam=card`) | TBD | TBD | <150 draws / <8 ms |
-| MACRO | TBD | TBD | <150 draws / <8 ms |
-| HERO `?chips=full` | TBD | TBD | <220 draws |
+| Shot | Draw calls (M10) | Frame-time median ms (M11) | Threshold | Verdict |
+|------|-----------------|---------------------------|-----------|---------|
+| HERO | 217 | ~1.3 | <150 draws / <8 ms | M10 over → TP3 · M11 PASS |
+| POV (`?cam=card`) | 217 | ~1.0 | <150 draws / <8 ms | M10 over → TP3 · M11 PASS |
+| MACRO | 181 | ~1 (headroom; gate is HERO) | <150 draws / <8 ms | M10 over → TP3 · M11 PASS |
+| HERO `?chips=full` | 637 | — | <220 draws | M10 over → TP3 |
+
+> **M10 (draw-calls): OVER ceiling at every shot — the known, admitted honest finding.** Instancing
+> the chip pot is a **TP3** deliverable; M10 is informational at TP0 (a perf metric routed forward),
+> NOT a freeze blocker.
+> **M11 (frame-time): PASS, ~6× margin** (median ~1.3 ms vs the <8 ms ceiling). The RTX 4060 renders
+> the scene trivially fast; on-screen vsync caps the *displayed* rate, not the GPU's render headroom.
 
 ---
 
@@ -163,3 +169,35 @@ tools/table-3d/
 
 > Committed anchors will be downscaled (to ~1280px wide) to avoid repo bloat (Pitfall 5 of 01-RESEARCH.md).
 > Full-res working copies live in gitignored `.dev-stack/diag/`.
+
+---
+
+## TP0 Freeze Finalization (2026-06-10, plan 01-06)
+
+**Baseline-capture HEAD:** `56520a19821db18913d2044473d0aa272f6b3e0d` (branch `spike/table-3d-hero`, LOCAL — no push). All captures GPU-faithful on the real RTX 4060 (ANGLE D3D11), zero console errors.
+
+### Pre-freeze fixes (operator-approved at the M1 gate, 2026-06-10)
+| Fix | Commit | Effect |
+|-----|--------|--------|
+| Hole-pair z-fighting (coplanar overlap) → along-normal height stagger (`HOLE_STACK 0.10`) | `57a4da6` | cards no longer "mix"/flicker; variant-B overlap + fan preserved |
+| As de Espadas asset shipped rotated 180° → restored pristine canonical (same-source `web/` deck) | `70bb7de` | correct in 2D game (DOM + Pixi) AND 3D lab — single origin, all modes |
+| HEAD anchors re-captured from the corrected scene | `56520a1` | baseline corpus reflects both fixes |
+
+### Anchor corpus (committed, downscaled 1280w)
+- `docs/table-3d/anchors/head/{hero,card,macro}.png` — the frozen-rig HEAD money shots.
+- `docs/table-3d/anchors/reference-tag/{hero,card,macro}.png` — the protected reference (`table-3d-premium-reference-2026-06-04` @ `d17df37`), captured via a throwaway detached worktree (a camera-only `card` preset was added in the worktree to match framing; scene/materials untouched), worktree removed, **tag SHA re-asserted == d17df37 — never mutated** (reference never degraded, SSOT §5.2).
+
+### Region rects + M12 zero-change (CLOSED)
+- `tools/table-3d/region-rects.json` — finalized fixed rects (POV promoted PROVISIONAL → FINAL at the fov40 lock).
+- M12 zero-visual-change: HERO felt **MSE 0** · HERO brass **0** · MACRO identity **0** · **POV felt (fov40) MSE 0 — the POV-region M12 deferred by plan 04 is now CLOSED.** Render is byte-deterministic (fresh capture == frozen baseline; M9-consistent).
+
+### Admitted metrics (re-run over the corrected HEAD — no regression)
+M3 felt ΔE **8.55** PASS · M4 brass H39.4°/S0.38/V0.69 **PASS** · M5 clip **0%** PASS · M6 contact-shadow **17.3%** PASS · +B specular **0%** PASS. M8 vignette (88.9%) + +A warm-corner are **informational → TP6** (a restrained 8–20% vignette + warm-corner floor are TP6 deliverables; the current baseline puts the dark room backdrop in the top corners).
+
+### Operator gate (plan 01-05) — all 3 cleared
+M1 cards-as-protagonist **PASS** (after the 2 fixes) · 3 money shots blessed + **POV fov LOCKED at 40** (no edit) · M1 legibility **PASS WITH NOTE** (razor-legible; rank-index ~17px @1080p < 22px heuristic → non-blocking future tweak) · M10 informational→TP3 · M11 **PASS**. Full record: `docs/table-3d/TP0_OPERATOR_GATE.md`.
+
+### Scorecard
+15-element baseline proposed (avg ≈ 3.4) in `docs/table-3d/SCORECARD_TABLE_3D.md` — **pending operator sign-off** at the freeze lock.
+
+> **Freeze status:** every automatable freeze artifact is produced + verified. **Awaiting the operator's final freeze sign-off** (scorecard confirmation + rig-frozen declaration). Until then the baseline is provisional. LOCAL only — no push / merge / deploy.

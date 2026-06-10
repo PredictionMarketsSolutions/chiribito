@@ -1,7 +1,7 @@
 # Table 3D — AAA Scorecard (15 elements · 0–5)
 
 **Authored:** 2026-06-09 (plan 02, TP0a-5)
-**Baseline:** scored by the operator at TP0 (plan 05/06 gate) against HEAD captures.
+**Baseline:** proposed 2026-06-10 from the GPU-faithful HEAD anchors + admitted-metric results (automated assessment) — **pending operator confirmation at the freeze sign-off** (adjust any score before the lock). Avg ≈ 3.4; weakest = depth (2, AO/vignette are TP6); strongest = cards/composition/cameras/lighting/rail/body/social-read (4).
 **Target:** green = every element ≥ 4/5 at TP9.
 **Anchor paths:** `docs/table-3d/anchors/head/{hero,card,macro}.png` (committed at plan 06)
 **Scale:** 0 = absent/broken · 1 = placeholder · 2 = recognisable · 3 = acceptable · 4 = good · 5 = AAA
@@ -25,21 +25,21 @@
 
 | # | Element | Baseline | Target | 0 — absent | 3 — acceptable | 5 — AAA | Primary anchor |
 |---|---------|:-------:|:------:|------------|----------------|---------|---------------|
-| 1 | **felt** | _TP0_ | ≥ 4 | Flat-lit disc, solid colour, no texture signal | Woven look, correct palette (#1f9163 family), no nap | Nap sheen, micro-relief visible in rake light, relights as camera moves | `macro` |
-| 2 | **cards** | _TP0_ | ≥ 4 | Decal / coloured plane; rank unreadable | Legible stock; suit icons distinct | Razor-legible Fournier stock; rank glyph ≥ 22 px on 1080p POV downscale; face texture punchy at M1 shot distance | `card (POV)` |
-| 3 | **chips** | _TP0_ | ≥ 4 | Oversized glossy coins; no denomination read | Matte, demoted accent pot; size-correct | Tooled clay edges; instanced; denomination suits readable; brass-not-gold (M4 PASS); demoted pot reads as identity, not clutter | `hero` / `macro` |
-| 4 | **leather rail** | _TP0_ | ≥ 4 | Flat band / plastic tube | Padded roll; bump visible; correct colour | Broken-in cordobán with welt; crease at inner edge; broad flattened crown reads as comfortable; bump map reacts to key light | `hero` / `rail` |
-| 5 | **wood coaming** | _TP0_ | ≥ 4 | Brown plastic ring | Varnished mahogany read; grain directional | Figured grain; per-arc UV alignment (grain follows the oval); varnish gloss restrained; joint detail at corners | `hero` |
-| 6 | **brass** | _TP0_ | ≥ 4 | Gold / gaudy; oversaturated | Aged brass tone; HSV roughly in range | Brass-not-gold (M4 PASS: H 35–48°, S ≤ 0.55, V ≤ 0.80); hairline scratches in normal map; reveals dirt and age, not showroom shine | `macro` |
-| 7 | **body / contour** | _TP0_ | ≥ 4 | Table floats; no apron, no plinth, no mass | Silhouette present; table has underside depth | Elegant sectional edge; apron + plinth read as furniture mass; the "you could move it" test passes | `hero` / `wide` |
-| 8 | **lighting** | _TP0_ | ≥ 4 | Flat ambient; no directionality | One warm key spotLight; shadow present | Shaped warm gradient: key overhead + two restrained fills + back rim for separation; warm floor bounce washes the apron; no casino uplighting | all 3 |
-| 9 | **shadows** | _TP0_ | ≥ 4 | No shadows / hard aliased shadow | Contact shadow present; soft edges | PCSS-quality penumbra on the felt; baked contact shadow under chips and cards; graded from hard (near contact) to soft (farther fall-off) | `hero` |
-| 10 | **depth** | _TP0_ | ≥ 4 | No depth cues; everything equidistant | Some atmospheric falloff; fog present | AO in crevices; restrained depth-of-field (not bokeh-soup); vignette 8–20% (M8 PASS); felt darkens toward rail | `hero` |
-| 11 | **composition** | _TP0_ | ≥ 4 | Dead zones; table cut off; no hierarchy | Balanced; all elements within frame | Cards dominate foreground read; board extends the eye into mid; rail + coaming frame the scene; no compositional voids; HERO: ¾ angle reveals table as protagonist | `hero` |
-| 12 | **cameras** | _TP0_ | ≥ 4 | Arbitrary / unframed; no intentional angle | Usable angles; table mostly in frame | Three locked money shots (HERO ¾ fov 32 / POV player fov 40 or 37 / MACRO detail fov 26); each tells a different story; zero unintentional clipping | all 3 |
-| 13 | **tactility** | _TP0_ | ≥ 4 | CG-flat; no material read | Material type recognisable (cloth / leather / wood / metal) | "You could pick it up" test passes: felt nap, leather grain, wood varnish, brass patina, clay chip edges — all readable without a label | `macro` |
-| 14 | **social-read** | _TP0_ | ≥ 4 | Still-life; no game narrative | Staged hand present; pot visible | Shared mid-play read: the Perla (Sota + 7 de Oros) reads as protagonist; community cards tell the board state; pot placement signals action without dominating; the scene invites imagination | `hero` |
-| 15 | **premium-overall** | _TP0_ | ≥ 4 | Prototype quality; would not ship | "It works"; presentable but forgettable | AAA, castizo, discreet. Chiribito's table is the one you remember — not because it's loud, but because every material is correct. The card is the protagonist. | all 3 |
+| 1 | **felt** | **3** | ≥ 4 | Flat-lit disc, solid colour, no texture signal | Woven look, correct palette (#1f9163 family), no nap | Nap sheen, micro-relief visible in rake light, relights as camera moves | `macro` |
+| 2 | **cards** | **4** | ≥ 4 | Decal / coloured plane; rank unreadable | Legible stock; suit icons distinct | Razor-legible Fournier stock; rank glyph ≥ 22 px on 1080p POV downscale; face texture punchy at M1 shot distance | `card (POV)` |
+| 3 | **chips** | **3** | ≥ 4 | Oversized glossy coins; no denomination read | Matte, demoted accent pot; size-correct | Tooled clay edges; instanced; denomination suits readable; brass-not-gold (M4 PASS); demoted pot reads as identity, not clutter | `hero` / `macro` |
+| 4 | **leather rail** | **4** | ≥ 4 | Flat band / plastic tube | Padded roll; bump visible; correct colour | Broken-in cordobán with welt; crease at inner edge; broad flattened crown reads as comfortable; bump map reacts to key light | `hero` / `rail` |
+| 5 | **wood coaming** | **3** | ≥ 4 | Brown plastic ring | Varnished mahogany read; grain directional | Figured grain; per-arc UV alignment (grain follows the oval); varnish gloss restrained; joint detail at corners | `hero` |
+| 6 | **brass** | **3** | ≥ 4 | Gold / gaudy; oversaturated | Aged brass tone; HSV roughly in range | Brass-not-gold (M4 PASS: H 35–48°, S ≤ 0.55, V ≤ 0.80); hairline scratches in normal map; reveals dirt and age, not showroom shine | `macro` |
+| 7 | **body / contour** | **4** | ≥ 4 | Table floats; no apron, no plinth, no mass | Silhouette present; table has underside depth | Elegant sectional edge; apron + plinth read as furniture mass; the "you could move it" test passes | `hero` / `wide` |
+| 8 | **lighting** | **4** | ≥ 4 | Flat ambient; no directionality | One warm key spotLight; shadow present | Shaped warm gradient: key overhead + two restrained fills + back rim for separation; warm floor bounce washes the apron; no casino uplighting | all 3 |
+| 9 | **shadows** | **3** | ≥ 4 | No shadows / hard aliased shadow | Contact shadow present; soft edges | PCSS-quality penumbra on the felt; baked contact shadow under chips and cards; graded from hard (near contact) to soft (farther fall-off) | `hero` |
+| 10 | **depth** | **2** | ≥ 4 | No depth cues; everything equidistant | Some atmospheric falloff; fog present | AO in crevices; restrained depth-of-field (not bokeh-soup); vignette 8–20% (M8 PASS); felt darkens toward rail | `hero` |
+| 11 | **composition** | **4** | ≥ 4 | Dead zones; table cut off; no hierarchy | Balanced; all elements within frame | Cards dominate foreground read; board extends the eye into mid; rail + coaming frame the scene; no compositional voids; HERO: ¾ angle reveals table as protagonist | `hero` |
+| 12 | **cameras** | **4** | ≥ 4 | Arbitrary / unframed; no intentional angle | Usable angles; table mostly in frame | Three locked money shots (HERO ¾ fov 32 / POV player fov 40 or 37 / MACRO detail fov 26); each tells a different story; zero unintentional clipping | all 3 |
+| 13 | **tactility** | **3** | ≥ 4 | CG-flat; no material read | Material type recognisable (cloth / leather / wood / metal) | "You could pick it up" test passes: felt nap, leather grain, wood varnish, brass patina, clay chip edges — all readable without a label | `macro` |
+| 14 | **social-read** | **4** | ≥ 4 | Still-life; no game narrative | Staged hand present; pot visible | Shared mid-play read: the Perla (Sota + 7 de Oros) reads as protagonist; community cards tell the board state; pot placement signals action without dominating; the scene invites imagination | `hero` |
+| 15 | **premium-overall** | **3** | ≥ 4 | Prototype quality; would not ship | "It works"; presentable but forgettable | AAA, castizo, discreet. Chiribito's table is the one you remember — not because it's loud, but because every material is correct. The card is the protagonist. | all 3 |
 
 ---
 
@@ -148,6 +148,6 @@ Additional per-level notes:
    LAB_URL="http://localhost:5173/table-lab.html?cam=macro" node .dev-stack/lab-shot.mjs docs/table-3d/anchors/head/macro.png
    ```
 3. Open each anchor PNG and score each element 0–5 using the rubric above.
-4. Replace each `_TP0_` placeholder in the Baseline column with your score.
+4. Replace each baseline placeholder in the Baseline column with your score.
 5. Commit: `git commit -F <msgfile>` (avoid double-quotes in PowerShell here-strings — HANDOFF §11.6).
 6. The baseline is now locked. Any future regression in a scored element is a TP regression.
