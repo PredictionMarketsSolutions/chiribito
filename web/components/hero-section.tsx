@@ -2,47 +2,50 @@
 
 import { motion, useScroll, useTransform } from "framer-motion"
 import Image from "next/image"
-import { OrosSuit, CopasSuit, EspadasSuit, BastosSuit } from "@/components/spanish-suits"
 
-// Generate particle positions deterministically
-const particles = Array.from({ length: 20 }, (_, i) => ({
+// Fewer, calmer particles so the table and title lead (B3)
+const particles = Array.from({ length: 8 }, (_, i) => ({
   id: i,
-  left: `${(i * 17) % 100}%`,
-  delay: (i * 0.5) % 8,
-  duration: 8 + (i % 4) * 2,
-  size: 2 + (i % 3),
+  left: `${(i * 37) % 100}%`,
+  delay: (i * 0.7) % 8,
+  duration: 9 + (i % 4) * 2,
+  size: 2 + (i % 2),
 }))
 
 export function HeroSection() {
   const { scrollYProgress } = useScroll()
   const bgY = useTransform(scrollYProgress, [0, 0.5], ["0%", "20%"])
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.8, 0.95])
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5], [0.74, 0.90])
   const contentY = useTransform(scrollYProgress, [0, 0.5], ["0%", "12%"])
   const contentOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0])
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background image with parallax */}
+      {/* Background: the Chiribito table in close-up (B2) */}
       <motion.div className="absolute inset-0" style={{ y: bgY }}>
         <Image
-          src="/images/hero-casino.jpg"
-          alt="Salón de cartas madrileño, años 50"
+          src="/images/chiribito-table.jpg"
+          alt="Mesa de Chiribito con cartas españolas y fichas"
           fill
           className="object-cover scale-110"
           priority
         />
       </motion.div>
-      {/* Dark overlay that intensifies on scroll */}
+      {/* Green felt tint to align the warm photo with the Chiribito identity */}
+      <div className="absolute inset-0 bg-[oklch(0.24_0.08_155)]/45" />
+      {/* Warm cenital light over the table (B5) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_36%,oklch(0.58_0.10_85/0.30)_0%,transparent_72%)]" />
+      {/* Dark overlay that intensifies on scroll (lighter than before so the table shows) */}
       <motion.div className="absolute inset-0 bg-background" style={{ opacity: overlayOpacity }} />
       {/* Vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,oklch(0.12_0.01_160)_100%)]" />
 
-      {/* Floating golden particles */}
+      {/* A few calm golden particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map((p) => (
           <div
             key={p.id}
-            className="absolute bottom-0 rounded-full bg-primary/60"
+            className="absolute bottom-0 rounded-full bg-primary/50"
             style={{
               left: p.left,
               width: p.size,
@@ -53,15 +56,11 @@ export function HeroSection() {
         ))}
       </div>
 
-      {/* Smoke/fog effect at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none">
-        <div 
-          className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/20 to-transparent"
-          style={{ animation: 'smoke-drift 12s ease-in-out infinite' }}
-        />
-        <div 
-          className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent"
-          style={{ animation: 'smoke-drift 15s ease-in-out 3s infinite reverse' }}
+      {/* Soft smoke at the bottom (single subtle layer) */}
+      <div className="absolute bottom-0 left-0 right-0 h-56 pointer-events-none">
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-background/50 via-background/10 to-transparent"
+          style={{ animation: 'smoke-drift 14s ease-in-out infinite' }}
         />
       </div>
 
@@ -136,24 +135,6 @@ export function HeroSection() {
           secreto mejor guardado de los círculos selectos de España.
         </motion.p>
 
-        {/* Open Source mention */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.1 }}
-          className="mt-4 text-xs md:text-sm text-muted-foreground/60 max-w-xl mx-auto"
-        >
-          Este es un proyecto{" "}
-          <a
-            href="https://github.com/PredictionMarketsSolutions/chiribito"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary/80 hover:text-primary underline transition-colors"
-          >
-            open source
-          </a>
-        </motion.p>
-
         {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -171,28 +152,8 @@ export function HeroSection() {
           </a>
         </motion.div>
 
-        {/* Scroll indicator with smooth scroll */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.6 }}
-          className="mt-16"
-        >
-          <motion.button
-            onClick={() => {
-              document.getElementById("historia")?.scrollIntoView({ behavior: "smooth" })
-            }}
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="flex flex-col items-center gap-2 cursor-pointer hover:text-primary transition-colors duration-300"
-          >
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-primary">
-              Descubre la historia
-            </span>
-            <div className="w-px h-8 bg-primary/40" />
-          </motion.button>
-        </motion.div>
       </motion.div>
+
     </section>
   )
 }

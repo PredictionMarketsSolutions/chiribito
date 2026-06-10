@@ -53,7 +53,7 @@ export function Navbar() {
           : "bg-transparent"
         }`}
     >
-      <div className="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-full mx-auto px-6 h-24 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3 group flex-shrink-0">
           <Image
@@ -63,7 +63,7 @@ export function Navbar() {
             height={100}
             priority
             loading="eager"
-            className="h-12 w-12 group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+            className="h-20 w-20 group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
           />
         </a>
 
