@@ -423,7 +423,7 @@ export function feltTexture(
   logoImg?: HTMLImageElement | null,
   aceImgs?: Partial<Record<SuitCode, HTMLImageElement | null>>,
 ): THREE.CanvasTexture {
-  const S = 1024;
+  const S = 2048;
   const { c, ctx } = makeCanvas(S, S);
   const r = S / 2;
 
@@ -488,13 +488,6 @@ export function feltTexture(
   }
   ctx.globalAlpha = 1;
   ctx.restore();
-
-  // vignette
-  const vig = ctx.createRadialGradient(r, r, r * 0.42, r, r, r);
-  vig.addColorStop(0, "rgba(0,0,0,0)");
-  vig.addColorStop(1, "rgba(0,0,0,0.5)");
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, S, S);
 
   ctx.restore();
   return srgb(c);
