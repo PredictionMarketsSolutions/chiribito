@@ -613,7 +613,13 @@ function Scene() {
   // them for variant exploration (default scene unchanged when no param is present).
   const hole = useMemo(() => {
     const num = (k: string) => (qp(k) != null ? Number(qp(k)) : undefined);
-    return holeLayout(LAB_HOLE, { pitch: num("hpitch"), fan: num("hfan"), z: num("hz"), lift: num("hlift") });
+    return holeLayout(LAB_HOLE, {
+      pitch: num("hpitch"),
+      fan: num("hfan"),
+      z: num("hz"),
+      lift: num("hlift"),
+      stack: num("hstack"),
+    });
   }, []);
 
   // camera preset via ?cam=wide|hero|close|top — lets us capture several angles

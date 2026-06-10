@@ -73,6 +73,12 @@ const HOLE_Z = 3.35; // pulled back from 3.95 so the near edge no longer clips t
 const HOLE_PITCH = CARD_W * 0.73; // ≈1.75 — balanced held-pair: slight overlap, both ranks legible (operator-picked variant B)
 const HOLE_LIFT = 0.42; // raise the far edge toward the player camera (eased from 0.46 to keep the pair fully framed)
 const HOLE_FAN = 0.14; // a soft fan between the two (operator-picked variant B)
+// The pair OVERLAPS in x (HOLE_PITCH < CARD_W) — the blessed variant-B composition. Two cards
+// overlapping at the SAME height are COPLANAR: the depth buffer can't separate them, so the
+// overlap interpenetrates and z-fights (the cards visibly "mix"/flicker between each other at
+// the seam). Fix: stack each successive card along its shared face-normal so the later card
+// rests cleanly ON TOP of its partner — physical, and the overlap no longer fights for depth.
+const HOLE_STACK = 0.1; // along-normal rise per card (clears the ~0.071 face-decal stack + margin)
 
 /** Optional per-render overrides for hole-pair composition (variant exploration; defaults = the baked constants). */
 export interface HoleOpts {
@@ -80,6 +86,7 @@ export interface HoleOpts {
   fan?: number;
   z?: number;
   lift?: number;
+  stack?: number;
 }
 
 /** The player's hole cards, fanned + lifted toward the player camera for legibility. */
@@ -88,13 +95,19 @@ export function holeLayout(ids: string[], opts: HoleOpts = {}): CardPose[] {
   const fan = opts.fan ?? HOLE_FAN;
   const z = opts.z ?? HOLE_Z;
   const lift = opts.lift ?? HOLE_LIFT;
+  const stack = opts.stack ?? HOLE_STACK;
   const n = ids.length;
   const xs = rowPositionsX(n, pitch);
+  // the cards lie face-up tilted toward the camera by `lift`; their shared up-normal is
+  // (0, cos lift, sin lift). Stacking each successive card along it lifts the top card up AND
+  // a hair toward the camera, so it rests on its partner rather than slicing through it.
+  const ny = Math.cos(lift);
+  const nz = Math.sin(lift);
   return ids.map((id, i) => {
     const dir = n === 1 ? 0 : i - (n - 1) / 2; // -0.5 / +0.5 for a pair
     return {
       id,
-      position: [xs[i], FELT_REST_Y + 0.02, z],
+      position: [xs[i], FELT_REST_Y + 0.02 + i * stack * ny, z + i * stack * nz],
       // lifted toward the player camera (front face up-and-toward +Z), gently fanned
       rotation: [-Math.PI / 2 + lift, 0, dir * fan],
     };

@@ -83,4 +83,16 @@ describe("holeLayout", () => {
     // lifted toward the camera (more upright than a flat -90°)
     for (const p of poses) expect(p.rotation[0]).toBeGreaterThan(-Math.PI / 2);
   });
+
+  it("height-staggers the overlapping pair so the cards never sit coplanar (no z-fighting)", () => {
+    const poses = holeLayout(["10O", "7O"]);
+    // premise: the held pair OVERLAPS in x (HOLE_PITCH < CARD_W) — that overlap is the
+    // blessed 'variant B' composition. Two cards overlapping at the SAME height are coplanar:
+    // the depth buffer can't resolve them → they interpenetrate and z-fight (the M1 'cards
+    // mix / flicker between each other' bug). So an overlapping pair MUST be separated in height.
+    const dx = poses[1].position[0] - poses[0].position[0];
+    expect(dx).toBeLessThan(CARD_W); // they overlap in x
+    const dy = poses[1].position[1] - poses[0].position[1];
+    expect(dy).toBeGreaterThan(0.05); // the later card rests clearly ON TOP — no coplanar overlap
+  });
 });
