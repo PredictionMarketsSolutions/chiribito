@@ -91,19 +91,6 @@ export function Footer() {
             </Link>
             <span className="px-2">{"support@chiribito.com"}</span>
           </div>
-
-          <div className="text-xs text-muted-foreground/70 pt-4">
-            Este es un proyecto{" "}
-            <a
-              href="https://github.com/PredictionMarketsSolutions/chiribito"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline transition-colors"
-            >
-              open source
-            </a>
-            . Contribuye en GitHub.
-          </div>
         </div>
       </div>
     </footer>
