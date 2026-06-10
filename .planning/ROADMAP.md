@@ -23,7 +23,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - Integer phases (1, 2, 3): Planned milestone work. Here Phase N = **TP(N−1)** (Phase 1 = TP0 … Phase 10 = TP9).
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED).
 
-- [ ] **Phase 1: TP0 — Eval Rig & Baseline (BLOCKING)** - Lock the frozen rig + baseline + M1 precondition gate before any visual work.
+- [x] **Phase 1: TP0 — Eval Rig & Baseline (BLOCKING)** - Lock the frozen rig + baseline + M1 precondition gate before any visual work. ✅ COMPLETE 2026-06-10.
 - [ ] **Phase 2: TP1 — Felt / Tapete Materiality (the stage)** - Turn the largest, weakest surface into believable woven baize that relights.
 - [ ] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility.
 - [ ] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk).
@@ -64,11 +64,11 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 01-05-PLAN.md — OPERATOR GATE (autonomous:false): TP0.0 M1 precondition + money-shot blessing (POV fov 37-vs-40) + M1-legibility + M11 on-device read
+- [x] 01-05-PLAN.md — OPERATOR GATE (autonomous:false): TP0.0 M1 precondition + money-shot blessing (POV fov 37-vs-40) + M1-legibility + M11 on-device read
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-06-PLAN.md — IRREVERSIBLE baseline freeze: capture HEAD + protected-tag corpus (throwaway worktree), downscale + persist to docs/table-3d/anchors/, scorecard baseline, region rects
+- [x] 01-06-PLAN.md — IRREVERSIBLE baseline freeze: capture HEAD + protected-tag corpus (throwaway worktree), downscale + persist to docs/table-3d/anchors/, scorecard baseline, region rects
 
 ### Phase 2: TP1 — Felt / Tapete Materiality (the stage)
 
@@ -220,7 +220,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 4/6 | In Progress|  |
+| 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 0/TBD | Not started | - |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |

@@ -200,4 +200,8 @@ M1 cards-as-protagonist **PASS** (after the 2 fixes) · 3 money shots blessed + 
 ### Scorecard
 15-element baseline proposed (avg ≈ 3.4) in `docs/table-3d/SCORECARD_TABLE_3D.md` — **pending operator sign-off** at the freeze lock.
 
-> **Freeze status:** every automatable freeze artifact is produced + verified. **Awaiting the operator's final freeze sign-off** (scorecard confirmation + rig-frozen declaration). Until then the baseline is provisional. LOCAL only — no push / merge / deploy.
+> **Freeze status: 🔒 LOCKED — operator signed off 2026-06-10 ("Baseline locked").** The proposed
+> 15-element scorecard is accepted as the TP0 baseline; the perf baseline is recorded (M10
+> informational → TP3 · M11 PASS); the M1 rank-index legibility note (~17px) is logged non-blocking;
+> depth / AO / vignette are routed to later phases (TP5/TP6). The frozen rig + baseline are now the
+> protected reference for TP1→TP9 — no mid-program re-baseline. LOCAL only — no push / merge / deploy.

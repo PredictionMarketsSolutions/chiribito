@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-09T15:58:42.223Z"
-last_activity: 2026-06-09
+status: paused
+last_updated: "2026-06-10"
+last_activity: 2026-06-10
 progress:
   total_phases: 10
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 0
+  completed_plans: 6
+  percent: 10
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 1 — TP0 — Eval Rig & Baseline (BLOCKING)
+**Current focus:** Phase 1 (TP0) ✅ COMPLETE — baseline FROZEN + operator-signed-off 2026-06-10. PAUSED before Phase 2 (TP1, felt materiality) pending explicit operator authorization.
 
 ## Current Position
 
-Phase: 1 (TP0 — Eval Rig & Baseline (BLOCKING)) — EXECUTING
-Plan: 5 of 6
-Status: Ready to execute
-Last activity: 2026-06-09
+Phase: 1 (TP0 — Eval Rig & Baseline (BLOCKING)) — ✅ COMPLETE (frozen + signed off)
+Plan: 6 of 6 complete
+Status: TP0 baseline LOCKED — PAUSED before Phase 2 (TP1), awaiting operator GO
+Last activity: 2026-06-10
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100% (Phase 1) · milestone 1/10 phases
 
 ## Performance Metrics
 
@@ -84,8 +84,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- **[GATE — awaiting freeze GO]** Operator's on-device M1 gate (2026-06-09): M1 read GOOD/direction right but freeze NOT approved → opened an M1 refinement (clipping/chip-intersection/composition). Desktop M1 refinement now COMPLETE (operator delegated → judged PASS; commit d57e177). **Awaiting the operator's explicit GO to run the baseline freeze (plan 01-06).**
-- **[OPEN — operator, at freeze]** POV fov: KEEPING 40 (no un-blessed change); 37 remains a one-line option the operator can call at the freeze go. Mobile-responsive DEFERRED (see Deferred Items).
+- **[RESOLVED 2026-06-10 — TP0 FROZEN]** The M1 gate (re-run 2026-06-10) PASSED after two operator-found pre-freeze fixes (hole-pair z-fighting → height stagger; As de Espadas asset rotated 180° → restored canonical, single-origin for 2D+3D). Baseline freeze (plan 01-06) ran and the operator signed off ("Baseline locked"). POV fov LOCKED at 40 (37 discarded). M12 zero-change CLOSED. Scorecard baselined (avg ≈ 3.4).
+- **[CARRIED FORWARD — non-blocking]** M10 draw-calls over ceiling → TP3 (instancing); M1 rank-index ~17px legibility note → future tweak; depth/AO/vignette → TP5/TP6; the dual 2D-classic / 3D-immersive view-mode architecture → its own future workstream (memory: chiribito-table-dual-view-modes).
 - **[INVARIANT]** NO push / deploy / merge without explicit operator confirmation (Chiribito manual-deploy policy, Vercel team `chiribito293-7173`). Atomic LOCAL commits only.
 - **[OPERATIONAL — session rooting]** The GSD autonomous loop + its skills are repo-root-relative (verified: workflows use relative `.planning/` paths). To run the loop reliably the session MUST be rooted at `Documents\CHIRIBITO\chiri-infrastructure\chiri-app`, not the home folder. Bootstrap was done with absolute paths + SDK validation; execution needs repo rooting.
 
@@ -97,8 +97,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-09
-Stopped at: TP0 W1–W3 done (rig + metric kit: 8 ADMITTED, 4 informational; zero-visual-change PROVEN; honest finding draw-calls OVER ceiling HERO 237 → TP3). The W4 on-device operator gate ran: M1 read GOOD but freeze NOT approved → **M1 refinement** (docs/table-3d/M1_REFINEMENT.md) fixed card clipping + chip intersections + baked the operator-picked **"B" balanced Perla** (HOLE_Z 3.95→3.35, pitch ≈1.75, fan 0.14; pot re-spaced non-intersecting). **Desktop M1 COMPLETE** (commit d57e177) — cards dominate, money shots clean. Mobile portrait → responsive-camera finding, DEFERRED.
-Awaiting OPERATOR: explicit **GO to run plan 01-06** (baseline freeze at fov 40 — persist anchors to docs/table-3d/anchors/, finalize POV rects + scorecard; LOCAL + reversible, no push) → then TP0 verification → TP0 complete → pause before TP1 (materiality). Operator may instead say "use 37" / "do mobile first" / request desktop tweaks. (M1 refinement evidence: .dev-stack/diag/table-3d/m1-final/ + m1-mobile/.)
-Branch/merge: work lives on `claude/cranky-volhard-dd8b01` (FF'd from `spike/table-3d-hero`), ISOLATED, all LOCAL commits (no push). use_worktrees=false (GPU/dev-server program → sequential). Merge back to spike only with operator confirmation.
-Resume file: None
+Last session: 2026-06-10
+Stopped at: **TP0 / Phase 1 COMPLETE — baseline FROZEN + operator-signed-off ("Baseline locked").** All 6 plans done. Plan 01-05 operator gate: M1 cards-as-protagonist PASS (after the 2 fixes below) · 3 money shots blessed · POV fov LOCKED at 40 · M1-legibility PASS-WITH-NOTE (~17px @1080p, non-blocking) · M11 PASS (~1.3ms). Plan 01-06 freeze: protected-tag corpus captured (tag d17df37 NEVER mutated) · region-rects.json finalized (POV→FINAL) · M12 zero-change CLOSED (HERO+MACRO+POV fov40 all MSE 0) · 15-element scorecard baselined (avg ≈ 3.4) · perf recorded (M10 217/637 → TP3 info · M11 PASS).
+Two pre-freeze fixes (operator-found at the M1 gate, all LOCAL): hole-pair z-fighting → along-normal height stagger (HOLE_STACK 0.10, commit 57a4da6); As de Espadas asset was rotated 180° → restored pristine canonical, single-origin fix for 2D (DOM+Pixi) + 3D (commit 70bb7de); anchors re-captured (56520a1); freeze package (21aba04).
+PAUSED before Phase 2 (TP1 — Felt materiality). **Operator has NOT authorized TP1.** Do NOT start TP1 / push / merge / deploy without an explicit operator GO — operator wants to review the final TP0 state first.
+Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
+Branch: `spike/table-3d-hero` (== `claude/cranky-volhard-dd8b01`), all LOCAL commits (no push). use_worktrees=false (GPU/dev-server → sequential).
+Resume file: docs/table-3d/TP0_BASELINE.md (freeze record) + docs/table-3d/TP0_OPERATOR_GATE.md (gate record)

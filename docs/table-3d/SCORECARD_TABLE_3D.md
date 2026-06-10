@@ -1,7 +1,7 @@
 # Table 3D — AAA Scorecard (15 elements · 0–5)
 
 **Authored:** 2026-06-09 (plan 02, TP0a-5)
-**Baseline:** proposed 2026-06-10 from the GPU-faithful HEAD anchors + admitted-metric results (automated assessment) — **pending operator confirmation at the freeze sign-off** (adjust any score before the lock). Avg ≈ 3.4; weakest = depth (2, AO/vignette are TP6); strongest = cards/composition/cameras/lighting/rail/body/social-read (4).
+**Baseline:** 🔒 LOCKED 2026-06-10 — operator accepted the proposed scores ("Baseline locked") as the TP0 baseline. Avg ≈ 3.4; weakest = depth (2, AO/vignette are TP6); strongest = cards/composition/cameras/lighting/rail/body/social-read (4). Any future regression in a scored element is a TP regression.
 **Target:** green = every element ≥ 4/5 at TP9.
 **Anchor paths:** `docs/table-3d/anchors/head/{hero,card,macro}.png` (committed at plan 06)
 **Scale:** 0 = absent/broken · 1 = placeholder · 2 = recognisable · 3 = acceptable · 4 = good · 5 = AAA
