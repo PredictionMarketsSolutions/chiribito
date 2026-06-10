@@ -91,7 +91,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 02-02-PLAN.md — textures.ts: feltTexture S→2048 (D-04) + remove baked vignette (D-03, M3 gradient untouched); new feltNapNormalMap (D-01 concentric/oval, LINEAR, repeat 8) + feltEdgeAoMap (D-03 subtle, LINEAR)
+- [x] 02-02-PLAN.md — textures.ts: feltTexture S→2048 (D-04) + remove baked vignette (D-03, M3 gradient untouched); new feltNapNormalMap (D-01 concentric/oval, LINEAR, repeat 8) + feltEdgeAoMap (D-03 subtle, LINEAR)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -236,7 +236,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
-| 2. TP1 — Felt Materiality | 1/4 | In Progress|  |
+| 2. TP1 — Felt Materiality | 2/4 | In Progress|  |
 | 3. TP2 — Cartas Materiality & Legibility | 0/TBD | Not started | - |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
