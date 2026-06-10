@@ -11,6 +11,7 @@
  * Throwaway spike code: not wired into the game, lives only on the lab route.
  */
 import * as THREE from "three";
+import { heightToNormalMap, toNormalMapTexture } from "./normalMapHelper";
 
 export type SuitCode = "O" | "C" | "E" | "B";
 export const CHIP_SUITS: SuitCode[] = ["C", "B", "E", "O"];
@@ -491,6 +492,52 @@ export function feltTexture(
 
   ctx.restore();
   return srgb(c);
+}
+
+/**
+ * Concentric / oval nap normalMap for the felt (D-01).
+ *
+ * Builds a height field of concentric rings centered at UV (0.5, 0.5), converts it
+ * to a tangent-space normal map via the shared Sobel helper, and returns a LINEAR
+ * (NoColorSpace) CanvasTexture with RepeatWrapping + repeat 8 — inside the SSOT 6-10
+ * band.  The rings appear oval on the felt because the mesh lives inside the OVAL_X=1.22
+ * scale group (no UV correction needed — the scaling is a world-space effect).
+ *
+ * normalScale is set per-material in 02-03; keep strength neutral here.
+ * No explicit tangent attributes needed: three.js uses getTangentFrame() (UV-derivative)
+ * on PlaneGeometry (RESEARCH.md §2).
+ */
+export function feltNapNormalMap(): THREE.CanvasTexture {
+  const S = 512; // 512² sufficient for repeat-8 at MACRO fov26
+  const { c, ctx } = makeCanvas(S, S);
+
+  // Build concentric height field: sin-based rings from UV center (0.5, 0.5)
+  // ringFreq=5 → ~40 ring-pairs across the diameter at repeat=8 (sub-pixel at HERO fov32,
+  // fine weave at MACRO fov26 — avoids the "vinyl record" read, Pitfall 8).
+  const imgData = ctx.createImageData(S, S);
+  const d = imgData.data;
+  const ringFreq = 5;
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      const dx = px / S - 0.5;
+      const dy = py / S - 0.5;
+      const dist = Math.sqrt(dx * dx + dy * dy) * 2; // 0 at center, ~1.41 at corners
+      const h = (Math.sin(dist * Math.PI * ringFreq * 2) * 0.5 + 0.5) * 255;
+      const i = (py * S + px) * 4;
+      d[i] = d[i + 1] = d[i + 2] = h;
+      d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Convert height field to tangent-space normal map via the shared Sobel helper
+  const normalCanvas = heightToNormalMap(c, 1.0); // strength tuned by normalScale in 02-03
+
+  // Wrap in a LINEAR CanvasTexture (NoColorSpace — Pitfall 7: normal maps must NOT be sRGB)
+  const t = toNormalMapTexture(normalCanvas);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; // wrapS/wrapT BEFORE repeat
+  t.repeat.set(8, 8); // repeat 8 — inside SSOT 6-10 band
+  return t;
 }
 
 /**
