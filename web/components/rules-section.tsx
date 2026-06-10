@@ -67,7 +67,7 @@ const bettingRounds = [
 
 export function RulesSection() {
   return (
-    <section id="mecanica" className="py-24 md:py-32 relative felt-texture">
+    <section id="mecanica" className="py-16 md:py-32 relative felt-texture">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section header */}
         <motion.div

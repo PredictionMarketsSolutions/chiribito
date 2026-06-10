@@ -6,7 +6,7 @@ import { OrosSuit } from "@/components/spanish-suits"
 
 export function NewsletterSection() {
   return (
-    <section id="contacto" className="py-24 md:py-32 relative overflow-hidden">
+    <section id="contacto" className="py-16 md:py-32 relative overflow-hidden">
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute top-10 left-10">

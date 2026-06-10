@@ -14,7 +14,7 @@ const fadeInUp = {
 export function HistorySection() {
 
   return (
-    <section id="historia" className="py-24 md:py-32 relative">
+    <section id="historia" className="py-16 md:py-32 relative">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section header */}
         <motion.div {...fadeInUp} className="text-center mb-20">

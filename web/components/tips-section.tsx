@@ -36,7 +36,7 @@ const tips = [
 
 export function TipsSection() {
   return (
-    <section id="estrategia" className="py-24 md:py-32 bg-card relative">
+    <section id="estrategia" className="py-16 md:py-32 bg-card relative">
       {/* Top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-primary/20" />
 

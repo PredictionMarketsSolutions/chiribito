@@ -54,7 +54,7 @@ const comparisons = [
 
 export function ComparativaSection() {
   return (
-    <section id="comparativa" className="py-24 md:py-32 relative">
+    <section id="comparativa" className="py-16 md:py-32 relative">
       <div className="max-w-5xl mx-auto px-6">
         {/* Section header */}
         <motion.div
@@ -86,17 +86,17 @@ export function ComparativaSection() {
         >
           {/* Table Header */}
           <div className="grid grid-cols-3 bg-secondary/50 border-b border-border">
-            <div className="p-4 md:p-6 text-center">
+            <div className="p-3 md:p-6 text-center">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">
                 Aspecto
               </span>
             </div>
-            <div className="p-4 md:p-6 text-center border-x border-border">
+            <div className="p-3 md:p-6 text-center border-x border-border">
               <span className="font-serif text-lg md:text-xl text-primary">
                 Chiribito
               </span>
             </div>
-            <div className="p-4 md:p-6 text-center">
+            <div className="p-3 md:p-6 text-center">
               <span className="font-serif text-lg md:text-xl text-muted-foreground">
                 Texas Hold{"'"}em
               </span>

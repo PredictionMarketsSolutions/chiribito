@@ -55,7 +55,7 @@ const events = [
 
 export function TimelineSection() {
   return (
-    <section id="cronologia" className="py-24 md:py-32 bg-card relative">
+    <section id="cronologia" className="py-16 md:py-32 bg-card relative">
       {/* Top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-primary/20" />
 

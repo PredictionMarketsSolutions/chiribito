@@ -330,7 +330,7 @@ export function SimuladorSection() {
   }, [])
 
   return (
-    <section id="simulador" className="py-24 md:py-32 bg-card relative">
+    <section id="simulador" className="py-16 md:py-32 bg-card relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-primary/20" />
 
       <div className="max-w-5xl mx-auto px-6">
