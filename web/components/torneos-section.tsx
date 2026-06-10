@@ -6,30 +6,30 @@ import { Trophy, Calendar, Crown, Users } from "lucide-react"
 const torneos = [
   {
     icon: Users,
-    title: "Torneos Freeroll",
+    title: "Mesas de la parroquia",
     description:
-      "Perfectos para empezar. Juega gratis y gana premios reales para construir tu banca desde cero.",
+      "Siéntate con la peña y echa unas manos de Chiribito. Aquí no se juega por dinero real: se juega por el gusto de jugar y por la gloria de cantar la Perla.",
     highlight: false,
   },
   {
     icon: Calendar,
-    title: "Eventos Diarios",
+    title: "Torneos · próximamente",
     description:
-      "Competiciones rápidas y dinámicas con botes garantizados todos los días. No te quedes fuera.",
+      "Estamos preparando los primeros torneos de la parroquia. Aún no hay calendario: cuando abran, lo contaremos aquí y en Instagram.",
     highlight: false,
   },
   {
     icon: Crown,
-    title: "El Gran Torneo de Fin de Semana",
+    title: "El Gran Torneo",
     description:
-      "Nuestra joya de la corona. Los mayores premios, los mejores jugadores y la gloria absoluta en juego. Reserva tu asiento, prepara tu mejor estrategia y llévate el bote a casa.",
+      "La cita que perseguimos: juntar a la mejor peña a por la gloria absoluta. Todavía no existe, pero hacia ahí vamos, mano a mano.",
     highlight: true,
   },
 ]
 
 export function TorneosSection() {
   return (
-    <section id="torneos" className="py-24 md:py-32 relative">
+    <section id="torneos" className="py-16 md:py-32 relative">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section header */}
         <motion.div
@@ -49,8 +49,8 @@ export function TorneosSection() {
             Torneos
           </h2>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-pretty">
-            Demuestra quién manda en la mesa. Enfréntate a jugadores de todo el
-            mundo en nuestros torneos diarios, semanales y eventos especiales.
+            La competición del Chiribito, a fuego lento. Esto es lo que se cuece
+            en la mesa — y lo que está por llegar.
           </p>
           <div className="w-24 h-px bg-primary mx-auto mt-6" />
         </motion.div>
@@ -117,7 +117,7 @@ export function TorneosSection() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-lg hover:brightness-110 transition-all duration-300"
           >
-            Ver todos los torneos
+            Jugar ahora
           </a>
         </motion.div>
       </div>
