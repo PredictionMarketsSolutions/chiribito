@@ -96,19 +96,19 @@ export function HeroSection() {
           <div className="w-16 md:w-24 h-px bg-primary/40" />
           <div className="flex items-center gap-2">
             {[
-              { src: "/ace-oros.png", alt: "As de Oros" },
-              { src: "/ace-copas.png", alt: "As de Copas" },
-              { src: "/ace-espada.png", alt: "As de Espadas" },
-              { src: "/ace-bastos.png", alt: "As de Bastos" },
+              { src: "/ace-oros.png", alt: "As de Oros", w: 1200, h: 1859 },
+              { src: "/ace-copas.png", alt: "As de Copas", w: 1200, h: 1820 },
+              { src: "/ace-espada.png", alt: "As de Espadas", w: 1200, h: 1784 },
+              { src: "/ace-bastos.png", alt: "As de Bastos", w: 1200, h: 1881 },
             ].map((ace) => (
-              <div key={ace.alt} style={{ position: "relative", display: "inline-block", width: 28, height: 42 }}>
-                <Image
-                  src={ace.src}
-                  alt={ace.alt}
-                  fill
-                  className="object-contain"
-                />
-              </div>
+              <Image
+                key={ace.alt}
+                src={ace.src}
+                alt={ace.alt}
+                width={ace.w}
+                height={ace.h}
+                className="object-contain shrink-0 w-7 h-auto"
+              />
             ))}
           </div>
           <div className="w-16 md:w-24 h-px bg-primary/40" />
@@ -154,39 +154,21 @@ export function HeroSection() {
           </a>
         </motion.p>
 
-        {/* CTA Button with pulse animation */}
+        {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
           className="mt-10"
         >
-          <motion.a
+          <a
             href="https://play.chiribito.com"
             target="_blank"
             rel="noopener noreferrer"
-            animate={{
-              scale: [1, 1.08, 1],
-              boxShadow: [
-                "0 0 20px 0px rgba(212, 175, 55, 0.3), 0 10px 30px -5px rgba(212, 175, 55, 0.3)",
-                "0 0 40px 8px rgba(212, 175, 55, 0.5), 0 20px 50px -5px rgba(212, 175, 55, 0.5)",
-                "0 0 20px 0px rgba(212, 175, 55, 0.3), 0 10px 30px -5px rgba(212, 175, 55, 0.3)",
-              ],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 2,
-              ease: "easeInOut",
-            }}
-            className="relative inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-lg transition-all duration-300 overflow-hidden"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-10 py-4 rounded-lg shadow-gold hover:brightness-110 hover:-translate-y-0.5 transition-all duration-300"
           >
-            <span className="relative z-10">JUGAR PARTIDA</span>
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              animate={{ x: ["-100%", "100%"] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-            />
-          </motion.a>
+            Jugar ahora
+          </a>
         </motion.div>
 
         {/* Scroll indicator with smooth scroll */}
