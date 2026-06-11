@@ -295,13 +295,20 @@ function useCardKit(): CardKit {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+  // TP2 Lever 4: clearcoat whisper — lower from 0.16 (pre-TP2) to 0.12 (restraint-first).
+  // clearcoatRoughness 0.55 reduces plastic-read risk vs 0.5 (Pitfall 7 — stay coated-not-laminated).
+  // ?card=base keeps pre-TP2 clearcoat 0.16 / clearcoatRoughness 0.5 for A/B comparison.
+  // Cap HARD at 0.18 (operator STOP above); never exceed without explicit gate approval.
+  const clearcoat = cardFlag === "base" ? 0.16 : 0.12; // TP2 Lever 4 — restraint-first
+  const clearcoatRoughness = cardFlag === "base" ? 0.5 : 0.55; // TP2 Lever 4
+
   return useMemo(() => {
     const stock = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#f1e7cf"), // warm ivory card stock
       roughness: 0.62,
       metalness: 0,
-      clearcoat: 0.16, // a faint coated sheen on the stock
-      clearcoatRoughness: 0.5,
+      clearcoat, // TP2 Lever 4: 0.12 (was 0.16); ?card=base → 0.16 A/B baseline
+      clearcoatRoughness, // TP2 Lever 4: 0.55 (was 0.5); ?card=base → 0.5 A/B baseline
       sheen: 0.22,
       sheenColor: new THREE.Color("#fff6e0"),
       // TP2 Lever 3: faint card-stock micro-relief (linen/emboss grain) on the body.
@@ -312,7 +319,7 @@ function useCardKit(): CardKit {
         : {}),
     });
     return { body: cardBodyGeometry(), face: cardFaceGeometry(), stock };
-  }, [normalMap]);
+  }, [normalMap, clearcoat, clearcoatRoughness]);
 }
 
 /** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp).
@@ -340,17 +347,20 @@ function useCardFaces(ids: string[], maxAniso: number): Record<string, THREE.Tex
 }
 
 function Card({ kit, faceTex, pose }: { kit: CardKit; faceTex: THREE.Texture; pose: CardPose }) {
+  // TP2 Lever 4: align faceMat clearcoat to 0.12 (was 0.1) for consistency with stock body.
+  // ?card=base → 0.1 (pre-TP2); any other value → 0.12 whisper coat, coated-not-plastic.
+  const faceClearcoat = qp("card") === "base" ? 0.1 : 0.12;
   const faceMat = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
         map: faceTex,
         roughness: 0.52,
         metalness: 0,
-        clearcoat: 0.1, // a whisper of coated-card gloss, not plastic
-        clearcoatRoughness: 0.55,
+        clearcoat: faceClearcoat, // TP2 Lever 4: 0.12 (was 0.1); ?card=base → 0.1 A/B baseline
+        clearcoatRoughness: 0.55, // unchanged — already at the target
         side: THREE.DoubleSide, // never cull the face — the card is read from either side
       }),
-    [faceTex],
+    [faceTex, faceClearcoat],
   );
   return (
     <group position={pose.position} rotation={pose.rotation}>
