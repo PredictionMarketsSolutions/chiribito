@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
+status: executing
 last_updated: "2026-06-11T19:50:55.492Z"
 last_activity: 2026-06-11
 progress:
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 3 — TP2 — Cartas Materiality & Legibility (protagonist). Full-scene composition RECONCILED 2026-06-11 (operator ADOPTED the encuadre baseline; all 4 felt suit marks KEPT). Now opening TP2 card materiality on the adopted scene.
+**Current focus:** Phase 4 — TP3 — Fichas Materiality + Perf. INSTANCING SHIPPED 2026-06-11 (04-02: HERO 233→105, chips=full 653→133, MACRO parity confirmed — the program's #1 perf fix landed with zero visual change). PAUSED here; de-Vegas materiality (04-03) + operator gate (04-04) remain. Resume = /gsd-execute-phase 4 --wave 3.
 
 ## Current Position
 
