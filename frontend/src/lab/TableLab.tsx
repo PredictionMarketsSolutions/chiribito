@@ -12,7 +12,7 @@
  * inlaid into the felt (born inside the table, not pasted on top).
  */
 import { useMemo, Suspense } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
+import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
@@ -299,20 +299,28 @@ function useCardKit(): CardKit {
   }, []);
 }
 
-/** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp). */
-function useCardFaces(ids: string[]): Record<string, THREE.Texture> {
+/** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp).
+ * maxAniso: Math.min(gl.capabilities.getMaxAnisotropy(), 16) from Scene via useThree.
+ * ?card=base → pre-TP2 baseline (anisotropy 8); any other value (incl. no param) → maxAniso.
+ */
+function useCardFaces(ids: string[], maxAniso: number): Record<string, THREE.Texture> {
   const texs = useLoader(THREE.TextureLoader, ids.map(labCardFaceUrl)) as THREE.Texture[];
+  // ?card=base → keep pre-TP2 anisotropy 8 for A/B comparison; otherwise use GPU-capped max.
+  const cardFlag = qp("card");
+  const aniso = cardFlag === "base" ? 8 : maxAniso;
   return useMemo(() => {
     const map: Record<string, THREE.Texture> = {};
     ids.forEach((id, i) => {
       const t = texs[i];
       t.colorSpace = THREE.SRGBColorSpace;
-      t.anisotropy = 8; // keep rank + suit crisp at the grazing table angle (legibility gate)
+      t.anisotropy = aniso; // TP2 Lever 1: GPU-capped max (cap 16) except on ?card=base
+      t.minFilter = THREE.LinearMipmapLinearFilter; // explicit mipmap chain (default, assertion-visible)
+      t.generateMipmaps = true; // explicit (default in three 0.169 — making intent clear)
       t.needsUpdate = true;
       map[id] = t;
     });
     return map;
-  }, [ids, texs]);
+  }, [ids, texs, aniso]);
 }
 
 function Card({ kit, faceTex, pose }: { kit: CardKit; faceTex: THREE.Texture; pose: CardPose }) {
@@ -653,9 +661,14 @@ function Scene() {
   const cImg = qp("c") === "literal" ? ((cTex.image as HTMLImageElement) ?? null) : null;
   const chipKit = useChipKit(cImg);
 
+  // TP2 Lever 1: read renderer capabilities inside Scene (where gl is mounted and valid).
+  // gl.capabilities is only safe to call in a mounted R3F component — never outside Canvas.
+  const gl = useThree((s) => s.gl);
+  const maxAniso = useMemo(() => Math.min(gl.capabilities.getMaxAnisotropy(), 16), [gl]);
+
   // M1 — the cards: shared kit + the staged hand's real faces, laid out on the felt.
   const cardKit = useCardKit();
-  const cardFaces = useCardFaces(LAB_HAND_IDS);
+  const cardFaces = useCardFaces(LAB_HAND_IDS, maxAniso);
   const community = useMemo(() => communityLayout(LAB_COMMUNITY), []);
   // hole-pair composition: defaults to the baked constants; ?hpitch/?hfan/?hz/?hlift override
   // them for variant exploration (default scene unchanged when no param is present).
