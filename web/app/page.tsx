@@ -9,6 +9,7 @@ import { ComparativaSection } from "@/components/comparativa-section"
 import { TorneosSection } from "@/components/torneos-section"
 import { TipsSection } from "@/components/tips-section"
 import { NewsletterSection } from "@/components/newsletter-section"
+import { DichosSection } from "@/components/dichos-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { SectionSeparator } from "@/components/section-separator"
@@ -44,6 +45,8 @@ export default function Home() {
       <TorneosSection />
       <SectionSeparator />
       <TipsSection />
+      <SectionSeparator />
+      <DichosSection />
       <NewsletterSection />
       <Footer />
       <BackToTop />
