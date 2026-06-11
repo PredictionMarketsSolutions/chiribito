@@ -5,6 +5,7 @@ import {
   communityLayout,
   holeLayout,
   CARD_W,
+  MAX_TILT_RAD,
 } from "./cards";
 
 describe("labCardFaceUrl", () => {
@@ -94,5 +95,90 @@ describe("holeLayout", () => {
     expect(dx).toBeLessThan(CARD_W); // they overlap in x
     const dy = poses[1].position[1] - poses[0].position[1];
     expect(dy).toBeGreaterThan(0.05); // the later card rests clearly ON TOP — no coplanar overlap
+  });
+});
+
+// --- TP2 Lever 6: dealt variance bound + determinism ----------------------------------------
+// MAX_TILT_RAD = (1.5 * PI / 180) = 0.0262 rad. The per-card micro-tilt and micro-yaw each
+// stay within this bound so the hole-pair opposite-sign fan invariant is preserved (the added
+// z amplitude <= 0.026 is strictly less than HOLE_FAN * 0.5 = 0.07, so the base sign cannot
+// flip). Seeds are integer-constant Math.sin(i * prime) — same every call → M9 satisfied.
+// Variance is off by default (?card=base and default call); opt-in via { variance: true }.
+describe("dealt variance (Lever 6)", () => {
+  const COMMUNITY_IDS = ["1E", "12C", "11B", "5C", "7E"];
+  const HOLE_IDS = ["10O", "7O"];
+
+  it("MAX_TILT_RAD is exported and equals (1.5 * PI / 180) — the <= 0.026 rad bound", () => {
+    expect(MAX_TILT_RAD).toBeCloseTo((1.5 * Math.PI) / 180, 6);
+    // hard bound: must not exceed 0.026 rad
+    expect(MAX_TILT_RAD).toBeLessThanOrEqual(0.026);
+  });
+
+  it("community variance: all micro-tilt + micro-yaw offsets are within <= 0.026 rad", () => {
+    const base = communityLayout(COMMUNITY_IDS); // no variance — baseline z rotation
+    const varied = communityLayout(COMMUNITY_IDS, { variance: true });
+    expect(varied).toHaveLength(COMMUNITY_IDS.length);
+    for (let i = 0; i < varied.length; i++) {
+      // x-rotation offset (micro-tilt): delta from -PI/2
+      const tilt = varied[i].rotation[0] - (-Math.PI / 2);
+      expect(Math.abs(tilt)).toBeLessThanOrEqual(0.026);
+      // z-rotation offset (micro-yaw): delta from the base yaw
+      const yawDelta = varied[i].rotation[2] - base[i].rotation[2];
+      expect(Math.abs(yawDelta)).toBeLessThanOrEqual(0.026);
+    }
+  });
+
+  it("community variance is deterministic: two calls with same ids produce identical poses", () => {
+    const first = communityLayout(COMMUNITY_IDS, { variance: true });
+    const second = communityLayout(COMMUNITY_IDS, { variance: true });
+    for (let i = 0; i < first.length; i++) {
+      expect(first[i].rotation[0]).toBe(second[i].rotation[0]);
+      expect(first[i].rotation[2]).toBe(second[i].rotation[2]);
+    }
+  });
+
+  it("hole variance: all micro-tilt + micro-yaw offsets are within <= 0.026 rad", () => {
+    const base = holeLayout(HOLE_IDS); // no variance — baseline rotations
+    const varied = holeLayout(HOLE_IDS, { variance: true });
+    expect(varied).toHaveLength(HOLE_IDS.length);
+    for (let i = 0; i < varied.length; i++) {
+      // x-rotation offset (micro-tilt): delta from base
+      const tiltDelta = varied[i].rotation[0] - base[i].rotation[0];
+      expect(Math.abs(tiltDelta)).toBeLessThanOrEqual(0.026);
+      // z-rotation offset (micro-yaw): delta from base
+      const yawDelta = varied[i].rotation[2] - base[i].rotation[2];
+      expect(Math.abs(yawDelta)).toBeLessThanOrEqual(0.026);
+    }
+  });
+
+  it("hole variance is deterministic: two calls with same ids produce identical poses", () => {
+    const first = holeLayout(HOLE_IDS, { variance: true });
+    const second = holeLayout(HOLE_IDS, { variance: true });
+    for (let i = 0; i < first.length; i++) {
+      expect(first[i].rotation[0]).toBe(second[i].rotation[0]);
+      expect(first[i].rotation[2]).toBe(second[i].rotation[2]);
+    }
+  });
+
+  it("hole variance preserves opposite-sign fan invariant (CRITICAL: added z < HOLE_FAN*0.5)", () => {
+    const varied = holeLayout(HOLE_IDS, { variance: true });
+    // The hole-pair MUST still fan in opposite z-directions even with variance applied
+    expect(Math.sign(varied[0].rotation[2])).toBe(-Math.sign(varied[1].rotation[2]));
+  });
+
+  it("hole variance preserves height-stagger dy > 0.05 (no coplanar z-fight)", () => {
+    const varied = holeLayout(HOLE_IDS, { variance: true });
+    const dy = varied[1].position[1] - varied[0].position[1];
+    expect(dy).toBeGreaterThan(0.05);
+  });
+
+  it("default call (no variance option) returns the same poses as before Lever 6", () => {
+    // The variance feature must be opt-in — default behaviour is unchanged for M9 backward compat
+    const defaultPoses = holeLayout(HOLE_IDS);
+    const noVariance = holeLayout(HOLE_IDS, { variance: false });
+    for (let i = 0; i < defaultPoses.length; i++) {
+      expect(defaultPoses[i].rotation[0]).toBe(noVariance[i].rotation[0]);
+      expect(defaultPoses[i].rotation[2]).toBe(noVariance[i].rotation[2]);
+    }
   });
 });
