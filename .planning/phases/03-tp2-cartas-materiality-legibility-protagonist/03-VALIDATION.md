@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: tp2-cartas-materiality-legibility-protagonist
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-11
+approved: 2026-06-11
 ---
 
 # Phase 3 — Validation Strategy
@@ -38,12 +39,23 @@ created: 2026-06-11
 
 ## Per-Task Verification Map
 
-> Populated during planning — `gsd-planner` assigns plan/task IDs. Each lever-task maps to: **M1
-> (always)** + the lever-specific metric. Template row:
+> Each lever-task maps to **M1 (always-on)** + the lever-specific metric. Threat ref `—` / secure
+> behavior `N/A` throughout (lab-only render, no untrusted input, not in prod build). `File Exists`
+> = ❌ W0 means the metric/baseline tooling is produced/recalibrated in Wave 0 (plan 03-01).
 
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 03-0X-0Y | 0X | W | SSOT §TP2 | — | N/A (lab-only, not in prod build) | metric+unit | `vitest run src/lab/` + capture→M1/Mn | ❌ W0 | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
+|---------|------|------|-------------|-----------|-------------------|-------------|--------|
+| 03-01-01 | 01 | 1 | §TP2 rollback tag + tp2-base + M1 floor | infra | `git tag --list tp2-before-cards` + node file-exists check | ❌ W0 | ⬜ pending |
+| 03-01-02 | 01 | 1 | §TP2 M6 rect recalibration | metric | `node run-metrics.mjs --meta-gate` + content check | ❌ W0 | ⬜ pending |
+| 03-02-01 | 02 | 2 | §TP2 L1 anisotropy max + M1 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (no hardcoded 16) | ❌ W0 | ⬜ pending |
+| 03-02-02 | 02 | 2 | §TP2 L2 seam fix + M1 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (CARD_CORNER 0.17) | ❌ W0 | ⬜ pending |
+| 03-03-01 | 03 | 3 | §TP2 L3 micro-relief + M1 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (NoColorSpace, single-instance) | ❌ W0 | ⬜ pending |
+| 03-03-02 | 03 | 3 | §TP2 L4 clearcoat + M1/M5 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (clearcoat 0.12 cap) | ❌ W0 | ⬜ pending |
+| 03-04-01 | 04 | 4 | §TP2 L5 paper-edge + M1 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (no transmission) | ❌ W0 | ⬜ pending |
+| 03-04-02 | 04 | 4 | §TP2 L6 dealt variance + M9 | tdd | `vitest run src/lab/` (≤0.026 rad bound test) + grep gate (no Math.random) | ❌ W0 | ⬜ pending |
+| 03-05-01 | 05 | 5 | §TP2 L7 contact-shadow + M6 | unit | `vitest run src/lab/` + `tsc --noEmit` + grep gate (1 shadow light; no SoftShadows/N8AO/EffectComposer) | ❌ W0 | ⬜ pending |
+| 03-05-02 | 05 | 5 | §TP2 pre-gate ledger M1/M2/M5/M6/M9/M12 | metric | `node run-metrics.mjs` + `m1-m2-m12.mjs --zero-change` vs tp2-base | ❌ W0 | ⬜ pending |
+| 03-06-01 | 06 | 6 | §TP2 operator A/B gate | manual | checkpoint:human-verify (POV+MACRO A/B; revert offending `?card=` lever) | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -77,6 +89,6 @@ created: 2026-06-11
 - [ ] Sampling continuity: M1 re-checked after EVERY lever (no lever ships without a legibility check)
 - [ ] Wave 0 covers tp2-base capture + M1 floor + M6 rect recalibration
 - [ ] No watch-mode flags (captures run under the frozen capture flag, M9 determinism holds)
-- [ ] `nyquist_compliant: true` set in frontmatter (after planner populates the per-task map)
+- [x] `nyquist_compliant: true` set in frontmatter (per-task map populated 2026-06-11)
 
-**Approval:** pending
+**Approval:** approved 2026-06-11 — plan-checker VERIFICATION PASSED (6/6 plans, 0 blockers); per-task map populated. `wave_0_complete` flips true after plan 03-01 executes.

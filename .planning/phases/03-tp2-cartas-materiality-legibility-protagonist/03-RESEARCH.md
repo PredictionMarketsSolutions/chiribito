@@ -730,7 +730,7 @@ node tools/table-3d/m1-m2-m12.mjs --zero-change .dev-stack/diag/table-3d/tp2/gat
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **M6 region calibration after encuadre**
    - What we know: `REGIONS.underCardHero` was calibrated on the TP0 baseline (CARD_W 2.4,
@@ -740,6 +740,7 @@ node tools/table-3d/m1-m2-m12.mjs --zero-change .dev-stack/diag/table-3d/tp2/gat
    - Recommendation: The Step 0 baseline capture reveals this. Inspect `tp2-base/hero.png`
      at those pixel coordinates; if open felt, recalibrate the rect and re-run the M6
      meta-gate before proceeding to levers. Budget one planner task for this check.
+   - **RESOLVED:** plan 03-01 Task 2 (Wave 0 M6 region-rect verify/recalibrate + re-admit via meta-gate).
 
 2. **bevelSegments increase and geometry test coverage**
    - What we know: `cards.test.ts` tests geometry invariants (HOLE_PITCH < CARD_W,
@@ -749,6 +750,7 @@ node tools/table-3d/m1-m2-m12.mjs --zero-change .dev-stack/diag/table-3d/tp2/gat
    - Recommendation: Increasing `bevelSegments` only adds more bevel loop geometry; it
      does not change the UV bounding box or the card dimensions. The existing 27/27 tests
      should remain green. Verify with `cd frontend && npm test` after the seam-fix edit.
+   - **RESOLVED:** plan 03-02 Task 2 (seam fix verifies 27/27 lab Vitest stays green after bevelSegments bump).
 
 ---
 
