@@ -10,17 +10,44 @@ type Msg = { id: number; role: "bot" | "user"; text: string }
 const BASE_IDS = FAQS.map((f) => f.id)
 const PLAY_URL = "https://play.chiribito.com"
 const STORAGE_KEY = "chiribot-open"
+// Brand green for the monogram (provisional: the brand favicon is the gold wordmark, not a green C).
+const CHIRI_GREEN = "oklch(0.74 0.17 152)"
 
 // The monogram avatar — the house mark, no invented mascot (identity guardrail).
 function Monogram({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`grid place-items-center rounded-full bg-card border border-primary/60 font-serif text-primary leading-none select-none ${className}`}
+      style={{ color: CHIRI_GREEN, borderColor: "oklch(0.74 0.17 152 / 0.5)" }}
+      className={`grid place-items-center rounded-full bg-card border font-serif leading-none select-none ${className}`}
     >
       C
     </span>
   )
+}
+
+// Render a bot answer, turning a play.chiribito.com mention into a direct link to the game.
+function renderBotText(text: string) {
+  const parts = text.split("play.chiribito.com")
+  if (parts.length === 1) return text
+  const out: React.ReactNode[] = []
+  parts.forEach((part, i) => {
+    out.push(part)
+    if (i < parts.length - 1) {
+      out.push(
+        <a
+          key={i}
+          href={PLAY_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline underline-offset-2 hover:brightness-110"
+        >
+          play.chiribito.com
+        </a>,
+      )
+    }
+  })
+  return out
 }
 
 export function Chiribot() {
@@ -147,7 +174,7 @@ export function Chiribot() {
                 <X className="h-6 w-6 text-primary" />
               </motion.span>
             ) : (
-              <motion.span key="c" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: reduce ? 0 : 0.2 }} className="font-serif text-2xl text-primary leading-none">
+              <motion.span key="c" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: reduce ? 0 : 0.2 }} style={{ color: CHIRI_GREEN }} className="font-serif text-2xl leading-none">
                 C
               </motion.span>
             )}
@@ -167,8 +194,8 @@ export function Chiribot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: reduce ? 0 : 0.28, ease: "easeOut" }}
-            style={{ transformOrigin: "bottom right" }}
-            className="glass-card fixed z-40 flex flex-col overflow-hidden rounded-2xl bottom-24 right-6 w-[min(380px,calc(100vw-3rem))] max-h-[70vh] max-sm:inset-x-4 max-sm:right-4 max-sm:bottom-24 max-sm:w-auto focus-visible:outline-none"
+            style={{ transformOrigin: "bottom right", maxHeight: "calc(100dvh - 17rem)" }}
+            className="glass-card fixed z-40 flex flex-col overflow-hidden rounded-2xl bottom-24 right-6 w-[min(380px,calc(100vw-3rem))] max-sm:inset-x-4 max-sm:right-4 max-sm:bottom-24 max-sm:w-auto focus-visible:outline-none"
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
@@ -204,7 +231,7 @@ export function Chiribot() {
                         : "max-w-[85%] rounded-2xl rounded-tl-sm bg-card/80 border border-border px-3.5 py-2 text-sm text-foreground leading-relaxed"
                     }
                   >
-                    {m.text}
+                    {m.role === "bot" ? renderBotText(m.text) : m.text}
                   </p>
                 </motion.div>
               ))}

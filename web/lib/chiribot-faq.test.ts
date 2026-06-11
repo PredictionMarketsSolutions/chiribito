@@ -61,6 +61,7 @@ test("matchFaq returns null on empty input", () => {
 // --- Integration: the real shipped content must answer typical user phrasings ---
 const realCases: [string, string][] = [
   ["¿cómo se juega?", "reglas"],
+  ["¿qué es el Chiribito?", "reglas"],
   ["explícame las reglas", "reglas"],
   ["qué es la perla", "perla"],
   ["la sota y 7", "perla"],

@@ -23,12 +23,13 @@ export const FAQS: FaqEntry[] = [
     id: "reglas",
     pregunta: "¿Cómo se juega al Chiribito?",
     respuesta:
-      "Mira, sencillo: baraja española, 28 cartas. Te reparten dos cartas tuyas y van saliendo " +
-      "cinco en la mesa, de una en una, con su ronda de apuestas en cada una. Con tus dos cartas " +
-      "—y es sagrado, las dos— más las de la mesa, montas tu mejor jugada. Gana la mejor mano " +
-      "cuando se enseñan. Y apúntate esto: aquí el Color le gana al Full.",
+      "Mira, sencillo: baraja española de 28 cartas —del 5 al 7, y luego Sota, Caballo, Rey y As, " +
+      "en los cuatro palos: Oros, Copas, Espadas y Bastos—. Te reparten dos cartas tuyas y van " +
+      "saliendo cinco en la mesa, de una en una, con su ronda de apuestas en cada una. Con tus dos " +
+      "cartas —y es sagrado, las dos— más las de la mesa, montas tu mejor jugada. Gana la mejor " +
+      "mano cuando se enseñan. Y apúntate esto: aquí el Color le gana al Full.",
     relacionadas: ["perla", "ranking", "baraja"],
-    keywords: ["como se juega", "jugar", "reglas", "empezar", "mecanica", "instrucciones", "se juega"],
+    keywords: ["como se juega", "jugar", "reglas", "empezar", "mecanica", "instrucciones", "se juega", "que es el chiribito", "que es esto"],
   },
   {
     id: "perla",
