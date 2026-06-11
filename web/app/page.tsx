@@ -13,6 +13,7 @@ import { DichosSection } from "@/components/dichos-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { SectionSeparator } from "@/components/section-separator"
+import { Chiribot } from "@/components/chiribot"
 
 // Lazy load heavy interactive components
 const SimuladorSection = dynamic(
@@ -50,6 +51,7 @@ export default function Home() {
       <NewsletterSection />
       <Footer />
       <BackToTop />
+      <Chiribot />
     </main>
   )
 }
