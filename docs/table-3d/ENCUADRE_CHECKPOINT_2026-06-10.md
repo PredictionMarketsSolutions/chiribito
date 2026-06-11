@@ -1,10 +1,10 @@
 # ENCUADRE / Composition Exploration — Checkpoint 2026-06-10
 
-> **STATUS: WIP — DIAGNOSTIC, UNDECIDED.** This is an end-of-day checkpoint of an in-progress
-> composition exploration, committed so it is not lost and can resume tomorrow. **It is NOT an adopted
-> design.** Decisions are pending (see below). The TP1 felt *material* (sheen/nap/aniso/aoMap) and the
-> 3 frozen money-shot *cameras* (`card`/`hero`/`macro`) are **unchanged** — only scene *composition*
-> (felt size, card size, board count, hand layout) + **opt-in** diagnostic layers were explored.
+> **STATUS: ADOPTED 2026-06-11.** The operator reviewed this full-scene composition exploration at the
+> TP1 gate and **ADOPTED it as the new scene baseline** (see §DECISIONS below). The TP1 felt *material*
+> (sheen/nap/aniso/aoMap) and the 3 frozen money-shot *cameras* (`card`/`hero`/`macro`) remain
+> **unchanged** — only scene *composition* (felt size, card size, board count, hand layout) was adopted;
+> the diagnostic cameras + multi-hand staging stay opt-in (→ TP7/TP8). `b2c9dd4` is promoted WIP→baseline.
 
 ## How we got here
 
@@ -46,16 +46,18 @@ but NOT their pos/fov values. Lab unit tests still pass (27/27) — `HOLE_PITCH�
 - The ornate "sword" under the hand = the **Espada suit emblem baked into the felt** (one of 4 cardinal
   "ADN on the cloth" marks), front cardinal point. Last "casi" snag.
 
-## ⏭️ PENDING DECISIONS (resume here tomorrow)
+## ✅ DECISIONS (resolved 2026-06-11)
 
-1. **Composition direction** — adopt / refine / revert the bigger-table + 5-board + smaller-cards +
-   whole-hand layout. (Operator leaned positive.)
-2. **Felt suit marks** — `limpio` (hide all 4) · `solo-frente` (hide only the front Espada, keep 3) ·
-   `mantener` (keep all 4). **UNDECIDED — identity call, operator's.**
-3. **Cameras** — formalize `conjunto`/`social` as canonical? That touches the **TP0-frozen cameras** →
-   a **TP7** decision. Keep diagnostic for now.
-4. **Multi-hand staging** — formalize `SeatHands` (TP8 scope) or keep opt-in preview.
-5. **Then → TP2** (Cartas materiality), the original Phase 3.
+1. **Composition direction — ADOPTED.** The bigger-table + 5-board + smaller-cards + whole-hand layout
+   becomes the new scene baseline (GLOBAL levers in `b2c9dd4` stand). TP2 builds on top of it.
+2. **Felt suit marks — MANTENER all 4.** Identity call: the 4 cardinal "ADN on the cloth" marks stay,
+   including the front Espada under the hand. (`?marks=off` remains a diagnostic toggle; default = 4.)
+3. **Cameras — stay DIAGNOSTIC.** `conjunto`/`social` are NOT formalized (that touches the TP0-frozen
+   camera invariant → deferred to **TP7**). The 3 money-shot pos/fov are unchanged.
+4. **Multi-hand staging — stays opt-in** (`?seats=on`); formalization deferred to **TP8**.
+5. **→ NOW: TP2** (Cartas materiality & legibility), the original Phase 3, opens on the adopted scene.
+   WATCH: smaller cards (CARD_W 2.05) put M1 hole-card legibility under pressure — TP2 must re-measure
+   M1 first and must NOT regress it (max-anisotropy + mipmaps are the legibility-defending lever).
 
 ## Revert (if the exploration is dropped)
 

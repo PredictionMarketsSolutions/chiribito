@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-10T17:35:00.000Z"
-last_activity: 2026-06-10
+last_updated: "2026-06-11T10:00:00.000Z"
+last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 2
@@ -20,16 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 3 — TP2 — Cartas Materiality & Legibility (protagonist) — OPENS with the operator-requested full-scene composition validation (see Blockers/Concerns)
+**Current focus:** Phase 3 — TP2 — Cartas Materiality & Legibility (protagonist). Full-scene composition RECONCILED 2026-06-11 (operator ADOPTED the encuadre baseline; all 4 felt suit marks KEPT). Now opening TP2 card materiality on the adopted scene.
 
 ## Current Position
 
-Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — NEXT (not yet started)
+Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — OPENING (encuadre reconciled; needs discuss → plan)
 Plan: none yet (Phase 3 needs discuss → plan)
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
-Status: Phase 2 closed; Phase 3 must reconcile the operator full-scene composition feedback before card micro-detail
-Last activity: 2026-06-10
+  (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
+Status: Encuadre adopted (b2c9dd4 promoted WIP→baseline); Phase 3 TP2 card materiality now OPEN on the adopted scene. WATCH: CARD_W 2.4→2.05 shrank cards ~15% — M1 hole-card legibility must be re-measured FIRST and MUST NOT regress (TP2 hard gate).
+Last activity: 2026-06-11
 
 Progress: [██░░░░░░░░] 20% (2 of 10 phases)
 
@@ -86,6 +87,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase ?]: Plan 02-03: felt MeshPhysicalMaterial with sheen 0.70/#2aad7a/0.65, anisotropy 0.25, roughness 0.93, normalScale 0.25 — M3/M5/+B all PASS on first capture, zero tuning iterations
 - [Phase 2]: Plan 02-04 (OPERATOR GATE): TP1 felt **APPROVED / ship** — operator accepted the current felt as the reference baseline for TP2+, 0 iterations, no rollback. felt scorecard 3→4 (meets ≥4 target; AAA(5)→TP9). Recorded: docs/table-3d/TP1_OPERATOR_AB.md.
 - [Phase 2→3 STEER]: Operator forward feedback at the TP1 gate (does NOT reopen TP1): cards stay the absolute protagonist · the hand must read complete (too cropped now) · the whole table must be visible (too partial/small now) · WANTS a full-scene composition validation (table + community + hands + global comp + camera↔table↔cards) BEFORE more local detail. Camera/composition concern (roadmap TP6/TP7/TP8) pulled EARLY; touches the TP0-frozen-camera invariant. Reconcile at the start of Phase 3.
+- [Phase 3 OPEN — encuadre RESOLVED 2026-06-11]: Operator ADOPTED the full-scene composition exploration as the new scene baseline (Q1=Adopt): FELT_R 5.2→6.5, CARD_W 2.4→2.05, LAB_COMMUNITY 3→5-card board, HOLE_Z/LIFT/PITCH retuned (whole separated hand). Felt suit marks (Q2)=MANTENER all 4 (identity; front Espada under the hand stays). Cameras conjunto/social stay DIAGNOSTIC (formalization → TP7, frozen-camera invariant). SeatHands multi-hand stays opt-in `?seats=on` → TP8. Frozen money-shot pos/fov UNCHANGED (only scene content adopted). → NOW: TP2 card materiality. Record: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md §DECISIONS.
 
 ### Pending Todos
 
@@ -93,7 +95,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- **[OPERATOR STEER — Phase 3 priority, 2026-06-10]** At the TP1 gate the operator approved the felt AND asked (without reopening TP1) for a **full-scene composition validation BEFORE more local card detail**: the hand reads too cropped to judge composition, the table reads too partial/small; the cards must stay the absolute protagonist; the operator wants to verify the complete set first — full table + community cards + player hands + global composition + the camera↔table↔cards relationship. This is a camera-framing / composition / scene-completeness concern (roadmap-scoped to TP6/TP7/TP8) pulled EARLY, and it touches the **TP0-frozen-camera invariant**. Note the current lab scene stages ONE hand (the Perla) + community board + demoted pot — all 6 player hands are NOT staged (seats opt-in, TP8 scope). Phase 3 (TP2 — Cartas) MUST open by reconciling this (a full-scene validation capture/checkpoint, possibly a diagnostic wide camera that does NOT alter the frozen 3 money shots) before any card-stock micro-detail levers. Full record: docs/table-3d/TP1_OPERATOR_AB.md §forward feedback.
+- **[RESOLVED 2026-06-11 — ENCUADRE ADOPTED]** (Was: OPERATOR STEER — Phase 3 priority.) Resolution: operator ADOPTED the full-scene composition baseline (bigger-table + 5-board + smaller-cards + whole-hand) and chose to KEEP all 4 felt suit marks; conjunto/social cams stay diagnostic → TP7; SeatHands → TP8; frozen money-shot pos/fov untouched. TP2 is unblocked and opens on the adopted scene. Original steer, for the record: at the TP1 gate the operator approved the felt AND asked (without reopening TP1) for a **full-scene composition validation BEFORE more local card detail**: the hand reads too cropped to judge composition, the table reads too partial/small; the cards must stay the absolute protagonist; the operator wants to verify the complete set first — full table + community cards + player hands + global composition + the camera↔table↔cards relationship. This is a camera-framing / composition / scene-completeness concern (roadmap-scoped to TP6/TP7/TP8) pulled EARLY, and it touches the **TP0-frozen-camera invariant**. Note the current lab scene stages ONE hand (the Perla) + community board + demoted pot — all 6 player hands are NOT staged (seats opt-in, TP8 scope). Phase 3 (TP2 — Cartas) MUST open by reconciling this (a full-scene validation capture/checkpoint, possibly a diagnostic wide camera that does NOT alter the frozen 3 money shots) before any card-stock micro-detail levers. Full record: docs/table-3d/TP1_OPERATOR_AB.md §forward feedback.
+- **[WATCH — Phase 3 TP2, hard gate not blocker]** CARD_W 2.4→2.05 shrank the cards ~15%; with the pre-existing ~17px rank-index legibility note, TP2 MUST re-measure M1 hole-card legibility on the adopted scene as its FIRST step and MUST NOT regress it (SSOT §TP2: legibility loss → STOP/revert that lever). TP2's max-anisotropy + mipmap crispness is the lever expected to defend legibility. ALSO open for Phase 3 discuss: how to reconcile the TP0 anchor corpus with the new composition (frozen TP0 anchors were captured on the OLD scene) — the apples-to-apples basis for TP2 metric deltas needs a decision (re-baseline post-encuadre vs. compare-to-current).
 - **[RESOLVED 2026-06-10 — TP0 FROZEN]** The M1 gate (re-run 2026-06-10) PASSED after two operator-found pre-freeze fixes (hole-pair z-fighting → height stagger; As de Espadas asset rotated 180° → restored canonical, single-origin for 2D+3D). Baseline freeze (plan 01-06) ran and the operator signed off ("Baseline locked"). POV fov LOCKED at 40 (37 discarded). M12 zero-change CLOSED. Scorecard baselined (avg ≈ 3.4).
 - **[RESOLVED 2026-06-10 — TP1 SHIPPED]** Phase 2 / TP1 felt materiality APPROVED by the operator at the 02-04 gate; felt MeshPhysicalMaterial (sheen/nap/aniso/aoMap) shipped as the reference baseline. 0 iterations, no rollback. M3/M5/+B green. felt 3→4.
 - **[CARRIED FORWARD — non-blocking]** M10 draw-calls over ceiling → TP3 (instancing); M1 rank-index ~17px legibility note → future tweak; depth/AO/vignette → TP5/TP6; the dual 2D-classic / 3D-immersive view-mode architecture → its own future workstream (memory: chiribito-table-dual-view-modes).
@@ -108,9 +111,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-10 (end-of-day checkpoint)
+Last session: 2026-06-11 (encuadre ADOPTED → Phase 3 / TP2 opened). Prior: 2026-06-10 (end-of-day encuadre checkpoint).
 Stopped at: ENCUADRE / COMPOSITION EXPLORATION checkpoint (WIP, UNDECIDED). Phase 2 / TP1 was APPROVED + closed (0a47b59). The operator then asked for "encuadre primero" — a full-scene composition validation BEFORE TP2. Explored (all on spike, lab-only, diagnostic, behind flags where possible): diagnostic cameras conjunto/social (NOT money shots); opt-in multi-hand staging SeatHands (?seats=on, TP8 scope); ?marks=off felt-suit-mark gate; + GLOBAL levers FELT_R 5.2→6.5 (bigger table), CARD_W 2.4→2.05 (smaller cards), LAB_COMMUNITY→5-card board, HOLE_Z/LIFT/PITCH retuned (hand reads WHOLE + separated). 27/27 lab unit tests still green. Full record + exact values + captures index: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md. GPU captures in .dev-stack/diag/table-3d/{tp1-fullscene,tp1-social}/ (scratch, local-only).
-PENDING DECISIONS (resume here): (1) adopt / refine / revert the composition direction; (2) felt suit marks — limpio / solo-frente / mantener (UNDECIDED, identity call); (3) formalize conjunto/social cameras? (touches the TP0-frozen-camera invariant → a TP7 decision); (4) formalize multi-hand staging (TP8); (5) THEN → TP2 (Cartas). The frozen money-shot CAMERAS + the TP1 felt MATERIAL are unchanged; TP1 not reopened.
+DECISIONS RESOLVED 2026-06-11: (1) composition direction = ADOPTED (bigger-table + 5-board + smaller-cards + whole-hand is the new scene baseline); (2) felt suit marks = MANTENER all 4 (identity; front Espada under the hand stays); (3) conjunto/social cameras = stay DIAGNOSTIC, not formalized (→ TP7, frozen-camera invariant); (4) SeatHands multi-hand = stay opt-in `?seats=on` → TP8; (5) → NOW opening TP2 (Cartas). The frozen money-shot CAMERA pos/fov + the TP1 felt MATERIAL are unchanged; TP1 not reopened. b2c9dd4 promoted WIP→adopted baseline.
 Policy: operator AUTHORIZED a checkpoint push 2026-06-10 → spike pushed to origin/spike (carries TP1 + Phase 2 close + this WIP, previously all local). Still NO push to main, NO merge, NO deploy. Absolute isolation from feat/web-timeline-2026 maintained (only frontend/src/lab/ touched, guard-de-rama before every change).
 Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
 Branch: `spike/table-3d-hero`. CI note: build.yml + test-coverage.yml trigger ONLY on push/PR to main|develop — a spike push does NOT run CI (verified locally instead: frontend lab vitest 27/27 green; game/api unaffected by the lab-only edits). use_worktrees=false (GPU/dev-server → sequential).
