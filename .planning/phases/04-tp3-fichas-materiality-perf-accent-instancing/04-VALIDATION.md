@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: tp3-fichas-materiality-perf-accent-instancing
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-11
+approved: 2026-06-11
 ---
 
 # Phase 4 — Validation Strategy
@@ -39,12 +40,20 @@ created: 2026-06-11
 
 ## Per-Task Verification Map
 
-> Populated post-planning — `gsd-planner` assigns plan/task IDs. Instancing tasks map to **M10 + parity**;
-> de-Vegas tasks map to **M2 + MACRO-chip + recede**. Threat ref `—` / secure `N/A` (lab-only).
+> Instancing tasks map to **M10 (must-ship) + MACRO parity**; de-Vegas tasks map to **M2 + recede + MACRO-chip**.
+> Threat ref `—` / secure `N/A` throughout (lab-only render, not in prod build).
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Status |
 |---------|------|------|-------------|-----------|-------------------|--------|
-| 04-0X-0Y | 0X | W | §TP3 | unit/metric | `vitest run src/lab/` + `stats-read.mjs` (M10) / M2 | ⬜ pending |
+| 04-01-01 | 01 | 1 | §TP3 rollback tag + tp3-base capture | infra | `git tag --list tp3-before-chips` + node PNG-exists | ⬜ pending |
+| 04-01-02 | 01 | 1 | §TP3 M10 baseline confirm | metric | `node tools/table-3d/stats-read.mjs <url> hero` + TP3_BASELINE.md | ⬜ pending |
+| 04-02-01 | 02 | 2 | §TP3 chipStack.ts extract + seed-parity (tdd) | tdd | `vitest run src/lab/chipStack.test.ts` (byte-equiv seeds) | ⬜ pending |
+| 04-02-02 | 02 | 2 | §TP3 InstancedChipStack + 512² + M10 must-ship | unit/metric | `vitest run src/lab/` + `tsc --noEmit` + `stats-read.mjs` (M10 ≤10/<220) + MACRO parity | ⬜ pending |
+| 04-02-03 | 02 | 2 | §TP3 instancing grep-check | unit | `node tools/table-3d/grep-check-tp3-02.cjs` (Instances; no bottom face) | ⬜ pending |
+| 04-03-01 | 03 | 3 | §TP3 de-Vegas textures (chroma −20%, C normal, logo) | unit | `vitest run src/lab/` + grep-check-tp3-03tex.cjs | ⬜ pending |
+| 04-03-02 | 03 | 3 | §TP3 matte clay material + M2/recede | unit/metric | `vitest run src/lab/` + `tsc --noEmit` + grep-check-tp3-03mat.cjs + `m2CardsVsChips` (≥2×) | ⬜ pending |
+| 04-03-03 | 03 | 3 | §TP3 de-Vegas grep-checks | unit | `node grep-check-tp3-03tex.cjs` + `grep-check-tp3-03mat.cjs` | ⬜ pending |
+| 04-04-01 | 04 | 4 | §TP3 operator A/B gate | manual | checkpoint:human-verify (HERO+MACRO; SPLIT disposition) | ⬜ pending |
 
 ---
 
@@ -70,6 +79,6 @@ created: 2026-06-11
 - [ ] Instancing task gated on M10 (must-ship-or-revert) + strict MACRO parity
 - [ ] De-Vegas tasks gated on M2 ≥ 2× + chips-recede + MACRO chip ≥ baseline
 - [ ] Wave 0 covers tp3-base capture + M10 baseline
-- [ ] `nyquist_compliant: true` set in frontmatter (after planner populates the per-task map)
+- [x] `nyquist_compliant: true` set in frontmatter (per-task map populated 2026-06-11)
 
-**Approval:** pending
+**Approval:** approved 2026-06-11 — plan-checker VERIFICATION PASSED (4/4 plans, 0 blockers); per-task map populated. `wave_0_complete` flips true after plan 04-01 executes.

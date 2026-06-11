@@ -806,17 +806,19 @@ console.log(result); // { pass: true, value: { ratio: X.XX, ... }, threshold: "�
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Will `<Instances>` shadow casting work per-instance without extra config?**
    - What we know: drei `<Instances>` wraps `THREE.InstancedMesh`; R3F maps `castShadow`/`receiveShadow` on the `<Instances>` node to the underlying InstancedMesh.
    - What's unclear: The current `<Chip>` applies `castShadow receiveShadow` on the body mesh and `castShadow` on the face mesh. Whether `<Instances castShadow receiveShadow>` propagates to all instances is standard InstancedMesh behavior in three.js — but under headless D3D11 the shadow pass adds extra draw calls that `stats-read.mjs` counts.
    - Recommendation: Accept default — add `castShadow receiveShadow` to `<Instances>` nodes, then verify via stats-read.mjs that draw counts match expectation. If shadow draws double unexpectedly, debug InstancedMesh shadow pass.
+   - **RESOLVED:** plan 04-02 adds `castShadow receiveShadow` on `<Instances>` + verifies draw counts via `stats-read.mjs` (the M10 must-ship gate catches any unexpected shadow-pass inflation).
 
 2. **Do the HERO/MACRO REGIONS rects in `metrics.mjs` need updating for the de-Vegas chip color?**
    - What we know: M3 samples a fixed `feltHero` rect (open green felt, clear of chips). M4 samples the `brassHero` rect (the brass inlay torus). Neither samples chips directly.
    - What's unclear: After de-Vegas muting the chip chroma −20%, the chip region may bleed slightly into adjacent felt rects at the MACRO view. But the REGIONS rects are calibrated against felt, not chips.
    - Recommendation: No rect changes needed. M2 remains manual-polygon (unaffected). M3/M4/M5/M6/M8 sample felt/brass/shadow rects, not chips. No REGIONS update required for TP3.
+   - **RESOLVED:** no REGIONS rect change in TP3 (M2 is manual-polygon; M3/M4/M5/M6 sample felt/brass/shadow, not chips).
 
 ---
 
