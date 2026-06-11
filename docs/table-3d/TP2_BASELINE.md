@@ -30,7 +30,7 @@ This floor records the minimum: no TP2 lever may produce a lower px-height; all 
 
 | Field | Value |
 |-------|-------|
-| **M1 FLOOR — rank-glyph bbox height** | **9 px** (on 1728×1080 downscale of POV frame) |
+| **M1 FLOOR — rank-glyph bbox height** | **9 px** (1728×1080 downscale) ⚠ **SUPERSEDED — see M1 RECONCILIATION at end** (manual artifact; full-res ≈32px; cards confirmed legible) |
 | Target (M1_PX_HEIGHT_MIN) | 22 px |
 | Gap to target | -13 px (below target; expected — CARD_W shrank) |
 | requiresOperatorConfirm | TRUE (always; operator gate is plan 03-06) |
@@ -131,3 +131,24 @@ The TP2 per-lever hard gates (SSOT wins on any conflict with this doc):
 - **M1 ≥ 9px** (this floor) AND operator confirm — any lever below 9px → STOP, REVERT
 - **M6 ≥ 12% darker** (recalibrated rects) — any lever that removes contact shadow → STOP, REVERT
 - Operator gate: plan 03-06 (A/B at POV + MACRO — "physical printed stock while razor-legible?")
+
+---
+
+## ⚠ M1 RECONCILIATION (2026-06-11, post-03-02)
+
+The "9 px" M1 floor recorded above was a **manual-measurement artifact**, NOT a real legibility deficit:
+
+- Plan 03-01 measured **9 px** (manual stroke-scan of the "10" on a 1728×1080 downscale).
+- Plan 03-02 measured **32 px** for the SAME POV rank glyph (full-res 2880×1800 basis).
+- **CEO visual verification** (full-res crops `.dev-stack/diag/table-3d/tp2/lever1-aniso/crop2x-card-{base,aniso}.png`,
+  2× zoom of the hand region): the hole-card ranks ("10", "7") + Oros suit symbols are **clearly legible**.
+  The cards read well on the adopted post-encuadre scene. **The legibility alarm was FALSE.**
+
+**Conclusion:** the manual M1 px-height method is method-dependent and inconsistent (9 vs 32 px on the same
+frame). M1 is `px-height + operator confirm` by SSOT design — the **operator gate (03-06) is the
+authoritative legibility check**; the automated "≥ floor" per-lever gate is ADVISORY (treat the floor as
+loose, won't false-fail). A consistent deterministic glyph-bbox measurement is a worthwhile eval-rig
+improvement (future TP-rig touch-up; out of TP2 lever scope).
+
+**Practical effect:** legibility is NOT the blocker it appeared. The lever sequence proceeds; the real
+legibility verdict is the operator A/B at 03-06.

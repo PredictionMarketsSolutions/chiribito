@@ -31,7 +31,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
   (Plan 03-01 ✅ COMPLETE 2026-06-11 — Wave-0 foundation: tp2-before-cards tag@22017ee + tp2-base anchors + M1 floor=9px + M6 rects recalibrated; commits 048df10 + 3e2c505)
   (Plan 03-02 ✅ COMPLETE 2026-06-11 — Lever 1: maxAniso via useThree (Math.min(getMaxAnisotropy(),16)); ?card=base A/B; mipmaps explicit. Lever 2: seam already clean — no geometry edit. M1 floor held 32px >= 9px; commit 7d9b31d)
-Status: TP2 Wave-1 COMPLETE. Lever 1 (max-anisotropy) shipped; Lever 2 (seam) confirmed clean. M1 floor held (32px >= 9px). ?card=base / ?card=aniso A/B flags in place. Next: Wave 2 (03-03 — micro-relief normalMap on card stock body).
+Status: TP2 Wave-1 COMPLETE. Lever 1 (max-anisotropy) shipped; Lever 2 (seam) confirmed clean. ⚠ M1 RECONCILED: the 9px "floor" was a manual-measurement ARTIFACT — CEO visual check of full-res crops confirms the hole-card ranks/suits are CLEARLY LEGIBLE (03-02 measured 32px on the same glyph; legibility alarm FALSE). M1 = px-height + operator-confirm → gate 03-06 authoritative; automated px-gate advisory only. See docs/table-3d/TP2_BASELINE.md §M1 RECONCILIATION. ?card=base/aniso A/B flags in place. Next: Wave 2 (03-03 — micro-relief + clearcoat).
 Last activity: 2026-06-11
 
 Progress: [███████░░░] 69%
