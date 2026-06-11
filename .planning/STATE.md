@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Encuadre adopted (b2c9dd4 promoted WIP→baseline); Phase 3 TP2 card materiality now OPEN on the adopted scene. WATCH: CARD_W 2.4→2.05 shrank cards ~15% — M1 hole-card legibility must be re-measured FIRST and MUST NOT regress (TP2 hard gate)."
-last_updated: "2026-06-11T16:09:56.538Z"
+status: completed
+last_updated: "2026-06-11T16:23:56.092Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 16
-  completed_plans: 11
+  completed_plans: 12
   percent: 20
 ---
 
@@ -24,13 +24,14 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 
 ## Current Position
 
-Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — EXECUTING (plan 03-01 COMPLETE; 1/6 plans done)
-Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. NEXT = Wave 1 lever (03-02: max-anisotropy + mipmap crispness).
+Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — EXECUTING (plan 03-02 COMPLETE; 2/6 plans done)
+Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. NEXT = Wave 2 lever (03-03: micro-relief normalMap on card stock).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
   (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
   (Plan 03-01 ✅ COMPLETE 2026-06-11 — Wave-0 foundation: tp2-before-cards tag@22017ee + tp2-base anchors + M1 floor=9px + M6 rects recalibrated; commits 048df10 + 3e2c505)
-Status: TP2 Wave-0 foundation COMPLETE. M1 floor = 9px (below 22px target; expected after CARD_W shrink; TP2 sharpening levers must improve perceived legibility without going below 9px). M6 rects recalibrated and trustworthy (20.8% PASS). Lever plans (03-02…03-05) can now execute on the adopted scene.
+  (Plan 03-02 ✅ COMPLETE 2026-06-11 — Lever 1: maxAniso via useThree (Math.min(getMaxAnisotropy(),16)); ?card=base A/B; mipmaps explicit. Lever 2: seam already clean — no geometry edit. M1 floor held 32px >= 9px; commit 7d9b31d)
+Status: TP2 Wave-1 COMPLETE. Lever 1 (max-anisotropy) shipped; Lever 2 (seam) confirmed clean. M1 floor held (32px >= 9px). ?card=base / ?card=aniso A/B flags in place. Next: Wave 2 (03-03 — micro-relief normalMap on card stock body).
 Last activity: 2026-06-11
 
 Progress: [███████░░░] 69%
@@ -62,6 +63,7 @@ Progress: [███████░░░] 69%
 | Phase 02 P03 | 8 | 2 tasks | 1 files |
 | Phase 02 P04 | 1 | 1 task (operator gate) | 2 files |
 | Phase 3 P01 | 150 | 2 tasks | 5 files |
+| Phase 3 P02 | 45 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -94,6 +96,9 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 3]: Plan 03-01: M6 RECALIBRATED — old rects {left:360,top:1230}/{left:360,top:1090} now sample open felt on adopted CARD_W 2.05 scene (7.55% FAIL); new rects {left:420,top:1120}/{left:420,top:1310} land on real contact-shadow gradient (20.8% PASS ≥12% gate); metrics.mjs REGIONS updated. Meta-gate shows informational (pre-existing: good-control frame never committed at TP0); M6 admission stands in METRICS_ADMISSION.md.
 - [Phase 3]: Plan 03-01: tp2-before-cards rollback tag cut at 22017ee (not 045f748 as plan estimated — 3 docs-only commits intervened; tag still pre-card-edit and correct). LOCAL only, never pushed/deleted.
 - [Phase 3]: Plan 03-01: tp2-base anchors = 3 × 1280x800 PNGs (card/hero/macro) of adopted scene at frozen money shots; these are the apples-to-apples delta basis for lever plans 03-02 thru 03-05 (NOT head/ which is the old scene).
+- [Phase 3]: Plan 03-02: Lever 1 — maxAniso = Math.min(gl.capabilities.getMaxAnisotropy(), 16) via useThree in Scene; passed to useCardFaces(); ?card=base=pre-TP2 aniso 8; otherwise maxAniso. Mipmaps explicit (minFilter + generateMipmaps). Commit 7d9b31d.
+- [Phase 3]: Plan 03-02: Lever 2 — SEAM ALREADY CLEAN at tp2-base/macro (fov26). No cream rim, no z-fight halo. bevelSegments stays 2; CARD_FACE_Z = 0.071 sufficient; no geometry edit. CARD_CORNER 0.17 + curveSegments 14 locked.
+- [Phase 3]: Plan 03-02: M1 re-measured post-levers = 32px (1728x1080 POV downscale, rows 508-539; >= 9px floor; no regression). Anisotropy sharpens oblique texture quality, not glyph px-height — visually inspect full-res captures at .dev-stack/diag/table-3d/tp2/lever1-aniso/ for crispness delta.
 
 ### Pending Todos
 
@@ -117,10 +122,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T16:09:56.529Z
-Stopped at: ENCUADRE / COMPOSITION EXPLORATION checkpoint (WIP, UNDECIDED). Phase 2 / TP1 was APPROVED + closed (0a47b59). The operator then asked for "encuadre primero" — a full-scene composition validation BEFORE TP2. Explored (all on spike, lab-only, diagnostic, behind flags where possible): diagnostic cameras conjunto/social (NOT money shots); opt-in multi-hand staging SeatHands (?seats=on, TP8 scope); ?marks=off felt-suit-mark gate; + GLOBAL levers FELT_R 5.2→6.5 (bigger table), CARD_W 2.4→2.05 (smaller cards), LAB_COMMUNITY→5-card board, HOLE_Z/LIFT/PITCH retuned (hand reads WHOLE + separated). 27/27 lab unit tests still green. Full record + exact values + captures index: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md. GPU captures in .dev-stack/diag/table-3d/{tp1-fullscene,tp1-social}/ (scratch, local-only).
-DECISIONS RESOLVED 2026-06-11: (1) composition direction = ADOPTED (bigger-table + 5-board + smaller-cards + whole-hand is the new scene baseline); (2) felt suit marks = MANTENER all 4 (identity; front Espada under the hand stays); (3) conjunto/social cameras = stay DIAGNOSTIC, not formalized (→ TP7, frozen-camera invariant); (4) SeatHands multi-hand = stay opt-in `?seats=on` → TP8; (5) → NOW opening TP2 (Cartas). The frozen money-shot CAMERA pos/fov + the TP1 felt MATERIAL are unchanged; TP1 not reopened. b2c9dd4 promoted WIP→adopted baseline.
-Policy: operator AUTHORIZED a checkpoint push 2026-06-10 → spike pushed to origin/spike (carries TP1 + Phase 2 close + this WIP, previously all local). Still NO push to main, NO merge, NO deploy. Absolute isolation from feat/web-timeline-2026 maintained (only frontend/src/lab/ touched, guard-de-rama before every change).
-Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
-Branch: `spike/table-3d-hero`. CI note: build.yml + test-coverage.yml trigger ONLY on push/PR to main|develop — a spike push does NOT run CI (verified locally instead: frontend lab vitest 27/27 green; game/api unaffected by the lab-only edits). use_worktrees=false (GPU/dev-server → sequential).
+Last session: 2026-06-11T18:27:00Z
+Stopped at: Plan 03-02 COMPLETE — TP2 Levers 1+2. Lever 1 (max-anisotropy via useThree) shipped at commit 7d9b31d; Lever 2 (seam) already clean — no geometry edit. M1 floor held 32px. SUMMARY at .planning/phases/03-tp2-cartas-materiality-legibility-protagonist/03-02-SUMMARY.md. A/B captures at .dev-stack/diag/table-3d/tp2/lever1-aniso/ and lever2-seam/ (LOCAL, gitignored scratch).
+Next: Plan 03-03 — Wave 2 lever (micro-relief normalMap on card stock body using cardStockNormalMap() + textures.ts).
+Carried forward (non-blocking): M10→TP3 (instancing) · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes).
+Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 27/27 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

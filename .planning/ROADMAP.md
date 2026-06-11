@@ -121,7 +121,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 03-02-PLAN.md — Levers 1+2 (legibility-first): face anisotropy to getMaxAnisotropy() cap 16 via useThree + mipmaps confirmed; face-to-bevel seam fix (CARD_CORNER 0.17 / curveSegments 14 unchanged)
+- [x] 03-02-PLAN.md — Levers 1+2 (legibility-first): face anisotropy to getMaxAnisotropy() cap 16 via useThree + mipmaps confirmed; face-to-bevel seam fix (CARD_CORNER 0.17 / curveSegments 14 unchanged)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -259,7 +259,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
-| 3. TP2 — Cartas Materiality & Legibility | 1/6 | In Progress|  |
+| 3. TP2 — Cartas Materiality & Legibility | 2/6 | In Progress|  |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
