@@ -34,6 +34,19 @@ export const CHIP_PALETTES: Record<SuitCode, ChipPalette> = {
   O: { faceLit: "#e6b455", face: "#b9892f", edge: "#7a591c", cream: "#f7f0db", ink: "#5a4216", accent: "#b07d22" }, // oros → gold
 };
 
+/**
+ * TP3 de-Vegas: muted chip palette — chroma −20% (S*0.80) + value lowered (L*0.88).
+ * Suits stay recognisable (burgundy C, green B, navy E, gold O) but quieter so the
+ * accent recedes behind the cards (M2 hierarchy check + histogram recede).
+ * Before/after HSL documented in the 04-03-SUMMARY.
+ */
+export const CHIP_PALETTES_MUTED: Record<SuitCode, ChipPalette> = {
+  C: { faceLit: "#8a3d49", face: "#712b37", edge: "#461921", cream: "#e1d3ac", ink: "#2f1016", accent: "#7f2933" },
+  B: { faceLit: "#238668", face: "#135642", edge: "#0a3226", cream: "#e1d3ac", ink: "#08221a", accent: "#166244" },
+  E: { faceLit: "#3f5878", face: "#2c4056", edge: "#19293b", cream: "#cbd2df", ink: "#101b28", accent: "#344965" },
+  O: { faceLit: "#d0a045", face: "#977536", edge: "#634c21", cream: "#e6dab4", ink: "#493819", accent: "#8e6a2a" },
+};
+
 const BRASS = "#c9a24c";
 const BRASS_DARK = "#6e4f17";
 const TAU = Math.PI * 2;
@@ -410,6 +423,197 @@ export function chipEdgeTexture(suit: SuitCode): THREE.CanvasTexture {
   const t = srgb(c);
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TP3 de-Vegas chip textures — muted palette (chroma −20% + value lowered),
+// recessed-C normalMap via the shared Sobel helper, desat+shrunk face logo.
+// Used behind the ?chips=dv A/B flag in TableLab.tsx (SSOT §TP3).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * De-Vegas chip face — muted palette + desaturated/shrunk Chiribito C logo.
+ *
+ * Uses CHIP_PALETTES_MUTED (chroma −20%, value lowered) so the clay dome recedes.
+ * The C medallion is drawn with a ctx.filter saturate(35%) to further quiet the logo,
+ * and cSize is reduced from r*1.26 → r*1.02 (logo shrunk) so it reads quieter and
+ * smaller — the chip is an accent, not a billboard. Micro-grain restrained at 12.
+ *
+ * S=512 preserved (04-02 right-size; do not revert).
+ * Returns sRGB (colour texture).
+ */
+export function chipFaceTextureDV(suit: SuitCode, cImg?: HTMLImageElement | null): THREE.CanvasTexture {
+  const p = CHIP_PALETTES_MUTED[suit];
+  const S = 512; // TP3 right-sized: preserved from 04-02 — do NOT revert to 2048
+  const { c, ctx } = makeCanvas(S, S);
+  const r = S / 2;
+
+  // muted clay dome
+  const dome = ctx.createRadialGradient(r, r * 0.8, r * 0.05, r, r, r);
+  dome.addColorStop(0, p.faceLit);
+  dome.addColorStop(0.55, p.face);
+  dome.addColorStop(0.85, p.edge);
+  dome.addColorStop(1, p.edge);
+  ctx.fillStyle = dome;
+  ctx.beginPath();
+  ctx.arc(r, r, r, 0, TAU);
+  ctx.fill();
+  speckle(ctx, S, S, 12);
+
+  // refined brass rim line (restrained — same as base, just quieter context around it)
+  ctx.lineWidth = S * 0.0055;
+  ctx.strokeStyle = hexA(BRASS, 0.5);
+  ctx.beginPath();
+  ctx.arc(r, r, r * 0.93, 0, TAU);
+  ctx.stroke();
+  ctx.lineWidth = S * 0.0028;
+  ctx.strokeStyle = hexA(BRASS_DARK, 0.4);
+  ctx.beginPath();
+  ctx.arc(r, r, r * 0.895, 0, TAU);
+  ctx.stroke();
+
+  // de-Vegas logo: desaturated + shrunk so it reads quieter (not a Vegas marquee).
+  // cSize reduced from r*1.26 → r*1.02 (smaller); saturate(35%) before draw (desat).
+  const cSize = r * 1.02; // TP3 de-Vegas: shrunk from r*1.26
+  if (cImg) {
+    const rad = cSize / 2;
+    ctx.save();
+    ctx.filter = "saturate(35%)"; // TP3 de-Vegas: desaturate the image logo
+    ctx.beginPath();
+    ctx.arc(r, r, rad, 0, TAU);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = true;
+    (ctx as unknown as { imageSmoothingQuality: string }).imageSmoothingQuality = "high";
+    ctx.drawImage(cImg, r - rad, r - rad, rad * 2, rad * 2);
+    ctx.restore();
+  } else {
+    ctx.save();
+    ctx.filter = "saturate(35%)"; // TP3 de-Vegas: desaturate the vector C
+    drawChiriC(ctx, r, r, cSize);
+    ctx.restore();
+  }
+
+  // final dither to break banding
+  speckle(ctx, S, S, 4);
+
+  return srgb(c);
+}
+
+/**
+ * De-Vegas chip edge — muted palette (CHIP_PALETTES_MUTED).
+ *
+ * Same structure as chipEdgeTexture, but uses the muted palette so the rolled clay
+ * edge recedes tonally. Micro-grain restrained at 10. S=512 preserved.
+ */
+export function chipEdgeTextureDV(suit: SuitCode): THREE.CanvasTexture {
+  const p = CHIP_PALETTES_MUTED[suit];
+  const W = 512; // TP3 right-sized: preserved from 04-02 — do NOT revert to 2048
+  const H = 256;
+  const { c, ctx } = makeCanvas(W, H);
+
+  // muted clay shading across the rolled edge
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, p.faceLit);
+  g.addColorStop(0.5, p.face);
+  g.addColorStop(1, p.edge);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // faint vertical striations
+  ctx.globalAlpha = 0.08;
+  for (let x = 0; x < W; x += 7) {
+    ctx.strokeStyle = x % 14 === 0 ? p.faceLit : p.edge;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  speckle(ctx, W, H, 10);
+
+  // cream inserts row
+  const groups = 10;
+  const gw = W / groups;
+  const sw = gw * 0.3;
+  const sh = H * 0.42;
+  for (let i = 0; i < groups; i++) {
+    const cx = i * gw + gw * 0.5;
+    ctx.fillStyle = hexA(p.ink, 0.45);
+    ctx.fillRect(cx - sw / 2 - 3, H * 0.5 - sh / 2 - 3, sw + 6, sh + 6);
+    ctx.fillStyle = p.cream;
+    ctx.fillRect(cx - sw / 2, H * 0.5 - sh / 2, sw, sh);
+    ctx.fillStyle = hexA("#ffffff", 0.18);
+    ctx.fillRect(cx - sw / 2, H * 0.5 - sh / 2, sw, sh * 0.16);
+  }
+
+  const t = srgb(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}
+
+/**
+ * Recessed-C normalMap for the chip face (TP3 de-Vegas upgrade from bumpMap).
+ *
+ * Re-draws the SAME height field as chipFaceBump (identical C_ARC coords + brass rim
+ * groove + clay speckle, at S=512) and pipes it through the shared Sobel helper:
+ *   heightToNormalMap(heightCanvas, 1.0) → tangent-space normal canvas
+ *   toNormalMapTexture(canvas)            → NoColorSpace CanvasTexture (anisotropy 8)
+ *
+ * Mirrors feltNapNormalMap + cardMicroReliefNormalMap exactly. NoColorSpace is
+ * MANDATORY for normal maps (Pitfall #3 — never call srgb() on a normal canvas).
+ *
+ * normalScale on the material tunes the depth; the height-field strength is kept
+ * neutral (1.0) here so normalScale is the single tuning lever at MACRO gate.
+ */
+export function chipFaceNormalMap(cImg?: HTMLImageElement | null): THREE.CanvasTexture {
+  const S = 512; // right-sized from 2048 — matches chipFaceBump S=512 (pixel-exact registration)
+  const { c, ctx } = makeCanvas(S, S);
+  const r = S / 2;
+
+  // Mid-height clay field with micro-grain (identical to chipFaceBump)
+  ctx.fillStyle = "#808080";
+  ctx.beginPath();
+  ctx.arc(r, r, r, 0, Math.PI * 2);
+  ctx.fill();
+  speckle(ctx, S, S, 18);
+
+  // Refined brass rim groove (matches chipFaceTexture's r*0.93)
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#5c5c5c";
+  ctx.lineWidth = S * 0.007;
+  ctx.beginPath();
+  ctx.arc(r, r, r * 0.93, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // The C tooled as a recessed groove (matches C_ARC exactly — pixel-exact registration)
+  const cSize = r * 1.26;
+  ctx.save();
+  ctx.translate(r, r);
+  const RR = cSize / 2;
+  if (!cImg) {
+    ctx.lineCap = "round";
+    ctx.lineWidth = RR * C_ARC.widthFrac;
+    ctx.strokeStyle = "#454545";
+    ctx.beginPath();
+    ctx.arc(0, 0, RR * C_ARC.rFrac, C_ARC.start, C_ARC.end, false);
+    ctx.stroke();
+    // thin bright shoulder inside the groove (tooled bevel)
+    ctx.lineWidth = RR * C_ARC.widthFrac * 0.3;
+    ctx.strokeStyle = "#a6a6a6";
+    ctx.beginPath();
+    ctx.arc(0, 0, RR * C_ARC.rFrac * 0.86, C_ARC.start + 0.08, C_ARC.end - 0.3, false);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Convert height field → tangent-space normal via shared Sobel helper.
+  // CRITICAL: toNormalMapTexture sets NoColorSpace — NEVER use srgb() on a normal canvas
+  // (Pitfall #3: sRGB gamma-decodes the XYZ components, destroying the normal direction).
+  const normalCanvas = heightToNormalMap(c, 1.0); // strength neutral; normalScale on mat tunes it
+  const t = toNormalMapTexture(normalCanvas); // NoColorSpace, anisotropy 8
   return t;
 }
 
