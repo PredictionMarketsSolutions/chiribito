@@ -155,7 +155,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Wave-0 foundation: cut the tp3-before-chips rollback tag + capture the tp3-base post-TP2 baseline (3 frozen shots) + record the M10 draw-call baseline (HERO + ?chips=full) as the must-ship-or-revert target basis
+- [x] 04-01-PLAN.md — Wave-0 foundation: cut the tp3-before-chips rollback tag + capture the tp3-base post-TP2 baseline (3 frozen shots) + record the M10 draw-call baseline (HERO + ?chips=full) as the must-ship-or-revert target basis
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -274,7 +274,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
-| 4. TP3 — Fichas Materiality + Perf | 0/4 | Planned | - |
+| 4. TP3 — Fichas Materiality + Perf | 1/4 | In Progress|  |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
