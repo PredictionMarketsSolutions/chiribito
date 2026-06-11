@@ -301,6 +301,16 @@ function useCardKit(): CardKit {
   // Cap HARD at 0.18 (operator STOP above); never exceed without explicit gate approval.
   const clearcoat = cardFlag === "base" ? 0.16 : 0.12; // TP2 Lever 4 — restraint-first
   const clearcoatRoughness = cardFlag === "base" ? 0.5 : 0.55; // TP2 Lever 4
+  // TP2 Lever 5: paper-edge warm sheen-rim — reuse the sheen lobe only (NO new texture,
+  // sheen-only approach, NOT a glass/resin material — SSOT-locked). The beveled card rim
+  // catches a warm wheat glow under the key light → reads as printed-stock paper edge, not casino neon.
+  // Stay restrained: sheen 0.35 is barely perceptible; sheenColor warm wheat #f5deb5.
+  // sheenRoughness 0.6 = soft diffuse rim (matches leather/warm convention → no hard ring).
+  // STOP criterion: if the rim reads as a glowing border → lower sheen or revert (non-blocking).
+  // ?card=base → pre-TP2 sheen 0.22 / #fff6e0 (no sheenRoughness change) for A/B comparison.
+  const sheen = cardFlag === "base" ? 0.22 : 0.35; // TP2 Lever 5
+  const sheenColor = cardFlag === "base" ? new THREE.Color("#fff6e0") : new THREE.Color("#f5deb5"); // TP2 Lever 5
+  const sheenRoughness = cardFlag === "base" ? undefined : 0.6; // TP2 Lever 5: soft warm rim
 
   return useMemo(() => {
     const stock = new THREE.MeshPhysicalMaterial({
@@ -309,8 +319,9 @@ function useCardKit(): CardKit {
       metalness: 0,
       clearcoat, // TP2 Lever 4: 0.12 (was 0.16); ?card=base → 0.16 A/B baseline
       clearcoatRoughness, // TP2 Lever 4: 0.55 (was 0.5); ?card=base → 0.5 A/B baseline
-      sheen: 0.22,
-      sheenColor: new THREE.Color("#fff6e0"),
+      sheen, // TP2 Lever 5: 0.35 (was 0.22); ?card=base → 0.22 A/B baseline
+      sheenColor, // TP2 Lever 5: warm wheat #f5deb5 (was #fff6e0); ?card=base → #fff6e0
+      ...(sheenRoughness !== undefined ? { sheenRoughness } : {}), // TP2 Lever 5: 0.6 soft rim
       // TP2 Lever 3: faint card-stock micro-relief (linen/emboss grain) on the body.
       // normalScale ~0.12 = "faint" (CONTEXT — restraint-first; face stays crisp).
       // NOT applied to the per-card faceMat so the printed Fournier face reads clean.
@@ -319,7 +330,7 @@ function useCardKit(): CardKit {
         : {}),
     });
     return { body: cardBodyGeometry(), face: cardFaceGeometry(), stock };
-  }, [normalMap, clearcoat, clearcoatRoughness]);
+  }, [normalMap, clearcoat, clearcoatRoughness, sheen, sheenColor, sheenRoughness]);
 }
 
 /** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp).
