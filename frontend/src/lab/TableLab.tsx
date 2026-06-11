@@ -32,6 +32,9 @@ import {
   chipFaceTexture,
   chipFaceBump,
   chipEdgeTexture,
+  chipFaceTextureDV,
+  chipEdgeTextureDV,
+  chipFaceNormalMap,
   feltTexture,
   feltNapNormalMap,
   feltEdgeAoMap,
@@ -175,7 +178,18 @@ interface ChipKit {
   mats: Record<string, { body: THREE.Material; face: THREE.Material }>;
 }
 
-function useChipKit(cImg: HTMLImageElement | null): ChipKit {
+/**
+ * useChipKit — builds the shared chip geometry + per-suit materials.
+ *
+ * deVegas=false (default): pre-de-Vegas instanced materials (TP3 instancing baseline).
+ * deVegas=true  (?chips=dv): TP3 de-Vegas materiality —
+ *   Body: clearcoat 0.32 / clearcoatRoughness 0.5 / sheen 0 (gloss killed) /
+ *         roughness 0.72 (kills MACRO gloss read); muted CHIP_PALETTES_MUTED palette.
+ *   Face: normalMap via chipFaceNormalMap (recessed-C Sobel normal, NoColorSpace) /
+ *         normalScale 0.4 / clearcoatRoughness 0.5 / roughness 0.72; muted palette.
+ *   This is the ?chips=dv A/B branch; ?chips=inst / default stays on the pre-de-Vegas look.
+ */
+function useChipKit(cImg: HTMLImageElement | null, deVegas = false): ChipKit {
   return useMemo(() => {
     const body = new THREE.LatheGeometry(chipProfile(), 72);
     // PlaneGeometry (uniform UVs), NOT CircleGeometry — a circle's triangle-fan UVs
@@ -187,33 +201,61 @@ function useChipKit(cImg: HTMLImageElement | null): ChipKit {
       const p = CHIP_PALETTES[suit];
       // the rolled clay edge carries its shading + cream inserts in the texture, so the
       // tint is white (the map IS the colour); double-darkening would muddy it.
-      const edge = chipEdgeTexture(suit);
-      edge.repeat.set(1, 1);
-      const bodyMat = new THREE.MeshPhysicalMaterial({
-        map: edge,
-        color: new THREE.Color("#ffffff"),
-        roughness: 0.5,
-        metalness: 0,
-        clearcoat: 0.42,
-        clearcoatRoughness: 0.46,
-        sheen: 0.5,
-        sheenColor: new THREE.Color(p.faceLit),
-      });
-      const faceMat = new THREE.MeshPhysicalMaterial({
-        map: chipFaceTexture(suit, cImg),
-        // the C + rim are tooled into the clay (recessed) — a real edge of light, not a print
-        bumpMap: chipFaceBump(cImg),
-        bumpScale: 0.025,
-        roughness: 0.46,
-        metalness: 0,
-        clearcoat: 0.32,
-        clearcoatRoughness: 0.36,
-        alphaTest: 0.5,
-      });
-      mats[suit] = { body: bodyMat, face: faceMat };
+      if (deVegas) {
+        // TP3 de-Vegas path — muted palette + killed gloss + normalMap for recessed C
+        const edgeDV = chipEdgeTextureDV(suit);
+        edgeDV.repeat.set(1, 1);
+        const bodyMat = new THREE.MeshPhysicalMaterial({
+          map: edgeDV,
+          color: new THREE.Color("#ffffff"),
+          roughness: 0.72,        // raised from 0.5 — kills MACRO gloss read
+          metalness: 0,
+          clearcoat: 0.32,        // SSOT locked: low-end of 0.32–0.42 matte clay seal
+          clearcoatRoughness: 0.5, // SSOT locked: maximally matte (was 0.46)
+          // sheen KILLED (was 0.5, sheenColor p.faceLit) — anti-Vegas gloss removal
+        });
+        const faceNormalMap = chipFaceNormalMap(cImg); // Sobel normal, NoColorSpace
+        const faceMat = new THREE.MeshPhysicalMaterial({
+          map: chipFaceTextureDV(suit, cImg), // muted palette + desat+shrunk logo
+          normalMap: faceNormalMap,           // replaces bumpMap — C reads tooled-not-printed
+          normalScale: new THREE.Vector2(0.4, 0.4), // restrained; tunable at MACRO gate
+          roughness: 0.72,        // raised from 0.46 — kills face gloss
+          metalness: 0,
+          clearcoat: 0.32,        // unchanged from pre-de-Vegas
+          clearcoatRoughness: 0.5, // raised from 0.36 — matte clay seal on face too
+          alphaTest: 0.5,
+        });
+        mats[suit] = { body: bodyMat, face: faceMat };
+      } else {
+        // Pre-de-Vegas instanced path (default / ?chips=inst baseline)
+        const edge = chipEdgeTexture(suit);
+        edge.repeat.set(1, 1);
+        const bodyMat = new THREE.MeshPhysicalMaterial({
+          map: edge,
+          color: new THREE.Color("#ffffff"),
+          roughness: 0.5,
+          metalness: 0,
+          clearcoat: 0.42,
+          clearcoatRoughness: 0.46,
+          sheen: 0.5,
+          sheenColor: new THREE.Color(p.faceLit),
+        });
+        const faceMat = new THREE.MeshPhysicalMaterial({
+          map: chipFaceTexture(suit, cImg),
+          // the C + rim are tooled into the clay (recessed) — a real edge of light, not a print
+          bumpMap: chipFaceBump(cImg),
+          bumpScale: 0.025,
+          roughness: 0.46,
+          metalness: 0,
+          clearcoat: 0.32,
+          clearcoatRoughness: 0.36,
+          alphaTest: 0.5,
+        });
+        mats[suit] = { body: bodyMat, face: faceMat };
+      }
     }
     return { body, face, mats };
-  }, [cImg]);
+  }, [cImg, deVegas]);
 }
 
 function Chip({
@@ -760,7 +802,10 @@ function Scene() {
   );
   // ?c=literal → the literal 48px favicon (soft). Default → faithful HD rebuild (crisp).
   const cImg = qp("c") === "literal" ? ((cTex.image as HTMLImageElement) ?? null) : null;
-  const chipKit = useChipKit(cImg);
+  // TP3 de-Vegas: ?chips=dv → de-Vegas materials (clearcoat 0.32 / clearcoatRoughness 0.5 /
+  // sheen 0 / normalMap for recessed C). All other ?chips= values keep the pre-de-Vegas look.
+  const chipsFlag = qp("chips");
+  const chipKit = useChipKit(cImg, chipsFlag === "dv");
 
   // TP2 Lever 1: read renderer capabilities inside Scene (where gl is mounted and valid).
   // gl.capabilities is only safe to call in a mounted R3F component — never outside Canvas.
@@ -877,11 +922,16 @@ function Scene() {
         {/* the pot — clay stacks, each denomination a Spanish suit. M1 DEMOTES it to a modest
            accent so the cards dominate. ?chips=full restores the old heavy central pot;
            ?chips=off clears it. Chips are identity — demoted, never deleted.
-           TP3 INSTANCING FLAG MAP:
-             (default)        = InstancedChipStack demoted accent pot [INSTANCED — TP3 shipped]
+           TP3 FLAG MAP (complete, including de-Vegas):
+             (default)        = InstancedChipStack demoted accent pot, PRE-de-Vegas instanced look
+             ?chips=dv        = InstancedChipStack demoted accent pot, DE-VEGAS materiality
+                                (clearcoat 0.32 / clearcoatRoughness 0.5 / sheen 0 / normalMap)
+                                A/B vs default: confirms chips recede + worn clay read
              ?chips=full      = InstancedChipStack heavy central stress pot (draw-count diagnostic)
-             ?chips=legacy    = ChipStack (original per-chip path — apples-to-apples A/B baseline)
-             ?chips=off       = no chips */}
+             ?chips=legacy    = ChipStack (original per-chip path — pre-TP3 instancing A/B baseline)
+             ?chips=off       = no chips
+           Note: ?chips=dv and default both route through the demoted-pot branch; the material
+           difference is driven by chipsFlag === "dv" passed into useChipKit(cImg, deVegas). */}
         {qp("chips") === "full" ? (
           // Heavy central pot — stress diagnostic / ?chips=full draw-count test
           // TP3: all four denominations now use InstancedChipStack (2 draws/denomination)
