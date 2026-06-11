@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-06-11T16:23:56.092Z"
+last_updated: "2026-06-11T16:40:00Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 10
@@ -24,14 +24,15 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 
 ## Current Position
 
-Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — EXECUTING (plan 03-02 COMPLETE; 2/6 plans done)
-Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. NEXT = Wave 2 lever (03-03: micro-relief normalMap on card stock).
+Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — EXECUTING (plan 03-03 COMPLETE; 3/6 plans done)
+Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. COMPLETED: Wave 2 (03-03) — Lever 3 cardMicroReliefNormalMap (normalScale 0.12) + Lever 4 clearcoat whisper 0.12/0.55. NEXT = Wave 3 lever (03-04: paper-edge warm sheen-rim).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
   (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
   (Plan 03-01 ✅ COMPLETE 2026-06-11 — Wave-0 foundation: tp2-before-cards tag@22017ee + tp2-base anchors + M1 floor=9px + M6 rects recalibrated; commits 048df10 + 3e2c505)
   (Plan 03-02 ✅ COMPLETE 2026-06-11 — Lever 1: maxAniso via useThree (Math.min(getMaxAnisotropy(),16)); ?card=base A/B; mipmaps explicit. Lever 2: seam already clean — no geometry edit. M1 floor held 32px >= 9px; commit 7d9b31d)
-Status: TP2 Wave-1 COMPLETE. Lever 1 (max-anisotropy) shipped; Lever 2 (seam) confirmed clean. ⚠ M1 RECONCILED: the 9px "floor" was a manual-measurement ARTIFACT — CEO visual check of full-res crops confirms the hole-card ranks/suits are CLEARLY LEGIBLE (03-02 measured 32px on the same glyph; legibility alarm FALSE). M1 = px-height + operator-confirm → gate 03-06 authoritative; automated px-gate advisory only. See docs/table-3d/TP2_BASELINE.md §M1 RECONCILIATION. ?card=base/aniso A/B flags in place. Next: Wave 2 (03-03 — micro-relief + clearcoat).
+  (Plan 03-03 ✅ COMPLETE 2026-06-11 — Lever 3: cardMicroReliefNormalMap (NoColorSpace, single instance, normalScale 0.12, repeat 2×3); Lever 4: clearcoat 0.12/clearcoatRoughness 0.55 on stock + faceMat; M1=31px>=9px PASS; M5=0%/0% PASS; commits 327102e + a0d0f17)
+Status: TP2 Wave-2 COMPLETE. Lever 3 (card-stock micro-relief normal, NoColorSpace, normalScale 0.12) + Lever 4 (clearcoat whisper 0.12/0.55, coated-not-plastic) both shipped. M1 = 31px (floor held); M5 = 0%/0% (no highlight clip, identical to tp2-base). No plastic/laminated STOP triggered. ?card=base restores full pre-TP2 A/B. Next: Wave 3 (03-04 — paper-edge warm sheen-rim: sheen 0.22→0.35, sheenColor warmer).
 Last activity: 2026-06-11
 
 Progress: [███████░░░] 69%
@@ -99,6 +100,9 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 3]: Plan 03-02: Lever 1 — maxAniso = Math.min(gl.capabilities.getMaxAnisotropy(), 16) via useThree in Scene; passed to useCardFaces(); ?card=base=pre-TP2 aniso 8; otherwise maxAniso. Mipmaps explicit (minFilter + generateMipmaps). Commit 7d9b31d.
 - [Phase 3]: Plan 03-02: Lever 2 — SEAM ALREADY CLEAN at tp2-base/macro (fov26). No cream rim, no z-fight halo. bevelSegments stays 2; CARD_FACE_Z = 0.071 sufficient; no geometry edit. CARD_CORNER 0.17 + curveSegments 14 locked.
 - [Phase 3]: Plan 03-02: M1 re-measured post-levers = 32px (1728x1080 POV downscale, rows 508-539; >= 9px floor; no regression). Anisotropy sharpens oblique texture quality, not glyph px-height — visually inspect full-res captures at .dev-stack/diag/table-3d/tp2/lever1-aniso/ for crispness delta.
+- [Phase 3]: Plan 03-03: Lever 3 — cardMicroReliefNormalMap() added to textures.ts (S=256, linen crosshatch freq=18, hx*0.6+hy*0.4 horizontal bias, heightToNormalMap Sobel, toNormalMapTexture NoColorSpace, repeat 2×3); created ONCE in useCardKit (not per-Card — Pitfall 5); normalScale Vector2(0.12,0.12) on stock body; faceMat intentionally unchanged. Commits 327102e (Lever 3) + a0d0f17 (Lever 4).
+- [Phase 3]: Plan 03-03: Lever 4 — clearcoat 0.16→0.12 / clearcoatRoughness 0.5→0.55 on stock body; faceMat clearcoat 0.1→0.12 for consistency. Both levers gated behind same ?card= flag: ?card=base restores full pre-TP2 A/B (stock 0.16/0.5, face 0.1, no relief normal). Active values all within SSOT 0.12-0.18 range. Sheen/sheenColor unchanged (lever 5 scope).
+- [Phase 3]: Plan 03-03: M1 = 31px post-levers 3+4 (floor 9px held; advisory PASS). M5 highlight-clip = feltClipPct 0% / frameClipPct 0% (identical to tp2-base baseline — no over-clearcoat flare; plastic/laminated STOP criterion not triggered).
 
 ### Pending Todos
 
@@ -122,9 +126,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T18:27:00Z
-Stopped at: Plan 03-02 COMPLETE — TP2 Levers 1+2. Lever 1 (max-anisotropy via useThree) shipped at commit 7d9b31d; Lever 2 (seam) already clean — no geometry edit. M1 floor held 32px. SUMMARY at .planning/phases/03-tp2-cartas-materiality-legibility-protagonist/03-02-SUMMARY.md. A/B captures at .dev-stack/diag/table-3d/tp2/lever1-aniso/ and lever2-seam/ (LOCAL, gitignored scratch).
-Next: Plan 03-03 — Wave 2 lever (micro-relief normalMap on card stock body using cardStockNormalMap() + textures.ts).
+Last session: 2026-06-11T16:40:00Z
+Stopped at: Plan 03-03 COMPLETE — TP2 Levers 3+4. Lever 3 (cardMicroReliefNormalMap, normalScale 0.12) at commit 327102e; Lever 4 (clearcoat 0.12/0.55) at commit a0d0f17. M1=31px; M5=0%/0%. SUMMARY at .planning/phases/03-tp2-cartas-materiality-legibility-protagonist/03-03-SUMMARY.md. A/B captures at .dev-stack/diag/table-3d/tp2/lever3-relief/ and lever4-clearcoat/ (LOCAL, gitignored scratch).
+Next: Plan 03-04 — Wave 3 lever (paper-edge warm sheen-rim: sheen 0.22→0.35, sheenColor warmer to wheat).
 Carried forward (non-blocking): M10→TP3 (instancing) · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes).
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 27/27 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
