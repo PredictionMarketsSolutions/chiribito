@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T19:50:55.492Z"
+last_updated: "2026-06-11T20:31:57.828Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 3
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 30
 ---
 
@@ -20,11 +20,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 4 — TP3 — Fichas Materiality + Perf. INSTANCING SHIPPED 2026-06-11 (04-02: HERO 233→105, chips=full 653→133, MACRO parity confirmed — the program's #1 perf fix landed with zero visual change). PAUSED here; de-Vegas materiality (04-03) + operator gate (04-04) remain. Resume = /gsd-execute-phase 4 --wave 3.
+**Current focus:** Phase 4 — TP3 — Fichas Materiality + Perf. INSTANCING SHIPPED 2026-06-11 (04-02: HERO 233→105, chips=full 653→133, MACRO parity confirmed). DE-VEGAS SHIPPED 2026-06-11 (04-03: muted palette chroma -20%/value lowered, recessed-C normalMap, sheen killed, clearcoat 0.32/clearcoatRoughness 0.5, ?chips=dv A/B flag — non-blocking gate PASSED: M2=3.7x, chips recede avgSat -0.047, MACRO byte-identical). PAUSED here; operator A/B gate (04-04) remains. Resume = /gsd-execute-phase 4 --wave 4.
 
 ## Current Position
 
-Phase: 4 (TP3 — Fichas Materiality + Perf (accent + instancing)) — EXECUTING (4 plans 04-01…04-04; plan-checker VERIFICATION PASSED, 0 blockers; discuss✅+plan✅ 2026-06-11; instancing-FIRST; SPLIT rollback = instancing must-ship-or-revert + de-Vegas non-blocking; operator gate 04-04 autonomous:false). COMPLETED: Wave 0 (04-01) — tp3-before-chips tag + tp3-base anchors + M10 baseline (HERO 233 / MACRO 195 / chips=full 653). COMPLETED: Wave 1 (04-02) — InstancedChipStack per denomination (body+face; bottom DROPPED) + textures 512² + M10 PASS (HERO 105/chips=full 133) + MACRO parity CONFIRMED — SHIP. NEXT = 04-03 (de-Vegas materiality). [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
+Phase: 4 (TP3 — Fichas Materiality + Perf (accent + instancing)) — EXECUTING (4 plans 04-01…04-04; plan-checker VERIFICATION PASSED, 0 blockers; discuss✅+plan✅ 2026-06-11; instancing-FIRST; SPLIT rollback = instancing must-ship-or-revert + de-Vegas non-blocking; operator gate 04-04 autonomous:false). COMPLETED: Wave 0 (04-01) — tp3-before-chips tag + tp3-base anchors + M10 baseline (HERO 233 / MACRO 195 / chips=full 653). COMPLETED: Wave 1 (04-02) — InstancedChipStack per denomination (body+face; bottom DROPPED) + textures 512² + M10 PASS (HERO 105/chips=full 133) + MACRO parity CONFIRMED — SHIP. COMPLETED: Wave 3 (04-03) — de-Vegas materiality: muted palette (chroma -20%), recessed-C normalMap (Sobel helper), sheen killed, clearcoat 0.32/clearcoatRoughness 0.5, ?chips=dv A/B flag — non-blocking gate PASSED (M2=3.7x / chips recede avgSat -0.047 / MACRO byte-identical) — SHIP. NEXT = 04-04 (operator gate, autonomous:false). [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
 Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. COMPLETED: Wave 2 (03-03) — Lever 3 cardMicroReliefNormalMap (normalScale 0.12) + Lever 4 clearcoat whisper 0.12/0.55. COMPLETED: Wave 3 (03-04) — Lever 5 warm sheen-rim paper-edge + Lever 6 deterministic dealt variance. COMPLETED: Wave 4 (03-05) — Lever 7 contact-shadow tighten (shadow-radius 8->4, M6 PASS 20.69%) + TP2_PREGATE.md ledger all HARD gates GREEN. NEXT = 03-06 (operator gate, autonomous:false).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
@@ -35,7 +35,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Plan 03-04 ✅ COMPLETE 2026-06-11 — Lever 5: sheen 0.35/#f5deb5/sheenRoughness 0.6 warm paper-edge (sheen-only, no texture); Lever 6: MAX_TILT_RAD=(1.5*PI/180), Math.sin seeds 7.3/3.1/5.7/4.1, frozen at construction; M9 PASS byte-identical; M5=0%/0% PASS; 35/35 vitest; commits 140dda7+499df38+cc73ec5)
   (Plan 03-05 ✅ COMPLETE 2026-06-11 — Lever 7: shadow-radius 8->4 (near-edge 49% darker at y=1060, card bites cloth); M6 PASS 20.69%; M9 byte-identical; all HARD gates GREEN; TP2_PREGATE.md complete with per-lever ?card= flag map; gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/; commits 9027a25+00c9d10)
   (Plan 03-06 ✅ COMPLETE 2026-06-11 — OPERATOR GATE: operator APPROVED the full TP2 stack ("Aprobado — cierra TP2") after live dev-server A/B + green HARD gates + CEO visual read; 0 levers reverted, 0 iterations; cards scorecard 4→4 held; record docs/table-3d/TP2_OPERATOR_AB.md)
-Status: ✅ TP2 shipped (3/10 phases, 30%). Phase 4 / TP3 IN PROGRESS (plan 04-02 ✅ COMPLETE — instancing SHIPPED; plan 04-03 next = de-Vegas). TP3 instancing result: HERO 233→105 (−55%), chips=full 653→133 (−80%), MACRO parity PASS — must-ship gate CLEARED. De-Vegas materiality (plan 04-03) now proceeds on the instanced base. TP2 record: docs/table-3d/TP2_OPERATOR_AB.md. TP3 instancing record: docs/table-3d/TP3_BASELINE.md §Post-Instancing.
+Status: ✅ TP2 shipped (3/10 phases, 30%). Phase 4 / TP3 IN PROGRESS (plan 04-02 ✅ COMPLETE — instancing SHIPPED; plan 04-03 ✅ COMPLETE — de-Vegas SHIPPED; plan 04-04 next = operator gate). TP3 instancing result: HERO 233→105 (−55%), chips=full 653→133 (−80%), MACRO parity PASS. TP3 de-Vegas result: muted palette (chroma -20%/value lowered), recessed-C normalMap (sheen killed, clearcoat 0.32/clearcoatRoughness 0.5), ?chips=dv A/B flag — M2=3.7x/chips recede/MACRO byte-identical — SHIP. TP2 record: docs/table-3d/TP2_OPERATOR_AB.md. TP3 instancing record: docs/table-3d/TP3_BASELINE.md §Post-Instancing.
 Last activity: 2026-06-11
 
 Progress: [███░░░░░░░] 30% (3 of 10 phases)
@@ -113,6 +113,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 3]: Plan 03-05: TP2_PREGATE.md created — consolidated M1/M2/M5/M6/M9/M12 ledger at 3 frozen shots (full-TP2 vs tp2-base). All HARD gates GREEN. M12 brass-rect note: pre-existing scene recalibration (rect lands on card face in adopted scene; MSE identical L6 vs L7). Per-lever ?card= flag map (base/aniso/relief/coat/edge/var/shadow). Gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/. 35/35 vitest. Ready for operator gate 03-06.
 - [Phase 4]: Plan 04-02: InstancedChipStack (drei <Instances> per denomination; body+top face; bottom DROPPED; limit={count+4}; castShadow/receiveShadow); chip textures 2048→512; ?chips=legacy A/B flag. M10 HERO 105 (233→105, −55%, < 150 PASS) / chips=full 133 (653→133, −80%, < 220 PASS) / demoted-pot delta −96 draws. MACRO strict parity PASS (chip look byte-equivalent, jitter seeds 2.3/1.7/0.012 preserved). Ship decision: SHIP — must-ship-or-revert gate cleared. De-Vegas (plan 04-03) proceeds on instanced base.
 
+- [Phase 4]: Plan 04-03: De-Vegas chip materiality behind ?chips=dv. CHIP_PALETTES_MUTED (chroma -20% S*0.80 / value lowered L*0.88 on all 4 suits). chipFaceNormalMap via heightToNormalMap+toNormalMapTexture (NoColorSpace). Body: clearcoat 0.42->0.32 / clearcoatRoughness 0.46->0.5 / sheen KILLED / roughness 0.5->0.72. Face: bumpMap->normalMap (Sobel) / clearcoatRoughness 0.36->0.5. Logo desat(35%) + shrunk r*1.26->r*1.02. Non-blocking gate: M2=3.7x (>=2.0x PASS) / chip avgSat delta -0.047 (recedes PASS) / MACRO byte-identical (PASS). Ship decision: SHIP. Commits: 8c4f251 (textures) + 8509eeb (materials) + 287e3c5 (grep-check helpers).
+
 ### Pending Todos
 
 None yet.
@@ -135,9 +137,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T19:40:00Z
-Stopped at: Plan 03-05 COMPLETE — Lever 7 (shadow-radius 8->4, near-edge 49% darker, M6 PASS 20.69%) at commit 9027a25; TP2_PREGATE.md ledger (all HARD gates GREEN, per-lever flag map) at commit 00c9d10. 35/35 vitest. SUMMARY at .planning/phases/03-tp2-cartas-materiality-legibility-protagonist/03-05-SUMMARY.md. Gate A/B frames at .dev-stack/diag/table-3d/tp2/gate/ (LOCAL, gitignored scratch).
-Next: Plan 03-06 — OPERATOR GATE (autonomous:false): operator A/B at ?card=base vs default (all 7 levers) at POV+MACRO — "physical printed stock while razor-legible?"
-Carried forward (non-blocking): M10→TP3 (instancing) · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes).
-Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 35/35 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
+Last session: 2026-06-11T20:29:00Z
+Stopped at: Plan 04-03 COMPLETE — de-Vegas chip materiality: CHIP_PALETTES_MUTED + chipFaceNormalMap + useChipKit(deVegas) + ?chips=dv flag. Non-blocking gate: M2=3.7x / chips recede (avgSat -0.047) / MACRO byte-identical — SHIP. Commits: 8c4f251 (textures) + 8509eeb (materials) + 287e3c5 (grep-check helpers). 45/45 vitest. SUMMARY at .planning/phases/04-tp3-fichas-materiality-perf-accent-instancing/04-03-SUMMARY.md.
+Next: Plan 04-04 — OPERATOR GATE (autonomous:false): operator A/B at ?chips=dv vs default at HERO + MACRO — "worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss"
+Carried forward (non-blocking): depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO → TP6.
+Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

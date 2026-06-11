@@ -159,11 +159,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 04-02-PLAN.md — INSTANCING (must-ship-or-revert): ChipStack → drei <Instances> per denomination (one body + one TOP-face) + drop the bottom face + chip textures 2048→512 + break the 10-group cream phase-alignment (0.37 seed, unit-tested seed parity); gate M10 net-positive (<150 HERO / <220 chips=full / demoted ≤~10) + strict MACRO parity vs tp3-base; behind ?chips=
+- [x] 04-02-PLAN.md — INSTANCING (must-ship-or-revert): ChipStack → drei <Instances> per denomination (one body + one TOP-face) + drop the bottom face + chip textures 2048→512 + break the 10-group cream phase-alignment (0.37 seed, unit-tested seed parity); gate M10 net-positive (<150 HERO / <220 chips=full / demoted ≤~10) + strict MACRO parity vs tp3-base; behind ?chips=
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 04-03-PLAN.md — DE-VEGAS (non-blocking): matte clay material (clearcoat 0.32 / clearcoatRoughness 0.5 / sheen 0 killed; face bumpMap→normalMap via the shared helper, recessed C) + chroma muted ~20% + value lowered + logo desat+shrunk + micro-grain; gate M2 ≥ 2× + chips recede + MACRO quality ≥ baseline; STOP-on-ambiguous → revert (non-blocking); behind ?chips=
+- [x] 04-03-PLAN.md — DE-VEGAS (non-blocking): matte clay material (clearcoat 0.32 / clearcoatRoughness 0.5 / sheen 0 killed; face bumpMap→normalMap via the shared helper, recessed C) + chroma muted ~20% + value lowered + logo desat+shrunk + micro-grain; gate M2 ≥ 2× + chips recede + MACRO quality ≥ baseline; STOP-on-ambiguous → revert (non-blocking); behind ?chips=
 
 **Wave 4** *(blocked on Wave 3)*
 
@@ -274,7 +274,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
-| 4. TP3 — Fichas Materiality + Perf | 1/4 | In Progress|  |
+| 4. TP3 — Fichas Materiality + Perf | 3/4 | In Progress|  |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
