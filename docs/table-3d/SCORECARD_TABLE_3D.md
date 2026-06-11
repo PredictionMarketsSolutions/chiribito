@@ -63,6 +63,7 @@ Additional per-level notes:
 - **0:** cylinders with no material differentiation; too large / too central (dominating the card)
 - **3:** denomination suits visible; demoted accent pot set aside; matte read (not glossy casino)
 - **5:** tooled clay edge (bevel profile readable); instanced; HSV in brass range (M4 PASS); demoted pot (group[2.7,0,1.5] scale 0.66) reads as present but subordinate to the cards
+- **TP3 status (2026-06-11, operator-approved):** SHIPPED, scored **4** — InstancedChipStack (drei Instances per denomination, bottom face dropped, textures 512²) + de-Vegas materiality (clearcoat 0.32/clearcoatRoughness 0.5, sheen killed, muted palette chroma -20%/value lowered, recessed-C normalMap via Sobel helper, logo desat+shrunk); M10 PASS (HERO 105, chips=full 133); M2=3.7× PASS; chips recede (avgSat -0.047); no Vegas gloss; C/rim tooled-not-printed. **AAA(5) gated on TP5/TP6:** inter-chip crevice AO + full lighting integration needed for bevel-edge + denomination-suit clarity to reach the AAA bar. Record: `TP3_OPERATOR_AB.md`.
 
 ### 4 · leather rail
 - **0:** flat band or extruded square tube; no bump; wrong colour
@@ -163,6 +164,7 @@ Additional per-level notes:
 | TP / Phase | Date | Element | Baseline → Post | Basis |
 |------------|------|---------|:---------------:|-------|
 | TP1 / Phase 2 (felt) | 2026-06-10 | **felt** | 3 → **4** | Operator A/B APPROVED (`TP1_OPERATOR_AB.md`). Nap sheen + micro-relief + relight; M3/M5/+B PASS. Meets ≥4 target; AAA(5) deferred to TP9. Accepted "suficiente", no further materiality iteration. |
+| TP3 / Phase 4 (chips) | 2026-06-11 | **chips** | 3 → **4** | Operator A/B APPROVED (`TP3_OPERATOR_AB.md`). Instancing (M10 PASS: HERO 233→105, chips=full 653→133, MACRO parity) + de-Vegas (muted palette chroma -20%/value lowered, recessed-C normalMap, sheen killed, clearcoat 0.32/clearcoatRoughness 0.5). Chips read as matte worn clay that recedes; C/rim tooled-not-printed; no Vegas gloss. Meets ≥4 target. **AAA(5) deferred:** inter-chip crevice depth + full lighting integration (bevel-edge + denomination-suit clarity under one coherent warm light) are TP5/TP6 scope; AAA(5) plausible post-TP6. |
 
 **TP1 operator forward feedback (steers TP2+, does NOT reopen TP1):** cards stay the absolute
 protagonist · the hand must read complete (currently too cropped) · the whole table must be visible
