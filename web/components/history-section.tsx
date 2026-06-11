@@ -121,7 +121,13 @@ export function HistorySection() {
         {/* Legend - El Cabezon */}
         <motion.div
           {...fadeInUp}
-          className="relative bg-card border border-primary/30 rounded-lg p-10 md:p-14"
+          className="relative bg-card rounded-lg p-10 md:p-14"
+          style={{
+            border: "1px solid oklch(0.78 0.12 85 / 0.40)",
+            backgroundImage: "linear-gradient(165deg, oklch(0.28 0.04 60 / 0.40), transparent 55%)",
+            boxShadow:
+              "0 26px 64px -22px oklch(0 0 0 / 0.70), inset 0 0 0 5px oklch(0.19 0.035 55 / 0.60), inset 0 0 0 6px oklch(0.78 0.12 85 / 0.28)",
+          }}
         >
           <div className="absolute top-6 right-8">
             <Shield className="w-10 h-10 text-primary/20" />
