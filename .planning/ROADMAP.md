@@ -125,15 +125,15 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 03-03-PLAN.md — Levers 3+4: faint card-stock micro-relief normal (shared Sobel helper, normalScale 0.12, NoColorSpace) + clearcoat whisper (0.12 / clearcoatRoughness 0.55)
+- [x] 03-03-PLAN.md — Levers 3+4: faint card-stock micro-relief normal (shared Sobel helper, normalScale 0.12, NoColorSpace) + clearcoat whisper (0.12 / clearcoatRoughness 0.55)
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 03-04-PLAN.md — Levers 5+6: warm sheen-rim paper-edge (sheen-only, no transmission) + deterministic dealt variance (<= 1.5 deg, seeded, M9 byte-identity, unit-tested)
+- [x] 03-04-PLAN.md — Levers 5+6: warm sheen-rim paper-edge (sheen-only, no transmission) + deterministic dealt variance (<= 1.5 deg, seeded, M9 byte-identity, unit-tested)
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 03-05-PLAN.md — Lever 7 (near-edge contact-shadow tighten, M6) + the consolidated pre-gate ledger (M1/M2/M5/M6/M9/M12 at the 3 frozen shots + per-lever ?card= flag map)
+- [x] 03-05-PLAN.md — Lever 7 (near-edge contact-shadow tighten, M6) + the consolidated pre-gate ledger (M1/M2/M5/M6/M9/M12 at the 3 frozen shots + per-lever ?card= flag map)
 
 **Wave 6** *(blocked on Wave 5)*
 
@@ -259,7 +259,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
-| 3. TP2 — Cartas Materiality & Legibility | 2/6 | In Progress|  |
+| 3. TP2 — Cartas Materiality & Legibility | 5/6 | In Progress|  |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
