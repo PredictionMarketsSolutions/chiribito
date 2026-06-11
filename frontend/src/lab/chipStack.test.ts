@@ -61,7 +61,7 @@ describe("chipStackLayout", () => {
     const layouts = chipStackLayout(3, [0, 0, 0]);
     for (const entry of layouts) {
       // If a bottomPos ever appears in the layout, the bottom face is not dropped
-      expect((entry as Record<string, unknown>).bottomPos).toBeUndefined();
+      expect((entry as unknown as Record<string, unknown>).bottomPos).toBeUndefined();
     }
   });
 

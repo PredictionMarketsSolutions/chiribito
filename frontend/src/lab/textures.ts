@@ -249,7 +249,7 @@ function studRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, rad: nu
  */
 export function chipFaceTexture(suit: SuitCode, cImg?: HTMLImageElement | null): THREE.CanvasTexture {
   const p = CHIP_PALETTES[suit];
-  const S = 2048; // very high-res so the C + rim stay crisp even at macro zoom
+  const S = 512; // TP3 right-sized: chips are small/recessive (demoted pot scale=0.5); 512 is mip-friendly
   const { c, ctx } = makeCanvas(S, S);
   const r = S / 2;
 
@@ -308,7 +308,7 @@ export function chipFaceTexture(suit: SuitCode, cImg?: HTMLImageElement | null):
  * sticker. Drawn at the SAME coordinates as chipFaceTexture (shared C_ARC) so they register.
  */
 export function chipFaceBump(cImg?: HTMLImageElement | null): THREE.CanvasTexture {
-  const S = 2048;
+  const S = 512; // TP3 right-sized: matches chipFaceTexture S=512 (registers pixel-exactly at smaller size)
   const { c, ctx } = makeCanvas(S, S);
   const r = S / 2;
 
@@ -366,7 +366,7 @@ export function chipFaceBump(cImg?: HTMLImageElement | null): THREE.CanvasTextur
  */
 export function chipEdgeTexture(suit: SuitCode): THREE.CanvasTexture {
   const p = CHIP_PALETTES[suit];
-  const W = 2048;
+  const W = 512; // TP3 right-sized: was 2048; chips occupy ~80-120px in hero frame; 512 mip-friendly
   const H = 256;
   const { c, ctx } = makeCanvas(W, H);
 

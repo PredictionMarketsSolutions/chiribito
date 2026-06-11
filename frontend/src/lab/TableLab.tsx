@@ -20,6 +20,8 @@ import {
   Environment,
   Lightformer,
   ContactShadows,
+  Instances,
+  Instance,
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -51,6 +53,7 @@ import {
   labCardFaceUrl,
   type CardPose,
 } from "./cards";
+import { chipStackLayout, CHIP_H as _CHIP_H } from "./chipStack";
 
 // --- proportions (chip radius = 1 world unit) ---
 const R = 1;
@@ -272,6 +275,69 @@ function ChipStack({
     );
   }
   return <group>{chips}</group>;
+}
+
+/**
+ * InstancedChipStack — TP3 instancing replacement for ChipStack.
+ *
+ * Renders N chips of one denomination as TWO draw calls instead of N×3:
+ *   - One <Instances> (body) — all N body cylinders share one InstancedMesh draw
+ *   - One <Instances> (top face) — all N top faces share one InstancedMesh draw
+ *   - Bottom face DROPPED entirely (never visible, was the #1 draw-call waste)
+ *
+ * Visual parity: consumes chipStackLayout() from chipStack.ts which reproduces the
+ * EXACT pre-instancing jitter seeds (Math.sin(i*2.3)*0.012, Math.cos(i*1.7)*0.012)
+ * so the hand-stacked look is byte-equivalent. The cream phase-alignment is broken
+ * via CHIP_ROT_SEED = 0.37 (was 0.55, which was near-rational → column alignment).
+ *
+ * limit={count+4}: safety margin prevents silent instance truncation (drei Pitfall #2).
+ * castShadow/receiveShadow on <Instances> propagates to the underlying InstancedMesh.
+ */
+function InstancedChipStack({
+  kit,
+  denom,
+  count,
+  position,
+}: {
+  kit: ChipKit;
+  denom: SuitCode;
+  count: number;
+  position: [number, number, number];
+}) {
+  const m = kit.mats[denom];
+  // Consume the deterministic layout from chipStack.ts — same seeds as the old ChipStack,
+  // byte-equivalent positions. useMemo ensures we don't re-compute every render.
+  const layout = useMemo(
+    () => chipStackLayout(count, position),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [count, position[0], position[1], position[2]],
+  );
+
+  return (
+    <>
+      {/* Body instances — one InstancedMesh draw for all N chips of this denomination */}
+      <Instances geometry={kit.body} material={m.body} limit={count + 4} castShadow receiveShadow>
+        {layout.map((inst, i) => (
+          <Instance
+            key={i}
+            position={inst.bodyPos}
+            rotation={[0, inst.rotY, 0]}
+          />
+        ))}
+      </Instances>
+      {/* Top-face instances — one draw for all N top faces (flat on top of each body) */}
+      <Instances geometry={kit.face} material={m.face} limit={count + 4} castShadow>
+        {layout.map((inst, i) => (
+          <Instance
+            key={i}
+            position={inst.facePos}
+            rotation={[-Math.PI / 2, 0, inst.rotY]}
+          />
+        ))}
+      </Instances>
+      {/* Bottom face is DROPPED — never visible (chip rests on felt or another chip) */}
+    </>
+  );
 }
 
 // --- M1: the cards — the absolute protagonist ---------------------------------------
@@ -815,26 +881,41 @@ function Scene() {
 
         {/* the pot — clay stacks, each denomination a Spanish suit. M1 DEMOTES it to a modest
            accent so the cards dominate. ?chips=full restores the old heavy central pot;
-           ?chips=off clears it. Chips are identity — demoted, never deleted. */}
+           ?chips=off clears it. Chips are identity — demoted, never deleted.
+           TP3 INSTANCING FLAG MAP:
+             (default)        = InstancedChipStack demoted accent pot [INSTANCED — TP3 shipped]
+             ?chips=full      = InstancedChipStack heavy central stress pot (draw-count diagnostic)
+             ?chips=legacy    = ChipStack (original per-chip path — apples-to-apples A/B baseline)
+             ?chips=off       = no chips */}
         {qp("chips") === "full" ? (
+          // Heavy central pot — stress diagnostic / ?chips=full draw-count test
+          // TP3: all four denominations now use InstancedChipStack (2 draws/denomination)
           <>
-            <ChipStack kit={chipKit} denom="C" count={17} position={[-0.55, 0.06, 0.2]} />
-            <ChipStack kit={chipKit} denom="B" count={12} position={[0.7, 0.06, -0.35]} />
-            <ChipStack kit={chipKit} denom="E" count={14} position={[0.1, 0.06, 0.95]} />
-            <ChipStack kit={chipKit} denom="O" count={9} position={[1.05, 0.06, 0.7]} />
+            <InstancedChipStack kit={chipKit} denom="C" count={17} position={[-0.55, 0.06, 0.2]} />
+            <InstancedChipStack kit={chipKit} denom="B" count={12} position={[0.7, 0.06, -0.35]} />
+            <InstancedChipStack kit={chipKit} denom="E" count={14} position={[0.1, 0.06, 0.95]} />
+            <InstancedChipStack kit={chipKit} denom="O" count={9} position={[1.05, 0.06, 0.7]} />
+            {/* 2 loose chips kept as individual meshes — acceptable for stress branch (Pitfall #7) */}
             <Chip kit={chipKit} denom="O" position={[-1.7, 0.055, 1.0]} rotationY={0.6} />
             <Chip kit={chipKit} denom="C" position={[-1.4, 0.055, 1.25]} rotationY={1.4} />
           </>
+        ) : qp("chips") === "legacy" ? (
+          // A/B baseline — original per-chip ChipStack (pre-TP3 instancing)
+          <group position={[3.0, 0, 1.5]} scale={0.5}>
+            <ChipStack kit={chipKit} denom="C" count={5} position={[-1.6, 0.06, -0.7]} />
+            <ChipStack kit={chipKit} denom="E" count={3} position={[1.6, 0.06, -0.7]} />
+            <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.7]} />
+          </group>
         ) : qp("chips") !== "off" ? (
-          // demoted accent pot — fewer, smaller stacks set off to the side
+          // Default — demoted accent pot using InstancedChipStack (TP3 shipped)
           <group position={[3.0, 0, 1.5]} scale={0.5}>
             {/* demoted accent — three SHORT stacks, centers ~3 units apart in local space so even
                at this scale they keep a clear ~0.45-world gap and never interpenetrate from any
                reachable orbit angle. No loose chip (it muddied the read). They recede behind the
                cards as quiet stakes. */}
-            <ChipStack kit={chipKit} denom="C" count={5} position={[-1.6, 0.06, -0.7]} />
-            <ChipStack kit={chipKit} denom="E" count={3} position={[1.6, 0.06, -0.7]} />
-            <ChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.7]} />
+            <InstancedChipStack kit={chipKit} denom="C" count={5} position={[-1.6, 0.06, -0.7]} />
+            <InstancedChipStack kit={chipKit} denom="E" count={3} position={[1.6, 0.06, -0.7]} />
+            <InstancedChipStack kit={chipKit} denom="B" count={4} position={[0.0, 0.06, 1.7]} />
           </group>
         ) : null}
 
