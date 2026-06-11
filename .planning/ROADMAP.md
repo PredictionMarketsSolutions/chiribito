@@ -25,7 +25,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 
 - [x] **Phase 1: TP0 — Eval Rig & Baseline (BLOCKING)** - Lock the frozen rig + baseline + M1 precondition gate before any visual work. ✅ COMPLETE 2026-06-10.
 - [x] **Phase 2: TP1 — Felt / Tapete Materiality (the stage)** - Turn the largest, weakest surface into believable woven baize that relights. ✅ COMPLETE 2026-06-10 (operator APPROVED; felt shipped as reference baseline).
-- [x] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility. (completed 2026-06-11)
+- [x] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility. (completed 2026-06-11)
 - [ ] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk).
 - [ ] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details.
 - [ ] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding.
@@ -149,11 +149,25 @@ Plans:
   2. PERF: stacks converted to InstancedMesh/drei Instances per denomination, bottom face dropped, chip textures right-sized; demoted-pot chip draws ~42 → ≤ ~10; `?chips=full` back within < 220; M10 PASS; MACRO chip quality ≥ baseline.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B at HERO + MACRO: worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss. Stop-on-ambiguous: chips pull the eye / read plastic → STOP. Rollback SPLIT: de-Vegas non-blocking (keep current); instancing must-ship-or-revert (net-positive perf or don't ship).
 
-**Plans**: TBD
+**Plans**: 4 plans (4 waves — strictly sequential; the two workstreams have different rollback dispositions and share files, and the operator locked instancing-FIRST, so each wave depends on the prior)
 
 Plans:
 
-- [ ] TBD during planning
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Wave-0 foundation: cut the tp3-before-chips rollback tag + capture the tp3-base post-TP2 baseline (3 frozen shots) + record the M10 draw-call baseline (HERO + ?chips=full) as the must-ship-or-revert target basis
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 04-02-PLAN.md — INSTANCING (must-ship-or-revert): ChipStack → drei <Instances> per denomination (one body + one TOP-face) + drop the bottom face + chip textures 2048→512 + break the 10-group cream phase-alignment (0.37 seed, unit-tested seed parity); gate M10 net-positive (<150 HERO / <220 chips=full / demoted ≤~10) + strict MACRO parity vs tp3-base; behind ?chips=
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 04-03-PLAN.md — DE-VEGAS (non-blocking): matte clay material (clearcoat 0.32 / clearcoatRoughness 0.5 / sheen 0 killed; face bumpMap→normalMap via the shared helper, recessed C) + chroma muted ~20% + value lowered + logo desat+shrunk + micro-grain; gate M2 ≥ 2× + chips recede + MACRO quality ≥ baseline; STOP-on-ambiguous → revert (non-blocking); behind ?chips=
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 04-04-PLAN.md — OPERATOR GATE (autonomous:false): A/B at HERO + MACRO "worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss?"; HARD gates M10 PASS + M2 ≥ 2× restated; confirm the SPLIT disposition (instancing must-ship; de-Vegas non-blocking)
 
 ### Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)
 
@@ -260,7 +274,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
-| 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
+| 4. TP3 — Fichas Materiality + Perf | 0/4 | Planned | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
