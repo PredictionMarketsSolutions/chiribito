@@ -33,6 +33,7 @@ import {
   feltTexture,
   feltNapNormalMap,
   feltEdgeAoMap,
+  cardMicroReliefNormalMap,
   woodTexture,
   leatherTexture,
   leatherBump,
@@ -285,6 +286,15 @@ interface CardKit {
 }
 
 function useCardKit(): CardKit {
+  // TP2 Lever 3: create the card-stock micro-relief normal map ONCE here (shared by
+  // reference across all card body meshes — Pitfall 5: never create per-Card).
+  // ?card=base → pre-TP2 baseline (no normal map); any other value → lever 3 active.
+  const cardFlag = qp("card");
+  const normalMap = useMemo(
+    () => (cardFlag === "base" ? null : cardMicroReliefNormalMap()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   return useMemo(() => {
     const stock = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#f1e7cf"), // warm ivory card stock
@@ -294,9 +304,15 @@ function useCardKit(): CardKit {
       clearcoatRoughness: 0.5,
       sheen: 0.22,
       sheenColor: new THREE.Color("#fff6e0"),
+      // TP2 Lever 3: faint card-stock micro-relief (linen/emboss grain) on the body.
+      // normalScale ~0.12 = "faint" (CONTEXT — restraint-first; face stays crisp).
+      // NOT applied to the per-card faceMat so the printed Fournier face reads clean.
+      ...(normalMap
+        ? { normalMap, normalScale: new THREE.Vector2(0.12, 0.12) }
+        : {}),
     });
     return { body: cardBodyGeometry(), face: cardFaceGeometry(), stock };
-  }, []);
+  }, [normalMap]);
 }
 
 /** Load the real Fournier faces for a set of card ids → { id: texture } (sRGB, crisp).

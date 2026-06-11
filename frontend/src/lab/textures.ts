@@ -541,6 +541,51 @@ export function feltNapNormalMap(): THREE.CanvasTexture {
 }
 
 /**
+ * Card-stock micro-relief normal map — a faint linen/emboss crosshatch height field
+ * converted via the shared Sobel helper (exactly as feltNapNormalMap).
+ *
+ * Created ONCE in useCardKit and shared by reference across all card body meshes
+ * (Pitfall 5 — never called per-Card).  normalScale ~0.12 is set on the stock body
+ * material in useCardKit (not here).
+ *
+ * Colorspace: NoColorSpace (toNormalMapTexture sets this — Pitfall 3: normal maps
+ * MUST NOT be sRGB-decoded).
+ *
+ * TP2 Lever 3 (plan 03-03).
+ */
+export function cardMicroReliefNormalMap(): THREE.CanvasTexture {
+  const S = 256; // 256² — sufficient for a face-scale card grain at MACRO fov26
+  const { c, ctx } = makeCanvas(S, S);
+
+  // Linen/emboss crosshatch height field: fine horizontal fibres (paper grain direction)
+  // with a subtle vertical component for the laid-paper cross-weave.
+  // freq=18 → ~18 fibre pairs per tile; repeat 2×3 over the card → tight grain at MACRO.
+  const imgData = ctx.createImageData(S, S);
+  const d = imgData.data;
+  const freq = 18;
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      const hx = (Math.sin((px / S) * Math.PI * freq * 2) * 0.5 + 0.5);
+      const hy = (Math.sin((py / S) * Math.PI * freq * 2) * 0.5 + 0.5);
+      const h = (hx * 0.6 + hy * 0.4) * 255; // horizontal bias (primary paper grain)
+      const i = (py * S + px) * 4;
+      d[i] = d[i + 1] = d[i + 2] = Math.min(255, h);
+      d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Convert height field to tangent-space normal via the shared Sobel helper
+  const normalCanvas = heightToNormalMap(c, 1.0); // strength neutral; normalScale 0.12 does the tuning
+
+  // Wrap in a LINEAR CanvasTexture (NoColorSpace — Pitfall 3: normal maps must NOT be sRGB)
+  const t = toNormalMapTexture(normalCanvas);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 3); // 2 tiles across card width, 3 along card height → face-scale grain
+  return t;
+}
+
+/**
  * Very-subtle light-responsive edge-darken AO map for the felt (D-03).
  *
  * Replaces the baked black vignette removed from feltTexture().  This is a radial
