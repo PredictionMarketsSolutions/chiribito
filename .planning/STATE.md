@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 
 ## Current Position
 
-Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — OPENING (encuadre reconciled; needs discuss → plan)
-Plan: none yet (Phase 3 needs discuss → plan)
+Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — PLANNED (6 plans verified, ready to execute)
+Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). NEXT = execute (Wave 0 = rollback tag + tp2-base capture + M1 floor + M6 recalibration, THEN levers).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
   (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
