@@ -57,6 +57,7 @@ Additional per-level notes:
 - **0:** no face texture or rank unreadable at any size
 - **3:** rank + suit readable at full resolution; edges not Z-fighting; correct face texture loaded
 - **5:** rank glyph bbox ≥ 22 px on 1080p POV downscale (M1 PASS + operator confirm); Fournier stock identifiable; hole cards fanned + lifted correctly (holeLayout); no visible Z-fight or mip aliasing
+- **TP2 status (2026-06-11, operator-approved):** SHIPPED, held at **4** — real card STOCK (max-anisotropy + mipmaps, faint micro-relief normalScale 0.12, clearcoat whisper 0.12/0.55, warm sheen-rim edge, deterministic dealt variance ≤1.5°, tightened contact shadow); coated-not-plastic, no casino edge-glow; M2/M5/M6/M9/M12 green. **AAA(5) gated on CARD_W:** the adopted encuadre (CARD_W 2.05) keeps the rank glyph below the ≥22px bar — sharpening can't enlarge; reaching 5 needs a separate CARD_W/encuadre call. Record: `TP2_OPERATOR_AB.md`.
 
 ### 3 · chips
 - **0:** cylinders with no material differentiation; too large / too central (dominating the card)
