@@ -238,12 +238,7 @@ function Chip({
         rotation={[-Math.PI / 2, 0, 0]}
         castShadow
       />
-      <mesh
-        geometry={kit.face}
-        material={m.face}
-        position={[0, -H / 2 - 0.002, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-      />
+      {/* Bottom face DROPPED (TP3) — never visible; chip rests on felt or another chip */}
     </group>
   );
 }
