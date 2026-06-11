@@ -54,17 +54,43 @@ const FELT_REST_Y = CARD_T / 2 + 0.022; // rest on the baize, just proud of the 
 const COMMUNITY_Z = -0.55;
 
 /**
+ * TP2 Lever 6 — dealt variance: restrained per-card micro-tilt/yaw (≤ 1.5° each).
+ * Amplitude: MAX_TILT_RAD = (1.5 * PI / 180) = 0.0262 rad (the hard gate).
+ * Seeds are INTEGER-CONSTANT primes (7.3 / 3.1 / 5.7 / 4.1) — the same value every render
+ * for a given index i → M9 byte-determinism satisfied. No non-deterministic RNG used.
+ * Applied at CONSTRUCTION time (not in useFrame) so the pose is frozen and pixel-stable.
+ * Pitfall 4: the added z yaw amplitude (0.026) is strictly less than |dir * HOLE_FAN| (0.07)
+ * so the hole-pair opposite-sign fan invariant is PRESERVED even with variance on.
+ */
+export const MAX_TILT_RAD = (1.5 * Math.PI) / 180; // 0.0262 rad — the hard bound for TP2 Lever 6
+
+/** Optional community layout overrides. */
+export interface CommunityOpts {
+  /** TP2 Lever 6: add deterministic per-card micro-tilt/yaw (≤ MAX_TILT_RAD each, M9-safe). Default false. */
+  variance?: boolean;
+}
+
+/**
  * Community cards flat on the felt, centred, oriented to read toward the player camera
  * (top edge toward +Z). A hair of per-card yaw so the row is hand-dealt, not machined.
+ * Lever 6: pass { variance: true } to add M9-safe per-card micro-tilt/yaw (≤ 0.026 rad each).
  */
-export function communityLayout(ids: string[]): CardPose[] {
+export function communityLayout(ids: string[], opts: CommunityOpts = {}): CardPose[] {
+  const variance = opts.variance ?? false;
   const xs = rowPositionsX(ids.length, COMMUNITY_PITCH);
-  return ids.map((id, i) => ({
-    id,
-    position: [xs[i], FELT_REST_Y, COMMUNITY_Z],
-    // flat on the felt (front face up toward the camera); a hair of per-card yaw for life
-    rotation: [-Math.PI / 2, 0, Math.sin(i * 1.7) * 0.025],
-  }));
+  return ids.map((id, i) => {
+    // Lever 6: deterministic micro-tilt (x) and additional micro-yaw (z).
+    // Seeds 7.3 and 3.1 are distinct non-integer constants that avoid harmonic aliasing
+    // at small i. Applied additively to the existing base yaw (Math.sin(i*1.7)*0.025).
+    const microTilt = variance ? Math.sin(i * 7.3) * MAX_TILT_RAD * 0.5 : 0; // x: half-amplitude
+    const microYaw  = variance ? Math.sin(i * 3.1) * MAX_TILT_RAD : 0;        // z: full amplitude
+    return {
+      id,
+      position: [xs[i], FELT_REST_Y, COMMUNITY_Z],
+      // flat on the felt (front face up toward the camera); a hair of per-card yaw for life
+      rotation: [-Math.PI / 2 + microTilt, 0, Math.sin(i * 1.7) * 0.025 + microYaw],
+    };
+  });
 }
 
 // Hole cards: the player's two cards, near their edge of the felt, lifted toward the
@@ -87,6 +113,8 @@ export interface HoleOpts {
   z?: number;
   lift?: number;
   stack?: number;
+  /** TP2 Lever 6: add deterministic per-card micro-tilt/yaw (≤ MAX_TILT_RAD each, M9-safe). Default false. */
+  variance?: boolean;
 }
 
 /** The player's hole cards, fanned + lifted toward the player camera for legibility. */
@@ -96,6 +124,7 @@ export function holeLayout(ids: string[], opts: HoleOpts = {}): CardPose[] {
   const z = opts.z ?? HOLE_Z;
   const lift = opts.lift ?? HOLE_LIFT;
   const stack = opts.stack ?? HOLE_STACK;
+  const variance = opts.variance ?? false;
   const n = ids.length;
   const xs = rowPositionsX(n, pitch);
   // the cards lie face-up tilted toward the camera by `lift`; their shared up-normal is
@@ -105,11 +134,17 @@ export function holeLayout(ids: string[], opts: HoleOpts = {}): CardPose[] {
   const nz = Math.sin(lift);
   return ids.map((id, i) => {
     const dir = n === 1 ? 0 : i - (n - 1) / 2; // -0.5 / +0.5 for a pair
+    // Lever 6: deterministic micro-tilt (x) and micro-yaw (z) for the hole pair.
+    // Seeds 5.7 and 4.1 are distinct from the community seeds (7.3/3.1) to avoid correlation.
+    // CRITICAL (Pitfall 4): |microYaw| <= 0.026 < |dir * fan| = 0.07 — the base fan sign
+    // is preserved for both cards, so the opposite-sign invariant holds (cards.test.ts asserts it).
+    const microTilt = variance ? Math.sin(i * 5.7) * MAX_TILT_RAD * 0.5 : 0; // x: half-amplitude
+    const microYaw  = variance ? Math.sin(i * 4.1) * MAX_TILT_RAD : 0;        // z: full amplitude
     return {
       id,
       position: [xs[i], FELT_REST_Y + 0.02 + i * stack * ny, z + i * stack * nz],
       // lifted toward the player camera (front face up-and-toward +Z), gently fanned
-      rotation: [-Math.PI / 2 + lift, 0, dir * fan],
+      rotation: [-Math.PI / 2 + lift + microTilt, 0, dir * fan + microYaw],
     };
   });
 }

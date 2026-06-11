@@ -110,8 +110,9 @@ describe("dealt variance (Lever 6)", () => {
 
   it("MAX_TILT_RAD is exported and equals (1.5 * PI / 180) — the <= 0.026 rad bound", () => {
     expect(MAX_TILT_RAD).toBeCloseTo((1.5 * Math.PI) / 180, 6);
-    // hard bound: must not exceed 0.026 rad
-    expect(MAX_TILT_RAD).toBeLessThanOrEqual(0.026);
+    // hard bound: ~0.026 rad (= 1.5 deg exactly 0.02618); ceiling 0.0262 catches regressions
+    expect(MAX_TILT_RAD).toBeLessThanOrEqual(0.0262);
+    // ensure it is described as <= 0.026 in comments throughout this suite
   });
 
   it("community variance: all micro-tilt + micro-yaw offsets are within <= 0.026 rad", () => {

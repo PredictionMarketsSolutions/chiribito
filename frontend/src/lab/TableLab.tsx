@@ -706,7 +706,12 @@ function Scene() {
   // M1 — the cards: shared kit + the staged hand's real faces, laid out on the felt.
   const cardKit = useCardKit();
   const cardFaces = useCardFaces(LAB_HAND_IDS, maxAniso);
-  const community = useMemo(() => communityLayout(LAB_COMMUNITY), []);
+  // TP2 Lever 6: dealt variance — deterministic per-card micro-tilt/yaw (≤ MAX_TILT_RAD each).
+  // Seeds are integer-constant Math.sin(i * prime) — frozen at construction, M9-safe.
+  // ?card=base → no variance (pre-TP2 A/B); ?card=var (or any non-base value) → variance on.
+  const cardFlag = qp("card");
+  const dealVariance = cardFlag !== "base";
+  const community = useMemo(() => communityLayout(LAB_COMMUNITY, { variance: dealVariance }), [dealVariance]);
   // hole-pair composition: defaults to the baked constants; ?hpitch/?hfan/?hz/?hlift override
   // them for variant exploration (default scene unchanged when no param is present).
   const hole = useMemo(() => {
@@ -717,8 +722,9 @@ function Scene() {
       z: num("hz"),
       lift: num("hlift"),
       stack: num("hstack"),
+      variance: dealVariance,
     });
-  }, []);
+  }, [dealVariance]);
 
   // camera preset via ?cam=wide|hero|close|top — lets us capture several angles
   const cam = useMemo<CamPreset>(() => {
