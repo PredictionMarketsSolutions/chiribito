@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-11T10:00:00.000Z"
+status: "Encuadre adopted (b2c9dd4 promoted WIP→baseline); Phase 3 TP2 card materiality now OPEN on the adopted scene. WATCH: CARD_W 2.4→2.05 shrank cards ~15% — M1 hole-card legibility must be re-measured FIRST and MUST NOT regress (TP2 hard gate)."
+last_updated: "2026-06-11T16:09:56.538Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 16
+  completed_plans: 11
   percent: 20
 ---
 
@@ -24,15 +24,16 @@ See: .planning/PROJECT.md (updated 2026-06-09)
 
 ## Current Position
 
-Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — PLANNED (6 plans verified, ready to execute)
-Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). NEXT = execute (Wave 0 = rollback tag + tp2-base capture + M1 floor + M6 recalibration, THEN levers).
+Phase: 3 (TP2 — Cartas Materiality & Legibility (protagonist)) — EXECUTING (plan 03-01 COMPLETE; 1/6 plans done)
+Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. NEXT = Wave 1 lever (03-02: max-anisotropy + mipmap crispness).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
   (Encuadre / full-scene composition ✅ RECONCILED 2026-06-11 — operator ADOPTED bigger-table + 5-board + smaller-cards + whole-hand as the new scene baseline; all 4 felt suit marks KEPT; diagnostic conjunto/social cams stay diagnostic → TP7; SeatHands stays opt-in → TP8; frozen money-shot pos/fov unchanged)
-Status: Encuadre adopted (b2c9dd4 promoted WIP→baseline); Phase 3 TP2 card materiality now OPEN on the adopted scene. WATCH: CARD_W 2.4→2.05 shrank cards ~15% — M1 hole-card legibility must be re-measured FIRST and MUST NOT regress (TP2 hard gate).
+  (Plan 03-01 ✅ COMPLETE 2026-06-11 — Wave-0 foundation: tp2-before-cards tag@22017ee + tp2-base anchors + M1 floor=9px + M6 rects recalibrated; commits 048df10 + 3e2c505)
+Status: TP2 Wave-0 foundation COMPLETE. M1 floor = 9px (below 22px target; expected after CARD_W shrink; TP2 sharpening levers must improve perceived legibility without going below 9px). M6 rects recalibrated and trustworthy (20.8% PASS). Lever plans (03-02…03-05) can now execute on the adopted scene.
 Last activity: 2026-06-11
 
-Progress: [██░░░░░░░░] 20% (2 of 10 phases)
+Progress: [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -60,6 +61,7 @@ Progress: [██░░░░░░░░] 20% (2 of 10 phases)
 | Phase 02 P02 | 6 | 3 tasks | 1 files |
 | Phase 02 P03 | 8 | 2 tasks | 1 files |
 | Phase 02 P04 | 1 | 1 task (operator gate) | 2 files |
+| Phase 3 P01 | 150 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -88,6 +90,10 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 2]: Plan 02-04 (OPERATOR GATE): TP1 felt **APPROVED / ship** — operator accepted the current felt as the reference baseline for TP2+, 0 iterations, no rollback. felt scorecard 3→4 (meets ≥4 target; AAA(5)→TP9). Recorded: docs/table-3d/TP1_OPERATOR_AB.md.
 - [Phase 2→3 STEER]: Operator forward feedback at the TP1 gate (does NOT reopen TP1): cards stay the absolute protagonist · the hand must read complete (too cropped now) · the whole table must be visible (too partial/small now) · WANTS a full-scene composition validation (table + community + hands + global comp + camera↔table↔cards) BEFORE more local detail. Camera/composition concern (roadmap TP6/TP7/TP8) pulled EARLY; touches the TP0-frozen-camera invariant. Reconcile at the start of Phase 3.
 - [Phase 3 OPEN — encuadre RESOLVED 2026-06-11]: Operator ADOPTED the full-scene composition exploration as the new scene baseline (Q1=Adopt): FELT_R 5.2→6.5, CARD_W 2.4→2.05, LAB_COMMUNITY 3→5-card board, HOLE_Z/LIFT/PITCH retuned (whole separated hand). Felt suit marks (Q2)=MANTENER all 4 (identity; front Espada under the hand stays). Cameras conjunto/social stay DIAGNOSTIC (formalization → TP7, frozen-camera invariant). SeatHands multi-hand stays opt-in `?seats=on` → TP8. Frozen money-shot pos/fov UNCHANGED (only scene content adopted). → NOW: TP2 card materiality. Record: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md §DECISIONS.
+- [Phase 3]: Plan 03-01: M1 FLOOR = 9px (1728x1080 POV downscale of POV/card frame; rank-glyph "10" spans rows 513-521; below 22px target — expected after CARD_W 2.4→2.05 shrink); TP2 hard gate = no lever may go below 9px; operator confirm at plan 03-06. requiresOperatorConfirm=TRUE always.
+- [Phase 3]: Plan 03-01: M6 RECALIBRATED — old rects {left:360,top:1230}/{left:360,top:1090} now sample open felt on adopted CARD_W 2.05 scene (7.55% FAIL); new rects {left:420,top:1120}/{left:420,top:1310} land on real contact-shadow gradient (20.8% PASS ≥12% gate); metrics.mjs REGIONS updated. Meta-gate shows informational (pre-existing: good-control frame never committed at TP0); M6 admission stands in METRICS_ADMISSION.md.
+- [Phase 3]: Plan 03-01: tp2-before-cards rollback tag cut at 22017ee (not 045f748 as plan estimated — 3 docs-only commits intervened; tag still pre-card-edit and correct). LOCAL only, never pushed/deleted.
+- [Phase 3]: Plan 03-01: tp2-base anchors = 3 × 1280x800 PNGs (card/hero/macro) of adopted scene at frozen money shots; these are the apples-to-apples delta basis for lever plans 03-02 thru 03-05 (NOT head/ which is the old scene).
 
 ### Pending Todos
 
@@ -111,10 +117,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11 (encuadre ADOPTED → Phase 3 / TP2 opened). Prior: 2026-06-10 (end-of-day encuadre checkpoint).
+Last session: 2026-06-11T16:09:56.529Z
 Stopped at: ENCUADRE / COMPOSITION EXPLORATION checkpoint (WIP, UNDECIDED). Phase 2 / TP1 was APPROVED + closed (0a47b59). The operator then asked for "encuadre primero" — a full-scene composition validation BEFORE TP2. Explored (all on spike, lab-only, diagnostic, behind flags where possible): diagnostic cameras conjunto/social (NOT money shots); opt-in multi-hand staging SeatHands (?seats=on, TP8 scope); ?marks=off felt-suit-mark gate; + GLOBAL levers FELT_R 5.2→6.5 (bigger table), CARD_W 2.4→2.05 (smaller cards), LAB_COMMUNITY→5-card board, HOLE_Z/LIFT/PITCH retuned (hand reads WHOLE + separated). 27/27 lab unit tests still green. Full record + exact values + captures index: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md. GPU captures in .dev-stack/diag/table-3d/{tp1-fullscene,tp1-social}/ (scratch, local-only).
 DECISIONS RESOLVED 2026-06-11: (1) composition direction = ADOPTED (bigger-table + 5-board + smaller-cards + whole-hand is the new scene baseline); (2) felt suit marks = MANTENER all 4 (identity; front Espada under the hand stays); (3) conjunto/social cameras = stay DIAGNOSTIC, not formalized (→ TP7, frozen-camera invariant); (4) SeatHands multi-hand = stay opt-in `?seats=on` → TP8; (5) → NOW opening TP2 (Cartas). The frozen money-shot CAMERA pos/fov + the TP1 felt MATERIAL are unchanged; TP1 not reopened. b2c9dd4 promoted WIP→adopted baseline.
 Policy: operator AUTHORIZED a checkpoint push 2026-06-10 → spike pushed to origin/spike (carries TP1 + Phase 2 close + this WIP, previously all local). Still NO push to main, NO merge, NO deploy. Absolute isolation from feat/web-timeline-2026 maintained (only frontend/src/lab/ touched, guard-de-rama before every change).
 Carried forward (non-blocking): M10→TP3 (instancing) · M1 rank-index ~17px legibility tweak · depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode architecture is its own future workstream (memory: chiribito-table-dual-view-modes).
 Branch: `spike/table-3d-hero`. CI note: build.yml + test-coverage.yml trigger ONLY on push/PR to main|develop — a spike push does NOT run CI (verified locally instead: frontend lab vitest 27/27 green; game/api unaffected by the lab-only edits). use_worktrees=false (GPU/dev-server → sequential).
-Resume file: docs/table-3d/ENCUADRE_CHECKPOINT_2026-06-10.md
+Resume file: None

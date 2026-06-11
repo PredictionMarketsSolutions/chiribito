@@ -117,7 +117,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Wave-0 foundation: cut the tp2-before-cards rollback tag + capture the tp2-base post-encuadre baseline (3 frozen shots) + re-measure the M1 legibility floor + verify/recalibrate the M6 region rects
+- [x] 03-01-PLAN.md — Wave-0 foundation: cut the tp2-before-cards rollback tag + capture the tp2-base post-encuadre baseline (3 frozen shots) + re-measure the M1 legibility floor + verify/recalibrate the M6 region rects
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -259,7 +259,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 |-------|----------------|--------|-----------|
 | 1. TP0 — Eval Rig & Baseline (BLOCKING) | 6/6 | ✅ Complete | 2026-06-10 |
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
-| 3. TP2 — Cartas Materiality & Legibility | 0/6 | Planned | - |
+| 3. TP2 — Cartas Materiality & Legibility | 1/6 | In Progress|  |
 | 4. TP3 — Fichas Materiality + Perf | 0/TBD | Not started | - |
 | 5. TP4 — Rail & Contour Elegance | 0/TBD | Not started | - |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
