@@ -636,7 +636,10 @@ function SeatHands({ kit }: { kit: CardKit }) {
   );
 }
 
-function Lights() {
+// TP2 Lever 7: tighter shadow-radius when the card TP2 stack is on.
+// shadow-radius 8 → 4 sharpens the near-edge card-to-felt penumbra so the card bites the cloth (M6).
+// ?card=base restores the wide soft-shadow (pre-TP2 baseline). ONE shadow-casting light — SSOT §5.
+function Lights({ shadowRadius = 8 }: { shadowRadius?: number }) {
   return (
     <>
       {/* warm room bounce — a lit tavern, not a black void with one casino spotlight.
@@ -655,7 +658,7 @@ function Lights() {
         castShadow={qp("sh") !== "off"}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0003}
-        shadow-radius={8}
+        shadow-radius={shadowRadius}
       />
       {/* soft warm fill from the opposite side */}
       <spotLight position={[-7, 6, -1]} angle={0.8} penumbra={1} intensity={0.7} decay={0} color="#ffd9a0" />
@@ -791,7 +794,8 @@ function Scene() {
         maxDistance={13}
       />
 
-      <Lights />
+      {/* TP2 Lever 7: tighter shadow-radius when card stack active; base restores wide soft shadow */}
+      <Lights shadowRadius={cardFlag !== "base" ? 4 : 8} />
 
       <group>
         {qp("table") ? (
@@ -863,6 +867,15 @@ function Scene() {
           color="#000000"
         />
       )}
+
+      {/* TP2 Lever 7: near-edge contact shadow tighten.
+         Diagnosis: the spotLight at y=15 is the ONLY source of card-to-felt contact shadow
+         on the felt surface (y≈0). The grounded ContactShadows at y=-1.48 is floor-level
+         (below the table) and does NOT reach the cards on the felt.
+         Lever 7 tightens via shadow-radius 8→4 on the spotLight (see Lights component):
+         tighter PCF penumbra = sharper/darker near-edge contact shadow where card bites cloth.
+         The ContactShadows params (blur/far/opacity) are unchanged from the pre-TP2 scene.
+         ?card=base → restores shadow-radius=8 (pre-TP2 wide soft shadow). */}
 
       {/* real reflections: a warm overhead softbox + dim side fills, baked once */}
       {qp("env") !== "off" && (
