@@ -87,7 +87,7 @@ completed: "2026-06-11"
 1. **Task 1: rollback tag + tp2-base captures** — `048df10` (chore)
 2. **Task 2: M1 floor + M6 recalibration + TP2_BASELINE.md** — `3e2c505` (feat)
 
-**Plan metadata:** TBD (docs commit follows)
+**Plan metadata:** `6b3071b` (docs: complete plan)
 
 ## Files Created/Modified
 
@@ -160,6 +160,19 @@ None — no external service configuration required.
 - **Plans 03-02…03-05** (lever plans) can now run. Each measures M5/M6/M12 delta against `tp2-base/`, NOT `head/`.
 - **Known watch:** M1 floor of 9px is below the 22px target. TP2 sharpening levers are expected to improve perceived legibility (crispness, not scale). Operator confirm is the 03-06 gate.
 - **No blockers.** M3/M4/M8/+A FAILs in the baseline are expected TP6 scope items (not TP2 scope) — documented in TP2_BASELINE.md.
+
+## Self-Check: PASSED
+
+- FOUND: docs/table-3d/anchors/tp2-base/card.png
+- FOUND: docs/table-3d/anchors/tp2-base/hero.png
+- FOUND: docs/table-3d/anchors/tp2-base/macro.png
+- FOUND: docs/table-3d/TP2_BASELINE.md
+- FOUND: tools/table-3d/metrics.mjs
+- FOUND: .planning/phases/03-tp2-cartas-materiality-legibility-protagonist/03-01-SUMMARY.md
+- FOUND commit: 048df10
+- FOUND commit: 3e2c505
+- FOUND commit: 6b3071b (metadata)
+- TAG: tp2-before-cards at 22017ee — PRESENT
 
 ---
 *Phase: 03-tp2-cartas-materiality-legibility-protagonist*
