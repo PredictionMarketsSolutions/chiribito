@@ -96,9 +96,12 @@ export const REGIONS = Object.freeze({
   // Center reference patch (lit felt/cards around the table middle) for vignette ratio.
   centerHero: { left: FRAME.width / 2 - 180, top: FRAME.height / 2 - 130, width: 360, height: 260 },
   // M6: a rect directly under a hole card vs an adjacent open-felt rect (HERO).
-  // Calibrated: under-card luma ≈172 vs adjacent felt ≈200 → ≈14% darker (≥12% gate). [TP0b]
-  underCardHero: { left: 360, top: 1230, width: 220, height: 90 },
-  feltAdjacentHero: { left: 360, top: 1090, width: 220, height: 90 },
+  // TP0b calibration (CARD_W 2.4): under-card luma ≈172 vs adjacent felt ≈200 → ≈14% darker (≥12% gate).
+  // TP2 recalibration (CARD_W 2.05, HOLE_Z 2.3, plan 03-01): smaller cards moved the hole-card shadow.
+  // New: under=luma 145.6 (contact-shadow felt just below left hole card near-edge) vs
+  //      adj=luma 183.8 (open felt below the shadow zone) → 20.8% darker (≥12% gate PASS).
+  underCardHero: { left: 420, top: 1120, width: 220, height: 90 },
+  feltAdjacentHero: { left: 420, top: 1310, width: 220, height: 90 },
 
   // PROVISIONAL POV rects (fov 40, NOT operator-locked). Finalized in plan 06.
   feltPovProvisional: { left: 380, top: 560, width: 320, height: 200 },
