@@ -329,6 +329,10 @@ export function SimuladorSection() {
     setFase("inicio")
   }, [])
 
+  // Mascot animation state: lively while playing; the toro celebrates a strong hand (Escalera or better)
+  const jugando = fase === "repartido" || fase === "revelando"
+  const esVictoria = fase === "finalizado" && !!resultado && resultado.rank >= 5
+
   return (
     <section id="simulador" className="py-16 md:py-32 bg-card relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-primary/20" />
@@ -357,7 +361,88 @@ export function SimuladorSection() {
         </motion.div>
 
         {/* Simulator area */}
-        <div className="bg-background border border-border rounded-xl p-6 md:p-10">
+        <div className="relative isolate overflow-hidden bg-background border border-border rounded-xl p-6 md:p-10">
+          {/* Mascots as a subtle backdrop inside the panel */}
+          {/* Victory glow behind the toro */}
+          <AnimatePresence>
+            {esVictoria && (
+              <motion.div
+                key="glow"
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: [0, 0.7, 0.45], scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.1, ease: "easeOut" }}
+                className="pointer-events-none absolute -right-12 -bottom-8 w-80 h-80 z-0"
+                style={{ background: "radial-gradient(circle, oklch(0.80 0.14 85 / 0.45) 0%, transparent 62%)" }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Pato (left) — jaleando */}
+          <motion.img
+            src="/brand/pato.png"
+            alt=""
+            aria-hidden="true"
+            initial={{ opacity: 0.1 }}
+            className="pointer-events-none select-none absolute -left-5 bottom-0 w-40 md:w-56 z-0 origin-bottom"
+            animate={
+              esVictoria
+                ? { opacity: 0.6, scale: 1.14, y: [-2, -10, -2], rotate: [-3, 2, -3] }
+                : jugando
+                  ? { opacity: 0.16, y: [0, -6, 0], rotate: [0, -1.5, 0] }
+                  : { opacity: 0.1, scale: 1, y: 0, rotate: 0 }
+            }
+            transition={
+              esVictoria
+                ? { duration: 1.3, repeat: Infinity, ease: "easeInOut" }
+                : jugando
+                  ? { duration: 2.6, repeat: Infinity, ease: "easeInOut" }
+                  : { duration: 0.6 }
+            }
+          />
+
+          {/* Toro (right) — sale a celebrar la jugada */}
+          <motion.img
+            src="/brand/toro.png"
+            alt=""
+            aria-hidden="true"
+            initial={{ opacity: 0.1 }}
+            className="pointer-events-none select-none absolute -right-5 bottom-0 w-40 md:w-56 origin-bottom"
+            style={{ zIndex: esVictoria ? 20 : 0 }}
+            animate={
+              esVictoria
+                ? { opacity: 0.97, scale: 1.42, y: [-4, -24, -4], rotate: [-2, 3, -2] }
+                : jugando
+                  ? { opacity: 0.16, y: [0, -6, 0], rotate: [0, 1.5, 0] }
+                  : { opacity: 0.1, scale: 1, y: 0, rotate: 0 }
+            }
+            transition={
+              esVictoria
+                ? { duration: 1.15, repeat: Infinity, ease: "easeInOut" }
+                : jugando
+                  ? { duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 1.3 }
+                  : { duration: 0.6 }
+            }
+          />
+
+          {/* Castizo victory tag */}
+          <AnimatePresence>
+            {esVictoria && (
+              <motion.div
+                key="ole"
+                initial={{ opacity: 0, scale: 0.5, y: 14, rotate: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0, rotate: -6 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: "spring", stiffness: 320, damping: 13, delay: 0.2 }}
+                className="pointer-events-none absolute right-4 md:right-10 bottom-24 md:bottom-48 z-30"
+              >
+                <span className="inline-block bg-primary text-primary-foreground font-serif font-bold text-lg md:text-2xl px-4 py-1.5 rounded-lg shadow-gold-lg">
+                  {resultado?.tipo === "Perla" ? "¡La Perla! ¡Olé!" : "¡Olé esa mano!"}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="relative z-10">
           {/* Player hand */}
           <div className="mb-10">
             <p className="text-xs uppercase tracking-[0.2em] text-primary mb-4 text-center">
@@ -496,6 +581,7 @@ export function SimuladorSection() {
               )}
             </motion.div>
           )}
+          </div>
         </div>
 
         {/* Hand ranking reference */}
