@@ -97,3 +97,43 @@ chips — no revert required for the de-Vegas workstream.
 - Rollback disposition: SPLIT — instancing must-ship-or-revert; de-Vegas non-blocking
 - Both M10 PASS and MACRO strict visual parity are required for instancing to ship
 - Demoted-pot chip component ~42 → ≤ ~10; `?chips=full` < 220 (SSOT §TP3 instancing targets)
+
+---
+
+## M10 Post-Instancing — Measured Results (plan 04-02)
+
+**Measured:** 2026-06-11 (plan 04-02)
+**Commit at measure:** `58a6eca` (HEAD at time of measurement)
+**Branch:** `spike/table-3d-hero`
+**GPU:** ANGLE (NVIDIA GeForce RTX 4060 Laptop GPU) Direct3D11 vs_5_0 ps_5_0
+
+| Camera | Param | Raw JSON | calls | vs Baseline | vs Ceiling | M10 Verdict |
+|--------|-------|----------|-------|-------------|------------|-------------|
+| HERO | (instanced demoted pot, default) | `{"cam":"hero","extra":"","ok":true,"calls":105,"framesRendered":90,"distinct":[105]}` | **105** | −128 from 233 | < 150 ✅ | **PASS** |
+| HERO | `?chips=full` (stress, instanced) | `{"cam":"hero","extra":"&chips=full","ok":true,"calls":133,"framesRendered":90,"distinct":[133]}` | **133** | −520 from 653 | < 220 ✅ | **PASS** |
+| HERO | `?chips=legacy` (A/B, per-chip) | `{"cam":"hero","extra":"&chips=legacy","ok":true,"calls":201,"framesRendered":90,"distinct":[201]}` | **201** | — (A/B ref) | — | — |
+
+**Demoted-pot chip draw component:** Instanced (105) vs legacy (201) = **96 fewer draws** from
+the chip component alone (rest of scene identical); demoted-pot chip draws ≈ 6-10 (body×3 denom
++ face×3 denom per shadow pass) — well within ≤ ~10 target. ✅
+
+**MACRO strict visual parity:** Chip look in `hero-instanced.png` vs `tp3-base/hero.png` is
+visually identical — same jitter (seeds 2.3/1.7/0.012 preserved byte-exactly by chipStackLayout),
+same colors (texture art identical at 512², just right-sized), same geometry. **PARITY: PASS** ✅
+
+**Ship decision: SHIP** — both M10 gate (HERO 105 < 150 ✅; chips=full 133 < 220 ✅) AND
+MACRO strict visual parity PASS. Instancing ships as plan 04-02 default. No revert.
+
+**A/B captures (gitignored scratch):**
+- `.dev-stack/diag/table-3d/tp3/instancing/hero-instanced.png` — post-instancing HERO
+- `.dev-stack/diag/table-3d/tp3/instancing/macro-instanced.png` — post-instancing MACRO
+- `.dev-stack/diag/table-3d/tp3/instancing/hero-legacy.png` — pre-instancing A/B (legacy path)
+
+**?chips= flag map (plan 04-02):**
+
+| Flag | Path | Draw Count |
+|------|------|------------|
+| (default) | InstancedChipStack demoted accent pot | 105 (HERO) |
+| `?chips=full` | InstancedChipStack heavy central stress pot | 133 (HERO) |
+| `?chips=legacy` | ChipStack per-chip demoted pot (A/B baseline) | 201 (HERO) |
+| `?chips=off` | No chips | — |
