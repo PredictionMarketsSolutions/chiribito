@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-12T02:09:53Z"
-last_activity: 2026-06-12
+status: completed
+last_updated: "2026-06-12T02:19:55.458Z"
+last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 24
+  completed_plans: 22
   percent: 40
 ---
 
@@ -38,7 +38,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
 Status: ✅ TP3 shipped (4/10 phases, 40%). Phase 4 / TP3 COMPLETE 2026-06-11 — operator gate APPROVED; chips 3→4; both workstreams SHIP (instancing must-ship-or-revert + de-Vegas non-blocking). TP3 instancing result: HERO 233→105 (−55%), chips=full 653→133 (−80%), MACRO parity PASS. TP3 de-Vegas result: muted palette (chroma -20%/value lowered), recessed-C normalMap (sheen killed, clearcoat 0.32/clearcoatRoughness 0.5), ?chips=dv — SHIP. TP2 record: docs/table-3d/TP2_OPERATOR_AB.md. TP3 full record: docs/table-3d/TP3_OPERATOR_AB.md. Next: Phase 5 / TP4 — Rail & Contour Elegance.
 Last activity: 2026-06-11
 
-Progress: [████░░░░░░] 40% (4 of 10 phases)
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [████░░░░░░] 40% (4 of 10 phases)
 | Phase 3 P01 | 150 | 2 tasks | 5 files |
 | Phase 3 P02 | 45 | 2 tasks | 1 files |
 | Phase 03-tp2-cartas-materiality-legibility-protagonist P05 | 40 | 2 tasks | 2 files |
+| Phase 05 P02 | 12 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 4]: Plan 04-04 (OPERATOR GATE): TP3 chips APPROVED / SHIP — operator A/B confirmed "worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss" at HERO (fov32) + MACRO (chip-close via ?chips=full&cam=macro). SPLIT disposition confirmed: instancing must-ship-or-revert SHIPPED (M10 PASS: HERO 105/chips=full 133, MACRO parity); de-Vegas non-blocking SHIPPED (M2=3.7x/recede avgSat -0.047/MACRO byte-identical). chips scorecard 3->4 (AAA(5) gated on TP5/TP6 inter-chip AO + lighting integration). MACRO-framing caveat recorded honestly: default cam=macro omits demoted pot; clay read confirmed via dv-chipclose.png. 0 reverts, 0 iterations. Record: docs/table-3d/TP3_OPERATOR_AB.md. Phase 4 / TP3 COMPLETE.
 
 - [Phase 5]: Plan 05-01 (TP4 VERDICT): Verdict=lost-in-specific-respect — woodCoamingProfile yTop=0.34 reads as slightly heavy horizontal band at rail/eye view; leather roll reads correct (rOut=FELT_R*1.072 justified, broad crown, correct sheen). Edge-thickness ratio before=0.087 (0.565/6.5, 8.7% of FELT_R). Absent elev/ anchors recorded explicitly (non-blocking). Action: 05-02 targets woodCoamingProfile yTop 0.34→0.28 (−18% band height, behind ?rail=slim). Craft levers 05-03 proceed in all cases. tag tp4-before-rail=LOCAL. Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
+- [Phase ?]: 05-02 slim SHIPPED: woodCoamingProfile yTop 0.34->0.28 behind ?rail=slim; visual verdict better-without-losing-material; thin-disc invariant PASS (rOut 7.605 > 7.540); bodyProfile inviolate
 
 ### Pending Todos
 
@@ -141,8 +143,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T22:00:00Z
-Stopped at: Plan 05-01 COMPLETE 2026-06-12 — TP4 baseline capture + elegance verdict. tp4-before-rail tag (LOCAL) + docs/table-3d/anchors/tp4-base/{hero,rail}.png + docs/table-3d/TP4_VERDICT.md (verdict=lost-in-specific-respect, woodCoamingProfile yTop 0.34→0.28). Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
+Last session: 2026-06-12T02:19:55.451Z
+Stopped at: Plan 05-02 COMPLETE 2026-06-12 -- surgical slim woodCoamingProfile yTop 0.34->0.28 SHIPPED behind ?rail=slim; thin-disc PASS; 45/45 vitest; commit b332357
 Next: 05-02 (surgical slim — woodCoamingProfile yTop 0.34→0.28, behind ?rail=slim, isolated from craft levers).
 Carried forward (non-blocking): depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
