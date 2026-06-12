@@ -627,16 +627,19 @@ function Table({
     // TP4 default flip (05-04 APPROVED): slim (0.28) is now the default look.
     // ?rail=base passes 0.34 to restore the pre-TP4 baseline; all other paths get 0.28 (slim).
     const woodPoints = woodCoamingProfile(isBase ? 0.34 : 0.28);
-    // Lever D: brass aged-brass tune — roughness 0.34→0.42 + envMapIntensity 0.45 behind isBrass.
+    // Lever D: brass aged-brass tune — roughness 0.34→0.42 + envMapIntensity behind isBrass.
     // Color #b8915a unchanged (already M4-compliant HSV: H≈39°/S≈0.38/V≈0.69).
     // Raising roughness REDUCES specular V (safer direction for M4 casino-drift guard).
     // Default (isBrass=false): roughness 0.34 preserved for baseline comparison.
+    // TP5 M4 fix (06-05): envMapIntensity 0.45→0.30 — TP5 grounding (SoftShadows PCSS + shaped key
+    // intensity 2.2) made V=0.866, above the 0.80 ceiling. Per-material envMapIntensity cut is
+    // legitimate TP5 per-material specular scope; roughness stays at 0.42 (TP4-locked, grep-check).
     const brassMat = isBrass
       ? new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#b8915a"),   // unchanged — M4-compliant HSV
+          color: new THREE.Color("#b89b74"),   // TP5 M4 fix: #b8915a→#b89b74 (S reduction 0.51→0.37; aged-brass, not gold)
           metalness: 1,
-          roughness: 0.42,                     // Lever D: 0.34→0.42 (aged-brass, SSOT 0.38-0.45)
-          envMapIntensity: 0.45,               // Lever D: lower env (was implicit 1.0) — reads less shiny
+          roughness: 0.42,                     // TP4-locked: 0.34→0.42 (aged-brass, SSOT 0.38-0.45)
+          envMapIntensity: 0.30,               // TP5 M4 fix: 0.45→0.30 (dimmer env response)
         })
       : new THREE.MeshStandardMaterial({
           color: new THREE.Color("#b8915a"),

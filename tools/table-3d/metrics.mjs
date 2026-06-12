@@ -79,10 +79,14 @@ export const REGIONS = Object.freeze({
   // Open green felt, clear of cards/chips/logo/inlay — upper-left table surface (HERO).
   // Calibrated against the real HERO baseline: clean woven green, M3 ΔE≈8.5 (<12). [TP0b]
   feltHero: { left: 760, top: 500, width: 200, height: 120 },
-  // Aged-brass inlay reveal (the gold band by the community cards) — HERO.
-  // Calibrated: H≈40° · S≈0.47 · V≈0.73 — the table's aged brass, NOT the bright gold
-  // of the painted court cards (which sit at S≈0.70 and would read as gold). [TP0b]
-  brassHero: { left: 1240, top: 820, width: 140, height: 60 },
+  // Aged-brass inlay reveal (the torus band at felt/leather boundary) — HERO.
+  // TP5 06-05 RECALIBRATION: ENCUADRE scene change (Plan 03-01) moved cards to cover the
+  // original rect at (1240, 820), which was reading card stock (V≈0.866, H≈45, S≈0.10) —
+  // a false failure. New rect samples the actual brass ring at the top of the felt oval,
+  // between the community cards at y=368 (the lit brass band, clear of card faces).
+  // New calibration (TP5 brass #b89b74 + envMapIntensity=0.30): H≈35.4° S≈0.52 V≈0.71
+  // (aged bronze, not gold). With uncorrected #b8915a: S≈0.65 FAIL (gold-drift detection works).
+  brassHero: { left: 1350, top: 368, width: 140, height: 4 },
   // Whole-frame corners (each 360×260).
   // NOTE (TP0b honest calibration): on the CURRENT baseline the table fills the BOTTOM
   // corners with lit felt while the TOP corners are the dark room backdrop. The vignette
