@@ -69,16 +69,19 @@ Additional per-level notes:
 - **0:** flat band or extruded square tube; no bump; wrong colour
 - **3:** padded roll cross-section visible; bump or normal map; cordobán-adjacent colour
 - **5:** broken-in crease at inner edge reads clearly; broad flattened crown (not showroom-taut tube); welt at wood join; specular is a dull highlight, not a shine
+- **TP4 status (2026-06-12, operator-approved):** CRAFT SHIPPED, held at **4** — leatherNapNormalMap (pebble height field via toNormalMapTexture, NoColorSpace, normalScale 0.22) upgrades from bumpMap on the isNormals path; welt geometry (FELT_R*0.960, tube 0.012, y=0.022, #2a1208) reads as a shadow crease at the felt-to-rail seam. Material story intact: cognac sheen, broad flattened crown, inner crease all confirmed at HERO + rail/eye. **AAA(5) gated on TP6 AO:** crevice darkening under the rail overhang and in the leather-to-wood join is screen-space AO scope. Record: `TP4_OPERATOR_GATE.md`.
 
 ### 5 · wood coaming
 - **0:** brown plastic ring; no grain; uniform specularity
 - **3:** directional grain texture; mahogany colour range; varnish sheen present
 - **5:** grain follows the oval (per-arc UV); figured/mottled grain in the highlight band; varnish gloss restrained (not wet-look); corner detail distinguishable from the leather
+- **TP4 status (2026-06-12, operator-approved):** SLIM + NORMALMAP SHIPPED, **3 → 4** — woodCoamingProfile yTop slimmed 0.34→0.28 (−18% band height; slim is now the default render); woodNapNormalMap (freq=12, cross-profile gradient for top-highlight/underside-shadow volume, toNormalMapTexture NoColorSpace, normalScale 0.15 under clearcoat 0.72); top-highlight/underside-shadow volume read confirmed. Wood lip resolves immediately as a refined casino-rail edge. **AAA(5) gated on TP7:** per-arc UV alignment (grain follows the oval) + figured grain in the highlight band are TP7 geometry/texture pass scope. Record: `TP4_OPERATOR_GATE.md`.
 
 ### 6 · brass
 - **0:** gold / chrome / oversaturated yellow; H outside 35–48° or S > 0.55 or V > 0.80 (M4 FAIL)
 - **3:** aged brass tone; correct H range; not shiny-new
 - **5:** M4 PASS (H 35–48°, S ≤ 0.55, V ≤ 0.80); hairline-scratch normal map; slight dark patina in recesses; the reveal band between felt and leather reads as a detail, not decoration
+- **TP4 status (2026-06-12, operator-approved):** AGED-BRASS SHIPPED, **3 → 4** — Lever D: brassMat roughness 0.34→0.42 + envMapIntensity 0.45 (down from implicit 1.0). M4 PASS: H≈39°, S≈0.38, V≈0.67 (within H 35–48° / S ≤ 0.55 / V ≤ 0.80). Color #b8915a unchanged. Reads as aged-not-shiny; raising roughness reduces specular V (safer direction for casino-drift guard). **AAA(5) gated on TP7:** hairline-scratch normalMap + per-arc recessed patina detail are TP7 geometry/texture pass scope. Record: `TP4_OPERATOR_GATE.md`.
 
 ### 7 · body / contour
 - **0:** table is a disc floating in void; no underside, no apron, no weight
@@ -114,6 +117,7 @@ Additional per-level notes:
 - **0:** all surfaces look the same; no material differentiation
 - **3:** felt, leather, wood, metal are recognisably different material types
 - **5:** "you could pick it up" — felt nap, leather softness, wood grain, brass weight, clay chip texture are all present and distinct without a label; the macro shot reads like a product photograph
+- **TP4 status (2026-06-12, operator-approved):** CRAFT LEVERS SHIPPED, **3 → 4** — welt seam (shadow crease), leather pebble grain (normalMap), wood varnish grain (normalMap under clearcoat 0.72), aged brass patina (roughness 0.42 + reduced env) — all readable without a label at HERO + rail/eye distances. The 5 craft levers act together to deliver the full tactile read. **AAA(5) gated on TP6 AO:** crevice darkening (under the rail, in the leather-to-wood and felt-to-leather joins) needed for the "product photograph" read. Record: `TP4_OPERATOR_GATE.md`.
 
 ### 14 · social-read
 - **0:** still-life or empty table; no game narrative
@@ -165,6 +169,10 @@ Additional per-level notes:
 |------------|------|---------|:---------------:|-------|
 | TP1 / Phase 2 (felt) | 2026-06-10 | **felt** | 3 → **4** | Operator A/B APPROVED (`TP1_OPERATOR_AB.md`). Nap sheen + micro-relief + relight; M3/M5/+B PASS. Meets ≥4 target; AAA(5) deferred to TP9. Accepted "suficiente", no further materiality iteration. |
 | TP3 / Phase 4 (chips) | 2026-06-11 | **chips** | 3 → **4** | Operator A/B APPROVED (`TP3_OPERATOR_AB.md`). Instancing (M10 PASS: HERO 233→105, chips=full 653→133, MACRO parity) + de-Vegas (muted palette chroma -20%/value lowered, recessed-C normalMap, sheen killed, clearcoat 0.32/clearcoatRoughness 0.5). Chips read as matte worn clay that recedes; C/rim tooled-not-printed; no Vegas gloss. Meets ≥4 target. **AAA(5) deferred:** inter-chip crevice depth + full lighting integration (bevel-edge + denomination-suit clarity under one coherent warm light) are TP5/TP6 scope; AAA(5) plausible post-TP6. |
+| TP4 / Phase 5 (rail) | 2026-06-12 | **wood coaming** | 3 → **4** | Operator gate APPROVED (`TP4_OPERATOR_GATE.md`). woodCoamingProfile yTop slimmed 0.34→0.28 (−18% band height) + woodNapNormalMap via toNormalMapTexture (freq=12, crossProfile gradient, normalScale 0.15) — top-highlight/underside-shadow volume read confirmed. Grain visible under clearcoat 0.72; restrained (no noisy-wood read). Meets ≥4 target. **AAA(5) deferred:** per-arc UV alignment (grain follows oval) + AO in wood-to-leather join are TP6/TP7 scope. |
+| TP4 / Phase 5 (rail) | 2026-06-12 | **leather rail** | 4 → **4** | Operator gate APPROVED (`TP4_OPERATOR_GATE.md`). Craft upgrade: leatherNapNormalMap via toNormalMapTexture (pebble height field, normalScale 0.22) replaces bumpMap on the isNormals path + welt geometry at FELT_R*0.960 tube 0.012 y=0.022 #2a1208 reads as shadow crease at felt-to-rail seam. Material story intact (cognac sheen, broad crown, inner crease). Held at **4** honestly — AAA(5) awaits AO (inter-material crevice darkening, under the rail overhang) at TP6. |
+| TP4 / Phase 5 (brass) | 2026-06-12 | **brass** | 3 → **4** | Operator gate APPROVED (`TP4_OPERATOR_GATE.md`). Lever D: brassMat roughness 0.34→0.42 + envMapIntensity 0.45 (was implicit 1.0). M4 PASS: H≈39°, S≈0.38, V≈0.67 — within H 35–48° / S ≤ 0.55 / V ≤ 0.80. Color #b8915a unchanged. Reads as aged-not-shiny; reveal band between felt and leather recedes as a detail. Meets ≥4 target. **AAA(5) deferred:** hairline-scratch normalMap + per-arc recessed patina detail are TP7 geometry/texture pass. |
+| TP4 / Phase 5 (tactility) | 2026-06-12 | **tactility** | 3 → **4** | Operator gate APPROVED (`TP4_OPERATOR_GATE.md`). The "you could pick it up" test now passes: welt seam (shadow crease at felt-to-leather join), leather pebble grain (normalMap), wood varnish grain (normalMap under clearcoat), aged brass patina (roughness 0.42 + reduced env) — all readable without a label at HERO + rail/eye distances. The 5 craft levers act together to deliver the tactile read. **AAA(5) deferred:** crevice AO (under rail, in material joins) is TP6 scope. |
 
 **TP1 operator forward feedback (steers TP2+, does NOT reopen TP1):** cards stay the absolute
 protagonist · the hand must read complete (currently too cropped) · the whole table must be visible
