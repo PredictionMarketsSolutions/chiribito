@@ -13,6 +13,7 @@
  */
 import { useMemo, Suspense } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import { EffectComposer } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
@@ -1181,6 +1182,28 @@ function Scene() {
       {/* M10/M11 instrumentation — renders null (zero pixels); writes window.__labStats.
           Mounted ONLY when ?stats is present so the default captured scene is untouched. */}
       {qp("stats") !== null && <StatsProbe />}
+
+      {/* TP6 — EffectComposer scaffold, mounted ONLY when ?fx is present in the URL.
+          Default (?fx absent): composer NOT mounted → exact pre-TP6 / TP5-identical render.
+          ?fx present (any value): composer mounts as a transparent pass-through — no effects yet.
+          Mirrors the safe qp() page-load pattern of ?chips / ?card / ?light / ?rail
+          (qp() reads window.location.search once at load — static value, not per-frame state;
+          composer mounts once at load or never → no shader-recompile storm, RESEARCH Pitfall 7).
+          Placement: AFTER all scene content (last sibling in Scene JSX) so the scene renders
+          first and the compositor consumes the frame buffer (RESEARCH "Key structural rule").
+          multisampling={4}: MSAA 4 (SSOT §TP6 requirement).
+          enableNormalPass={false}: N8AO reconstructs normals from depth — no extra render pass.
+          Effects (N8AO / DepthOfField / Vignette / BrightnessContrast / Noise) are added
+          in plans 07-02 through 07-04. M7 HARD gate: the glow effect is permanently banned. */}
+      {qp("fx") !== null && (
+        <EffectComposer
+          multisampling={4}
+          enableNormalPass={false}
+        >
+          {/* Effects added in 07-02 through 07-04 (N8AO, DepthOfField, Vignette, Noise, BrightnessContrast) */}
+          <></>
+        </EffectComposer>
+      )}
     </>
   );
 }

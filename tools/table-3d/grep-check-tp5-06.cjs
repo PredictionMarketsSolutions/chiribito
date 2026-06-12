@@ -28,9 +28,10 @@
  *  (4) SHADOW-NORMALBIAS ON KEY SPOTLIGHT — shadow-normalBias present in non-comment code.
  *      shadow-normalBias={0.02} prevents peter-pan floating artifact on the flat felt plane.
  *
- *  (5) NO BLOOM / EFFECTCOMPOSER IN LAB SOURCE — M7 code assert.
+ *  (5) NO BLOOM IN LAB SOURCE — M7 code assert (relaxed in TP6).
  *      Checks ALL .tsx and .ts files in frontend/src/lab/ (non-comment lines).
- *      TP5 hard gate: ALL postprocessing is deferred to TP6.
+ *      TP6 relaxation: EffectComposer is now permitted (TP6 adds it behind ?fx guard).
+ *      Only Bloom remains permanently forbidden (M7 HARD gate: casino trap + perf sink).
  *
  *  (6) BRASSMAT ROUGHNESS IN TP4-LOCKED RANGE (0.42-0.45) — TP4 Lever D brass roughness.
  *      The TP5 per-material specular pass must not have changed the brass roughness.
@@ -126,8 +127,10 @@ if (!/shadow-normalBias/.test(tableNonComment)) {
   );
 }
 
-// --- CHECK 5: No Bloom / EffectComposer in frontend/src/lab/ (M7 code assert) ---
-// Read ALL .tsx and .ts files in the lab directory and check for forbidden tokens.
+// --- CHECK 5: No Bloom in frontend/src/lab/ (M7 code assert — relaxed in TP6) ---
+// TP6 relaxation: EffectComposer is now PERMITTED (TP6 adds it behind ?fx guard).
+// Only Bloom remains permanently forbidden (casino trap + perf sink, M7 HARD gate).
+// Read ALL .tsx and .ts files in the lab directory and check for the forbidden token.
 const labFiles = fs.readdirSync(path.resolve(LAB_DIR))
   .filter((f) => f.endsWith(".tsx") || f.endsWith(".ts"))
   .map((f) => path.join(LAB_DIR, f));
@@ -138,7 +141,7 @@ let offendingFile = null;
 for (const labFile of labFiles) {
   const src = readFile(labFile);
   const nonComment = stripComments(src);
-  if (/Bloom|EffectComposer/.test(nonComment)) {
+  if (/Bloom/.test(nonComment)) {
     offendingFile = labFile;
     labSrcCombined = nonComment; // keep for error reporting
     break;
@@ -148,10 +151,11 @@ for (const labFile of labFiles) {
 
 if (offendingFile !== null) {
   fail(
-    "CHECK 5 FAILED — frontend/src/lab/ contains Bloom or EffectComposer in non-comment code.\n" +
-    "  TP5 hard gate: ALL postprocessing is deferred to TP6. No bloom, no SSAO, no EffectComposer.\n" +
+    "CHECK 5 FAILED — Bloom detected in lab source. M7 HARD gate: Bloom is permanently\n" +
+    "  banned (casino trap + perf sink). EffectComposer is now permitted (TP6 adds it).\n" +
+    "  Only Bloom remains forbidden.\n" +
     `  Offending file: ${offendingFile}\n` +
-    "  Remove or move to TP6 scope before the operator gate.",
+    "  Remove all Bloom imports and JSX from frontend/src/lab/ before proceeding.",
   );
 }
 
@@ -174,7 +178,7 @@ console.log(
   "  (2) ContactShadows frames={1} (baked once; M10 improved 106→52 draws)\n" +
   "  (3) KEY_TO_FILL_RATIO_CEILING = 3.5 (anti-casino sentinel; shaped 2.75x / base 2.86x)\n" +
   "  (4) shadow-normalBias present on key spotLight (peter-pan prevention on flat felt plane)\n" +
-  "  (5) No Bloom/EffectComposer in frontend/src/lab/ (M7 PASS — all postprocessing deferred to TP6)\n" +
+  "  (5) No Bloom in frontend/src/lab/ (M7 PASS — Bloom banned; EffectComposer now permitted per TP6)\n" +
   "  (6) brassMat roughness 0.42-0.45 (TP4-locked; brass aging pass held through TP5 specular changes)",
 );
 process.exit(0);
