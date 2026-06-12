@@ -40,8 +40,10 @@ import {
   feltEdgeAoMap,
   cardMicroReliefNormalMap,
   woodTexture,
+  woodNapNormalMap,
   leatherTexture,
   leatherBump,
+  leatherNapNormalMap,
   floorTexture,
   backdropTexture,
 } from "./textures";
@@ -518,11 +520,16 @@ function Table({
   logoImg: HTMLImageElement | null;
   aceImgs: Partial<Record<SuitCode, HTMLImageElement | null>>;
 }) {
-  // TP4 surgical slim: ?rail=slim trims woodCoamingProfile yTop 0.34→0.28 (−18% band height).
-  // NEVER combined with ?rail=craft in the same capture (Pitfall 7 / SSOT §TP4).
-  // Default (no flag) retains the TP3-validated contour unchanged.
+  // TP4 ?rail= flag system — mirrors ?chips= / ?card= / ?felt= A/B pattern (qp() established).
+  // Each lever is isolated behind its own sub-flag for apples-to-apples capture.
+  // ?rail=craft accumulates all passing craft levers simultaneously.
+  // NEVER combine ?rail=slim with ?rail=craft in the same capture (Pitfall 7 / SSOT §TP4).
   const railFlag = qp("rail");
-  const isSlim = railFlag === "slim";
+  const isSlim    = railFlag === "slim";                         // surgical contour slim (05-02)
+  const isWelt    = railFlag === "welt"    || railFlag === "craft"; // Lever A: welt cord at seam
+  const isNormals = railFlag === "normals" || railFlag === "craft"; // Levers B+C+F: normalMaps
+  const isBrass   = railFlag === "brass"   || railFlag === "craft"; // Lever D: aged-brass tune
+  // isCraft is implicit: activated by "craft" value which sets isWelt + isNormals + isBrass
 
   const { felt, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
     const feltKind = qp("felt");
@@ -549,6 +556,9 @@ function Table({
             });
     const wood = woodTexture();
     wood.repeat.set(13, 1);
+    // Lever B+F: wood normalMap (NoColorSpace via toNormalMapTexture — shared helper) behind isNormals.
+    // normalScale 0.15 — restrained; clearcoat 0.72 amplifies; cap hard at 0.22 (anti-noisy-normals).
+    // Lever F is baked into woodNapNormalMap as a cross-profile gradient (top-highlight/underside-shadow).
     const woodMat = new THREE.MeshPhysicalMaterial({
       map: wood,
       color: new THREE.Color("#ffffff"), // tone is baked in the texture
@@ -558,29 +568,61 @@ function Table({
       clearcoatRoughness: 0.2,
       envMapIntensity: 0.65,
       side: THREE.DoubleSide,
+      ...(isNormals ? {
+        normalMap: woodNapNormalMap(),                         // Lever B+F — NoColorSpace (toNormalMapTexture)
+        normalScale: new THREE.Vector2(0.15, 0.15),            // restrained; clearcoat 0.72 amplifies
+      } : {}),
     });
-    const leatherMat = new THREE.MeshPhysicalMaterial({
-      map: leatherTexture(),
-      bumpMap: leatherBump(),
-      bumpScale: 0.016,
-      color: new THREE.Color("#ffffff"), // cordobán tone is baked in the texture
-      roughness: 0.64, // matter — a broken-in, much-touched roll, not showroom gloss
-      metalness: 0,
-      sheen: 0.4, // a whisper of waxed sheen, no more (richness is not the point)
-      sheenColor: new THREE.Color("#b08a64"),
-      sheenRoughness: 0.6,
-      clearcoat: 0.08,
-      clearcoatRoughness: 0.7,
-      side: THREE.DoubleSide,
-    });
+    // Lever C: leather normalMap (upgrade from bumpMap) behind isNormals.
+    // Baseline (isNormals=false): bumpMap + bumpScale preserved for A/B.
+    const leatherMat = isNormals
+      ? new THREE.MeshPhysicalMaterial({
+          map: leatherTexture(),
+          normalMap: leatherNapNormalMap(),                    // Lever C — NoColorSpace (toNormalMapTexture)
+          normalScale: new THREE.Vector2(0.22, 0.22),          // comparable to bumpScale 0.016 at this canvas size
+          color: new THREE.Color("#ffffff"),
+          roughness: 0.64,
+          metalness: 0,
+          sheen: 0.4,
+          sheenColor: new THREE.Color("#b08a64"),
+          sheenRoughness: 0.6,
+          clearcoat: 0.08,
+          clearcoatRoughness: 0.7,
+          side: THREE.DoubleSide,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          map: leatherTexture(),
+          bumpMap: leatherBump(),                              // baseline: bumpMap preserved for A/B
+          bumpScale: 0.016,
+          color: new THREE.Color("#ffffff"),
+          roughness: 0.64,
+          metalness: 0,
+          sheen: 0.4,
+          sheenColor: new THREE.Color("#b08a64"),
+          sheenRoughness: 0.6,
+          clearcoat: 0.08,
+          clearcoatRoughness: 0.7,
+          side: THREE.DoubleSide,
+        });
     const leatherPoints = leatherProfile();
     // TP4 slim: pass 0.28 when isSlim; otherwise undefined → default 0.34 retained.
     const woodPoints = woodCoamingProfile(isSlim ? 0.28 : undefined);
-    const brassMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#b8915a"),
-      metalness: 1,
-      roughness: 0.34,
-    });
+    // Lever D: brass aged-brass tune — roughness 0.34→0.42 + envMapIntensity 0.45 behind isBrass.
+    // Color #b8915a unchanged (already M4-compliant HSV: H≈39°/S≈0.38/V≈0.69).
+    // Raising roughness REDUCES specular V (safer direction for M4 casino-drift guard).
+    // Default (isBrass=false): roughness 0.34 preserved for baseline comparison.
+    const brassMat = isBrass
+      ? new THREE.MeshStandardMaterial({
+          color: new THREE.Color("#b8915a"),   // unchanged — M4-compliant HSV
+          metalness: 1,
+          roughness: 0.42,                     // Lever D: 0.34→0.42 (aged-brass, SSOT 0.38-0.45)
+          envMapIntensity: 0.45,               // Lever D: lower env (was implicit 1.0) — reads less shiny
+        })
+      : new THREE.MeshStandardMaterial({
+          color: new THREE.Color("#b8915a"),
+          metalness: 1,
+          roughness: 0.34,                     // baseline: original value preserved for A/B
+        });
     // the body is the same mahogany as the rail, scaled for the larger apron surface,
     // a touch matter (it sits in shadow below the lit rail)
     const bodyWood = woodTexture();
@@ -597,7 +639,7 @@ function Table({
     });
     const bodyPoints = bodyProfile();
     return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints };
-  }, [logoImg, aceImgs, isSlim]);
+  }, [logoImg, aceImgs, isSlim, isNormals, isBrass]);
 
   return (
     <group scale={[OVAL_X, 1, 1]}>

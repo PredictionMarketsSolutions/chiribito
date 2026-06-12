@@ -981,6 +981,97 @@ export function leatherBump(): THREE.CanvasTexture {
   return gray(c);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TP4 craft levers — wood + leather normalMaps via the shared Sobel helper.
+// NoColorSpace is MANDATORY for all normal maps (never srgb() on a normal canvas).
+// Pattern: identical to chipFaceNormalMap (TP3) — the canonical template.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Wood grain normalMap for the rail coaming (TP4 Lever B + F).
+ *
+ * Height field: freq=12 horizontal grain ridges (kept LOW — anti-noisy-normals-under-clearcoat
+ * risk; clearcoat 0.72 amplifies; freq>12 / normalScale>0.22 → chattering highlight).
+ * Very faint cross-grain (strength 0.12, freq*0.25) for wood pore read.
+ * Lever F baked in: cross-profile gradient (Math.sin((py/S)*PI)*0.18) gives the wood coaming
+ * outer wall a top-highlight / underside-shadow curved-volume read without geometry change.
+ *
+ * Mirrors chipFaceNormalMap final 2 lines verbatim (NoColorSpace — CRITICAL).
+ * normalScale set on woodMat (0.15), NOT here; height-field strength stays neutral (1.0).
+ */
+export function woodNapNormalMap(): THREE.CanvasTexture {
+  const S = 512;
+  const { c, ctx } = makeCanvas(S, S);
+
+  const imgData = ctx.createImageData(S, S);
+  const d = imgData.data;
+  const freq = 12; // keep LOW — anti-noisy-normals-under-clearcoat; clearcoat 0.72 amplifies
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      // Primary: horizontal grain running around the rail (Y axis in texture space)
+      const gy = (Math.sin((py / S) * Math.PI * freq * 2) * 0.5 + 0.5) * 0.88;
+      // Very faint cross-grain (wood pores, not figure) — freq*0.25 = coarse pore rhythm
+      const gx = (Math.sin((px / S) * Math.PI * freq * 0.25) * 0.5 + 0.5) * 0.12;
+      // Lever F: cross-profile gradient → top-highlight / underside-shadow volume read
+      // peak at center of band (py/S=0.5 → sin(PI*0.5)=1); 0 at top and bottom edges
+      const crossProfile = Math.sin((py / S) * Math.PI) * 0.18;
+      const h = (gy + gx + crossProfile) * 255;
+      const i = (py * S + px) * 4;
+      d[i] = d[i + 1] = d[i + 2] = Math.min(255, Math.max(0, h));
+      d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Convert height field → tangent-space normal via shared Sobel helper.
+  // CRITICAL: toNormalMapTexture sets NoColorSpace — NEVER use srgb() on a normal canvas.
+  const normalCanvas = heightToNormalMap(c, 1.0); // strength neutral; normalScale on mat tunes depth
+  const t = toNormalMapTexture(normalCanvas); // NoColorSpace, anisotropy 8
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(13, 1); // match woodTexture().repeat (13, 1 set on the material's map)
+  return t;
+}
+
+/**
+ * Leather pebble normalMap for the rail bumper (TP4 Lever C — upgrade from bumpMap).
+ *
+ * Draws the IDENTICAL height field as leatherBump() (2048×512, 2600 pebble blobs,
+ * speckle, stitch seam groove at H*0.3) then pipes it through the shared Sobel helper
+ * instead of feeding it raw as a bumpMap.  The result reads as "tooled-not-printed" at
+ * MACRO (the chip C precedent from TP3, proven pattern).
+ *
+ * Mirrors chipFaceNormalMap final 2 lines verbatim (NoColorSpace — CRITICAL).
+ * normalScale set on leatherMat (0.22), NOT here.
+ */
+export function leatherNapNormalMap(): THREE.CanvasTexture {
+  const W = 2048;
+  const H = 512;
+  const { c, ctx } = makeCanvas(W, H);
+
+  // Identical height-field to leatherBump() — same pebble blobs, same seam, same speckle
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 2600; i++) {
+    const x = (Math.sin(i * 12.9367) * 0.5 + 0.5) * W;
+    const y = (Math.sin(i * 78.233) * 0.5 + 0.5) * H;
+    const rr = 2 + (Math.sin(i * 3.31) * 0.5 + 0.5) * 6;
+    ctx.fillStyle = Math.sin(i * 2.11) > 0 ? "rgba(176,176,176,0.08)" : "rgba(58,58,58,0.08)";
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, TAU);
+    ctx.fill();
+  }
+  speckle(ctx, W, H, 16);
+  drawStitchSeam(ctx, W, H * 0.3, "#cfcfcf", "#4a4a4a"); // seam stays — the waxed-thread detail
+
+  // Convert height field → tangent-space normal via shared Sobel helper.
+  // CRITICAL: toNormalMapTexture sets NoColorSpace — NEVER use srgb() on a normal canvas.
+  const normalCanvas = heightToNormalMap(c, 1.0); // strength neutral; normalScale on mat tunes depth
+  const t = toNormalMapTexture(normalCanvas); // NoColorSpace, anisotropy 8
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.ClampToEdgeWrapping; // V clamped — leather profile V extent is finite
+  return t;
+}
+
 /**
  * The floor as a warm POOL of light — the table stands in an intimate warm circle that
  * falls to darkness, so the scene reads as a room (a portada), not a render on black.
