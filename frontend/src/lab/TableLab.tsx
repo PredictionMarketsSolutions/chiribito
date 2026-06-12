@@ -247,11 +247,11 @@ function useChipKit(cImg: HTMLImageElement | null, deVegas = false): ChipKit {
         const bodyMat = new THREE.MeshPhysicalMaterial({
           map: edge,
           color: new THREE.Color("#ffffff"),
-          roughness: 0.5,
+          roughness: 0.52, // TP5 06-03: 0.5→0.52 (matte clay; suppress highlight extent, anti-Vegas)
           metalness: 0,
-          clearcoat: 0.42,
-          clearcoatRoughness: 0.46,
-          sheen: 0.5,
+          clearcoat: 0.38, // TP5 06-03: 0.42→0.38 (reduce casino highlight; retain clay seal)
+          clearcoatRoughness: 0.50, // TP5 06-03: 0.46→0.50 (softer clearcoat lobe; matte seal read)
+          sheen: 0.4, // TP5 06-03: 0.5→0.4 (reduce sheen extent under the new warm key)
           sheenColor: new THREE.Color(p.faceLit),
         });
         const faceMat = new THREE.MeshPhysicalMaterial({
@@ -417,7 +417,7 @@ function useCardKit(): CardKit {
   // ?card=base keeps pre-TP2 clearcoat 0.16 / clearcoatRoughness 0.5 for A/B comparison.
   // Cap HARD at 0.18 (operator STOP above); never exceed without explicit gate approval.
   const clearcoat = cardFlag === "base" ? 0.16 : 0.12; // TP2 Lever 4 — restraint-first
-  const clearcoatRoughness = cardFlag === "base" ? 0.5 : 0.55; // TP2 Lever 4
+  const clearcoatRoughness = cardFlag === "base" ? 0.5 : 0.50; // TP2 Lever 4 / TP5 06-03: 0.55→0.50 (crisp card-edge highlight)
   // TP2 Lever 5: paper-edge warm sheen-rim — reuse the sheen lobe only (NO new texture,
   // sheen-only approach, NOT a glass/resin material — SSOT-locked). The beveled card rim
   // catches a warm wheat glow under the key light → reads as printed-stock paper edge, not casino neon.
@@ -432,7 +432,7 @@ function useCardKit(): CardKit {
   return useMemo(() => {
     const stock = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#f1e7cf"), // warm ivory card stock
-      roughness: 0.62,
+      roughness: 0.60, // TP5 06-03: 0.62→0.60 (crisp small highlight on card-edge under warm key)
       metalness: 0,
       clearcoat, // TP2 Lever 4: 0.12 (was 0.16); ?card=base → 0.16 A/B baseline
       clearcoatRoughness, // TP2 Lever 4: 0.55 (was 0.5); ?card=base → 0.5 A/B baseline
@@ -482,7 +482,7 @@ function Card({ kit, faceTex, pose }: { kit: CardKit; faceTex: THREE.Texture; po
     () =>
       new THREE.MeshPhysicalMaterial({
         map: faceTex,
-        roughness: 0.52,
+        roughness: 0.50, // TP5 06-03: 0.52→0.50 (slight tighten; allow slight highlight on face under warm key)
         metalness: 0,
         clearcoat: faceClearcoat, // TP2 Lever 4: 0.12 (was 0.1); ?card=base → 0.1 A/B baseline
         clearcoatRoughness: 0.55, // unchanged — already at the target
@@ -581,11 +581,11 @@ function Table({
     const woodMat = new THREE.MeshPhysicalMaterial({
       map: wood,
       color: new THREE.Color("#ffffff"), // tone is baked in the texture
-      roughness: 0.38,
+      roughness: 0.42, // TP5 06-03: 0.38→0.42 (anti-wet direction; varnished not mirror)
       metalness: 0,
-      clearcoat: 0.72, // varnish — a real polished highlight runs along the rail
-      clearcoatRoughness: 0.2,
-      envMapIntensity: 0.65,
+      clearcoat: 0.68, // TP5 06-03: 0.72→0.68 (less casino-polish; retain varnish hint)
+      clearcoatRoughness: 0.25, // TP5 06-03: 0.2→0.25 (softer clearcoat lobe; anti-mirror-wet)
+      envMapIntensity: 0.55, // TP5 06-03: 0.65→0.55 (wood recedes behind cards)
       side: THREE.DoubleSide,
       ...(isNormals ? {
         normalMap: woodNapNormalMap(),                         // Lever B+F — NoColorSpace (toNormalMapTexture)
@@ -650,11 +650,11 @@ function Table({
     const bodyMat = new THREE.MeshPhysicalMaterial({
       map: bodyWood,
       color: new THREE.Color("#ffffff"),
-      roughness: 0.48,
+      roughness: 0.52, // TP5 06-03: 0.48→0.52 (body in shadow; less specular; recedes behind rail)
       metalness: 0,
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.3,
-      envMapIntensity: 0.5,
+      clearcoat: 0.44, // TP5 06-03: 0.5→0.44 (less contrast with rail; body recedes)
+      clearcoatRoughness: 0.35, // TP5 06-03: 0.3→0.35 (softer body clearcoat lobe)
+      envMapIntensity: 0.4, // TP5 06-03: 0.5→0.4 (body recedes; less env punch)
       side: THREE.DoubleSide,
     });
     const bodyPoints = bodyProfile();
