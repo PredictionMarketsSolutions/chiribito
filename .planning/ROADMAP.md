@@ -258,11 +258,13 @@ Plans:
   2. Social read via CENTER table-STATE only (deck stub / button / center discard); NO modeled humans (`?seats` opt-in/never default); M2 ≥ 2× holds; castizo/artisanal lives in the OBJECT under warm light (no room, no decor); no flip/spin/glow FX, no bouncy easing.
   3. **[OPERATOR GATE — LIVE view, not a still]** Does it feel ALIVE and weighty + read as a shared mid-play game, with NO motion consciously noticeable? Stop-on-ambiguous: any visible wobble → HALVE it; if still seen → remove it (restrained stillness beats visible motion; non-blocking: keep the static-but-complete table).
 
-**Plans**: TBD
+**Plans**: 3 plans (09-01: HeroMotion + M9; 09-02: grep-check-tp8-09 + social-read audit; 09-03: operator gate)
 
 Plans:
 
-- [ ] TBD during planning
+- [x] 09-01-PLAN.md — HeroMotion component + dual freeze guard (MICRO_* constants + applyMicroBreath + useFrame/useEffect); M9 double-capture PASS (md5 02e4aa23a039575d07d1cdecb61e85f7). ✅ COMPLETE 2026-06-12.
+- [ ] 09-02-PLAN.md — grep-check-tp8-09.cjs static code assertion (18 checks); M2 audit; gate captures
+- [ ] 09-03-PLAN.md — TP8 operator gate (autonomous:false — LIVE motion-feel gate)
 
 ### Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)
 
@@ -295,5 +297,5 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
-| 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
+| 9. TP8 — Tactilidad & Lectura Social | 1/3 | In progress | 2026-06-12 (09-01 complete) |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
