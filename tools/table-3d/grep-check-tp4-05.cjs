@@ -1,9 +1,17 @@
 /**
- * grep-check-tp4-05.cjs — TP4 plan 05-03 craft lever structural invariant checker.
+ * grep-check-tp4-05.cjs — TP4 craft lever structural invariant checker (plans 05-03 + 05-04).
  *
  * Enforces the shipped craft lever invariants across:
  *   frontend/src/lab/textures.ts
  *   frontend/src/lab/TableLab.tsx
+ *
+ * POST-05-04 DEFAULT FLIP (operator APPROVED 2026-06-12 — slim + craft shipped as default):
+ *   DEFAULT (no ?rail=) = slim ON (yTop 0.28) + ALL craft levers ON — the TP4 approved look.
+ *   ?rail=base          = pre-TP4 baseline: yTop 0.34 + no craft.
+ *   ?rail=slim          = slim only, no craft (A/B isolation; never combine with ?rail=craft).
+ *   ?rail=craft         = craft only, no slim (A/B isolation).
+ *   ?rail=welt/normals/brass = single-lever isolation (craft group; no slim).
+ *   Lever E (UV arc-length remap) DROPPED — deferred to TP7.
  *
  * Checks (all mandatory for shipped levers):
  *
@@ -24,7 +32,9 @@
  *
  *  (6) WELT GEOMETRY PRESENT — TableLab.tsx contains FELT_R * 0.960 (Lever A torusGeometry).
  *
- *  (7) ICRAFT WIRED — TableLab.tsx contains isCraft, confirming ?rail=craft accumulator documented.
+ *  (7) ICRAFT WIRED — TableLab.tsx contains isCraft, confirming the craft accumulator is documented.
+ *      Post-05-04 default flip: isCraft = !isBase && railFlag !== 'slim' — craft is ON by default;
+ *      suppressed by ?rail=base (pre-TP4) or ?rail=slim (slim-only isolation path).
  *
  * Usage (from repo root):
  *   node tools/table-3d/grep-check-tp4-05.cjs
