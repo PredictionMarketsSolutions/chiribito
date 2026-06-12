@@ -585,7 +585,7 @@ function Table({
       metalness: 0,
       clearcoat: 0.68, // TP5 06-03: 0.72→0.68 (less casino-polish; retain varnish hint)
       clearcoatRoughness: 0.25, // TP5 06-03: 0.2→0.25 (softer clearcoat lobe; anti-mirror-wet)
-      envMapIntensity: 0.55, // TP5 06-03: 0.65→0.55 (wood recedes behind cards)
+      envMapIntensity: 0.50, // TP5 06-03: 0.65→0.50 (wood recedes behind cards; M4 brass anti-drift: 0.55 too close to V ceiling)
       side: THREE.DoubleSide,
       ...(isNormals ? {
         normalMap: woodNapNormalMap(),                         // Lever B+F — NoColorSpace (toNormalMapTexture)
