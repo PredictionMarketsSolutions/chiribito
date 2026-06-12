@@ -20,6 +20,7 @@ import {
   Environment,
   Lightformer,
   ContactShadows,
+  SoftShadows,
   Instances,
   Instance,
 } from "@react-three/drei";
@@ -863,6 +864,9 @@ function Lights({ shadowRadius = 8 }: { shadowRadius?: number }) {
         castShadow={qp("sh") !== "off"}
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0003}
+        shadow-normalBias={0.02}
+        shadow-camera-near={8}
+        shadow-camera-far={28}
         shadow-radius={shadowRadius}
       />
       {/* soft warm fill from the opposite side */}
@@ -1002,6 +1006,13 @@ function Scene() {
         maxDistance={13}
       />
 
+      {/* TP5 GROUNDING — SoftShadows (PCSS): injected ONCE unconditionally in Scene, above Lights.
+          PCSS recompiles shadow shaders at mount — NEVER place inside a conditional or it will
+          recompile every time the condition toggles (shader-recompile storm, Pitfall 2).
+          size=30: mid-range SSOT 25–35; samples=16: Vogel-disk quality vs GPU cost sweet-spot;
+          focus=0: full contact-hardening (hard contact at surface, soft far penumbra). */}
+      <SoftShadows size={30} samples={16} focus={0} />
+
       {/* TP2 Lever 7: tighter shadow-radius when card stack active; base restores wide soft shadow */}
       <Lights shadowRadius={cardFlag !== "base" ? 4 : 8} />
 
@@ -1083,16 +1094,22 @@ function Scene() {
         <primitive object={floorMat} attach="material" />
       </mesh>
 
-      {/* grounded contact shadow under the table */}
+      {/* TP5 GROUNDING — ContactShadows: baked once at mount (frames={1} → M11 improvement).
+          opacity 0.55→0.35: anti-double-darken with SoftShadows (Pitfall 3).
+          color "#000000"→"#1a0e06": warm near-black lifts the crushed-black corner into a warm
+          graded shadow floor (+A metric). far 4→5: extends to cover rail + body base.
+          blur 2.8→2.0: tighter — SoftShadows owns the far-penumbra now.
+          scale FELT_R*3→FELT_R*3.5: wider coverage to the body apron. */}
       {qp("cs") !== "off" && (
         <ContactShadows
           position={[0, -1.48, 0]}
-          scale={FELT_R * 3}
+          scale={FELT_R * 3.5}
           resolution={1024}
-          blur={2.8}
-          opacity={0.55}
-          far={4}
-          color="#000000"
+          blur={2.0}
+          opacity={0.35}
+          far={5}
+          color="#1a0e06"
+          frames={1}
         />
       )}
 
