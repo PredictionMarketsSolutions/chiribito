@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T22:00:00.000Z"
-last_activity: 2026-06-11
+last_updated: "2026-06-12T02:09:53Z"
+last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 4
@@ -20,11 +20,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 4 / TP3 COMPLETE 2026-06-11. Operator gate 04-04 APPROVED. chips 3→4. Next = Phase 5 / TP4 — Rail & Contour Elegance.
+**Current focus:** Phase 5 / TP4 — Rail & Contour Elegance. 05-01 COMPLETE 2026-06-12 — tp4-before-rail tag + tp4-base anchors + TP4_VERDICT.md (verdict=lost-in-specific-respect; woodCoamingProfile yTop 0.34→0.28 triggered for 05-02). Next = 05-02 (surgical slim, woodCoamingProfile yTop).
 
 ## Current Position
 
-Phase: 4 (TP3 — Fichas Materiality + Perf (accent + instancing)) — ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4). Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
+Phase: 5 (TP4 — Rail & Contour Elegance). Plan 01 ✅ COMPLETE 2026-06-12 — tp4-before-rail tag + hero+rail anchors + TP4_VERDICT.md (verdict=lost-in-specific-respect, woodCoamingProfile yTop 0.34→0.28 triggered for 05-02). [Phase 4 / TP3 ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4).] Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
 Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. COMPLETED: Wave 2 (03-03) — Lever 3 cardMicroReliefNormalMap (normalScale 0.12) + Lever 4 clearcoat whisper 0.12/0.55. COMPLETED: Wave 3 (03-04) — Lever 5 warm sheen-rim paper-edge + Lever 6 deterministic dealt variance. COMPLETED: Wave 4 (03-05) — Lever 7 contact-shadow tighten (shadow-radius 8->4, M6 PASS 20.69%) + TP2_PREGATE.md ledger all HARD gates GREEN. NEXT = 03-06 (operator gate, autonomous:false).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
@@ -117,6 +117,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 4]: Plan 04-04 (OPERATOR GATE): TP3 chips APPROVED / SHIP — operator A/B confirmed "worn artisanal clay that RECEDES, C tooled-not-printed, no Vegas gloss" at HERO (fov32) + MACRO (chip-close via ?chips=full&cam=macro). SPLIT disposition confirmed: instancing must-ship-or-revert SHIPPED (M10 PASS: HERO 105/chips=full 133, MACRO parity); de-Vegas non-blocking SHIPPED (M2=3.7x/recede avgSat -0.047/MACRO byte-identical). chips scorecard 3->4 (AAA(5) gated on TP5/TP6 inter-chip AO + lighting integration). MACRO-framing caveat recorded honestly: default cam=macro omits demoted pot; clay read confirmed via dv-chipclose.png. 0 reverts, 0 iterations. Record: docs/table-3d/TP3_OPERATOR_AB.md. Phase 4 / TP3 COMPLETE.
 
+- [Phase 5]: Plan 05-01 (TP4 VERDICT): Verdict=lost-in-specific-respect — woodCoamingProfile yTop=0.34 reads as slightly heavy horizontal band at rail/eye view; leather roll reads correct (rOut=FELT_R*1.072 justified, broad crown, correct sheen). Edge-thickness ratio before=0.087 (0.565/6.5, 8.7% of FELT_R). Absent elev/ anchors recorded explicitly (non-blocking). Action: 05-02 targets woodCoamingProfile yTop 0.34→0.28 (−18% band height, behind ?rail=slim). Craft levers 05-03 proceed in all cases. tag tp4-before-rail=LOCAL. Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
+
 ### Pending Todos
 
 None yet.
@@ -140,8 +142,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-06-11T22:00:00Z
-Stopped at: Plan 04-04 COMPLETE — TP3 operator gate APPROVED. docs/table-3d/TP3_OPERATOR_AB.md + SCORECARD chips 3->4 + 04-04-SUMMARY.md + STATE/ROADMAP tracking. Phase 4 / TP3 COMPLETE. Commits: 47e3e10 (gate record + scorecard) + 57e98e5 (04-04-SUMMARY).
-Next: Phase 5 / TP4 — Rail & Contour Elegance (plan: discuss → plan → execute). Resume = /gsd-discuss-phase 5 (TP4).
+Stopped at: Plan 05-01 COMPLETE 2026-06-12 — TP4 baseline capture + elegance verdict. tp4-before-rail tag (LOCAL) + docs/table-3d/anchors/tp4-base/{hero,rail}.png + docs/table-3d/TP4_VERDICT.md (verdict=lost-in-specific-respect, woodCoamingProfile yTop 0.34→0.28). Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
+Next: 05-02 (surgical slim — woodCoamingProfile yTop 0.34→0.28, behind ?rail=slim, isolated from craft levers).
 Carried forward (non-blocking): depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
