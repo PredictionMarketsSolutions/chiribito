@@ -13,7 +13,7 @@
  */
 import { useMemo, Suspense } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { EffectComposer, N8AO } from "@react-three/postprocessing";
+import { EffectComposer, N8AO, DepthOfField } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
@@ -1004,6 +1004,19 @@ function Scene() {
     return presets[key] || presets.wide;
   }, []);
 
+  // TP6 Wave 3 (07-03): DOF worldFocusDistance — computed ONCE at mount from the active cam preset.
+  // HOLE_WORLD: hole cards sit at HOLE_Z=2.3 (from cards.ts), FELT_REST_Y+0.02 ≈ 0.07 (y), x=0.
+  // CAM_WORLD: the active preset position (vector3 from cam.pos).
+  // holeCardDistance: the world-unit distance from camera to the hole-card plane.
+  //   hero cam  pos [1.2,5.0,8.2]  → ~7.8 wu
+  //   card cam  pos [0,4.7,10.6]   → ~9.5 wu
+  //   macro cam pos [-1.7,1.7,2.4] → ~4.5 wu
+  // Static useMemo (cam is static page-load preset — no useFrame needed for a frozen scene).
+  // Prop names worldFocusDistance/worldFocusRange verified from installed node_modules (07-01-SUMMARY A1/A2).
+  const HOLE_WORLD = useMemo(() => new THREE.Vector3(0, 0.07, 2.3), []);
+  const CAM_WORLD = useMemo(() => new THREE.Vector3(...cam.pos), [cam]);
+  const holeCardDistance = useMemo(() => CAM_WORLD.distanceTo(HOLE_WORLD), [CAM_WORLD, HOLE_WORLD]);
+
   const floorMat = useMemo(
     () => new THREE.MeshStandardMaterial({ map: floorTexture(), roughness: 0.9, metalness: 0 }),
     [],
@@ -1216,7 +1229,24 @@ function Scene() {
             halfRes={false}
             screenSpaceRadius={false}
           />
-          {/* DepthOfField — added in 07-03 */}
+          {/* TP6 Wave 3 (07-03): DepthOfField — whisper DOF; M1 HARD gate: hole cards RAZOR-SHARP.
+              worldFocusDistance={holeCardDistance}: ties the focal plane to the hole cards via
+                static useMemo (cam preset is page-load-static; no useFrame needed).
+                hero ~7.8wu · card/POV ~9.5wu · macro ~4.5wu (auto-adapts per ?cam= preset).
+              worldFocusRange={1.5}: half-band of the in-focus zone in world units. The hole-card
+                pair spans ~2wu center-to-edge; range 1.5 keeps both cards safely inside the sharp band.
+                If M1 fails (hero softens): widen to 2.0 first; lower bokehScale to 1.5 second;
+                CUT DOF entirely if still failing at legal params (non-blocking disposition).
+              bokehScale={2.0}: mid-range of SSOT 1.5-3; restrained start.
+              focalLength={0.025}: controls bokeh falloff speed; gentler at 0.025 (slow falloff).
+              Board (COMMUNITY_Z ≈ -0.55) and far rail are intentionally outside the sharp band
+              and receive perceptible gentle bokeh. */}
+          <DepthOfField
+            worldFocusDistance={holeCardDistance}
+            worldFocusRange={1.5}
+            bokehScale={2.0}
+            focalLength={0.025}
+          />
           {/* Vignette / BrightnessContrast / Noise — added in 07-04 */}
         </EffectComposer>
       )}
