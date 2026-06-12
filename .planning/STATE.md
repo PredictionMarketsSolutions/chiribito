@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T16:02:39.273Z"
+last_updated: "2026-06-12T16:10:55.590Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 31
+  completed_plans: 32
   percent: 60
 ---
 
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-01 COMPLETE 2026-06-12 — installed @react-three/postprocessing@2.19.1 + postprocessing@6.39.1; EffectComposer scaffold behind ?fx (transparent pass-through); grep-check-tp5-06 CHECK 5 relaxed to no-Bloom. All A1-A5 prop-name assumptions VERIFIED from node_modules. Next: 07-02 (N8AO crevice AO). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
+**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-02 COMPLETE 2026-06-12 — N8AO mounted inside EffectComposer (aoRadius=0.8/intensity=2.0/distanceFalloff=0.7/halfRes=false); M6 PASS 33.21%; M11 +5 draws (52→57); halfRes not needed; vitest 45/45 + tsc clean + grep-check exits 0. Commit 0c7c80a. Next: 07-03 (DOF). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
 
 ## Current Position
 
@@ -38,7 +38,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
 Status: ✅ TP4 shipped + TP5 COMPLETE (Phase 6 / TP5 operator gate 06-06 AUTO-APPROVED 2026-06-12; milestone 6/10 60%). TP5 full: grounding+shaped-key+per-material-specular+green-bounce+brass-M4-fix. Scorecard: shadows 3→4, depth 2→3, lighting/tactility held at 4. Next: Phase 7 / TP6 (profundidad & composición). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
 Last activity: 2026-06-12
 
-Progress: [████████░░] 84%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [████████░░] 84%
 | Phase 03-tp2-cartas-materiality-legibility-protagonist P05 | 40 | 2 tasks | 2 files |
 | Phase 05 P02 | 12 | 1 tasks | 1 files |
 | Phase 06 P05 | 90 | 2 tasks | 6 files |
+| Phase 07 P02 | 12 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase ?]: brass base color #b8915a→#b89b74 (S 0.511→0.370, aged-bronze not gold) + envMapIntensity 0.45→0.30; rendered M4: H=35.4 S=0.52 V=0.715 PASS under TP5 shaped key lighting
 - [Phase 6]: Plan 06-06 (OPERATOR GATE AUTO-APPROVED): TP5 operator gate closed under standing "auto-approve (0 paradas)" directive -- all HARD gates green (M4/M5/M6/M7/M10 PASS + grep-check exits 0 + vitest 398/398 + tsc clean) + orchestrator CEO visual read (warm gradient not casino cone, honest grounding, body volume, restrained highlights, brass aged-not-gold, cards protagonist, no cold void). Flagged for operator batch confirmation. Full TP5 ships: grounding+shaped-key+per-material-specular+green-bounce+brass-M4-fix. Scorecard: shadows 3→4, depth 2→3 (body-volume), lighting/tactility held at 4. Deferred to TP6: +A cornerLuma/vignette, AO/crevice, DOF. Phase 6 / TP5 COMPLETE. Milestone 6/10 (60%). Record: docs/table-3d/TP5_OPERATOR_GATE.md.
 
+- [Phase 7]: Plan 07-02: N8AO crevice AO SHIPPED -- aoRadius=0.8/intensity=2.0/distanceFalloff=0.7/halfRes=false/screenSpaceRadius=false; first child in EffectComposer ?fx. M6 PASS 33.21% luma delta (underCardHero luma=124.2 vs adjacentFelt luma=186.0; threshold >= 12%). M7 PASS (grep-check exits 0, no Bloom). M11 delta: baseline=52 draws / +fx+N8AO=57 draws (+5 draws, +9.6% -- within floor, halfRes NOT enabled). Starting params required zero tuning; no halos at hero/card/macro shots. vitest 45/45; tsc src/lab/ clean. Captures: .dev-stack/diag/tp6/n8ao-{hero,card,macro}.png (RTX 4060, zero errors). Commit 0c7c80a.
+
 ### Pending Todos
 
 None yet.
@@ -157,9 +160,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T16:02:39.266Z
-Stopped at: Plan 07-01 COMPLETE 2026-06-12 -- installed @react-three/postprocessing@2.19.1 + postprocessing@6.39.1; EffectComposer scaffold behind ?fx (commits 81f9033 + 96d6f2a); grep-check-tp5-06 CHECK 5 relaxed (Bloom-only ban); prop names A1-A5 VERIFIED from node_modules; vitest 45/45 + tsc clean under src/lab/. Do NOT auto-advance -- operator chooses.
-Next: Plan 07-02 (N8AO crevice AO -- aoRadius/distanceFalloff/halfRes behind ?fx; M6 crevice darkening; no halos). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T18:09:00Z
+Stopped at: Plan 07-02 COMPLETE 2026-06-12 -- N8AO aoRadius=0.8 inside EffectComposer ?fx; M6 PASS 33.21%; M11 +5 draws (52→57); halfRes=false; vitest 45/45 + tsc clean + grep-check exits 0. Commit 0c7c80a. Do NOT auto-advance -- operator chooses.
+Next: Plan 07-03 (DOF -- worldFocusDistance per cam preset, bokehScale=2.0, worldFocusRange=1.5; M1 HARD gate: hole cards razor-sharp). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
