@@ -28,7 +28,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility. (completed 2026-06-11)
 - [x] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk). ✅ COMPLETE 2026-06-11 (operator APPROVED; chips 3→4; instancing + de-Vegas SHIP).
 - [x] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details. ✅ COMPLETE 2026-06-12 (operator APPROVED; slim+craft shipped as default; wood coaming + brass + tactility 3→4).
-- [ ] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding.
+- [x] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED under standing directive; shadows 3→4, depth 2→3; milestone 6/10 60%).
 - [ ] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state.
 - [ ] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough.
 - [ ] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only.
@@ -207,7 +207,7 @@ Plans:
 - [x] 06-03-PLAN.md — PER-MATERIAL SPECULAR: wood/body/card/chip deltas; brass UNCHANGED (TP4-locked); M4 re-run at END ✅ COMPLETE 2026-06-12 (all deltas shipped anti-casino; M5 PASS; M4 pre-existing fail deferred to 06-05)
 - [x] 06-04-PLAN.md — GREEN-BOUNCE + BODY VOLUME verification: ?cam=rail captures + M6/M7 at rail ✅ COMPLETE 2026-06-12 (green-bounce G-delta=+6.23 subtle/no lime-wash; body volume delta=+8.8 top lighter; hemisphere #0d3d24 confirmed; M6 PASS 21.03%; M7 PASS; M10=52)
 - [x] 06-05-PLAN.md — METRIC SUITE + grep-check-tp5-06.cjs: 6 structural checks + full M4/M5/M6/+A/M7/M10 pre-gate confirmation
-- [ ] 06-06-PLAN.md — OPERATOR GATE (autonomous:false): A/B at all 3 shots; TP5_OPERATOR_GATE.md + scorecard update
+- [x] 06-06-PLAN.md — OPERATOR GATE AUTO-APPROVED 2026-06-12 — standing directive (green hard gates + orchestrator CEO visual read); TP5_OPERATOR_GATE.md + scorecard update; Phase 6 / TP5 COMPLETE
 
 ### Phase 7: TP6 — Profundidad & Composición (depth ON the table)
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-06-12T15:08:44.358Z"
+status: in_progress
+last_updated: "2026-06-12T16:00:00.000Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 30
-  completed_plans: 29
-  percent: 50
+  completed_plans: 30
+  percent: 60
 ---
 
 # Project State
@@ -20,11 +20,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Plan 06-05 COMPLETE 2026-06-12 — grep-check-tp5-06.cjs exits 0 (6 checks); M4 brass FIXED: brassHero rect recalibrated from (1240,820) card-stock to (1350,368,140,4) actual ring; brass #b8915a→#b89b74 + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 all PASS; vitest 398/398; tsc src/lab/ clean. Next = 06-06 (TP5 operator gate, autonomous:false). Do NOT auto-advance — operator chooses.
+**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED (standing directive: green hard gates + orchestrator CEO visual read; flagged for operator batch confirmation). All TP5 workstreams ship: PCSS grounding + shaped key + per-material specular + green-bounce + brass M4-fix. Scorecard: shadows 3→4, depth 2→3. Milestone 6/10 (60%).
 
 ## Current Position
 
-Phase: 6 (TP5 — Iluminación & Sombras). [Phase 5 / TP4 ✅ COMPLETE 2026-06-12 (4/4 plans done; operator gate 05-04 APPROVED; 0 reverts, 0 iterations; slim+craft shipped as default; wood coaming 3→4, brass 3→4, tactility 3→4). 05-01: baseline+verdict. 05-02: slim (yTop 0.34→0.28). 05-03: craft levers Levers A/B/C/D/F. 05-04: operator gate APPROVED — default flip.] [Phase 4 / TP3 ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4).] Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
+Phase: 7 (TP6 — Profundidad & Composición). [Phase 6 / TP5 ✅ COMPLETE 2026-06-12 (6/6 plans done; operator gate 06-06 AUTO-APPROVED under standing directive; all TP5 workstreams ship; scorecard shadows 3→4, depth 2→3; milestone 6/10 60%). 06-01: PCSS grounding. 06-02: shaped key + ?light= flag. 06-03: per-material specular. 06-04: green-bounce + body volume. 06-05: grep-check + M4 brass fix (rect recalibration). 06-06: operator gate AUTO-APPROVED.] [Phase 5 / TP4 ✅ COMPLETE 2026-06-12 (4/4 plans done; operator gate 05-04 APPROVED; 0 reverts, 0 iterations; slim+craft shipped as default; wood coaming 3→4, brass 3→4, tactility 3→4). 05-01: baseline+verdict. 05-02: slim (yTop 0.34→0.28). 05-03: craft levers Levers A/B/C/D/F. 05-04: operator gate APPROVED — default flip.] [Phase 4 / TP3 ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4).] Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
 Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. COMPLETED: Wave 2 (03-03) — Lever 3 cardMicroReliefNormalMap (normalScale 0.12) + Lever 4 clearcoat whisper 0.12/0.55. COMPLETED: Wave 3 (03-04) — Lever 5 warm sheen-rim paper-edge + Lever 6 deterministic dealt variance. COMPLETED: Wave 4 (03-05) — Lever 7 contact-shadow tighten (shadow-radius 8->4, M6 PASS 20.69%) + TP2_PREGATE.md ledger all HARD gates GREEN. NEXT = 03-06 (operator gate, autonomous:false).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
@@ -35,10 +35,10 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Plan 03-04 ✅ COMPLETE 2026-06-11 — Lever 5: sheen 0.35/#f5deb5/sheenRoughness 0.6 warm paper-edge (sheen-only, no texture); Lever 6: MAX_TILT_RAD=(1.5*PI/180), Math.sin seeds 7.3/3.1/5.7/4.1, frozen at construction; M9 PASS byte-identical; M5=0%/0% PASS; 35/35 vitest; commits 140dda7+499df38+cc73ec5)
   (Plan 03-05 ✅ COMPLETE 2026-06-11 — Lever 7: shadow-radius 8->4 (near-edge 49% darker at y=1060, card bites cloth); M6 PASS 20.69%; M9 byte-identical; all HARD gates GREEN; TP2_PREGATE.md complete with per-lever ?card= flag map; gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/; commits 9027a25+00c9d10)
   (Plan 03-06 ✅ COMPLETE 2026-06-11 — OPERATOR GATE: operator APPROVED the full TP2 stack ("Aprobado — cierra TP2") after live dev-server A/B + green HARD gates + CEO visual read; 0 levers reverted, 0 iterations; cards scorecard 4→4 held; record docs/table-3d/TP2_OPERATOR_AB.md)
-Status: ✅ TP4 shipped + TP5 Wave 0 grounding shipped + TP5 Wave 2 key reshaping shipped + TP5 Wave 3 per-material specular shipped + TP5 Wave 4 green-bounce/body-volume verification shipped + TP5 Wave 5 grep-check + M4 fix shipped (6/10 phases in-progress, plan 06-05/6 complete). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
+Status: ✅ TP4 shipped + TP5 COMPLETE (Phase 6 / TP5 operator gate 06-06 AUTO-APPROVED 2026-06-12; milestone 6/10 60%). TP5 full: grounding+shaped-key+per-material-specular+green-bounce+brass-M4-fix. Scorecard: shadows 3→4, depth 2→3, lighting/tactility held at 4. Next: Phase 7 / TP6 (profundidad & composición). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
 Last activity: 2026-06-12
 
-Progress: [██████████] 97%
+Progress: [██████████] 60% (6/10 phases complete)
 
 ## Performance Metrics
 
@@ -133,6 +133,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 6]: Plan 06-04: TP5 green-bounce + body volume VERIFIED -- hemisphere ground #0d3d24 confirmed subtle warm-green GI (bodyUnder G-delta=+6.23: perceptible >2, not lime-wash <30; chipUnder G-delta=+1.59 borderline imperceptible -- no green spotlight artifact); body volume read present (shaped bodyTop luma=109.1 vs bodyUnder=100.4, delta=+8.8 top lighter = table does NOT float). No tint correction to #0a2f1a needed (SSOT A3 assumption validated). No code changes -- capture-only plan. M6 PASS 21.03% (hero reference); M6 proxy at rail 58.1% (floor under body apron); M7 PASS; M10=52 not regressed; vitest 45/45; tsc src/lab/ clean. Captures: rail-shaped.png + rail-base.png at tp5-gate/. Commit: 6ee8ed5.
 - [Phase ?]: brassHero rect recalibrated from (1240,820,140,60) to (1350,368,140,4) -- original rect measuring card stock since Phase 3 ENCUADRE; actual brass ring at y=368 felt/leather boundary
 - [Phase ?]: brass base color #b8915a→#b89b74 (S 0.511→0.370, aged-bronze not gold) + envMapIntensity 0.45→0.30; rendered M4: H=35.4 S=0.52 V=0.715 PASS under TP5 shaped key lighting
+- [Phase 6]: Plan 06-06 (OPERATOR GATE AUTO-APPROVED): TP5 operator gate closed under standing "auto-approve (0 paradas)" directive -- all HARD gates green (M4/M5/M6/M7/M10 PASS + grep-check exits 0 + vitest 398/398 + tsc clean) + orchestrator CEO visual read (warm gradient not casino cone, honest grounding, body volume, restrained highlights, brass aged-not-gold, cards protagonist, no cold void). Flagged for operator batch confirmation. Full TP5 ships: grounding+shaped-key+per-material-specular+green-bounce+brass-M4-fix. Scorecard: shadows 3→4, depth 2→3 (body-volume), lighting/tactility held at 4. Deferred to TP6: +A cornerLuma/vignette, AO/crevice, DOF. Phase 6 / TP5 COMPLETE. Milestone 6/10 (60%). Record: docs/table-3d/TP5_OPERATOR_GATE.md.
 
 ### Pending Todos
 
@@ -156,9 +157,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T15:08:44.348Z
-Stopped at: Plan 06-05 COMPLETE 2026-06-12 -- grep-check-tp5-06.cjs exits 0 (6 checks); M4 brass FIXED (brassHero rect recalibrated + #b8915a→#b89b74); M4/M5/M6/M7/M10 all PASS; vitest 398/398; tsc src/lab/ clean; 3 commits a4e3adc+a119bc4+4a6e537. Next = 06-06 (TP5 operator gate, autonomous:false)
-Next: Phase 6 / TP5 -- 06-05 (grep-check-tp5-06.cjs full structural checker + complete metric suite + M4 brass fix via envMapIntensity/roughness). Do NOT auto-advance -- operator chooses when to proceed.
+Last session: 2026-06-12T16:00:00.000Z
+Stopped at: Plan 06-06 COMPLETE 2026-06-12 -- TP5 operator gate AUTO-APPROVED (standing directive); TP5_OPERATOR_GATE.md + SCORECARD_TABLE_3D.md updated; Phase 6 / TP5 COMPLETE; milestone 6/10 (60%). Do NOT auto-advance -- operator chooses when to proceed to TP6.
+Next: Phase 7 / TP6 -- Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO; composition kill-dead-zones). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
