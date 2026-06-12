@@ -276,11 +276,13 @@ Plans:
   2. **[OPERATOR GATE — final on-device verdict]** Operator final verdict across all 3 shots + a live view: "AAA, premium, castizo, hand-fabricated table, and clearly better than the reference?" Stop-on-ambiguous: ANYTHING ambiguous → do NOT promote; return to the specific failing phase.
   3. On an unambiguous operator yes: create a NEW git tag as the new protected reference; update the SSOT doc; retain the old tag forever. (Cannot promote on any below-green element / failed metric / ambiguous verdict.)
 
-**Plans**: TBD
+**Plans**: 3 total
 
 Plans:
 
-- [ ] TBD during planning
+- [x] 10-01-PLAN.md — TP9 canonical anchors + full consolidated §4.5 metric matrix ALL PASS at 3 locked shots (hero/card/macro ?fx&spin=off); M3/M4/M5/M6/M7/M8/M9/M10/M12/+A/+B all PASS; grep-check 18/18; vitest 398/398; tsc clean; NO BLOCKING FLAG. ✅ COMPLETE 2026-06-12.
+- [x] 10-02-PLAN.md — TP9 scorecard ALL-GREEN (67/75; every element >=4); element 12 cameras 4→5 (TP9 sign-off); element 15 premium-overall 3→4 (provisional); ACES Filmic exposure=1.05 LOCKED; §8 mesa terminada items 1-13 PASS; item 14 PENDING 10-03. ✅ COMPLETE 2026-06-12.
+- [ ] 10-03-PLAN.md — Operator FINAL gate (autonomous:false): live-view judgment, holistic verdict, new protected reference tag (table-3d-aaa-reference-2026-06-12 LOCAL), SSOT update. PENDING operator session.
 
 ## Progress
 
@@ -298,4 +300,4 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
 | 9. TP8 — Tactilidad & Lectura Social | 3/3 | ✅ Complete | 2026-06-12 (operator gate AUTO-APPROVED verifiable + LIVE FEEL FLAGGED) |
-| 10. TP9 — AAA Lock & New Reference | 1/3 | In Progress|  |
+| 10. TP9 — AAA Lock & New Reference | 2/3 | In Progress (10-03 pending operator) |  |
