@@ -11,7 +11,7 @@
  * Clay chips with worked edges, varnished wood rail, recessed baize, the mark
  * inlaid into the felt (born inside the table, not pasted on top).
  */
-import { useMemo, useRef, Suspense } from "react";
+import { useMemo, useRef, useEffect, Suspense } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { EffectComposer, N8AO, DepthOfField, Vignette, BrightnessContrast, Noise } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
@@ -740,6 +740,61 @@ function Table({
 const FELT_REST_Y_CGS = 0.0495; // CARD_T/2 + 0.022 — the y at which cards rest on felt
 const CARD_T_CGS = 0.055;       // card stock thickness (stacking delta per card in deck stub)
 
+// ─── TP8: sub-threshold micro-motion constants ────────────────────────────────────────────────
+// All four constants are grep-checked by tools/table-3d/grep-check-tp8-09.cjs.
+// SSOT thresholds: amplitude < 0.01wu / < 0.5° (0.00873 rad), idle 6-12s, settle 0.2-0.4s.
+// Err LESS: these values are 30-46% of their respective ceilings.
+const MICRO_AMPLITUDE_Y   = 0.003;  // world units — SSOT < 0.01wu; err LESS (30% of ceiling)
+const MICRO_AMPLITUDE_ROT = 0.004;  // radians    — SSOT < 0.00873 rad (0.5°); err LESS (46%)
+const MICRO_IDLE_PERIOD   = 9.0;    // seconds    — SSOT 6-12s idle; midpoint
+const MICRO_SETTLE_TAU    = 0.25;   // seconds    — SSOT 0.2-0.4s settle
+// Out-of-phase offset so hole-cards and top-chip do NOT breathe synchronously.
+// Avoids integer-multiple of π/2 to prevent harmonic locking.
+const CHIP_PHASE_OFFSET   = Math.PI * 0.7;
+
+function applyMicroBreath(
+  obj:      THREE.Group | null,
+  t:        number,
+  delta:    number,
+  phase:    number,
+  restYVal: number,
+): void {
+  if (!obj) return;
+  const cycle    = (2 * Math.PI * t) / MICRO_IDLE_PERIOD;
+  const targetY  = restYVal + MICRO_AMPLITUDE_Y   * Math.sin(cycle + phase);
+  const targetRot = MICRO_AMPLITUDE_ROT * Math.sin(cycle + phase + 0.6);
+  // Exponential settle — frame-rate-independent; zero overshoot (no bouncy easing).
+  // Equivalent to maath/easing.damp but inline — no new package.
+  const alpha = 1 - Math.exp(-delta / MICRO_SETTLE_TAU);
+  obj.position.y += (targetY   - obj.position.y) * alpha;
+  obj.rotation.x += (targetRot - obj.rotation.x) * alpha;
+}
+
+interface HeroMotionProps {
+  holeRef:    React.RefObject<THREE.Group | null>;
+  topChipRef: React.RefObject<THREE.Group | null>;
+  frozen:     boolean; // isFrozen || reducedMotion — M9 HARD gate
+}
+
+function HeroMotion({ holeRef, topChipRef, frozen }: HeroMotionProps) {
+  // restY stores the mount-time Y position of each hero object so breathing is additive.
+  const restY = useRef<{ hole: number; chip: number }>({ hole: 0, chip: 0 });
+
+  useEffect(() => {
+    if (holeRef.current)    restY.current.hole = holeRef.current.position.y;
+    if (topChipRef.current) restY.current.chip = topChipRef.current.position.y;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useFrame(({ clock }, delta) => {
+    if (frozen) return; // HARD dual freeze — M9 determinism gate; no mutation when frozen
+    const t = clock.getElapsedTime();
+    applyMicroBreath(holeRef.current, t, delta, 0, restY.current.hole);
+    applyMicroBreath(topChipRef.current, t, delta, CHIP_PHASE_OFFSET, restY.current.chip);
+  });
+
+  return null; // no geometry — pure side-effect component
+}
+
 function CenterGameState({ kit }: { kit: CardKit }) {
   const DECK_POS: [number, number, number] = [0.3, FELT_REST_Y_CGS, -1.3];
   const BUTTON_POS: [number, number, number] = [-0.7, 0.022, -1.6];
@@ -1069,6 +1124,14 @@ function Scene() {
   // isFrozen=true when the harness appends spin=off → useFrame is a no-op → M9-safe still.
   const isFly = qp("fly") !== null;
   const isFrozen = qp("spin") === "off";
+  // TP8: dual freeze — reducedMotion read ONCE at mount (mount-static, same pattern as isFrozen).
+  // typeof window guard covers SSR/test contexts.
+  const reducedMotion = typeof window !== "undefined"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motionFrozen = isFrozen || reducedMotion;
+  // TP8: refs for the two hero objects that breathe (hole cards + demoted accent pot).
+  const holeCardGroupRef = useRef<THREE.Group>(null);
+  const topChipGroupRef  = useRef<THREE.Group>(null);
   const flyCamRef = useRef<THREE.PerspectiveCamera>(null);
   useFrame(({ clock }) => {
     if (!isFly || isFrozen || !flyCamRef.current) return;
@@ -1155,7 +1218,10 @@ function Scene() {
         {qp("cards") !== "off" && (
           <>
             <CardGroup kit={cardKit} faces={cardFaces} poses={community} />
-            <CardGroup kit={cardKit} faces={cardFaces} poses={hole} />
+            {/* TP8: wrap hole cards in a group so HeroMotion can breathe on them additively */}
+            <group ref={holeCardGroupRef}>
+              <CardGroup kit={cardKit} faces={cardFaces} poses={hole} />
+            </group>
           </>
         )}
 
@@ -1193,7 +1259,8 @@ function Scene() {
           </group>
         ) : qp("chips") !== "off" ? (
           // Default — demoted accent pot using InstancedChipStack (TP3 shipped)
-          <group position={[3.0, 0, 1.5]} scale={0.5}>
+          // TP8: ref attached so HeroMotion can breathe on the pot group additively
+          <group ref={topChipGroupRef} position={[3.0, 0, 1.5]} scale={0.5}>
             {/* demoted accent — three SHORT stacks, centers ~3 units apart in local space so even
                at this scale they keep a clear ~0.45-world gap and never interpenetrate from any
                reachable orbit angle. No loose chip (it muddied the read). They recede behind the
@@ -1274,6 +1341,18 @@ function Scene() {
           Reads under both ?fx-off and ?fx-on. Scope audit: both objects ≤ 2wu from [0,0,0].
           DO NOT move inside the ?fx EffectComposer guard — it is game-state, not a compositor pass. */}
       <CenterGameState kit={cardKit} />
+
+      {/* TP8 Wave 1 (09-01): HeroMotion — sub-threshold micro-life on hero objects.
+          Breathes the hole-card group + demoted pot group with a very-low-frequency
+          sine-on-idle + exponential-decay settle. Dual freeze guard:
+            motionFrozen = isFrozen (spin=off) || reducedMotion (prefers-reduced-motion).
+          When frozen=true the useFrame returns immediately — M9 byte-identical guarantee.
+          NO geometry, NO materials — pure side-effect component. */}
+      <HeroMotion
+        holeRef={holeCardGroupRef}
+        topChipRef={topChipGroupRef}
+        frozen={motionFrozen}
+      />
 
       {/* TP6 — EffectComposer scaffold, mounted ONLY when ?fx is present in the URL.
           Default (?fx absent): composer NOT mounted → exact pre-TP6 / TP5-identical render.
