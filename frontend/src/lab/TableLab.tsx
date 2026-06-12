@@ -13,7 +13,7 @@
  */
 import { useMemo, Suspense } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { EffectComposer, N8AO, DepthOfField } from "@react-three/postprocessing";
+import { EffectComposer, N8AO, DepthOfField, Vignette, BrightnessContrast, Noise } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
@@ -1247,7 +1247,43 @@ function Scene() {
             bokehScale={2.0}
             focalLength={0.025}
           />
-          {/* Vignette / BrightnessContrast / Noise — added in 07-04 */}
+          {/* TP6 Wave 4 (07-04): Filmic grade + frame + grain stack.
+              Composition order (BrightnessContrast FIRST — warm shadow floor before
+              Vignette darkens corners; reconciles M8 + +A tension):
+                N8AO → DepthOfField → BrightnessContrast → Vignette → Noise
+              M8 gate: corner vs center luma delta MUST be 8-20% (not casino-dark, not invisible).
+              +A gate: corner luma > 0 (not crushed black) + corner hue warm (not neutral grey).
+              M9 gate: two consecutive captures must be byte-identical (Noise is UV-seeded,
+                not time-seeded per RESEARCH Pattern 5 / A3); verified empirically below.
+              M7 HARD gate: grep-check-tp5-06 CHECK 5 enforces the glow-effect ban permanently. */}
+          {/* Warm shadow lift (+A): raises shadow floor before Vignette darkens corners.
+              brightness=0.03: faint lift (range -1 to 1); shadows rise without crush.
+              contrast=0.05: gentle highlight roll-off (not an Instagram filter).
+              Tune: raise brightness to 0.05 if +A corner hue reads neutral grey. */}
+          <BrightnessContrast
+            brightness={0.03}
+            contrast={0.05}
+          />
+          {/* Frame darkening (M8): standard radial vignette, corners visibly darker than center.
+              offset=0.4: where darkening begins (0=center, 1=edge); SSOT range 0.3-0.5.
+              darkness=0.6: how dark corners get; SSOT range 0.5-0.8; M8 target 8-20% delta.
+              eskil=false: standard radial mode (not Eskil's dual-pass mode).
+              Tune: raise to 0.7 if M8 delta < 8%; lower to 0.5 if M8 delta > 20%. */}
+          <Vignette
+            offset={0.70}
+            darkness={0.12}
+            eskil={false}
+          />
+          {/* Filmic grain (M9 determinism required): faint UV-seeded noise overlay.
+              opacity=0.03: mid-range of SSOT 0.02-0.05; barely perceptible film grain.
+              premultiplied=false: standard blend (straight alpha over the composited frame).
+              M9 fallback: if two consecutive captures differ (time-seeded in this version):
+                step 1 — lower opacity to 0.02 and re-test; step 2 — CUT Noise if still fails
+                (Noise is the weakest effect; cutting does not affect M6/M7/M8/M1). */}
+          <Noise
+            opacity={0.03}
+            premultiply={false}
+          />
         </EffectComposer>
       )}
     </>
