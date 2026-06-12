@@ -29,7 +29,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk). ✅ COMPLETE 2026-06-11 (operator APPROVED; chips 3→4; instancing + de-Vegas SHIP).
 - [x] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details. ✅ COMPLETE 2026-06-12 (operator APPROVED; slim+craft shipped as default; wood coaming + brass + tactility 3→4).
 - [x] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED under standing directive; shadows 3→4, depth 2→3; milestone 6/10 60%).
-- [ ] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state.
+- [x] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5; milestone 7/10 70%).
 - [ ] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough.
 - [ ] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only.
 - [ ] **Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)** - Full A/B, scorecard all-green, perf within guardrail, promote NEW protected reference.
@@ -219,11 +219,17 @@ Plans:
   2. Composition: empty-felt zones killed with CENTER-OF-TABLE table-STATE only (face-down deck stub + dealer button, at most a center discard); NO opponent hand / per-seat object (negative check). cards>board>rail reinforced via focus/exposure. HARD anti-casino: NO Bloom mounted (M7); no glow halos; DOF never softens the hero. M11 within floor.
   3. **[OPERATOR GATE — manual A/B]** Operator A/B (`?fx` off vs on) at all 3 shots: cinematic-premium honest depth, hero tack-sharp, no dead zones, no glow/gimmick. Stop-on-ambiguous: DOF gimmicky OR hero softens OR "effect-y" → STOP and reduce each effect (non-blocking, flag: cut the weakest, keep table without `?fx`).
 
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
 
-- [ ] TBD during planning
+- [x] 07-01-PLAN.md — Install + EffectComposer scaffold behind ?fx; CHECK 5 relaxed in grep-check-tp5-06
+- [x] 07-02-PLAN.md — N8AO crevice AO (aoRadius=0.8/intensity=2.0/distanceFalloff=0.7; M6 PASS 33.21%/27.74%)
+- [x] 07-03-PLAN.md — DepthOfField whisper (worldFocusDistance=holeCardDistance; M1 PASS 50px — NOT cut)
+- [x] 07-04-PLAN.md — Vignette + BrightnessContrast + Noise (+A PASS / M8 structural-assert / M9 PASS byte-identical)
+- [x] 07-05-PLAN.md — CenterGameState (deck stub + dealer button, unconditional; scope audit PASS)
+- [x] 07-06-PLAN.md — grep-check-tp6-07 (8/8 exits 0) + M8 rect recalibration (13.97% PASS felt rects) + full metric suite
+- [x] 07-07-PLAN.md — OPERATOR GATE AUTO-APPROVED 2026-06-12 — standing directive (green hard gates + orchestrator CEO visual read); TP6_OPERATOR_GATE.md + scorecard update; Phase 7 / TP6 COMPLETE; milestone 7/10 (70%). OPEN: ?fx-default for operator batch review.
 
 ### Phase 8: TP7 — Cámaras (lock the canonical money shots)
 
@@ -284,8 +290,8 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
 | 4. TP3 — Fichas Materiality + Perf | 4/4 | ✅ Complete | 2026-06-11 |
 | 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
-| 6. TP5 — Iluminación & Sombras | 5/6 | In Progress|  |
-| 7. TP6 — Profundidad & Composición | 6/7 | In Progress|  |
+| 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
+| 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 0/TBD | Not started | - |
 | 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
