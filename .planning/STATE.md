@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-06-12T14:10:46.047Z"
+last_updated: "2026-06-12T14:18:42Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 30
-  completed_plans: 25
-  percent: 83
+  completed_plans: 26
+  percent: 50
 ---
 
 # Project State
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Plan 06-01 COMPLETE 2026-06-12 — TP5 grounding shipped: SoftShadows PCSS unconditional + ContactShadows frames=1/opacity=0.35/warm/#1a0e06 + key shadow frustum tuned; M10 improved 106→52. Next = 06-02 (key reshaping + ?light= flag).
+**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Plan 06-02 COMPLETE 2026-06-12 — TP5 key reshaping shipped: KEY_TO_FILL_RATIO_CEILING=3.5 anti-casino sentinel + ?light= A/B flag + shaped key (angle 0.72/fill 0.8/hemisphere ground #0d3d24 green-bounce); M5 PASS, M7 PASS, M10=52 (not regressed); shaped path verdict PASS. Next = 06-03 (per-material specular).
 
 ## Current Position
 
@@ -35,7 +35,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Plan 03-04 ✅ COMPLETE 2026-06-11 — Lever 5: sheen 0.35/#f5deb5/sheenRoughness 0.6 warm paper-edge (sheen-only, no texture); Lever 6: MAX_TILT_RAD=(1.5*PI/180), Math.sin seeds 7.3/3.1/5.7/4.1, frozen at construction; M9 PASS byte-identical; M5=0%/0% PASS; 35/35 vitest; commits 140dda7+499df38+cc73ec5)
   (Plan 03-05 ✅ COMPLETE 2026-06-11 — Lever 7: shadow-radius 8->4 (near-edge 49% darker at y=1060, card bites cloth); M6 PASS 20.69%; M9 byte-identical; all HARD gates GREEN; TP2_PREGATE.md complete with per-lever ?card= flag map; gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/; commits 9027a25+00c9d10)
   (Plan 03-06 ✅ COMPLETE 2026-06-11 — OPERATOR GATE: operator APPROVED the full TP2 stack ("Aprobado — cierra TP2") after live dev-server A/B + green HARD gates + CEO visual read; 0 levers reverted, 0 iterations; cards scorecard 4→4 held; record docs/table-3d/TP2_OPERATOR_AB.md)
-Status: ✅ TP4 shipped + TP5 Wave 0 grounding shipped (6/10 phases in-progress, plan 06-01/6 complete). Phase 6 / TP5 opened 2026-06-12 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; tsc+vitest clean. TP5 grounding always-on (not behind ?light= flag). tp5-gate captures at docs/table-3d/anchors/tp5-gate/. Commits 65d39c4+83ef5df. TP4 full record: docs/table-3d/TP4_OPERATOR_GATE.md. Next: 06-02 (key reshaping + ?light= flag).
+Status: ✅ TP4 shipped + TP5 Wave 0 grounding shipped + TP5 Wave 2 key reshaping shipped (6/10 phases in-progress, plan 06-02/6 complete). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag (lightFlag=qp('light') in Scene; Lights lightFlag prop); shaped path: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x ratio, PASS); base path: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x ratio, PASS); rim: 0.22/0.26; M5 PASS (0%/0%); M7 PASS; M10=52 (not regressed); tsc src/lab/ clean; vitest 45/45; shaped verdict PASS. Captures: hero-shaped/hero-base/macro-shaped at tp5-gate/. Commits 11c082f+6f38366. SoftShadows+ContactShadows unconditional (not behind ?light= flag). TP4 full record: docs/table-3d/TP4_OPERATOR_GATE.md. Next: 06-03 (per-material specular).
 Last activity: 2026-06-12
 
 Progress: [████████░░] 83%
@@ -125,6 +125,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 5]: 05-04 OPERATOR GATE APPROVED -- slim+craft shipped as DEFAULT render. Both SSOT questions YES: (CONTOUR) slim yTop 0.34->0.28 recovers edge elegance without losing material/mass; (CRAFT) 5 levers (D/C/B/F/A) read as restrained craft not overworked. Default flip: isCraft=!isBase&&railFlag!=='slim' (ON by default); woodCoamingProfile internal default 0.34->0.28; ?rail=base added (restores pre-TP4). 0 reverts, 0 iterations. Scorecard: wood coaming 3->4, brass 3->4, tactility 3->4 (leather rail held at 4). AAA(5) deferred: AO (TP6), grain alignment + hairline scratch normalMap (TP7). grep-check 7/7 PASS; vitest 398/398; tsc src/lab/ clean; M4 PASS; M10 106<150 PASS. Record: docs/table-3d/TP4_OPERATOR_GATE.md. Commits: da3bcbc + 1a1a624 + c627b47. Phase 5 / TP4 COMPLETE.
 
+- [Phase 6]: Plan 06-02: TP5 key reshaping SHIPPED -- KEY_TO_FILL_RATIO_CEILING=3.5 constant (anti-casino sentinel, grep-checkable); ?light= A/B flag (lightFlag=qp('light') in Scene; Lights accepts lightFlag prop; shaped path default / base path ?light=base); shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (ratio 2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (ratio 2.86x, PASS); rim: shaped 0.22/base 0.26; penumbra=1 in both (NEVER lowered); SoftShadows+ContactShadows unconditional (not behind ?light= flag). M5 PASS (0%/0% both paths); M7 PASS; M10=52 (not regressed); tsc src/lab/ clean; vitest 45/45. Shaped path verdict PASS: warm gradient confirmed, no casino cone. +A informational (warm hue H=27.9deg confirmed; luma structural TP6 scope). Captures: hero-shaped/hero-base/macro-shaped at tp5-gate/. Commits: 11c082f+6f38366. Next: 06-03 (per-material specular).
+
 ### Pending Todos
 
 None yet.
@@ -147,9 +149,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T14:09:28Z
-Stopped at: Plan 06-01 COMPLETE 2026-06-12 -- TP5 grounding shipped; SoftShadows PCSS + ContactShadows frames=1/warm + key shadow frustum; tp5-gate captures; M6 PASS/M10 improved 106→52; commits 65d39c4+83ef5df.
-Next: Phase 6 / TP5 -- 06-02 (key reshaping + ?light= flag, Lights component changes). Do NOT auto-advance -- operator chooses when to proceed.
+Last session: 2026-06-12T14:18:42Z
+Stopped at: Plan 06-02 COMPLETE 2026-06-12 -- TP5 key reshaping shipped; ?light= A/B flag + KEY_TO_FILL_RATIO_CEILING=3.5 + shaped key (angle 0.72/fill 0.8/hemisphere green-bounce #0d3d24); shaped path verdict PASS; M5/M7 PASS, M10=52; commits 11c082f+6f38366.
+Next: Phase 6 / TP5 -- 06-03 (per-material specular: wood roughness 0.38→0.42, clearcoat 0.72→0.68; body roughness 0.48→0.52; card stock roughness 0.62→0.60; chip pre-dv specular adjustments). Do NOT auto-advance -- operator chooses when to proceed.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
