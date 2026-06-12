@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T19:13:22.074Z"
+last_updated: "2026-06-12T21:21:00.000Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 43
-  completed_plans: 41
+  completed_plans: 42
   percent: 80
 ---
 
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 9 / TP8 — Tactilidad, micro-vida & lectura social (the FEEL). [Plan 09-01 ✅ COMPLETE 2026-06-12: HeroMotion + dual freeze guard + M9 PASS (md5 02e4aa23a039575d07d1cdecb61e85f7); commits f717e6d+a1807b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11. NEXT = 09-02 (grep-check-tp8-09). Do NOT auto-advance.] [Phase 8 / TP7 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 08-03 AUTO-APPROVED under standing directive — all HARD gates green + orchestrator CEO visual read; cameras CONFIRMED LOCKED 0 changes; M1=80px/M2=3.66×/M9=PASS/grep-check-tp7-08 11/11; ?fly flythrough SHIPPED non-canonical opt-in; cameras held at 4 conservatively (AAA(5) deferred to TP9); eval framing FINAL for TP9; milestone 8/10 80%). 08-01: TP7 captures + grep-check (commits 051914d+9488ef2). 08-02: ?fly flythrough (commit 44c84d1). 08-03: TP7 operator gate AUTO-APPROVED.] Do NOT auto-advance — operator chooses.
+**Current focus:** Phase 9 / TP8 — Tactilidad, micro-vida & lectura social (the FEEL). [Plan 09-02 ✅ COMPLETE 2026-06-12: grep-check-tp8-09 18/18 PASS (exit 0); 3 frozen tp8-gate anchors byte-identical to TP7 (M9 HARD gate PASS); social read COMPLETE (4/4 scene items); M2=3.66x/2.60x PASS; commits b0021ab+fa417b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11. Deviation: CHECK 5 regex case-sensitive (GSAP names PascalCase; /i false-positives on JSX block-comment text). NEXT = 09-03 (TP8 operator gate). Do NOT auto-advance.] [Plan 09-01 ✅ COMPLETE 2026-06-12: HeroMotion + dual freeze guard + M9 PASS (md5 02e4aa23a039575d07d1cdecb61e85f7); commits f717e6d+a1807b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11.] [Phase 8 / TP7 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 08-03 AUTO-APPROVED under standing directive — all HARD gates green + orchestrator CEO visual read; cameras CONFIRMED LOCKED 0 changes; M1=80px/M2=3.66×/M9=PASS/grep-check-tp7-08 11/11; ?fly flythrough SHIPPED non-canonical opt-in; cameras held at 4 conservatively (AAA(5) deferred to TP9); eval framing FINAL for TP9; milestone 8/10 80%). 08-01: TP7 captures + grep-check (commits 051914d+9488ef2). 08-02: ?fly flythrough (commit 44c84d1). 08-03: TP7 operator gate AUTO-APPROVED.] Do NOT auto-advance — operator chooses.
 
 ## Current Position
 
@@ -154,6 +154,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 8]: Plan 08-03 (OPERATOR GATE AUTO-APPROVED): TP7 cameras LOCKED under standing "auto-approve (0 paradas)" directive — all HARD gates green (M1=80px/M2=3.66×/M9 byte-identical md5 02e4aa23…/grep-check-tp7-08 11/11/grep-check-tp6-07 8/8/vitest 45/45/tsc clean) + orchestrator CEO visual read (Perla dominant lower-third HERO, player's-eye-view card, telephoto material MACRO — all three presets confirmed on the finished TP1-TP6 table). TP0 presets CONFIRMED UNCHANGED: all 9 frozen values byte-identical to TP0 lock. Cameras scored conservatively held at 4 (AAA(5) deferred to TP9 final scorecard). Eval framing FINAL for TP9. ?fly flythrough non-canonical opt-in SHIPPED (08-02, 44c84d1). 0 preset changes, 0 corrections, 0 iterations. Stop-on-ambiguous not triggered. Red-team #6 confirmed: no mid-program re-baseline. Record: docs/table-3d/TP7_OPERATOR_GATE.md. Phase 8 / TP7 COMPLETE. Milestone 8/10 (80%). Flagged for operator batch confirmation.
 
+- [Phase 9]: Plan 09-02: grep-check-tp8-09.cjs 18/18 PASS (exit 0). CHECK 5 regex case-sensitive (no /i flag): GSAP easing names PascalCase; /i would false-positive on 'bounce'/'glow' in JSX {/* */} block-comment text (stripComments removes only // lines). All 3 tp8-gate anchors byte-identical to tp7-gate (M9 HARD gate PASS: hero md5 c0c7e124 / card d7a4350d / macro cd073a0c). Social read COMPLETE: CenterGameState + staged Perla hand + 5-card community board + demoted accent pot all PRESENT by default. M2 standing = TP7 carry-forward 3.66x/2.60x (TP8 adds no geometry). Commits b0021ab (grep-check) + fa417b6 (anchors).
+
 - [Phase 9]: Plan 09-01: TP8 HeroMotion COMPLETE — HeroMotion component (4 named constants: MICRO_AMPLITUDE_Y=0.003/MICRO_AMPLITUDE_ROT=0.004/MICRO_IDLE_PERIOD=9.0/MICRO_SETTLE_TAU=0.25 + CHIP_PHASE_OFFSET=Math.PI*0.7) + applyMicroBreath (additive exp-decay, Pitfall 6 resolved via restY at mount) + HeroMotion (one useFrame for both hero objects, returns null). Dual freeze: motionFrozen=isFrozen||reducedMotion (mount-static); if(frozen) return as FIRST line of useFrame. Refs: holeCardGroupRef (wrapper group around hole CardGroup) + topChipGroupRef (on default demoted pot group). Mounted after CenterGameState, before EffectComposer. M9 PASS: md5 02e4aa23a039575d07d1cdecb61e85f7 (hero ?spin=off double-capture byte-identical). vitest 45/45; tsc src/lab/ clean; grep-check-tp7-08 11/11. No new packages. Commits f717e6d+a1807b6.
 
 - [Phase 8]: Plan 08-01: TP7 pre-gate captures COMPLETE — 3 TP0-frozen money shots (card/hero/macro ?fx) recaptured on the finished TP6 table. M1=80px PASS (3.6× over 22px floor) / M2=3.66x(hero)/2.60x(card) PASS (>= 2.0×) / M9=PASS (md5 02e4aa23a039575d07d1cdecb61e85f7 byte-identical). TP0 presets CONFIRMED UNCHANGED: card fov:40/pos:[0,4.7,10.6] / hero fov:32/pos:[1.2,5.0,8.2] / macro fov:26/pos:[-1.7,1.7,2.4] — all byte-identical to TP0 lock. grep-check-tp7-08.cjs 11/11 PASS (8 forward-carry + autoRotate={false} + fov 32/40/26 + no-second-makeDefault-PerspectiveCamera). grep-check-tp6-07 backward compat PASS. vitest 45/45; tsc src/lab/ clean. Deviation: CHECK 11 regex scoped to PerspectiveCamera-only makeDefault (OrbitControls also has makeDefault; plain count would fail; scoped to intent). Commits 051914d+9488ef2.
@@ -180,9 +182,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T19:13:22Z
-Stopped at: Plan 09-01 COMPLETE 2026-06-12 -- TP8 HeroMotion shipped (sub-threshold breathing on hole cards + accent pot; dual freeze guard; M9 PASS md5 02e4aa23a039575d07d1cdecb61e85f7; vitest 45/45; tsc clean; grep-check-tp7-08 11/11). Phase 9 / TP8 in progress (1/3 plans done). Do NOT auto-advance -- operator chooses.
-Next: Phase 9 / TP8 -- Plan 09-02 (grep-check-tp8-09.cjs static code assertion). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T21:21:00Z
+Stopped at: Plan 09-02 COMPLETE 2026-06-12 -- grep-check-tp8-09 18/18 PASS (exit 0); 3 frozen tp8-gate anchors (hero/card/macro byte-identical to TP7, M9 HARD gate PASS); social read COMPLETE; M2=3.66x/2.60x PASS; commits b0021ab+fa417b6; vitest 45/45; tsc clean. Phase 9 / TP8 in progress (2/3 plans done). Do NOT auto-advance -- operator chooses.
+Next: Phase 9 / TP8 -- Plan 09-03 (TP8 operator gate, autonomous:false). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · AAA(5) cameras gated on TP9 final scorecard · AAA(5) felt nap sheen → TP9 · AAA(5) cards CARD_W/encuadre call → separate workstream · AAA(5) chips denomination-suit clarity → TP9 · brass hairline-scratch normalMap → TP7 geometry (may be TP8 scope) · TP6 ?fx-default decision → operator batch review · scoring of depth/shadows/lighting/composition/tactility at AAA(5) flagged for operator batch confirmation (TP6 gate note).
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

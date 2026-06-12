@@ -263,7 +263,7 @@ Plans:
 Plans:
 
 - [x] 09-01-PLAN.md — HeroMotion component + dual freeze guard (MICRO_* constants + applyMicroBreath + useFrame/useEffect); M9 double-capture PASS (md5 02e4aa23a039575d07d1cdecb61e85f7). ✅ COMPLETE 2026-06-12.
-- [ ] 09-02-PLAN.md — grep-check-tp8-09.cjs static code assertion (18 checks); M2 audit; gate captures
+- [x] 09-02-PLAN.md — grep-check-tp8-09.cjs 18/18 PASS (exit 0); 3 frozen tp8-gate anchors byte-identical to TP7 (M9 HARD gate PASS); social read COMPLETE; M2=3.66x/2.60x PASS. ✅ COMPLETE 2026-06-12.
 - [ ] 09-03-PLAN.md — TP8 operator gate (autonomous:false — LIVE motion-feel gate)
 
 ### Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)
@@ -297,5 +297,5 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
-| 9. TP8 — Tactilidad & Lectura Social | 1/3 | In progress | 2026-06-12 (09-01 complete) |
+| 9. TP8 — Tactilidad & Lectura Social | 2/3 | In progress | 2026-06-12 (09-01+09-02 complete) |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
