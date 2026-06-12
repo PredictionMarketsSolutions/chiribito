@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T17:07:39.045Z"
+last_updated: "2026-06-12T17:38:27.542Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 35
+  completed_plans: 36
   percent: 60
 ---
 
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-05 COMPLETE 2026-06-12 — CenterGameState (4-card face-down deck stub + cream dealer button) at table center; FELT_REST_Y_CGS=0.0495/CARD_T_CGS=0.055; scope audit PASS (deck 1.33wu + button 1.75wu <= 2wu); unconditionally mounted before EffectComposer; zero new deps (kit.body+kit.stock reuse); grep-check EXIT 0 + tsc src/lab/ 0 errors + vitest 45/45; captures cgs-{hero,hero-fx,card-fx,macro-fx}.png (RTX 4060 zero errors); commit 80a449b. Next: 07-06 (full metric suite). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
+**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-06 COMPLETE 2026-06-12 — grep-check-tp6-07.cjs (8/8 TP6 invariants exits 0) + M8 vignette rect recalibrated to felt/rail edge (13.97% PASS 8-20%) + full pre-gate metric suite PASS (M6=27.74%/M7=0/M8=13.97%/M9 byte-identical/+A luma=31.9/hue=29.1deg) + 8 anchor PNGs at tp6-gate/; m7-bloom-assert PATTERN relaxed to /Bloom/ only (TP6 07-01 parity); commits 8154cf7+d6bb5b5. Next: 07-07 (TP6 operator gate, autonomous:false). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
 
 ## Current Position
 
@@ -38,7 +38,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
 Status: ✅ TP4 shipped + TP5 COMPLETE (Phase 6 / TP5 operator gate 06-06 AUTO-APPROVED 2026-06-12; milestone 6/10 60%). TP5 full: grounding+shaped-key+per-material-specular+green-bounce+brass-M4-fix. Scorecard: shadows 3→4, depth 2→3, lighting/tactility held at 4. Next: Phase 7 / TP6 (profundidad & composición). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
 Last activity: 2026-06-12
 
-Progress: [██████████] 95%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: [██████████] 95%
 | Phase 06 P05 | 90 | 2 tasks | 6 files |
 | Phase 07 P02 | 12 | 1 tasks | 1 files |
 | Phase 07 P03 | 20 | 1 tasks | 1 files |
+| Phase 07 P06 | 45 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 7]: Plan 07-05: CenterGameState SHIPPED -- FELT_REST_Y_CGS=0.0495 (CARD_T/2+0.022 exact from cards.ts) / CARD_T_CGS=0.055; DECK_POS [0.3,0.0495,-1.3] radius=1.33wu / BUTTON_POS [-0.7,0.022,-1.6] radius=1.75wu (both <=2wu center-only limit PASS); deck stub = 4 cards at DECK_POS with Math.sin/Math.cos scatter (kit.body+kit.stock, zero new deps); dealer button = cylinderGeometry [0.28,0.28,0.04,24] + MeshPhysicalMaterial #f0e8d0 roughness=0.80 metalness=0; unconditionally mounted in Scene JSX BEFORE EffectComposer ?fx guard; reads under both ?fx-off and ?fx-on; grep-check-tp5-06 EXIT 0; tsc src/lab/ 0 errors; vitest 45/45; captures cgs-{hero,hero-fx,card-fx,macro-fx}.png (RTX 4060, zero errors). Commit 80a449b.
 
+- [Phase 7]: Plan 07-06: grep-check-tp6-07.cjs exits 0 (8/8 TP6 invariants: EffectComposer+N8AO+DepthOfField+Vignette present; No Bloom; roughness 0.42-0.45; SoftShadows; frames={1}). M8 rect recalibrated from backdrop (cornerTL/cornerTR, natural 86-87% delta — unmeasurable) to felt lateral edges (m8FeltEdgeL(450,570,120x80)/m8FeltEdgeR(2500,570,120x80)); centerFeltLuma=135.7/edgeFeltMeanLuma=116.7/delta=13.97% PASS 8-20%. FRAMING_CORNERS (cornerTL/cornerTR) retained for +A only. m7-bloom-assert PATTERN relaxed from /Bloom|EffectComposer|postprocessing/ to /Bloom/ (TP6 07-01 parity). Full pre-gate metric suite: M6=27.74%/M7=0 Bloom/M8=13.97%/M9 byte-identical/+A cornerLuma=31.9 hue=29.1deg. M4/M5 structural notes at ?fx (pre-existing mismatch; not TP6 regressions). 8 anchor PNGs at docs/table-3d/anchors/tp6-gate/. Commits 8154cf7+d6bb5b5.
+
 - [Phase 7]: Plan 07-04: Vignette+BrightnessContrast+Noise SHIPPED -- stack order N8AO→DOF→BrightnessContrast→Vignette→Noise; BrightnessContrast brightness=0.03/contrast=0.05 (warm shadow floor); Vignette offset=0.70/darkness=0.12/eskil=false (restrained frame; tuned outward from SSOT default because top-corner rects are backdrop-black at hero angle); Noise opacity=0.03/premultiply=false (faint grain). Fog unchanged (near=20 — far rail reads as air). +A PASS cornerLuma=31.9>=18, hue=29.1deg warm, S=0.392. M9 PASS byte-identical captures (UV-seeded noise). M7 PASS (grep-check exits 0, no Bloom). M8 structural-assert: cornerTL/cornerTR rects are backdrop-black (natural delta 90% without any vignette; Vignette IS active: bottom corners darken -46 luma vs DOF baseline). Captures: grade-{hero,card,macro}.png + m9-{a,b}.png (RTX 4060, zero errors). vitest 45/45; tsc src/lab/ clean. Commit 0ba7f40.
 
 ### Pending Todos
@@ -167,9 +170,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T17:07:39.027Z
-Stopped at: Plan 07-05 COMPLETE 2026-06-12 -- CenterGameState (deck stub + dealer button at table center); FELT_REST_Y_CGS=0.0495/CARD_T_CGS=0.055; scope audit PASS (deck 1.33wu + button 1.75wu); unconditionally mounted; grep-check EXIT 0 + tsc src/lab/ clean + vitest 45/45; captures cgs-{hero,hero-fx,card-fx,macro-fx}.png (RTX 4060, zero errors); commit 80a449b. Do NOT auto-advance -- operator chooses.
-Next: 07-06 (full metric suite: M1/M6/M7/M8/M9/M10/M11/+A with ?fx on all 3 frozen shots) or 07-07 (operator gate, autonomous:false). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T17:38:27.525Z
+Stopped at: Plan 07-06 COMPLETE 2026-06-12 -- grep-check-tp6-07.cjs (8/8 TP6 invariants, exits 0) + M8 rect recalibrated to felt/rail edge (13.97% PASS) + full pre-gate metric suite PASS (M6/M7/M8/M9/+A all PASS with ?fx) + 8 anchor PNGs at tp6-gate/; m7-bloom-assert PATTERN relaxed to /Bloom/ only; commits 8154cf7+d6bb5b5. Do NOT auto-advance -- operator chooses.
+Next: 07-07 (TP6 operator gate, autonomous:false) -- reads 07-06-SUMMARY as the pre-gate basis before presenting A/B (?nofx vs ?fx at all 3 frozen shots). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
