@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-06-12T15:10:00.000Z"
+last_updated: "2026-06-12T14:10:46.047Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 5
-  total_plans: 24
-  completed_plans: 24
-  percent: 50
+  total_plans: 30
+  completed_plans: 25
+  percent: 83
 ---
 
 # Project State
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Phase 5 / TP4 COMPLETE 2026-06-12 — operator gate APPROVED (slim+craft); all 4 plans done; wood coaming 3→4, brass 3→4, tactility 3→4; slim+craft shipped as default render (no flag). Next = Phase 6 / TP5 — Iluminación & Sombras.
+**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Plan 06-01 COMPLETE 2026-06-12 — TP5 grounding shipped: SoftShadows PCSS unconditional + ContactShadows frames=1/opacity=0.35/warm/#1a0e06 + key shadow frustum tuned; M10 improved 106→52. Next = 06-02 (key reshaping + ?light= flag).
 
 ## Current Position
 
@@ -35,10 +35,10 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Plan 03-04 ✅ COMPLETE 2026-06-11 — Lever 5: sheen 0.35/#f5deb5/sheenRoughness 0.6 warm paper-edge (sheen-only, no texture); Lever 6: MAX_TILT_RAD=(1.5*PI/180), Math.sin seeds 7.3/3.1/5.7/4.1, frozen at construction; M9 PASS byte-identical; M5=0%/0% PASS; 35/35 vitest; commits 140dda7+499df38+cc73ec5)
   (Plan 03-05 ✅ COMPLETE 2026-06-11 — Lever 7: shadow-radius 8->4 (near-edge 49% darker at y=1060, card bites cloth); M6 PASS 20.69%; M9 byte-identical; all HARD gates GREEN; TP2_PREGATE.md complete with per-lever ?card= flag map; gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/; commits 9027a25+00c9d10)
   (Plan 03-06 ✅ COMPLETE 2026-06-11 — OPERATOR GATE: operator APPROVED the full TP2 stack ("Aprobado — cierra TP2") after live dev-server A/B + green HARD gates + CEO visual read; 0 levers reverted, 0 iterations; cards scorecard 4→4 held; record docs/table-3d/TP2_OPERATOR_AB.md)
-Status: ✅ TP4 shipped (5/10 phases, 50%). Phase 5 / TP4 COMPLETE 2026-06-12 — operator gate APPROVED; slim+craft both SHIP; slim (yTop 0.34→0.28) + Levers D/C/B/F/A now the DEFAULT render (no flag). Default-flip: isCraft ON by default; ?rail=base restores pre-TP4. Scorecard: wood coaming 3→4, brass 3→4, tactility 3→4 (leather rail held at 4). AAA(5) gated on TP6 AO + TP7 geometry. TP4 full record: docs/table-3d/TP4_OPERATOR_GATE.md. [TP3: docs/table-3d/TP3_OPERATOR_AB.md. TP2: docs/table-3d/TP2_OPERATOR_AB.md.] Next: Phase 6 / TP5 — Iluminación & Sombras.
+Status: ✅ TP4 shipped + TP5 Wave 0 grounding shipped (6/10 phases in-progress, plan 06-01/6 complete). Phase 6 / TP5 opened 2026-06-12 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; tsc+vitest clean. TP5 grounding always-on (not behind ?light= flag). tp5-gate captures at docs/table-3d/anchors/tp5-gate/. Commits 65d39c4+83ef5df. TP4 full record: docs/table-3d/TP4_OPERATOR_GATE.md. Next: 06-02 (key reshaping + ?light= flag).
 Last activity: 2026-06-12
 
-Progress: [█████████░] 50%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -121,6 +121,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 5]: Plan 05-01 (TP4 VERDICT): Verdict=lost-in-specific-respect — woodCoamingProfile yTop=0.34 reads as slightly heavy horizontal band at rail/eye view; leather roll reads correct (rOut=FELT_R*1.072 justified, broad crown, correct sheen). Edge-thickness ratio before=0.087 (0.565/6.5, 8.7% of FELT_R). Absent elev/ anchors recorded explicitly (non-blocking). Action: 05-02 targets woodCoamingProfile yTop 0.34→0.28 (−18% band height, behind ?rail=slim). Craft levers 05-03 proceed in all cases. tag tp4-before-rail=LOCAL. Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
 - [Phase ?]: 05-02 slim SHIPPED: woodCoamingProfile yTop 0.34->0.28 behind ?rail=slim; visual verdict better-without-losing-material; thin-disc invariant PASS (rOut 7.605 > 7.540); bodyProfile inviolate
 - [Phase 5]: 05-03 craft levers STRUCTURAL PASS: ?rail= flag system (railFlag/isWelt/isNormals/isBrass/isSlim/isCraft); Lever D brassMat roughness 0.34->0.42 + envMapIntensity 0.45; Lever B+F woodNapNormalMap (freq=12, crossProfile, NoColorSpace, normalScale 0.15); Lever C leatherNapNormalMap (pebble height field, NoColorSpace, normalScale 0.22, bumpMap->normalMap upgrade); Lever A welt FELT_R*0.960 tube 0.012 y=0.022 #2a1208; Lever E DROPPED (UV seam risk, TP7). grep-check-tp4-05.cjs exits 0 (7/7 checks). M4 structural PASS (roughness 0.42 in 0.38-0.45; H39/S0.38/V0.67 expected). M10 structural PASS (105+1=106 < 150). Visual reads at operator gate 05-04. Commits: 12f67a0 + 863801a.
+- [Phase 6]: Plan 06-01: TP5 grounding SHIPPED — SoftShadows PCSS unconditional (size=30/samples=16/focus=0) above Lights in Scene; ContactShadows frames=1 baked (M11 improvement: 106→52 draws)/opacity=0.35 anti-double-darken/color=#1a0e06 warm near-black/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias={0.02}+shadow-camera-near={8}+shadow-camera-far={28}. M6 PASS 21.03%; M10 IMPROVED 52 (<106 TP4 baseline); M7 PASS; M5 PASS; tsc src/lab/ clean; vitest 45/45 green. +A informational (backdrop corners structurally dark; warm hue confirmed H=27.6°; TP6 scope). tp5-gate captures committed. Commits: 65d39c4+83ef5df.
+
 - [Phase 5]: 05-04 OPERATOR GATE APPROVED -- slim+craft shipped as DEFAULT render. Both SSOT questions YES: (CONTOUR) slim yTop 0.34->0.28 recovers edge elegance without losing material/mass; (CRAFT) 5 levers (D/C/B/F/A) read as restrained craft not overworked. Default flip: isCraft=!isBase&&railFlag!=='slim' (ON by default); woodCoamingProfile internal default 0.34->0.28; ?rail=base added (restores pre-TP4). 0 reverts, 0 iterations. Scorecard: wood coaming 3->4, brass 3->4, tactility 3->4 (leather rail held at 4). AAA(5) deferred: AO (TP6), grain alignment + hairline scratch normalMap (TP7). grep-check 7/7 PASS; vitest 398/398; tsc src/lab/ clean; M4 PASS; M10 106<150 PASS. Record: docs/table-3d/TP4_OPERATOR_GATE.md. Commits: da3bcbc + 1a1a624 + c627b47. Phase 5 / TP4 COMPLETE.
 
 ### Pending Todos
@@ -145,9 +147,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T15:10:00Z
-Stopped at: Plan 05-04 COMPLETE 2026-06-12 -- TP4 operator gate APPROVED; slim+craft default flip; TP4_OPERATOR_GATE.md + scorecard delta; commits da3bcbc + 1a1a624 + c627b47. Phase 5 / TP4 COMPLETE (5/10 phases, 50%).
-Next: Phase 6 / TP5 -- Iluminación & Sombras (unified warm light, per-material specular, PCSS grounding). Do NOT auto-advance -- operator chooses when to start TP5.
+Last session: 2026-06-12T14:09:28Z
+Stopped at: Plan 06-01 COMPLETE 2026-06-12 -- TP5 grounding shipped; SoftShadows PCSS + ContactShadows frames=1/warm + key shadow frustum; tp5-gate captures; M6 PASS/M10 improved 106→52; commits 65d39c4+83ef5df.
+Next: Phase 6 / TP5 -- 06-02 (key reshaping + ?light= flag, Lights component changes). Do NOT auto-advance -- operator chooses when to proceed.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

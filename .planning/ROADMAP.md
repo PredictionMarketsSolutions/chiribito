@@ -202,7 +202,7 @@ Plans:
 
 Plans:
 
-- [ ] 06-01-PLAN.md — GROUNDING: SoftShadows PCSS + ContactShadows frames={1} warm + key shadow frustum (must-ship, always-on)
+- [x] 06-01-PLAN.md — GROUNDING: SoftShadows PCSS + ContactShadows frames={1} warm + key shadow frustum (must-ship, always-on)
 - [ ] 06-02-PLAN.md — KEY RESHAPING: ?light= flag + warm gradient angle 0.72 + KEY_TO_FILL_RATIO_CEILING + green-bounce hemisphere
 - [ ] 06-03-PLAN.md — PER-MATERIAL SPECULAR: wood/body/card/chip deltas; brass UNCHANGED (TP4-locked); M4 re-run at END
 - [ ] 06-04-PLAN.md — GREEN-BOUNCE + BODY VOLUME verification: ?cam=rail captures + M6/M7 at rail
@@ -284,7 +284,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
 | 4. TP3 — Fichas Materiality + Perf | 4/4 | ✅ Complete | 2026-06-11 |
 | 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
-| 6. TP5 — Iluminación & Sombras | 0/6 | In planning | - |
+| 6. TP5 — Iluminación & Sombras | 1/6 | In Progress|  |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
 | 8. TP7 — Cámaras | 0/TBD | Not started | - |
 | 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
