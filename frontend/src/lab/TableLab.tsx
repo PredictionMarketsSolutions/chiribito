@@ -726,6 +726,67 @@ function Table({
   );
 }
 
+// --- center game-state: deck stub + dealer button at table center ---
+// CenterGameState fills the large empty felt area to the left of the demoted chip pot.
+// Two objects only: a 4-card face-down deck stub (kit.body + kit.stock — zero new deps)
+// and a matte cream dealer button (cylinderGeometry + MeshPhysicalMaterial).
+// Mounted UNCONDITIONALLY — it is scene content (game state), NOT a postprocessing effect.
+// Anti-scope-creep invariant: all positions within 2wu of [0,0,0] (center-only rule §TP6).
+//   DECK_POS [0.3, *, -1.3]:  radius = sqrt(0.09 + 1.69) = sqrt(1.78) ≈ 1.33wu — PASS.
+//   BUTTON_POS [-0.7, *, -1.6]: radius = sqrt(0.49 + 2.56) = sqrt(3.05) ≈ 1.75wu — PASS.
+// No per-seat objects, no opponent hands, no chip piles at seat positions.
+// FELT_REST_Y = CARD_T / 2 + 0.022 = 0.0275 + 0.022 = 0.0495 (from cards.ts)
+// CARD_T = 0.055 (from cards.ts)
+const FELT_REST_Y_CGS = 0.0495; // CARD_T/2 + 0.022 — the y at which cards rest on felt
+const CARD_T_CGS = 0.055;       // card stock thickness (stacking delta per card in deck stub)
+
+function CenterGameState({ kit }: { kit: CardKit }) {
+  const DECK_POS: [number, number, number] = [0.3, FELT_REST_Y_CGS, -1.3];
+  const BUTTON_POS: [number, number, number] = [-0.7, 0.022, -1.6];
+
+  // Deck stub: 4 cards stacked face-down at center, slight scatter so it reads hand-placed.
+  const deckCards = useMemo(() => (
+    [0, 1, 2, 3].map(i => ({
+      x: DECK_POS[0] + Math.sin(i * 1.7) * 0.008,
+      y: DECK_POS[1] + i * CARD_T_CGS,
+      z: DECK_POS[2] + Math.cos(i * 2.3) * 0.006,
+      ry: i * 0.04,
+    }))
+  ), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const buttonMat = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color("#f0e8d0"),
+    roughness: 0.80,
+    metalness: 0,
+  }), []);
+
+  return (
+    <group>
+      {/* Face-down deck stub — reuses shared cardBodyGeometry + kit.stock material (zero new deps) */}
+      {deckCards.map((c, i) => (
+        <mesh
+          key={i}
+          geometry={kit.body}
+          material={kit.stock}
+          position={[c.x, c.y, c.z]}
+          rotation={[-Math.PI / 2, 0, c.ry]}
+          castShadow
+          receiveShadow
+        />
+      ))}
+      {/* Dealer button — small matte cream disc; reads as a clear game-state marker */}
+      <mesh
+        position={BUTTON_POS}
+        rotation={[-Math.PI / 2, 0, 0]}
+        castShadow
+      >
+        <cylinderGeometry args={[0.28, 0.28, 0.04, 24]} />
+        <primitive object={buttonMat} attach="material" />
+      </mesh>
+    </group>
+  );
+}
+
 // --- seating: the FIRST appearance of human presence around the oval ---
 // Not "a chair" — soft masses that read as people gathered: backs rising above the rail,
 // hugging the table, evenly spaced. A massing/presence study; detail + material come later.
@@ -1195,6 +1256,12 @@ function Scene() {
       {/* M10/M11 instrumentation — renders null (zero pixels); writes window.__labStats.
           Mounted ONLY when ?stats is present so the default captured scene is untouched. */}
       {qp("stats") !== null && <StatsProbe />}
+
+      {/* TP6 Wave 4 (07-05): CenterGameState — deck stub + dealer button at table center.
+          Unconditionally mounted: scene-graph content, NOT a postprocessing effect.
+          Reads under both ?fx-off and ?fx-on. Scope audit: both objects ≤ 2wu from [0,0,0].
+          DO NOT move inside the ?fx EffectComposer guard — it is game-state, not a compositor pass. */}
+      <CenterGameState kit={cardKit} />
 
       {/* TP6 — EffectComposer scaffold, mounted ONLY when ?fx is present in the URL.
           Default (?fx absent): composer NOT mounted → exact pre-TP6 / TP5-identical render.
