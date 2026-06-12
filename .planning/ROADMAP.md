@@ -31,7 +31,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED under standing directive; shadows 3→4, depth 2→3; milestone 6/10 60%).
 - [x] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5; milestone 7/10 70%).
 - [x] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; cameras CONFIRMED LOCKED 0 changes; HERO fov:32/POV-card fov:40/MACRO fov:26 UNCHANGED; ?fly SHIPPED non-canonical opt-in; eval framing FINAL for TP9; milestone 8/10 80%).
-- [ ] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only.
+- [x] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED verifiable parts + LIVE FEEL FLAGGED; HeroMotion SHIPPED; social read COMPLETE; milestone 9/10 90%).
 - [ ] **Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)** - Full A/B, scorecard all-green, perf within guardrail, promote NEW protected reference.
 
 ## Phase Details
@@ -264,7 +264,7 @@ Plans:
 
 - [x] 09-01-PLAN.md — HeroMotion component + dual freeze guard (MICRO_* constants + applyMicroBreath + useFrame/useEffect); M9 double-capture PASS (md5 02e4aa23a039575d07d1cdecb61e85f7). ✅ COMPLETE 2026-06-12.
 - [x] 09-02-PLAN.md — grep-check-tp8-09.cjs 18/18 PASS (exit 0); 3 frozen tp8-gate anchors byte-identical to TP7 (M9 HARD gate PASS); social read COMPLETE; M2=3.66x/2.60x PASS. ✅ COMPLETE 2026-06-12.
-- [ ] 09-03-PLAN.md — TP8 operator gate (autonomous:false — LIVE motion-feel gate)
+- [x] 09-03-PLAN.md — TP8 operator gate AUTO-APPROVED verifiable parts + LIVE MOTION-FEEL FLAGGED 2026-06-12 — standing directive (16 HARD gates green: grep-check 18/18, M9 byte-identical, M2 3.66x/2.60x, social read 4/4, vitest 45/45, tsc clean); LIVE MOTION-FEEL FLAGGED for operator batch review; TP8_OPERATOR_GATE.md + scorecard update; Phase 9 / TP8 COMPLETE; milestone 9/10 (90%).
 
 ### Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)
 
@@ -297,5 +297,5 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
-| 9. TP8 — Tactilidad & Lectura Social | 2/3 | In progress | 2026-06-12 (09-01+09-02 complete) |
+| 9. TP8 — Tactilidad & Lectura Social | 3/3 | ✅ Complete | 2026-06-12 (operator gate AUTO-APPROVED verifiable + LIVE FEEL FLAGGED) |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
