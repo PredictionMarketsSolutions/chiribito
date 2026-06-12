@@ -845,20 +845,47 @@ function SeatHands({ kit }: { kit: CardKit }) {
 // TP2 Lever 7: tighter shadow-radius when the card TP2 stack is on.
 // shadow-radius 8 → 4 sharpens the near-edge card-to-felt penumbra so the card bites the cloth (M6).
 // ?card=base restores the wide soft-shadow (pre-TP2 baseline). ONE shadow-casting light — SSOT §5.
-function Lights({ shadowRadius = 8 }: { shadowRadius?: number }) {
+//
+// TP5 Wave 2 (06-02): ?light= A/B flag splits the key into two paths.
+//   shaped path (default, lightFlag !== "base"): wider key angle 0.72, raised fill 0.8,
+//     hemisphere ground tinted to dark felt-green #0d3d24 for a subtle GI green-bounce.
+//   base path (?light=base): prior flat-warm key exactly restored (angle 0.62, fill 0.7,
+//     hemisphere ground #1a0f08). Non-blocking: SoftShadows + ContactShadows grounding
+//     from 06-01 are ALWAYS on — the ?light= flag NEVER conditions them.
+function Lights({ shadowRadius = 8, lightFlag = null }: { shadowRadius?: number; lightFlag?: string | null }) {
+  // Anti-casino sentinel: key intensity / fill intensity MUST stay <= this ceiling.
+  // shaped path: 2.2 / 0.8 = 2.75x (PASS). base path: 2.0 / 0.7 = 2.86x (PASS).
+  // If key is raised in tuning, fill MUST rise proportionally — never exceed 3.5x.
+  const KEY_TO_FILL_RATIO_CEILING = 3.5; // anti-casino: key/fill MUST stay <= this
+  void KEY_TO_FILL_RATIO_CEILING; // suppress unused-var; this constant IS the documentation
+
+  const shaped = lightFlag !== "base"; // true = new warm gradient; false = prior flat-warm key
+
   return (
     <>
       {/* warm room bounce — a lit tavern, not a black void with one casino spotlight.
          Generous fill is what kills the harsh radial light-shafts between the stacks. */}
       <ambientLight intensity={0.32} color="#ffdfb0" />
-      <hemisphereLight args={["#fff1d8", "#1a0f08", 0.45]} />
+      {/* TP5 green-bounce: hemisphere ground tinted to dark felt-green on shaped path
+         (#0d3d24) so chip/card/rail undersides receive a subtle warm-green GI bounce
+         from the felt. Base path restores prior near-black ground (#1a0f08).
+         Sky color (#fff1d8) and intensity (0.45) are unchanged in both paths. */}
+      <hemisphereLight
+        args={[
+          "#fff1d8",
+          shaped ? "#0d3d24" : "#1a0f08",
+          0.45,
+        ]}
+      />
       {/* THE warm overhead key — the tavern lamp. High + broad + soft so it pools
-         gently over the whole table instead of stabbing rays past the chips. */}
+         gently over the whole table instead of stabbing rays past the chips.
+         TP5 shaped path: wider angle (0.72 vs 0.62) for a warm gradient not a cone;
+         slight intensity lift (2.2 vs 2.0). penumbra=1 NEVER lowered — anti-casino floor. */}
       <spotLight
         position={[1.2, 15, 2]}
-        angle={0.62}
+        angle={shaped ? 0.72 : 0.62}
         penumbra={1}
-        intensity={2.0}
+        intensity={shaped ? 2.2 : 2.0}
         decay={0}
         color="#fff1d6"
         castShadow={qp("sh") !== "off"}
@@ -869,10 +896,13 @@ function Lights({ shadowRadius = 8 }: { shadowRadius?: number }) {
         shadow-camera-far={28}
         shadow-radius={shadowRadius}
       />
-      {/* soft warm fill from the opposite side */}
-      <spotLight position={[-7, 6, -1]} angle={0.8} penumbra={1} intensity={0.7} decay={0} color="#ffd9a0" />
-      {/* gentle back rim for separation against the dark room (lightly cool, low) */}
-      <directionalLight position={[-3, 4, -7]} intensity={0.26} color="#bcc6dc" />
+      {/* soft warm fill from the opposite side — raised proportionally on shaped path
+         (0.8 vs 0.7) to maintain the key-to-fill ratio below KEY_TO_FILL_RATIO_CEILING.
+         The generous fill is the anti-casino floor: never lower it below 0.65. */}
+      <spotLight position={[-7, 6, -1]} angle={0.8} penumbra={1} intensity={shaped ? 0.8 : 0.7} decay={0} color="#ffd9a0" />
+      {/* gentle back rim for separation against the dark room (lightly cool, low).
+         Slightly lower on shaped path (0.22 vs 0.26) — less cool pop with the warmer rig. */}
+      <directionalLight position={[-3, 4, -7]} intensity={shaped ? 0.22 : 0.26} color="#bcc6dc" />
       {/* low warm wash raking the table BODY — reveals the apron + plinth so the
          furniture reads as mass (a warm floor bounce, never a casino uplight) */}
       <pointLight position={[0, -0.25, 11]} intensity={0.5} distance={34} decay={0} color="#ffcd95" />
@@ -921,6 +951,10 @@ function Scene() {
   // M1 — the cards: shared kit + the staged hand's real faces, laid out on the felt.
   const cardKit = useCardKit();
   const cardFaces = useCardFaces(LAB_HAND_IDS, maxAniso);
+  // TP5 Wave 2 (06-02): ?light= A/B flag — null/undefined = shaped (default); "base" = prior flat-warm key.
+  // Passed to Lights component; SoftShadows + ContactShadows grounding are ALWAYS on (not behind this flag).
+  const lightFlag = qp("light");
+
   // TP2 Lever 6: dealt variance — deterministic per-card micro-tilt/yaw (≤ MAX_TILT_RAD each).
   // Seeds are integer-constant Math.sin(i * prime) — frozen at construction, M9-safe.
   // ?card=base → no variance (pre-TP2 A/B); ?card=var (or any non-base value) → variance on.
@@ -1013,8 +1047,11 @@ function Scene() {
           focus=0: full contact-hardening (hard contact at surface, soft far penumbra). */}
       <SoftShadows size={30} samples={16} focus={0} />
 
-      {/* TP2 Lever 7: tighter shadow-radius when card stack active; base restores wide soft shadow */}
-      <Lights shadowRadius={cardFlag !== "base" ? 4 : 8} />
+      {/* TP5 Wave 2 (06-02): ?light= A/B flag — shaped key (default) vs prior flat-warm key.
+          lightFlag=null/"" = shaped path (wider angle 0.72, fill 0.8, green-bounce hemisphere);
+          lightFlag="base" = prior flat-warm key (angle 0.62, fill 0.7, hemisphere ground #1a0f08).
+          SoftShadows + ContactShadows grounding (from 06-01) are ALWAYS on — NEVER conditioned here. */}
+      <Lights shadowRadius={cardFlag !== "base" ? 4 : 8} lightFlag={lightFlag} />
 
       <group>
         {qp("table") ? (
