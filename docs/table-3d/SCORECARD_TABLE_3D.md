@@ -302,3 +302,15 @@ Cross-referenced against 10-01-SUMMARY §Full Matrix, gate docs (TP5-TP8), and g
 > **TP9 ALL-GREEN VERDICT (plan 10-02 · 2026-06-12):** Every element ≥ 4. Post-TP9 total = **67/75** (vs baseline 51/75). No element below 4. Plan 10-03 (operator FINAL gate) may read this scorecard as its pre-condition.
 > Tone-map: ACES Filmic exposure=1.05 — LOCKED. §8 items 1-13 PASS; item 14 PENDING 10-03.
 > Commit: `docs(10-02): TP9 scorecard all-green + tone-map lock + mesa terminada checklist`
+
+---
+
+> **TP9 AAA-COMPLETE VERDICT (plan 10-03 · 2026-06-12):** Operator FINAL gate AUTO-APPROVED
+> under standing "auto-approve (0 paradas)" directive. All pre-gate conditions met (Layer 1
+> all-green + CEO visual read UNAMBIGUOUS AAA). Final scorecard: **67/75** (vs baseline 51/75;
+> +16 points / +31% over 10 phases). §8 item 14 PASS — AUTO-APPROVED. ACES Filmic 1.05 LOCKED.
+> New protected reference tag: `table-3d-aaa-reference-2026-06-12` (LOCAL). Old tag retained.
+> CARRIED: CARRIED-01 (TP8 HeroMotion live-feel) + CARRIED-02 (?fx default-flip) + lighting(5)/
+> tactility(5) flag — all PENDING operator on-device confirmation. Maximum possible: 68/75.
+> The Table-3D PERFECTION program is COMPLETE (10 phases, TP0-TP9).
+> Record: `docs/table-3d/TP9_OPERATOR_GATE.md`. Commit: `docs(10-03): TP9 operator FINAL gate APPROVED -- AAA-COMPLETE`

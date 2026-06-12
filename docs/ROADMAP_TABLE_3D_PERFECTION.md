@@ -34,11 +34,21 @@
 
 ---
 
-## 1. Estado actual (verified 2026-06-09)
+## 1. Estado actual (verified 2026-06-09; updated 2026-06-12 — AAA-COMPLETE)
 
-- **Branch** `spike/table-3d-hero` @ `e6b0726`. **Protected reference tag** `table-3d-premium-reference-2026-06-04`
-  + checkpoint tag `table-3d-lab-checkpoint-2026-06-04` both present. Working tree clean. Nothing
-  pushed / merged / deployed.
+> **Table-3D PERFECTION program AAA-COMPLETE 2026-06-12 (auto-rendered under operator's standing
+> directive, pending operator on-device confirmation). New protected reference tag:
+> `table-3d-aaa-reference-2026-06-12` (LOCAL — push requires separate explicit operator
+> confirmation). Old reference retained permanently: `table-3d-premium-reference-2026-06-04`.**
+> Final scorecard: 67/75 (baseline 51/75). All 10 phases TP0-TP9 complete.
+> Record: `docs/table-3d/TP9_OPERATOR_GATE.md`.
+
+- **Branch** `spike/table-3d-hero` @ `e6b0726` (baseline; TP9 HEAD is ~44 commits ahead).
+  **Protected reference tags:**
+  - `table-3d-premium-reference-2026-06-04` (TP0 baseline — PERMANENT, never deleted)
+  - `table-3d-aaa-reference-2026-06-12` (TP9 AAA lock — LOCAL, created 2026-06-12; push pending
+    separate operator confirmation)
+  + checkpoint tag `table-3d-lab-checkpoint-2026-06-04` present. Nothing pushed / merged / deployed.
 - **Isolation verified:** the lab is one React tree served only at `/table-lab.html`; it imports
   nothing from the game and is **NOT** in the prod `vite build` (no `table-lab` input in
   `vite.config.ts`). `play.chiribito.com` / `chiribito.com` are unaffected.
