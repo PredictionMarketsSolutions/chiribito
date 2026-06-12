@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T18:28:35.000Z"
+last_updated: "2026-06-12T18:35:05.000Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 40
-  completed_plans: 38
-  percent: 95
+  completed_plans: 39
+  percent: 97
 ---
 
 # Project State
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 8 / TP7 — Cámaras. Plan 08-01 COMPLETE 2026-06-12 — TP7 pre-gate captures: 3 TP0-frozen money shots (card/hero/macro ?fx) recaptured on the finished TP6 table; M1=80px PASS / M2=3.66x(hero) PASS / M9=PASS (md5 02e4aa23…); grep-check-tp7-08.cjs 11/11 PASS; all TP0 presets CONFIRMED UNCHANGED (fov 32/40/26). Next: 08-02 (optional flythrough) or 08-03 (operator gate).
+**Current focus:** Phase 8 / TP7 — Cámaras. Plan 08-02 COMPLETE 2026-06-12 — optional ?fly flythrough SHIPPED: X-axis arc (amplitude 0.20wu, freq 0.22 rad/s, ~28s cycle), freeze guard on spin=off (M9-safe), 9 new code lines, commit 44c84d1. grep-check-tp7-08 11/11 PASS; vitest 45/45; tsc src/lab/ clean. Next: 08-03 (operator gate, autonomous:false). Do NOT auto-advance.
 
 ## Current Position
 
@@ -150,6 +150,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 7]: Plan 07-04: Vignette+BrightnessContrast+Noise SHIPPED -- stack order N8AO→DOF→BrightnessContrast→Vignette→Noise; BrightnessContrast brightness=0.03/contrast=0.05 (warm shadow floor); Vignette offset=0.70/darkness=0.12/eskil=false (restrained frame; tuned outward from SSOT default because top-corner rects are backdrop-black at hero angle); Noise opacity=0.03/premultiply=false (faint grain). Fog unchanged (near=20 — far rail reads as air). +A PASS cornerLuma=31.9>=18, hue=29.1deg warm, S=0.392. M9 PASS byte-identical captures (UV-seeded noise). M7 PASS (grep-check exits 0, no Bloom). M8 structural-assert: cornerTL/cornerTR rects are backdrop-black (natural delta 90% without any vignette; Vignette IS active: bottom corners darken -46 luma vs DOF baseline). Captures: grade-{hero,card,macro}.png + m9-{a,b}.png (RTX 4060, zero errors). vitest 45/45; tsc src/lab/ clean. Commit 0ba7f40.
 
+- [Phase 8]: Plan 08-02: optional ?fly flythrough SHIPPED -- isFly=qp("fly")!==null; isFrozen=qp("spin")==="off" (mount-static); flyCamRef on existing PerspectiveCamera (no second makeDefault); useFrame: early-returns when !isFly||isFrozen (M9-safe); amplitude 0.20wu<0.25wu limit; freq 0.22 rad/s<0.30 limit; X-axis only; 9 new code lines (budget <=40); autoRotate={false} unchanged; grep-check-tp7-08 11/11 PASS; grep-check-tp6-07 8/8 PASS; vitest 45/45; tsc src/lab/ clean. Commit 44c84d1.
+
 - [Phase 8]: Plan 08-01: TP7 pre-gate captures COMPLETE — 3 TP0-frozen money shots (card/hero/macro ?fx) recaptured on the finished TP6 table. M1=80px PASS (3.6× over 22px floor) / M2=3.66x(hero)/2.60x(card) PASS (>= 2.0×) / M9=PASS (md5 02e4aa23a039575d07d1cdecb61e85f7 byte-identical). TP0 presets CONFIRMED UNCHANGED: card fov:40/pos:[0,4.7,10.6] / hero fov:32/pos:[1.2,5.0,8.2] / macro fov:26/pos:[-1.7,1.7,2.4] — all byte-identical to TP0 lock. grep-check-tp7-08.cjs 11/11 PASS (8 forward-carry + autoRotate={false} + fov 32/40/26 + no-second-makeDefault-PerspectiveCamera). grep-check-tp6-07 backward compat PASS. vitest 45/45; tsc src/lab/ clean. Deviation: CHECK 11 regex scoped to PerspectiveCamera-only makeDefault (OrbitControls also has makeDefault; plain count would fail; scoped to intent). Commits 051914d+9488ef2.
 
 ### Pending Todos
@@ -174,9 +176,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T18:26:37Z
-Stopped at: Plan 08-01 COMPLETE 2026-06-12 -- TP7 pre-gate captures: 3 money shots + M9 double-capture + grep-check-tp7-08.cjs 11/11 + all TP0 presets CONFIRMED UNCHANGED. Do NOT auto-advance -- operator chooses.
-Next: Phase 8 / TP7 -- Plan 08-02 (optional ?fly flythrough, Claude's discretion) OR 08-03 (operator gate). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T18:35:05Z
+Stopped at: Plan 08-02 COMPLETE 2026-06-12 -- optional ?fly flythrough SHIPPED (9 new lines; freeze guard on spin=off; commit 44c84d1; grep-check 11/11; vitest 45/45; tsc src/lab/ clean). Do NOT auto-advance -- operator chooses.
+Next: Phase 8 / TP7 -- Plan 08-03 (operator gate, autonomous:false). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

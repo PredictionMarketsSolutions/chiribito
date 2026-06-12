@@ -292,6 +292,6 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
 | 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
-| 8. TP7 — Cámaras | 1/3 | In Progress|  |
+| 8. TP7 — Cámaras | 2/3 | In Progress|  |
 | 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
