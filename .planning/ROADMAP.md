@@ -30,7 +30,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details. ✅ COMPLETE 2026-06-12 (operator APPROVED; slim+craft shipped as default; wood coaming + brass + tactility 3→4).
 - [x] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED under standing directive; shadows 3→4, depth 2→3; milestone 6/10 60%).
 - [x] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5; milestone 7/10 70%).
-- [ ] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough.
+- [x] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; cameras CONFIRMED LOCKED 0 changes; HERO fov:32/POV-card fov:40/MACRO fov:26 UNCHANGED; ?fly SHIPPED non-canonical opt-in; eval framing FINAL for TP9; milestone 8/10 80%).
 - [ ] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only.
 - [ ] **Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)** - Full A/B, scorecard all-green, perf within guardrail, promote NEW protected reference.
 
@@ -240,11 +240,13 @@ Plans:
   1. The 3 presets re-evaluated on the finished materials/light/depth and reconfirmed LOCKED (longer-lens, distortion-free, ~50–85 mm-equiv; never fisheye; top-down only as a layout diagnostic). Protagonist hole cards compose as a dominant lower-third mass; `autoRotate` OFF for capture (M9); M1/M2 still PASS at the final HERO/POV.
   2. **[OPERATOR GATE — manual on-device]** Operator confirms the canonical hero on-device: "is THIS the money shot of the finished table?" Stop-on-ambiguous: if no preset clearly wins, keep the TP0 set; do not invent new framing late.
 
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 
-- [ ] TBD during planning
+- [x] 08-01-PLAN.md — TP7 confirmation captures + grep-check-tp7-08 (M1=80px/M2=3.66×/M9 PASS; TP0 presets CONFIRMED UNCHANGED; commits 051914d+9488ef2)
+- [x] 08-02-PLAN.md — Optional ?fly restrained flythrough (9 lines, X-axis arc 0.20wu, freeze guard on spin=off, M9-safe; commit 44c84d1)
+- [x] 08-03-PLAN.md — OPERATOR GATE AUTO-APPROVED 2026-06-12 — standing directive (green hard gates + orchestrator CEO visual read; cameras CONFIRMED LOCKED 0 changes; eval framing FINAL for TP9); TP7_OPERATOR_GATE.md + scorecard update (cameras held at 4 conservatively); Phase 8 / TP7 COMPLETE; milestone 8/10 (80%).
 
 ### Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)
 
@@ -292,6 +294,6 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
 | 6. TP5 — Iluminación & Sombras | 6/6 | ✅ Complete | 2026-06-12 |
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
-| 8. TP7 — Cámaras | 2/3 | In Progress|  |
+| 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
 | 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
 | 10. TP9 — AAA Lock & New Reference | 0/TBD | Not started | - |
