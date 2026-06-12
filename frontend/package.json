@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@colyseus/sdk": "^0.17.26",
+    "@react-three/postprocessing": "^2.19.1",
     "gsap": "^3.12.5",
-    "pixi.js": "^7.4.0"
+    "pixi.js": "^7.4.0",
+    "postprocessing": "^6.39.1"
   },
   "devDependencies": {
     "@react-three/drei": "^9.114.0",
