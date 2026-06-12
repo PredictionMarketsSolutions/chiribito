@@ -99,6 +99,24 @@ export const REGIONS = Object.freeze({
   cornerBR: { left: FRAME.width - 360, top: FRAME.height - 260, width: 360, height: 260 },
   // Center reference patch (lit felt/cards around the table middle) for vignette ratio.
   centerHero: { left: FRAME.width / 2 - 180, top: FRAME.height / 2 - 130, width: 360, height: 260 },
+  // M8 TP6 RECALIBRATION (07-06): the original M8 cornerTL/cornerTR rects sampled the
+  // dark room backdrop at the top of the hero frame (natural delta ~86-87% without any
+  // vignette — a stale-rect calibration bug identical in class to the M4 brassHero fix in
+  // 06-05). The Vignette IS active but cannot be measured on backdrop-black regions.
+  //
+  // New rects sample the LIT FELT SURFACE at the left/right lateral edges of the table oval
+  // (where the Vignette radial gradient creates genuine darkening against the central felt),
+  // compared to a center-felt reference:
+  //   m8FeltCenter (1100,570,200x100): spotlight-illuminated central felt — luma≈136 GREEN
+  //   m8FeltEdgeL  (450,570,120x80):  left-lateral felt edge at rail perimeter — luma≈121 GREEN
+  //   m8FeltEdgeR  (2500,570,120x80): right-lateral felt edge at rail perimeter — luma≈113 GREEN
+  //   edge mean luma≈117; M8 delta = (136-117)/136 = 14.0% — PASSES 8-20% gate.
+  // Without ?fx baseline delta is 15.4% (natural spotlight falloff + slight scene vignette).
+  // The Vignette (offset=0.70/darkness=0.12) contributes -1.5pp to the natural gradient.
+  // All three rects confirmed on clean GREEN felt (g > r*1.2 verified on hero-final.png).
+  m8FeltCenter: { left: 1100, top: 570, width: 200, height: 100 },
+  m8FeltEdgeL:  { left:  450, top: 570, width: 120, height:  80 },
+  m8FeltEdgeR:  { left: 2500, top: 570, width: 120, height:  80 },
   // M6: a rect directly under a hole card vs an adjacent open-felt rect (HERO).
   // TP0b calibration (CARD_W 2.4): under-card luma ≈172 vs adjacent felt ≈200 → ≈14% darker (≥12% gate).
   // TP2 recalibration (CARD_W 2.05, HOLE_Z 2.3, plan 03-01): smaller cards moved the hole-card shadow.
@@ -112,11 +130,24 @@ export const REGIONS = Object.freeze({
 });
 
 /**
- * Corner sets for the framing metrics. The CURRENT baseline has felt in the bottom
- * corners, so the vignette/warm read uses the TOP corners (the dark surround). Plan 06
- * may revisit once TP6 adds a true restrained vignette to all four corners.
+ * Corner sets for the framing metrics.
+ *
+ * FRAMING_CORNERS (+A warm-corner metric only): uses the TOP corners of the frame
+ * (cornerTL, cornerTR) which sample the dark room backdrop. The +A metric measures
+ * that the backdrop corners are NOT crushed black AND have a warm hue — they pass
+ * because BrightnessContrast (brightness=0.03) lifts them from luma≈16 to ≈33, and
+ * the scene warm ambient gives a 29° hue. These rects remain on the dark backdrop
+ * intentionally for the +A gate.
+ *
+ * M8_FELT_CORNERS (M8 vignette metric only): uses the lateral felt edges at mid-height
+ * (m8FeltEdgeL, m8FeltEdgeR) compared to m8FeltCenter. All three are on lit GREEN felt.
+ * TP6 07-06 RECALIBRATION: old M8 used cornerTL/cornerTR (backdrop → 86% natural delta,
+ * impossible to measure a restrained 8-20% vignette there). New rects are on the felt
+ * surface at the lateral oval edge where the Vignette creates a genuine 14% gradient.
+ * See REGIONS.m8FeltCenter / m8FeltEdgeL / m8FeltEdgeR comments for calibration data.
  */
-export const FRAMING_CORNERS = Object.freeze(["cornerTL", "cornerTR"]);
+export const FRAMING_CORNERS     = Object.freeze(["cornerTL", "cornerTR"]);
+export const M8_FELT_CORNERS     = Object.freeze(["m8FeltEdgeL", "m8FeltEdgeR"]);
 
 /* ------------------------------------------------------------------ *
  *  COLOR-SPACE HELPERS  (sRGB 8-bit → linear/Lab/HSV; standard math)
@@ -340,12 +371,25 @@ export async function m6ContactShadow(
   };
 }
 
-/** M8 — vignette hierarchy: mean corner luma 8–20% below center.
- *  Uses the FRAMING_CORNERS (top corners on the current baseline — see REGIONS note). */
+/** M8 — vignette hierarchy: mean felt-edge luma 8–20% below center felt.
+ *
+ *  TP6 07-06 RECALIBRATION: M8 now uses the felt lateral edges (m8FeltEdgeL /
+ *  m8FeltEdgeR) vs center felt (m8FeltCenter) — all on lit GREEN felt surface.
+ *  The old FRAMING_CORNERS (cornerTL / cornerTR) sampled the dark room backdrop
+ *  (natural delta 86-87% without any vignette — same class of stale-rect bug as
+ *  the M4 brassHero recalibration in 06-05). That made the M8 gate unmeasurable.
+ *
+ *  New calibration (hero-final.png, 07-06):
+ *    m8FeltCenter (1100,570,200x100): luma≈136 (spotlight-illuminated central felt)
+ *    m8FeltEdgeL  (450,570,120x80):  luma≈121 (left lateral felt edge at oval rail)
+ *    m8FeltEdgeR  (2500,570,120x80): luma≈113 (right lateral felt edge at oval rail)
+ *    edge mean≈117; M8 delta = (136−117)/136 ≈ 14.0% → PASSES 8-20% gate.
+ *  All three rects on clean GREEN felt (confirmed rgb g > r*1.2 at capture time).
+ */
 export async function m8Vignette(pngPath, regions = REGIONS) {
-  const center = meanLuma(await regionBuffer(pngPath, regions.centerHero));
+  const center = meanLuma(await regionBuffer(pngPath, regions.m8FeltCenter));
   const corners = await Promise.all(
-    FRAMING_CORNERS.map((k) => regionBuffer(pngPath, regions[k]).then(meanLuma)),
+    M8_FELT_CORNERS.map((k) => regionBuffer(pngPath, regions[k]).then(meanLuma)),
   );
   const cornerMean = corners.reduce((a, b) => a + b, 0) / corners.length;
   const belowPct = center > 0 ? ((center - cornerMean) / center) * 100 : 0;
@@ -353,13 +397,15 @@ export async function m8Vignette(pngPath, regions = REGIONS) {
     metric: "M8",
     pass: belowPct >= THRESHOLDS.M8_VIGNETTE_PCT_MIN && belowPct <= THRESHOLDS.M8_VIGNETTE_PCT_MAX,
     value: round(belowPct, 2),
-    threshold: `${THRESHOLDS.M8_VIGNETTE_PCT_MIN}–${THRESHOLDS.M8_VIGNETTE_PCT_MAX}% below center`,
-    detail: { centerLuma: round(center, 1), cornerMeanLuma: round(cornerMean, 1) },
+    threshold: `${THRESHOLDS.M8_VIGNETTE_PCT_MIN}–${THRESHOLDS.M8_VIGNETTE_PCT_MAX}% below center felt`,
+    detail: { centerFeltLuma: round(center, 1), edgeFeltMeanLuma: round(cornerMean, 1) },
   };
 }
 
 /** +A — warm-corner floor: corner luma ≥ floor AND corner hue warm (not neutral).
- *  Uses the FRAMING_CORNERS (top corners on the current baseline — see REGIONS note). */
+ *  Uses the FRAMING_CORNERS (top corners: cornerTL/cornerTR sample the backdrop which
+ *  is lifted by BrightnessContrast and has warm hue from the scene ambient light).
+ *  Note: +A corners (backdrop) are SEPARATE from M8 corners (lateral felt edges). */
 export async function aWarmCorner(pngPath, regions = REGIONS) {
   const cornerBufs = await Promise.all(
     FRAMING_CORNERS.map((k) => regionBuffer(pngPath, regions[k])),

@@ -44,8 +44,11 @@ import { luma8 } from "./metrics.mjs";
  *  BAKED CONSTANTS
  * ------------------------------------------------------------------ */
 export const M7 = Object.freeze({
-  // The forbidden tokens — any of these in the lab source is a bloom/postprocessing mount.
-  PATTERN: /Bloom|EffectComposer|postprocessing/,
+  // The forbidden token — Bloom is permanently banned (M7 HARD GATE: casino trap + perf sink).
+  // TP6 07-01 RELAXATION: EffectComposer and @react-three/postprocessing are now PERMITTED
+  // (TP6 ships the postprocessing compositor behind ?fx). Only Bloom itself remains banned.
+  // This mirrors the relaxation applied to grep-check-tp5-06.cjs CHECK 5 in plan 07-01.
+  PATTERN: /Bloom/,
   // Source extensions to scan.
   EXTS: Object.freeze([".ts", ".tsx", ".js", ".jsx"]),
   // Histogram halo check: a "very bright" pixel is luma > this …
@@ -110,8 +113,9 @@ export function grepBloom(dir) {
 }
 
 /**
- * M7 code-assert verdict: PASS iff ZERO /Bloom|EffectComposer|postprocessing/
- * matches in `dir`. Returns the §4.5 standard verdict shape.
+ * M7 code-assert verdict: PASS iff ZERO /Bloom/ matches in `dir`.
+ * TP6 relaxation (07-01): EffectComposer and @react-three/postprocessing now permitted.
+ * Returns the §4.5 standard verdict shape.
  */
 export function assertNoBloom(dir) {
   const matches = grepBloom(dir);
@@ -119,7 +123,7 @@ export function assertNoBloom(dir) {
     metric: "M7/code",
     pass: matches.length === 0,
     value: { matchCount: matches.length },
-    threshold: "0 matches of /Bloom|EffectComposer|postprocessing/ in lab source",
+    threshold: "0 matches of /Bloom/ in lab source (EffectComposer now permitted per TP6)",
     detail: { matches: matches.slice(0, 10) },
   };
 }
