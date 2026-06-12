@@ -529,9 +529,10 @@ function Table({
   const isWelt    = railFlag === "welt"    || railFlag === "craft"; // Lever A: welt cord at seam
   const isNormals = railFlag === "normals" || railFlag === "craft"; // Levers B+C+F: normalMaps
   const isBrass   = railFlag === "brass"   || railFlag === "craft"; // Lever D: aged-brass tune
-  // isCraft is implicit: activated by "craft" value which sets isWelt + isNormals + isBrass
+  const isCraft   = railFlag === "craft";                        // accumulator: all passing craft levers
+  void isCraft; // referenced above via the per-lever flags; suppress unused-var if tree-shaken
 
-  const { felt, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
+  const { felt, leatherMat, woodMat, brassMat, bodyMat, weltMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
     const feltKind = qp("felt");
     const feltMat =
       feltKind === "magenta"
@@ -638,8 +639,19 @@ function Table({
       side: THREE.DoubleSide,
     });
     const bodyPoints = bodyProfile();
-    return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints };
-  }, [logoImg, aceImgs, isSlim, isNormals, isBrass]);
+    // Lever A: welt/cord at felt-to-rail seam — near-black cognac, reads as shadow crease (not stripe).
+    // Tube radius 0.012 (≤ threshold; anti-fussy-welt rule); position y=0.022 (above brass at y=0.014).
+    // Radius FELT_R*0.960 > FELT_R*0.957 (brass) — different radius avoids coplanar z-fighting.
+    // polygonOffset available as fallback if flickering appears at orbit angles.
+    const weltMat = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color("#2a1208"),   // near-black cognac — reads as tight crease, not a stripe
+      roughness: 0.88,
+      metalness: 0,
+      clearcoat: 0.05,
+      clearcoatRoughness: 0.9,
+    });
+    return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, weltMat, leatherPoints, woodPoints, bodyPoints };
+  }, [logoImg, aceImgs, isSlim, isNormals, isBrass, isWelt]);
 
   return (
     <group scale={[OVAL_X, 1, 1]}>
@@ -654,6 +666,17 @@ function Table({
         <torusGeometry args={[FELT_R * 0.957, 0.02, 16, 180]} />
         <primitive object={brassMat} attach="material" />
       </mesh>
+
+      {/* Lever A: welt/cord at felt-to-rail seam (TP4) — hides the hard CG join.
+          Tube radius 0.012 ≤ anti-fussy-welt threshold; near-black #2a1208 reads as shadow crease.
+          y=0.022 > brass y=0.014; radius FELT_R*0.960 > FELT_R*0.957 (brass) — no coplanar z-fight.
+          Active only when isWelt (?rail=welt|craft). +1 draw call (M10: 105→106, still <150). */}
+      {isWelt && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.022, 0]}>
+          <torusGeometry args={[FELT_R * 0.960, 0.012, 12, 180]} />
+          <primitive object={weltMat} attach="material" />
+        </mesh>
+      )}
 
       {/* padded leather armrest bumper — the cushioned inner roll */}
       <mesh castShadow receiveShadow>
