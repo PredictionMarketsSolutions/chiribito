@@ -185,7 +185,7 @@ Plans:
 
 - [x] 05-01: TP4 Baseline Capture + Elegance Verdict (COMPLETE 2026-06-12 — verdict=lost-in-specific-respect; tp4-before-rail tag; hero+rail anchors; TP4_VERDICT.md)
 - [x] 05-02: Surgical Slim (woodCoamingProfile yTop 0.34→0.28, behind ?rail=slim)
-- [ ] 05-03: Craft Levers (welt, wood/leather normalMaps, brass aged-brass tune, UV remap, outer wall volume)
+- [x] 05-03: Craft Levers (welt, wood/leather normalMaps, brass aged-brass tune, UV remap, outer wall volume)
 - [ ] 05-04: Operator Gate (autonomous: false — HERO + rail/eye; "elegance recovered without losing material/mass?")
 
 ### Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)
@@ -278,7 +278,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
 | 4. TP3 — Fichas Materiality + Perf | 4/4 | ✅ Complete | 2026-06-11 |
-| 5. TP4 — Rail & Contour Elegance | 2/4 | In Progress|  |
+| 5. TP4 — Rail & Contour Elegance | 3/4 | In Progress|  |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
 | 8. TP7 — Cámaras | 0/TBD | Not started | - |

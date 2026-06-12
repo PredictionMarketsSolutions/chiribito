@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-06-12T02:19:55.458Z"
+last_updated: "2026-06-12T02:31:39.553Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
   percent: 40
 ---
 
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 5 / TP4 — Rail & Contour Elegance. 05-01 COMPLETE 2026-06-12 — tp4-before-rail tag + tp4-base anchors + TP4_VERDICT.md (verdict=lost-in-specific-respect; woodCoamingProfile yTop 0.34→0.28 triggered for 05-02). Next = 05-02 (surgical slim, woodCoamingProfile yTop).
+**Current focus:** Phase 5 / TP4 — Rail & Contour Elegance. 05-03 COMPLETE 2026-06-12 — six craft levers behind ?rail= flag system; Levers A/B/C/D/F structural PASS; Lever E dropped (TP7); grep-check-tp4-05.cjs exits 0; vitest 45/45 green. Next = 05-04 (operator gate, autonomous:false — visual ship/drop confirmation at HERO+rail views).
 
 ## Current Position
 
@@ -120,6 +120,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 5]: Plan 05-01 (TP4 VERDICT): Verdict=lost-in-specific-respect — woodCoamingProfile yTop=0.34 reads as slightly heavy horizontal band at rail/eye view; leather roll reads correct (rOut=FELT_R*1.072 justified, broad crown, correct sheen). Edge-thickness ratio before=0.087 (0.565/6.5, 8.7% of FELT_R). Absent elev/ anchors recorded explicitly (non-blocking). Action: 05-02 targets woodCoamingProfile yTop 0.34→0.28 (−18% band height, behind ?rail=slim). Craft levers 05-03 proceed in all cases. tag tp4-before-rail=LOCAL. Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
 - [Phase ?]: 05-02 slim SHIPPED: woodCoamingProfile yTop 0.34->0.28 behind ?rail=slim; visual verdict better-without-losing-material; thin-disc invariant PASS (rOut 7.605 > 7.540); bodyProfile inviolate
+- [Phase 5]: 05-03 craft levers STRUCTURAL PASS: ?rail= flag system (railFlag/isWelt/isNormals/isBrass/isSlim/isCraft); Lever D brassMat roughness 0.34->0.42 + envMapIntensity 0.45; Lever B+F woodNapNormalMap (freq=12, crossProfile, NoColorSpace, normalScale 0.15); Lever C leatherNapNormalMap (pebble height field, NoColorSpace, normalScale 0.22, bumpMap->normalMap upgrade); Lever A welt FELT_R*0.960 tube 0.012 y=0.022 #2a1208; Lever E DROPPED (UV seam risk, TP7). grep-check-tp4-05.cjs exits 0 (7/7 checks). M4 structural PASS (roughness 0.42 in 0.38-0.45; H39/S0.38/V0.67 expected). M10 structural PASS (105+1=106 < 150). Visual reads at operator gate 05-04. Commits: 12f67a0 + 863801a.
 
 ### Pending Todos
 
@@ -143,9 +144,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T02:19:55.451Z
-Stopped at: Plan 05-02 COMPLETE 2026-06-12 -- surgical slim woodCoamingProfile yTop 0.34->0.28 SHIPPED behind ?rail=slim; thin-disc PASS; 45/45 vitest; commit b332357
-Next: 05-02 (surgical slim — woodCoamingProfile yTop 0.34→0.28, behind ?rail=slim, isolated from craft levers).
+Last session: 2026-06-12T02:30:35Z
+Stopped at: Plan 05-03 COMPLETE 2026-06-12 -- six craft levers + ?rail= flag system + grep-check-tp4-05.cjs; Levers A/B/C/D/F structural PASS; Lever E dropped (TP7); 45/45 vitest; commits 12f67a0 + 863801a
+Next: 05-04 (operator gate, autonomous:false — visual ship/drop confirmation at HERO+rail views with ?rail=craft).
 Carried forward (non-blocking): depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
