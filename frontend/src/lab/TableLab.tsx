@@ -11,8 +11,8 @@
  * Clay chips with worked edges, varnished wood rail, recessed baize, the mark
  * inlaid into the felt (born inside the table, not pasted on top).
  */
-import { useMemo, Suspense } from "react";
-import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import { useMemo, useRef, Suspense } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { EffectComposer, N8AO, DepthOfField, Vignette, BrightnessContrast, Noise } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
 import {
@@ -1065,6 +1065,18 @@ function Scene() {
     return presets[key] || presets.wide;
   }, []);
 
+  // TP7 Wave 2 (08-02): optional ?fly flythrough — X-axis arc, non-canonical, FREEZES on spin=off.
+  // isFrozen=true when the harness appends spin=off → useFrame is a no-op → M9-safe still.
+  const isFly = qp("fly") !== null;
+  const isFrozen = qp("spin") === "off";
+  const flyCamRef = useRef<THREE.PerspectiveCamera>(null);
+  useFrame(({ clock }) => {
+    if (!isFly || isFrozen || !flyCamRef.current) return;
+    const t = clock.getElapsedTime();
+    const swing = Math.sin(t * 0.22) * 0.20; // X-axis, ~28s cycle, amplitude 0.20wu < 0.25wu limit
+    flyCamRef.current.position.x = cam.pos[0] + swing; // Y and Z stay at cam.pos — pure lateral arc
+  });
+
   // TP6 Wave 3 (07-03): DOF worldFocusDistance — computed ONCE at mount from the active cam preset.
   // HOLE_WORLD: hole cards sit at HOLE_Z=2.3 (from cards.ts), FELT_REST_Y+0.02 ≈ 0.07 (y), x=0.
   // CAM_WORLD: the active preset position (vector3 from cam.pos).
@@ -1098,7 +1110,7 @@ function Scene() {
         <primitive object={backdropMat} attach="material" />
       </mesh>
 
-      <PerspectiveCamera makeDefault position={cam.pos} fov={cam.fov} />
+      <PerspectiveCamera ref={flyCamRef} makeDefault position={cam.pos} fov={cam.fov} />
       {/* Azimuth CLAMPED to the readable front arc (±~0.85 rad around the preset). The old 360°
           auto-rotate swung the camera behind the board, where the player-oriented cards read
           upside down — physically unavoidable from the far side. Default is now a static hero
