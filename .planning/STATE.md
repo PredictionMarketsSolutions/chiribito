@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T19:00:00Z"
+last_updated: "2026-06-12T18:28:35.000Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 37
-  completed_plans: 37
-  percent: 70
+  total_plans: 40
+  completed_plans: 38
+  percent: 95
 ---
 
 # Project State
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 8 / TP7 — Cámaras (confirm and lock the canonical money shots: HERO ¾ fov32 / POV fov40 / MACRO fov26 against the upgraded table; optional cinematic flythrough). Phase 7 / TP6 COMPLETE 2026-06-12 — operator gate 07-07 AUTO-APPROVED under standing directive (all HARD gates green + orchestrator CEO visual read; flagged for operator batch confirmation). Full TP6 stack ships: N8AO (M6 PASS 27.74%) + DOF (M1 PASS 50px, NOT cut) + BrightnessContrast + Vignette (M8 PASS 13.97%, felt rects) + Noise (M9 PASS byte-identical) behind ?fx; CenterGameState unconditional. Scorecard: depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5 (all AAA). Milestone 7/10 (70%). OPEN: ?fx-default decision (perf-vs-showcase call) left for operator batch review.
+**Current focus:** Phase 8 / TP7 — Cámaras. Plan 08-01 COMPLETE 2026-06-12 — TP7 pre-gate captures: 3 TP0-frozen money shots (card/hero/macro ?fx) recaptured on the finished TP6 table; M1=80px PASS / M2=3.66x(hero) PASS / M9=PASS (md5 02e4aa23…); grep-check-tp7-08.cjs 11/11 PASS; all TP0 presets CONFIRMED UNCHANGED (fov 32/40/26). Next: 08-02 (optional flythrough) or 08-03 (operator gate).
 
 ## Current Position
 
@@ -38,7 +38,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
 Status: ✅ TP6 COMPLETE (Phase 7 / TP6 operator gate 07-07 AUTO-APPROVED 2026-06-12; milestone 7/10 70%). TP6 full: N8AO+DOF+BrightnessContrast+Vignette+Noise behind ?fx; CenterGameState unconditional; grep-check-tp6-07 exits 0; M8 rect recalibrated to felt edges (13.97% PASS). Scorecard: depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5 (all AAA). OPEN: ?fx-default decision for operator batch review. Next: Phase 8 / TP7 (Cámaras — lock the canonical money shots). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
 Last activity: 2026-06-12
 
-Progress: [███████░░░] 70%
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -150,6 +150,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 7]: Plan 07-04: Vignette+BrightnessContrast+Noise SHIPPED -- stack order N8AO→DOF→BrightnessContrast→Vignette→Noise; BrightnessContrast brightness=0.03/contrast=0.05 (warm shadow floor); Vignette offset=0.70/darkness=0.12/eskil=false (restrained frame; tuned outward from SSOT default because top-corner rects are backdrop-black at hero angle); Noise opacity=0.03/premultiply=false (faint grain). Fog unchanged (near=20 — far rail reads as air). +A PASS cornerLuma=31.9>=18, hue=29.1deg warm, S=0.392. M9 PASS byte-identical captures (UV-seeded noise). M7 PASS (grep-check exits 0, no Bloom). M8 structural-assert: cornerTL/cornerTR rects are backdrop-black (natural delta 90% without any vignette; Vignette IS active: bottom corners darken -46 luma vs DOF baseline). Captures: grade-{hero,card,macro}.png + m9-{a,b}.png (RTX 4060, zero errors). vitest 45/45; tsc src/lab/ clean. Commit 0ba7f40.
 
+- [Phase 8]: Plan 08-01: TP7 pre-gate captures COMPLETE — 3 TP0-frozen money shots (card/hero/macro ?fx) recaptured on the finished TP6 table. M1=80px PASS (3.6× over 22px floor) / M2=3.66x(hero)/2.60x(card) PASS (>= 2.0×) / M9=PASS (md5 02e4aa23a039575d07d1cdecb61e85f7 byte-identical). TP0 presets CONFIRMED UNCHANGED: card fov:40/pos:[0,4.7,10.6] / hero fov:32/pos:[1.2,5.0,8.2] / macro fov:26/pos:[-1.7,1.7,2.4] — all byte-identical to TP0 lock. grep-check-tp7-08.cjs 11/11 PASS (8 forward-carry + autoRotate={false} + fov 32/40/26 + no-second-makeDefault-PerspectiveCamera). grep-check-tp6-07 backward compat PASS. vitest 45/45; tsc src/lab/ clean. Deviation: CHECK 11 regex scoped to PerspectiveCamera-only makeDefault (OrbitControls also has makeDefault; plain count would fail; scoped to intent). Commits 051914d+9488ef2.
+
 ### Pending Todos
 
 None yet.
@@ -172,9 +174,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T19:00:00Z
-Stopped at: Plan 07-07 COMPLETE 2026-06-12 -- TP6 operator gate AUTO-APPROVED; TP6_OPERATOR_GATE.md written; SCORECARD_TABLE_3D.md updated (depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5); Phase 7 / TP6 COMPLETE; milestone 7/10 (70%). Do NOT auto-advance -- operator chooses.
-Next: Phase 8 / TP7 -- Cámaras (confirm and lock the canonical money shots HERO ¾ fov32 / POV fov40 / MACRO fov26 against the upgraded table; optional cinematic flythrough). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T18:26:37Z
+Stopped at: Plan 08-01 COMPLETE 2026-06-12 -- TP7 pre-gate captures: 3 money shots + M9 double-capture + grep-check-tp7-08.cjs 11/11 + all TP0 presets CONFIRMED UNCHANGED. Do NOT auto-advance -- operator chooses.
+Next: Phase 8 / TP7 -- Plan 08-02 (optional ?fly flythrough, Claude's discretion) OR 08-03 (operator gate). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
