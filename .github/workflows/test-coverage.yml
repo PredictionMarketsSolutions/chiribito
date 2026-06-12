@@ -15,6 +15,14 @@ concurrency:
 env:
   CI: true
 
+# The "Comment PR with coverage" step needs write access to post the coverage comment on PRs.
+# Without this the default GITHUB_TOKEN is read-only and the step fails with 403 on pull_request
+# events (it passes on push because there is no PR to comment on).
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   test:
     name: Backend tests
@@ -55,6 +63,7 @@ jobs:
 
       - name: Comment PR with coverage
         if: github.event_name == 'pull_request' && matrix.node-version == '20.x'
+        continue-on-error: true # a failed coverage comment (e.g. restricted token) must not fail CI
         uses: actions/github-script@v7
         with:
           script: |

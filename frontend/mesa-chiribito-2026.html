@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Mesa Chiribito 2026 — El Reservado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        /* Emerald felt */
+        --em-lit: #16a276;
+        --em-1: #0f7a55;
+        --em-2: #0a5a3f;
+        --em-3: #06402d;
+        --em-4: #042a1d;
+        /* Brass */
+        --brass-hi: #f6e3ad;
+        --brass-1: #e7c97e;
+        --brass-2: #c99a4e;
+        --brass-3: #9a6f31;
+        --brass-deep: #6e4d20;
+        /* Burgundy leather */
+        --leather-hi: #8e3543;
+        --leather-1: #6e2230;
+        --leather-2: #561622;
+        --leather-3: #3c0f18;
+        /* Cream / ink */
+        --cream: #f4ead2;
+        --ink: #120a06;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        font-family: "Manrope", system-ui, sans-serif;
+        color: var(--cream);
+        /* The reservado: a warm, dark tavern room — the table is the lit heart of a scene,
+           not an oval floating on black. */
+        background:
+          radial-gradient(ellipse 90% 70% at 50% 16%, #3a2415 0%, #1d1108 38%, #0c0704 72%, #060302 100%);
+        overflow: hidden;
+        min-height: 100vh;
+      }
+      /* warm lamp light pouring from above the table */
+      .room-light {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse 46% 40% at 50% 30%, rgba(255, 214, 150, 0.22), transparent 60%),
+          radial-gradient(circle 8px at 50% 3%, rgba(255, 226, 170, 0.9), transparent 70%);
+      }
+      .room-grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.5;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+      }
+
+      .stage {
+        position: relative;
+        z-index: 2;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 24px;
+      }
+
+      /* ---- THE TABLE ---------------------------------------------------------- */
+      .m26-table {
+        position: relative;
+        width: min(92vw, 940px);
+        aspect-ratio: 1.5 / 1;
+        border-radius: 50% / 50%;
+        /* the table casts a real shadow into the room */
+        filter: drop-shadow(0 60px 70px rgba(0, 0, 0, 0.7));
+      }
+
+      /* leather rail with brass studs */
+      .m26-rail {
+        position: absolute;
+        inset: 0;
+        border-radius: 50% / 50%;
+        background:
+          /* a soft sheen sweeping across the leather (lamp reflection) */
+          radial-gradient(ellipse 60% 36% at 50% 8%, rgba(255, 210, 165, 0.22), transparent 60%),
+          /* polished burgundy leather, lit from the top, deepening to the base */
+          radial-gradient(ellipse 130% 130% at 50% 14%, var(--leather-hi) 0%, var(--leather-1) 30%, var(--leather-2) 62%, var(--leather-3) 100%);
+        box-shadow:
+          /* a rich brass lip outside + a dark seat */
+          0 0 0 2px var(--brass-1),
+          0 0 0 4px var(--brass-3),
+          0 0 0 6px var(--brass-deep),
+          0 0 0 7px rgba(0,0,0,0.7),
+          /* leather rounding */
+          inset 0 5px 12px rgba(255, 205, 160, 0.2),
+          inset 0 -16px 34px rgba(0, 0, 0, 0.62);
+      }
+      /* the brass nailheads themselves, as a dotted ring */
+      .m26-studs {
+        position: absolute;
+        inset: 8.5%;
+        border-radius: 50% / 50%;
+        pointer-events: none;
+        background:
+          repeating-conic-gradient(from 0deg at 50% 50%,
+            var(--brass-hi) 0deg 0.7deg, transparent 0.7deg 6deg);
+        -webkit-mask: radial-gradient(circle at 50% 50%, transparent 0 49.2%, #000 49.4% 50.4%, transparent 50.6%);
+        mask: radial-gradient(circle at 50% 50%, transparent 0 49.2%, #000 49.4% 50.4%, transparent 50.6%);
+        filter: drop-shadow(0 1px 0 rgba(0,0,0,0.6));
+        opacity: 0.9;
+      }
+
+      /* the emerald felt inset into the rail */
+      .m26-felt {
+        position: absolute;
+        inset: 7.6%;
+        border-radius: 50% / 50%;
+        background:
+          /* lamp pool — a warm, soft light gathered at the centre (the lamp above) */
+          radial-gradient(ellipse 56% 50% at 50% 40%, rgba(255, 232, 188, 0.17), transparent 58%),
+          /* deep rim vignette — the eye is pulled into the lit centre */
+          radial-gradient(ellipse 116% 110% at 50% 50%, transparent 42%, rgba(0,0,0,0.5) 84%, rgba(0,0,0,0.74) 100%),
+          /* a noble deep-emerald wash to enrich + deepen the cloth */
+          radial-gradient(ellipse 100% 86% at 50% 42%, rgba(18,120,84,0.55) 0%, rgba(8,74,52,0.5) 55%, rgba(3,40,28,0.7) 100%),
+          /* the REAL woven felt — fibre + weave, not a flat fill */
+          url("/textures/felt.png");
+        background-size: auto, auto, auto, cover;
+        background-position: center;
+        box-shadow:
+          /* felt sits BELOW the brass lip — a crisp recessed edge */
+          inset 0 0 0 2px rgba(0,0,0,0.5),
+          inset 0 0 0 4px var(--brass-deep),
+          inset 0 16px 38px rgba(0,0,0,0.55),
+          inset 0 -8px 24px rgba(0,0,0,0.42);
+        overflow: hidden;
+      }
+
+      /* ---- CENTRAL BRASS CREST (brand hero) ---------------------------------- */
+      .m26-crest {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 39%;
+        aspect-ratio: 1;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        border-radius: 50%;
+        /* brushed brass medallion */
+        background:
+          radial-gradient(circle at 38% 30%, rgba(255,248,225,0.5), transparent 42%),
+          conic-gradient(from 210deg, #7a5826, #d9b069, #8a6420, #f0d9a0, #9a6f31, #d9b069, #7a5826);
+        box-shadow:
+          inset 0 0 0 2px var(--brass-hi),
+          inset 0 0 0 7px var(--brass-3),
+          inset 0 0 0 8px rgba(0,0,0,0.5),
+          inset 0 4px 14px rgba(255,248,225,0.4),
+          inset 0 -10px 22px rgba(60,40,12,0.7),
+          0 8px 22px rgba(0,0,0,0.55);
+        /* only present at rest — community cards sit above it in play */
+        opacity: 0.96;
+      }
+      .m26-crest .glyph {
+        font-family: "Cinzel", serif;
+        font-weight: 900;
+        font-size: clamp(28px, 6vw, 60px);
+        color: #4a3414;
+        line-height: 1;
+        text-shadow: 0 1px 0 rgba(255,245,220,0.6), 0 -1px 1px rgba(0,0,0,0.4);
+        letter-spacing: 1px;
+      }
+      .m26-crest .word {
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        font-size: clamp(8px, 1.5vw, 13px);
+        letter-spacing: 3px;
+        color: #43300f;
+        margin-top: 4px;
+        text-shadow: 0 1px 0 rgba(255,245,220,0.5);
+      }
+      .m26-crest .sub {
+        font-family: "Cormorant Garamond", serif;
+        font-style: italic;
+        font-size: clamp(8px, 1.4vw, 13px);
+        color: #5a431c;
+        margin-top: 1px;
+      }
+
+      /* ---- JEWEL CHIPS -------------------------------------------------------- */
+      .m26-pot {
+        position: absolute;
+        left: 50%;
+        top: 62%;
+        transform: translateX(-50%);
+        z-index: 5;
+        display: flex;
+        gap: 7px;
+        align-items: flex-end;
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+      }
+      .m26-stack { position: relative; width: 46px; }
+      .m26-chip {
+        position: absolute;
+        left: 0;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 36% 26%, rgba(255,255,255,0.75), rgba(255,255,255,0) 30%),
+          radial-gradient(circle at 50% 50%, transparent 0 30%, var(--enamel) 31% 38%, transparent 39%),
+          conic-gradient(from 0deg, var(--brass-2) 0deg 12deg, var(--brass-hi) 12deg 24deg),
+          radial-gradient(circle at 50% 42%, var(--enamel-lit) 0%, var(--enamel) 55%, var(--enamel-dk) 100%);
+        box-shadow:
+          0 2px 0 var(--enamel-dk), 0 4px 0 var(--enamel-dk), 0 6px 0 var(--enamel-dk),
+          inset 0 0 0 4px var(--brass-2),
+          inset 0 2px 3px rgba(255,255,255,0.6),
+          inset 0 -3px 4px rgba(0,0,0,0.45);
+      }
+      .m26-chip--brass { --enamel:#caa24f; --enamel-lit:#ecd08a; --enamel-dk:#7a5a22; }
+      .m26-chip--night { --enamel:#274a72; --enamel-lit:#4f7bab; --enamel-dk:#16304e; }
+      .m26-chip--green { --enamel:#0b6e4f; --enamel-lit:#16a87c; --enamel-dk:#053a2a; }
+      .m26-chip--wine  { --enamel:#7e2236; --enamel-lit:#b13f57; --enamel-dk:#4d1320; }
+
+      /* ---- CARDS ------------------------------------------------------------- */
+      .m26-cards {
+        position: absolute;
+        left: 50%;
+        top: 41%;
+        transform: translateX(-50%);
+        z-index: 6;
+        display: flex;
+        gap: 9px;
+      }
+      .m26-card {
+        width: clamp(44px, 8vw, 74px);
+        aspect-ratio: 0.68;
+        border-radius: 7px;
+        background: #f7f3ea center/cover no-repeat;
+        box-shadow:
+          0 1px 1px rgba(0,0,0,0.3),
+          0 10px 14px rgba(0,0,0,0.45),
+          inset 0 0 0 1px rgba(0,0,0,0.15);
+      }
+      .m26-card--back {
+        background:
+          linear-gradient(150deg, #7c2233, #561522),
+          #561522;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.3), 0 10px 14px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(216,181,106,0.5);
+      }
+
+      /* ---- PLAYER PLATES ----------------------------------------------------- */
+      .m26-seat {
+        position: absolute;
+        z-index: 7;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 13px 7px 7px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(28,18,10,0.92), rgba(14,9,5,0.95));
+        box-shadow:
+          0 0 0 1px var(--brass-3),
+          0 0 0 2px rgba(0,0,0,0.6),
+          0 10px 22px rgba(0,0,0,0.5),
+          inset 0 1px 0 rgba(255,220,170,0.18);
+        transform: translate(-50%, -50%);
+      }
+      .m26-seat .ava {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: radial-gradient(circle at 40% 35%, #2f6b54, #0c3a2a);
+        box-shadow: 0 0 0 2px var(--brass-2), inset 0 2px 4px rgba(255,255,255,0.2);
+        display: grid; place-items: center; font-family: "Cinzel", serif; font-weight: 800; color: var(--brass-hi);
+      }
+      .m26-seat .info { display: flex; flex-direction: column; line-height: 1.15; }
+      .m26-seat .nm { font-weight: 800; font-size: 13px; color: var(--cream); }
+      .m26-seat .st { font-size: 12px; color: var(--brass-1); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+      .m26-seat .st::before { content: ""; width: 11px; height: 11px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #ecd08a, #caa24f 60%, #7a5a22);
+        box-shadow: inset 0 0 0 2px #b8893f; }
+      .m26-seat--you { box-shadow: 0 0 0 2px var(--brass-hi), 0 0 18px rgba(231,201,126,0.4), 0 10px 22px rgba(0,0,0,0.5); }
+      .seat-n { top: -3%; left: 50%; }
+      .seat-ne { top: 26%; left: 96%; }
+      .seat-se { top: 74%; left: 96%; }
+      .seat-s { top: 103%; left: 50%; }
+      .seat-sw { top: 74%; left: 4%; }
+      .seat-nw { top: 26%; left: 4%; }
+
+      .badge {
+        position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+        z-index: 20; font-size: 12px; letter-spacing: 1px; color: rgba(244,234,210,0.6);
+        font-family: "Cinzel", serif; text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="room-light"></div>
+    <div class="room-grain"></div>
+
+    <div class="stage">
+      <div class="m26-table">
+        <div class="m26-rail"></div>
+        <div class="m26-studs"></div>
+        <div class="m26-felt"></div>
+
+        <div class="m26-crest">
+          <div>
+            <div class="glyph">C</div>
+            <div class="word">CHIRIBITO</div>
+            <div class="sub">· la perla ·</div>
+          </div>
+        </div>
+
+        <div class="m26-cards">
+          <div class="m26-card" id="c1"></div>
+          <div class="m26-card" id="c2"></div>
+          <div class="m26-card" id="c3"></div>
+          <div class="m26-card m26-card--back"></div>
+          <div class="m26-card m26-card--back"></div>
+        </div>
+
+        <div class="m26-pot" id="pot"></div>
+
+        <div class="m26-seat seat-n"><div class="ava">P</div><div class="info"><span class="nm">Paco</span><span class="st">5.000</span></div></div>
+        <div class="m26-seat seat-ne"><div class="ava">L</div><div class="info"><span class="nm">Lola</span><span class="st">3.200</span></div></div>
+        <div class="m26-seat seat-sw"><div class="ava">M</div><div class="info"><span class="nm">Manolo</span><span class="st">7.450</span></div></div>
+        <div class="m26-seat m26-seat--you seat-s"><div class="ava">T</div><div class="info"><span class="nm">Tú</span><span class="st">8.150</span></div></div>
+      </div>
+    </div>
+
+    <div class="badge">MESA CHIRIBITO · EL RESERVADO · 2026</div>
+
+    <script type="module">
+      // Real Chiribito cards (Fournier) for the three community cards.
+      const ids = ["1O", "11E", "5B"];
+      try {
+        const cards = await import("/src/ui-cards.ts");
+        // ui-cards renders into a row; grab the produced <img> src per id by rendering once.
+        const probe = document.createElement("div");
+        cards.renderCardRow(probe, ids, 3);
+        const imgs = [...probe.querySelectorAll("img")];
+        imgs.forEach((im, i) => {
+          const el = document.getElementById("c" + (i + 1));
+          if (el && im.src) el.style.backgroundImage = `url('${im.src}')`;
+        });
+      } catch (e) {
+        /* if the module path differs, the cream card faces still read fine */
+      }
+
+      // Jewel chip stacks in the centre.
+      const pot = document.getElementById("pot");
+      const stacks = [
+        { c: "brass", n: 6 }, { c: "night", n: 8 }, { c: "green", n: 5 }, { c: "wine", n: 7 },
+      ];
+      for (const s of stacks) {
+        const st = document.createElement("div");
+        st.className = "m26-stack";
+        st.style.height = 46 + (s.n - 1) * 5 + "px";
+        for (let z = 0; z < s.n; z++) {
+          const ch = document.createElement("div");
+          ch.className = "m26-chip m26-chip--" + s.c;
+          ch.style.bottom = z * 5 + "px";
+          ch.style.zIndex = String(z);
+          st.appendChild(ch);
+        }
+        pot.appendChild(st);
+      }
+    </script>
+  </body>
+</html>

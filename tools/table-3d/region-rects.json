@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "purpose": "Finalized fixed pixel rects for the TP0 admitted metrics + the M12 identity regions. Authored against the blessed HEAD anchors after the operator gate (plan 01-06). Canonical rect record; metrics.mjs REGIONS / m1-m2-m12.mjs M12_REGIONS mirror these values.",
+    "authored": "2026-06-10",
+    "frame": { "width": 2880, "height": 1800 },
+    "pov_fov_locked": 40,
+    "blessed_frames": "docs/table-3d/anchors/head/{hero,card,macro}.png (committed downscaled; full-res working copies in gitignored .dev-stack/diag/)",
+    "note": "POV rect promoted from PROVISIONAL to FINAL now that the operator locked POV fov 40 (Gate 2, 2026-06-10). HERO/MACRO rects unchanged (fovs 32/26 were always final)."
+  },
+  "regions": {
+    "feltHero":        { "left": 760,  "top": 500,  "width": 200, "height": 120, "use": "M3/M5/+B felt sample (HERO fov32) — clean woven green, ΔE≈8.5" },
+    "brassHero":       { "left": 1240, "top": 820,  "width": 140, "height": 60,  "use": "M4 aged-brass reveal (HERO fov32) — H≈40 S≈0.38 V≈0.69, brass-not-gold" },
+    "underCardHero":   { "left": 360,  "top": 1230, "width": 220, "height": 90,  "use": "M6 under-object rect (HERO)" },
+    "feltAdjacentHero":{ "left": 360,  "top": 1090, "width": 220, "height": 90,  "use": "M6 adjacent open-felt rect (HERO)" },
+    "cornerTL":        { "left": 0,    "top": 0,    "width": 360, "height": 260, "use": "M8/+A framing corner (top-left)" },
+    "cornerTR":        { "left": 2520, "top": 0,    "width": 360, "height": 260, "use": "M8/+A framing corner (top-right)" },
+    "cornerBL":        { "left": 0,    "top": 1540, "width": 360, "height": 260, "use": "corner (felt on current baseline — not used for framing read)" },
+    "cornerBR":        { "left": 2520, "top": 1540, "width": 360, "height": 260, "use": "corner (felt on current baseline — not used for framing read)" },
+    "centerHero":      { "left": 1260, "top": 770,  "width": 360, "height": 260, "use": "M8 center reference patch (vignette ratio)" },
+    "feltPov":         { "left": 380,  "top": 560,  "width": 320, "height": 200, "use": "FINAL POV felt identity patch (card fov40 LOCKED) — M1 legibility-region neighbour + M12 POV identity" }
+  },
+  "framing_corners": ["cornerTL", "cornerTR"],
+  "framing_corners_note": "Current baseline fills the BOTTOM corners with lit felt and the TOP corners with the dark room backdrop; the 8-20% vignette falloff the SSOT targets lives in the TOP corners. A true restrained four-corner vignette is a TP6 deliverable (M8/+A informational at TP0).",
+  "m12_regions": {
+    "heroFelt":   { "left": 760,  "top": 500, "width": 200, "height": 120, "fov": 32, "status": "FINAL" },
+    "heroBrass":  { "left": 1240, "top": 820, "width": 140, "height": 60,  "fov": 32, "status": "FINAL" },
+    "macroIdentity": { "left": 1140, "top": 700, "width": 600, "height": 400, "fov": 26, "status": "FINAL" },
+    "povFelt":    { "left": 380,  "top": 560, "width": 320, "height": 200, "fov": 40, "status": "FINAL (closed at fov40 lock, plan 01-06)" }
+  },
+  "m12": {
+    "churn_floor_mse": 1.0,
+    "pov_region_closed": true,
+    "results_2026_06_10": {
+      "heroFelt_mse": 0,
+      "heroBrass_mse": 0,
+      "macroIdentity_mse": 0,
+      "povFelt_mse": 0,
+      "note": "Fresh capture vs frozen baseline; all identity regions MSE=0 (byte-deterministic render, M9-consistent). The POV-region M12 deferred by plan 04 is now CLOSED at the locked fov40."
+    }
+  }
+}
