@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-06-12T02:31:39.553Z"
-last_activity: 2026-06-11
+last_updated: "2026-06-12T15:10:00.000Z"
+last_activity: 2026-06-12
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 24
-  completed_plans: 23
-  percent: 40
+  completed_plans: 24
+  percent: 50
 ---
 
 # Project State
@@ -20,11 +20,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 5 / TP4 — Rail & Contour Elegance. 05-03 COMPLETE 2026-06-12 — six craft levers behind ?rail= flag system; Levers A/B/C/D/F structural PASS; Lever E dropped (TP7); grep-check-tp4-05.cjs exits 0; vitest 45/45 green. Next = 05-04 (operator gate, autonomous:false — visual ship/drop confirmation at HERO+rail views).
+**Current focus:** Phase 6 / TP5 — Iluminación & Sombras (unified warm light). Phase 5 / TP4 COMPLETE 2026-06-12 — operator gate APPROVED (slim+craft); all 4 plans done; wood coaming 3→4, brass 3→4, tactility 3→4; slim+craft shipped as default render (no flag). Next = Phase 6 / TP5 — Iluminación & Sombras.
 
 ## Current Position
 
-Phase: 5 (TP4 — Rail & Contour Elegance). Plan 01 ✅ COMPLETE 2026-06-12 — tp4-before-rail tag + hero+rail anchors + TP4_VERDICT.md (verdict=lost-in-specific-respect, woodCoamingProfile yTop 0.34→0.28 triggered for 05-02). [Phase 4 / TP3 ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4).] Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
+Phase: 6 (TP5 — Iluminación & Sombras). [Phase 5 / TP4 ✅ COMPLETE 2026-06-12 (4/4 plans done; operator gate 05-04 APPROVED; 0 reverts, 0 iterations; slim+craft shipped as default; wood coaming 3→4, brass 3→4, tactility 3→4). 05-01: baseline+verdict. 05-02: slim (yTop 0.34→0.28). 05-03: craft levers Levers A/B/C/D/F. 05-04: operator gate APPROVED — default flip.] [Phase 4 / TP3 ✅ COMPLETE 2026-06-11 (4/4 plans done; operator gate 04-04 APPROVED; 0 reverts; chips 3→4).] Wave 0 (04-01): tp3-before-chips tag + tp3-base anchors + M10 baseline. Wave 1 (04-02): InstancedChipStack SHIP (M10 PASS HERO 105/chips=full 133, MACRO parity). Wave 3 (04-03): de-Vegas SHIP (M2=3.7x/recede/MACRO byte-identical). Wave 4 (04-04): OPERATOR GATE APPROVED — instancing+de-Vegas both SHIP, chips 3→4, AAA(5) deferred to TP5/TP6. [Phase 3 / TP2 ✅ COMPLETE — operator-approved, shipped LOCAL; TP2 history below.]
 Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per gate; legibility-first). plan-checker VERIFICATION PASSED (0 blockers, 2 doc-warnings closed). discuss✅ + plan✅ 2026-06-11. Operator gate = 03-06 (autonomous:false). COMPLETED: Wave 0 (03-01) — rollback tag + tp2-base captures + M1 floor 9px + M6 rects recalibrated 20.8% PASS. COMPLETED: Wave 1 (03-02) — Lever 1 max-anisotropy via useThree + mipmap explicit + Lever 2 seam already clean. COMPLETED: Wave 2 (03-03) — Lever 3 cardMicroReliefNormalMap (normalScale 0.12) + Lever 4 clearcoat whisper 0.12/0.55. COMPLETED: Wave 3 (03-04) — Lever 5 warm sheen-rim paper-edge + Lever 6 deterministic dealt variance. COMPLETED: Wave 4 (03-05) — Lever 7 contact-shadow tighten (shadow-radius 8->4, M6 PASS 20.69%) + TP2_PREGATE.md ledger all HARD gates GREEN. NEXT = 03-06 (operator gate, autonomous:false).
   (Phase 1 / TP0 ✅ COMPLETE — baseline frozen + signed off)
   (Phase 2 / TP1 ✅ COMPLETE — felt APPROVED 2026-06-10, shipped as the reference baseline)
@@ -35,10 +35,10 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
   (Plan 03-04 ✅ COMPLETE 2026-06-11 — Lever 5: sheen 0.35/#f5deb5/sheenRoughness 0.6 warm paper-edge (sheen-only, no texture); Lever 6: MAX_TILT_RAD=(1.5*PI/180), Math.sin seeds 7.3/3.1/5.7/4.1, frozen at construction; M9 PASS byte-identical; M5=0%/0% PASS; 35/35 vitest; commits 140dda7+499df38+cc73ec5)
   (Plan 03-05 ✅ COMPLETE 2026-06-11 — Lever 7: shadow-radius 8->4 (near-edge 49% darker at y=1060, card bites cloth); M6 PASS 20.69%; M9 byte-identical; all HARD gates GREEN; TP2_PREGATE.md complete with per-lever ?card= flag map; gate A/B frames in .dev-stack/diag/table-3d/tp2/gate/; commits 9027a25+00c9d10)
   (Plan 03-06 ✅ COMPLETE 2026-06-11 — OPERATOR GATE: operator APPROVED the full TP2 stack ("Aprobado — cierra TP2") after live dev-server A/B + green HARD gates + CEO visual read; 0 levers reverted, 0 iterations; cards scorecard 4→4 held; record docs/table-3d/TP2_OPERATOR_AB.md)
-Status: ✅ TP3 shipped (4/10 phases, 40%). Phase 4 / TP3 COMPLETE 2026-06-11 — operator gate APPROVED; chips 3→4; both workstreams SHIP (instancing must-ship-or-revert + de-Vegas non-blocking). TP3 instancing result: HERO 233→105 (−55%), chips=full 653→133 (−80%), MACRO parity PASS. TP3 de-Vegas result: muted palette (chroma -20%/value lowered), recessed-C normalMap (sheen killed, clearcoat 0.32/clearcoatRoughness 0.5), ?chips=dv — SHIP. TP2 record: docs/table-3d/TP2_OPERATOR_AB.md. TP3 full record: docs/table-3d/TP3_OPERATOR_AB.md. Next: Phase 5 / TP4 — Rail & Contour Elegance.
-Last activity: 2026-06-11
+Status: ✅ TP4 shipped (5/10 phases, 50%). Phase 5 / TP4 COMPLETE 2026-06-12 — operator gate APPROVED; slim+craft both SHIP; slim (yTop 0.34→0.28) + Levers D/C/B/F/A now the DEFAULT render (no flag). Default-flip: isCraft ON by default; ?rail=base restores pre-TP4. Scorecard: wood coaming 3→4, brass 3→4, tactility 3→4 (leather rail held at 4). AAA(5) gated on TP6 AO + TP7 geometry. TP4 full record: docs/table-3d/TP4_OPERATOR_GATE.md. [TP3: docs/table-3d/TP3_OPERATOR_AB.md. TP2: docs/table-3d/TP2_OPERATOR_AB.md.] Next: Phase 6 / TP5 — Iluminación & Sombras.
+Last activity: 2026-06-12
 
-Progress: [█████████░] 92%
+Progress: [█████████░] 50%
 
 ## Performance Metrics
 
@@ -121,6 +121,7 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 - [Phase 5]: Plan 05-01 (TP4 VERDICT): Verdict=lost-in-specific-respect — woodCoamingProfile yTop=0.34 reads as slightly heavy horizontal band at rail/eye view; leather roll reads correct (rOut=FELT_R*1.072 justified, broad crown, correct sheen). Edge-thickness ratio before=0.087 (0.565/6.5, 8.7% of FELT_R). Absent elev/ anchors recorded explicitly (non-blocking). Action: 05-02 targets woodCoamingProfile yTop 0.34→0.28 (−18% band height, behind ?rail=slim). Craft levers 05-03 proceed in all cases. tag tp4-before-rail=LOCAL. Commits: 654ba8c (tp4-base anchors) + a46f6ef (TP4_VERDICT.md).
 - [Phase ?]: 05-02 slim SHIPPED: woodCoamingProfile yTop 0.34->0.28 behind ?rail=slim; visual verdict better-without-losing-material; thin-disc invariant PASS (rOut 7.605 > 7.540); bodyProfile inviolate
 - [Phase 5]: 05-03 craft levers STRUCTURAL PASS: ?rail= flag system (railFlag/isWelt/isNormals/isBrass/isSlim/isCraft); Lever D brassMat roughness 0.34->0.42 + envMapIntensity 0.45; Lever B+F woodNapNormalMap (freq=12, crossProfile, NoColorSpace, normalScale 0.15); Lever C leatherNapNormalMap (pebble height field, NoColorSpace, normalScale 0.22, bumpMap->normalMap upgrade); Lever A welt FELT_R*0.960 tube 0.012 y=0.022 #2a1208; Lever E DROPPED (UV seam risk, TP7). grep-check-tp4-05.cjs exits 0 (7/7 checks). M4 structural PASS (roughness 0.42 in 0.38-0.45; H39/S0.38/V0.67 expected). M10 structural PASS (105+1=106 < 150). Visual reads at operator gate 05-04. Commits: 12f67a0 + 863801a.
+- [Phase 5]: 05-04 OPERATOR GATE APPROVED -- slim+craft shipped as DEFAULT render. Both SSOT questions YES: (CONTOUR) slim yTop 0.34->0.28 recovers edge elegance without losing material/mass; (CRAFT) 5 levers (D/C/B/F/A) read as restrained craft not overworked. Default flip: isCraft=!isBase&&railFlag!=='slim' (ON by default); woodCoamingProfile internal default 0.34->0.28; ?rail=base added (restores pre-TP4). 0 reverts, 0 iterations. Scorecard: wood coaming 3->4, brass 3->4, tactility 3->4 (leather rail held at 4). AAA(5) deferred: AO (TP6), grain alignment + hairline scratch normalMap (TP7). grep-check 7/7 PASS; vitest 398/398; tsc src/lab/ clean; M4 PASS; M10 106<150 PASS. Record: docs/table-3d/TP4_OPERATOR_GATE.md. Commits: da3bcbc + 1a1a624 + c627b47. Phase 5 / TP4 COMPLETE.
 
 ### Pending Todos
 
@@ -144,9 +145,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T02:30:35Z
-Stopped at: Plan 05-03 COMPLETE 2026-06-12 -- six craft levers + ?rail= flag system + grep-check-tp4-05.cjs; Levers A/B/C/D/F structural PASS; Lever E dropped (TP7); 45/45 vitest; commits 12f67a0 + 863801a
-Next: 05-04 (operator gate, autonomous:false — visual ship/drop confirmation at HERO+rail views with ?rail=craft).
-Carried forward (non-blocking): depth/AO/vignette → TP5/TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6.
+Last session: 2026-06-12T15:10:00Z
+Stopped at: Plan 05-04 COMPLETE 2026-06-12 -- TP4 operator gate APPROVED; slim+craft default flip; TP4_OPERATOR_GATE.md + scorecard delta; commits da3bcbc + 1a1a624 + c627b47. Phase 5 / TP4 COMPLETE (5/10 phases, 50%).
+Next: Phase 6 / TP5 -- Iluminación & Sombras (unified warm light, per-material specular, PCSS grounding). Do NOT auto-advance -- operator chooses when to start TP5.
+Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None

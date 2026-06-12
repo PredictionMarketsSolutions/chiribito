@@ -27,7 +27,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 2: TP1 — Felt / Tapete Materiality (the stage)** - Turn the largest, weakest surface into believable woven baize that relights. ✅ COMPLETE 2026-06-10 (operator APPROVED; felt shipped as reference baseline).
 - [x] **Phase 3: TP2 — Cartas Materiality & Legibility (protagonist)** - Push the cards from "good decal" to real card STOCK without softening legibility. (completed 2026-06-11)
 - [x] **Phase 4: TP3 — Fichas Materiality + Perf (accent + instancing)** - Re-author chips as matte worn clay that recedes, and instance them (perf de-risk). ✅ COMPLETE 2026-06-11 (operator APPROVED; chips 3→4; instancing + de-Vegas SHIP).
-- [ ] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details.
+- [x] **Phase 5: TP4 — Rail & Contour Elegance (the OPEN check)** - Adjudicate the slim-edge question (review, not auto-revert) + craft details. ✅ COMPLETE 2026-06-12 (operator APPROVED; slim+craft shipped as default; wood coaming + brass + tactility 3→4).
 - [ ] **Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)** - One coherent shaped warm light, per-material specular, PCSS + baked contact grounding.
 - [ ] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state.
 - [ ] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough.
@@ -186,7 +186,7 @@ Plans:
 - [x] 05-01: TP4 Baseline Capture + Elegance Verdict (COMPLETE 2026-06-12 — verdict=lost-in-specific-respect; tp4-before-rail tag; hero+rail anchors; TP4_VERDICT.md)
 - [x] 05-02: Surgical Slim (woodCoamingProfile yTop 0.34→0.28, behind ?rail=slim)
 - [x] 05-03: Craft Levers (welt, wood/leather normalMaps, brass aged-brass tune, UV remap, outer wall volume)
-- [ ] 05-04: Operator Gate (autonomous: false — HERO + rail/eye; "elegance recovered without losing material/mass?")
+- [x] 05-04: Operator Gate APPROVED 2026-06-12 — slim+craft shipped as default; ?rail=base added; scorecard wood 3→4, brass 3→4, tactility 3→4
 
 ### Phase 6: TP5 — Iluminación & Sombras (unify under one warm light)
 
@@ -278,7 +278,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 2. TP1 — Felt Materiality | 4/4 | ✅ Complete | 2026-06-10 |
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
 | 4. TP3 — Fichas Materiality + Perf | 4/4 | ✅ Complete | 2026-06-11 |
-| 5. TP4 — Rail & Contour Elegance | 3/4 | In Progress|  |
+| 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
 | 6. TP5 — Iluminación & Sombras | 0/TBD | Not started | - |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
 | 8. TP7 — Cámaras | 0/TBD | Not started | - |
