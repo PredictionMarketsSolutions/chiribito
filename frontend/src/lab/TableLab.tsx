@@ -127,11 +127,20 @@ function leatherProfile(): THREE.Vector2[] {
   ];
 }
 
-/** Cross-section of the outer turned-wood coaming that frames the leather. */
-function woodCoamingProfile(): THREE.Vector2[] {
+/**
+ * Cross-section of the outer turned-wood coaming that frames the leather.
+ *
+ * yTopOverride — TP4 surgical slim: pass 0.28 when ?rail=slim is active to trim
+ * the wood band height by −18% without touching rOut, rIn, or any other dimension.
+ * Default (undefined) retains the TP3-validated value of 0.34.
+ *
+ * Thin-disc invariant (SSOT §TP4): rOut (7.605) > bodyProfile fascia (FELT_R*1.14=7.41) + 0.13
+ * → 7.605 > 7.54 PASS. rOut is UNCHANGED by the slim; only yTop moves.
+ */
+function woodCoamingProfile(yTopOverride?: number): THREE.Vector2[] {
   const rIn = FELT_R * 1.072; // meets the leather outer
   const rOut = FELT_R * 1.17; // ~6.08
-  const yTop = 0.34; // sits below the leather peak so the cushion reads proud
+  const yTop = yTopOverride ?? 0.34; // 0.34 = TP3 default; 0.28 = TP4 slim (?rail=slim)
   const yBot = -0.12;
   const b = 0.08;
   const v = (x: number, y: number) => new THREE.Vector2(x, y);
@@ -509,6 +518,12 @@ function Table({
   logoImg: HTMLImageElement | null;
   aceImgs: Partial<Record<SuitCode, HTMLImageElement | null>>;
 }) {
+  // TP4 surgical slim: ?rail=slim trims woodCoamingProfile yTop 0.34→0.28 (−18% band height).
+  // NEVER combined with ?rail=craft in the same capture (Pitfall 7 / SSOT §TP4).
+  // Default (no flag) retains the TP3-validated contour unchanged.
+  const railFlag = qp("rail");
+  const isSlim = railFlag === "slim";
+
   const { felt, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
     const feltKind = qp("felt");
     const feltMat =
@@ -559,7 +574,8 @@ function Table({
       side: THREE.DoubleSide,
     });
     const leatherPoints = leatherProfile();
-    const woodPoints = woodCoamingProfile();
+    // TP4 slim: pass 0.28 when isSlim; otherwise undefined → default 0.34 retained.
+    const woodPoints = woodCoamingProfile(isSlim ? 0.28 : undefined);
     const brassMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color("#b8915a"),
       metalness: 1,
@@ -581,7 +597,7 @@ function Table({
     });
     const bodyPoints = bodyProfile();
     return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, leatherPoints, woodPoints, bodyPoints };
-  }, [logoImg, aceImgs]);
+  }, [logoImg, aceImgs, isSlim]);
 
   return (
     <group scale={[OVAL_X, 1, 1]}>
