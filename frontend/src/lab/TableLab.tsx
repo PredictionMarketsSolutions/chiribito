@@ -132,9 +132,10 @@ function leatherProfile(): THREE.Vector2[] {
 /**
  * Cross-section of the outer turned-wood coaming that frames the leather.
  *
- * yTopOverride — TP4 surgical slim: pass 0.28 when ?rail=slim is active to trim
- * the wood band height by −18% without touching rOut, rIn, or any other dimension.
- * Default (undefined) retains the TP3-validated value of 0.34.
+ * yTopOverride — caller supplies the explicit yTop; pass 0.28 for the TP4 approved default
+ * (operator-gated APPROVED 2026-06-12: slim + craft shipped as the new default) or 0.34 to
+ * restore the pre-TP4 A/B baseline (?rail=base). The function no longer has a "smart default" —
+ * callers always pass an explicit value so the intent is readable at the call site.
  *
  * Thin-disc invariant (SSOT §TP4): rOut (7.605) > bodyProfile fascia (FELT_R*1.14=7.41) + 0.13
  * → 7.605 > 7.54 PASS. rOut is UNCHANGED by the slim; only yTop moves.
@@ -142,7 +143,8 @@ function leatherProfile(): THREE.Vector2[] {
 function woodCoamingProfile(yTopOverride?: number): THREE.Vector2[] {
   const rIn = FELT_R * 1.072; // meets the leather outer
   const rOut = FELT_R * 1.17; // ~6.08
-  const yTop = yTopOverride ?? 0.34; // 0.34 = TP3 default; 0.28 = TP4 slim (?rail=slim)
+  // 0.28 = TP4 operator-approved default (slim); 0.34 = pre-TP4 A/B baseline (?rail=base).
+  const yTop = yTopOverride ?? 0.28;
   const yBot = -0.12;
   const b = 0.08;
   const v = (x: number, y: number) => new THREE.Vector2(x, y);
@@ -522,14 +524,29 @@ function Table({
 }) {
   // TP4 ?rail= flag system — mirrors ?chips= / ?card= / ?felt= A/B pattern (qp() established).
   // Each lever is isolated behind its own sub-flag for apples-to-apples capture.
-  // ?rail=craft accumulates all passing craft levers simultaneously.
+  //
+  // POST-OPERATOR-GATE DEFAULT FLIP (05-04 APPROVED — slim + craft shipped as default):
+  //   DEFAULT (no flag)   = slim ON (yTop 0.28) + ALL craft levers ON — the approved TP4 look.
+  //   ?rail=base          = pre-TP4 baseline: yTop 0.34 + NO craft (full A/B reference).
+  //   ?rail=slim          = slim only, NO craft (A/B isolation — Pitfall 7: never combine with ?rail=craft).
+  //   ?rail=craft         = craft only, NO slim (A/B isolation; A/B before gate was ?rail=slim separate capture).
+  //   ?rail=welt          = Lever A only (welt cord; no slim, no other craft).
+  //   ?rail=normals       = Levers B+C+F only (normalMaps; no slim).
+  //   ?rail=brass         = Lever D only (aged-brass tune; no slim).
+  //
   // NEVER combine ?rail=slim with ?rail=craft in the same capture (Pitfall 7 / SSOT §TP4).
+  // Lever E (UV arc-length remap) DROPPED — deferred to TP7.
   const railFlag = qp("rail");
-  const isSlim    = railFlag === "slim";                         // surgical contour slim (05-02)
-  const isWelt    = railFlag === "welt"    || railFlag === "craft"; // Lever A: welt cord at seam
-  const isNormals = railFlag === "normals" || railFlag === "craft"; // Levers B+C+F: normalMaps
-  const isBrass   = railFlag === "brass"   || railFlag === "craft"; // Lever D: aged-brass tune
-  const isCraft   = railFlag === "craft";                        // accumulator: all passing craft levers
+  const isBase    = railFlag === "base";                                    // pre-TP4 A/B baseline
+  // Slim: ON by default; suppressed only by ?rail=base (full pre-TP4) or ?rail=craft (craft-only isolation).
+  // Also ON explicitly when ?rail=slim is set (isolation mode — no craft in that capture).
+  const isSlim    = !isBase && (railFlag === "slim" || (railFlag !== "craft" && railFlag !== "welt" && railFlag !== "normals" && railFlag !== "brass")); // slim is the default
+  // Craft levers: ON by default (all three groups); suppressed only by ?rail=base or ?rail=slim.
+  // Per-lever sub-flags still work for isolation: ?rail=welt, ?rail=normals, ?rail=brass.
+  const isCraft   = !isBase && railFlag !== "slim";                         // accumulator: all passing craft levers
+  const isWelt    = isCraft && (railFlag === "welt"    || railFlag !== "normals" && railFlag !== "brass"); // Lever A: welt cord at seam
+  const isNormals = isCraft && (railFlag === "normals" || railFlag !== "welt"    && railFlag !== "brass"); // Levers B+C+F: normalMaps
+  const isBrass   = isCraft && (railFlag === "brass"   || railFlag !== "welt"    && railFlag !== "normals"); // Lever D: aged-brass tune
   void isCraft; // referenced above via the per-lever flags; suppress unused-var if tree-shaken
 
   const { felt, leatherMat, woodMat, brassMat, bodyMat, weltMat, leatherPoints, woodPoints, bodyPoints } = useMemo(() => {
@@ -606,8 +623,9 @@ function Table({
           side: THREE.DoubleSide,
         });
     const leatherPoints = leatherProfile();
-    // TP4 slim: pass 0.28 when isSlim; otherwise undefined → default 0.34 retained.
-    const woodPoints = woodCoamingProfile(isSlim ? 0.28 : undefined);
+    // TP4 default flip (05-04 APPROVED): slim (0.28) is now the default look.
+    // ?rail=base passes 0.34 to restore the pre-TP4 baseline; all other paths get 0.28 (slim).
+    const woodPoints = woodCoamingProfile(isBase ? 0.34 : 0.28);
     // Lever D: brass aged-brass tune — roughness 0.34→0.42 + envMapIntensity 0.45 behind isBrass.
     // Color #b8915a unchanged (already M4-compliant HSV: H≈39°/S≈0.38/V≈0.69).
     // Raising roughness REDUCES specular V (safer direction for M4 casino-drift guard).
@@ -651,7 +669,10 @@ function Table({
       clearcoatRoughness: 0.9,
     });
     return { felt: feltMat, leatherMat, woodMat, brassMat, bodyMat, weltMat, leatherPoints, woodPoints, bodyPoints };
-  }, [logoImg, aceImgs, isSlim, isNormals, isBrass, isWelt]);
+  // isBase controls: woodCoamingProfile yTop (0.34 vs 0.28) + craft lever suppression.
+  // isSlim is not used inside useMemo (woodPoints now depends only on isBase); kept in outer scope for clarity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logoImg, aceImgs, isBase, isNormals, isBrass, isWelt]);
 
   return (
     <group scale={[OVAL_X, 1, 1]}>
