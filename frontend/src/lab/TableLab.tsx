@@ -13,7 +13,7 @@
  */
 import { useMemo, Suspense } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { EffectComposer } from "@react-three/postprocessing";
+import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { StatsProbe } from "./StatsProbe";
 import {
   OrbitControls,
@@ -1200,8 +1200,24 @@ function Scene() {
           multisampling={4}
           enableNormalPass={false}
         >
-          {/* Effects added in 07-02 through 07-04 (N8AO, DepthOfField, Vignette, Noise, BrightnessContrast) */}
-          <></>
+          {/* TP6 Wave 2 (07-02): N8AO screen-space crevice AO — M6 primary satisfier.
+              N8AO reconstructs normals from depth buffer (enableNormalPass={false} is correct;
+              no extra render pass needed). World-space radius:
+                aoRadius={0.8}            — mid-range of SSOT 0.5-1.5; targets crevice scale
+                intensity={2.0}           — artistic darkening strength (SSOT 1.5-3)
+                distanceFalloff={0.7}     — reduces halo artifacts; sweet spot 0.5-0.7
+                halfRes={false}           — full-res first; flip to true only if M11 breaches
+                screenSpaceRadius={false} — world-space radius (SSOT "world units" spec)
+              Prop names verified from installed node_modules in 07-01-SUMMARY (A4/A5 confirmed). */}
+          <N8AO
+            aoRadius={0.8}
+            intensity={2.0}
+            distanceFalloff={0.7}
+            halfRes={false}
+            screenSpaceRadius={false}
+          />
+          {/* DepthOfField — added in 07-03 */}
+          {/* Vignette / BrightnessContrast / Noise — added in 07-04 */}
         </EffectComposer>
       )}
     </>
