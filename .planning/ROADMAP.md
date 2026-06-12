@@ -204,7 +204,7 @@ Plans:
 
 - [x] 06-01-PLAN.md — GROUNDING: SoftShadows PCSS + ContactShadows frames={1} warm + key shadow frustum (must-ship, always-on)
 - [x] 06-02-PLAN.md — KEY RESHAPING: ?light= flag + warm gradient angle 0.72 + KEY_TO_FILL_RATIO_CEILING + green-bounce hemisphere
-- [ ] 06-03-PLAN.md — PER-MATERIAL SPECULAR: wood/body/card/chip deltas; brass UNCHANGED (TP4-locked); M4 re-run at END
+- [x] 06-03-PLAN.md — PER-MATERIAL SPECULAR: wood/body/card/chip deltas; brass UNCHANGED (TP4-locked); M4 re-run at END ✅ COMPLETE 2026-06-12 (all deltas shipped anti-casino; M5 PASS; M4 pre-existing fail deferred to 06-05)
 - [ ] 06-04-PLAN.md — GREEN-BOUNCE + BODY VOLUME verification: ?cam=rail captures + M6/M7 at rail
 - [ ] 06-05-PLAN.md — METRIC SUITE + grep-check-tp5-06.cjs: 6 structural checks + full M4/M5/M6/+A/M7/M10 pre-gate confirmation
 - [ ] 06-06-PLAN.md — OPERATOR GATE (autonomous:false): A/B at all 3 shots; TP5_OPERATOR_GATE.md + scorecard update
