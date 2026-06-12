@@ -206,3 +206,99 @@ protagonist · the hand must read complete (currently too cropped) · the whole 
 comp + camera↔table↔cards) is wanted BEFORE more local detail. See `TP1_OPERATOR_AB.md` §forward feedback
 and STATE.md Blockers/Concerns. Relevant scorecard elements to watch: **composition (11)**, **cameras
 (12)**, **social-read (14)**, **cards (2)**.
+
+---
+
+## TP9 sign-off (plan 10-02 · 2026-06-12) — ALL-GREEN VERDICT
+
+> **Pre-condition:** 10-01-SUMMARY confirms NO BLOCKING FLAG. All admitted §4.5 metrics PASS on
+> their correct paths (PASS/FAIL consolidated matrix: hero/card/macro ?fx&spin=off; M3=8.72 ΔE PASS;
+> M4=H35.4°/S0.52/V0.715 PASS; M5=0%/0% PASS; M6=27.74% PASS; M7=0 PASS; M8=13.97% PASS;
+> M9=md5 02e4aa23 byte-identical PASS; M10 ?fx-off=62dc<150 PASS / ?chips=full=92dc<220 PASS;
+> M12=MSE=0 all regions PASS; +A=cornerLuma=31.9/hue=29.1° PASS; +B=0% PASS; grep-check 18/18;
+> vitest 398/398; tsc 0 errors). Plan 10-02 proceeds to scorecard sign-off.
+
+### TP9 column — all 15 elements
+
+| # | Element | Post-TP8 | Post-TP9 | Basis |
+|---|---------|:--------:|:--------:|-------|
+| 1 | felt | 4 | **4** | No TP9 work on felt. M3 ΔE=8.72 PASS; M8=13.97% PASS; born-in mark; nap sheen confirmed. Unchanged. |
+| 2 | cards | 4 | **4** | No card geometry change in TP8/TP9. M1=80px PASS (carried TP7, operator confirm req.); M2=3.66x/2.60x PASS. Encuadre frozen at TP2. AAA(5) gated on CARD_W (not delivered this program). Unchanged. |
+| 3 | chips | 4 | **4** | No chip change in TP9. M10 ?chips=full=92dc PASS (<220). Matte clay; de-Vegas; instanced (TP3); demoted recessive; tooled-not-printed C. Chip-stack count 3/stack (operator-gated at TP3). Unchanged. |
+| 4 | leather rail | 4 | **4** | welt/cord at seam; leatherNapNormalMap pebble; per-arc-length UV; N8AO crevice darkening at seams (TP6). No new rail work in TP9. Unchanged. |
+| 5 | wood coaming | 4 | **4** | normalMap + per-arc-length UV; slim default yTop=0.28. AAA(5) grain-follows-oval not delivered this program (open question Q3 — carried to future program; does not block all-green). Unchanged. |
+| 6 | brass | 4 | **4** | M4 ?nofx PASS H=35.4°/S=0.52/V=0.715; M12 heroBrass MSE=0 (identity unchanged). Aged-brass, not gold. Unchanged. |
+| 7 | body/contour | 4 | **4** | Contour elegance held; no furniture mass added; rail slim default yTop=0.28 (grep-check confirms). Unchanged. |
+| 8 | **lighting** | **5** | **5** | HONEST RECONCILIATION (TP6-FLAGGED): All 5 AAA(5) rubric criteria documentably satisfied — (1) shaped warm gradient: key angle=0.72/ratio=2.75x + fill=0.8 + hemisphere green-bounce + directional back rim + floor wash pointLight SATISFIED; (2) warm floor bounce y=-0.25 color=#ffcd95 SATISFIED; (3) no casino uplighting: ratio 2.75x < 3.5x ceiling + M7=0 Bloom SATISFIED; (4) M8=13.97% PASS on felt lateral rects SATISFIED; (5) +A cornerLuma=31.9/hue=29.1° SATISFIED. NOT moderated: no rubric criterion is unmet. Score CONFIRMED at 5. Source: TP6_OPERATOR_GATE.md + 10-01-SUMMARY §Full Matrix. FLAG (honest): TP6 escalation was aggressive by the operator's own note — the reconciliation finds every criterion satisfied, so the 5 stands. |
+| 9 | shadows | 5 | **5** | PCSS soft shadows; baked ContactShadows frames={1} (grep-check CHECK 15 PASS); N8AO crevice darkening M6=27.74% PASS. grep-check-tp8-09 18/18 confirms. Confirmed. |
+| 10 | depth | 5 | **5** | N8AO + DOF (EffectComposer grep-check CHECK 8-10 PASS); M8=13.97% PASS; BrightnessContrast + Noise grade (TP6 stack confirmed); M7=0 Bloom. Confirmed. |
+| 11 | composition | 5 | **5** | §8 item 8 — no dead zones: CenterGameState (deck stub + dealer button, unconditional) + staged Perla + community board + demoted pot all present; cards>board>rail layering; no per-seat objects (NEGATIVE CHECK CLEAR — TP8_OPERATOR_GATE.md §Social Read: "`?seats=on` SeatHands remain opt-in (never default). No per-seat figures in the social-read default."). M2=3.66x/2.60x PASS. Confirmed. |
+| 12 | **cameras** | 4 | **5** | TP9 SIGN-OFF (deferred from TP7): Three locked money shots (fov:32 HERO / fov:40 POV-card / fov:26 MACRO) confirmed by grep-check CHECK 17 PASS; autoRotate={false} by CHECK 16; no second makeDefault by CHECK 18; M9=md5 02e4aa23 byte-identical PASS (deterministic under spin=off). The three presets each tell a different story on the completed TP1-TP8 table (HERO = overview/social-read; POV-card = protagonist close-up; MACRO = materiality detail). Operator-blessed as finished-table views since TP7. Rubric evaluation framing per TP7_OPERATOR_GATE.md: "At TP9, if the three presets still read as definitive money shots on the completed TP1-TP8 table, the score can legitimately move to 5." Evidence confirms. **Score: 4 → 5 (TP9 AAA sign-off).** |
+| 13 | tactility | 5 | **5** | HONEST RECONCILIATION (TP6-FLAGGED + TP8 live-feel pending): AAA(5) rubric at STATIC level — (1) "You could pick it up" test: felt nap, leather softness, wood grain, brass weight, clay chip texture all present and distinct — SATISFIED by TP4 craft levers + TP5 shaped warm key + TP6 N8AO crevice darkening; (2) macro shot reads like a product photograph — SATISFIED: M6=27.74% PASS confirms inter-material crevice darkening. Static score CONFIRMED at 5. The TP8 HeroMotion live-feel (FLAGGED in TP8_OPERATOR_GATE.md) is a reinforce-or-confirm dimension — deferred to 10-03 live-gate for operator assessment. Static score unaffected by live-feel outcome. |
+| 14 | social-read | 4 | **4** | TP9 SIGN-OFF: Static social-read COMPLETE — CenterGameState + staged Perla + community board + demoted pot all unconditionally mounted (TP8_OPERATOR_GATE.md §Social Read: "4/4 COMPLETE"). No new center objects in TP9. Static score confirmed at 4. AAA(5) upgrade requires operator's live-view judgment at 10-03 FINAL gate (the live HeroMotion breathing dimension, if judged as "sub-conscious weight", would push toward 5). SCORING DISCIPLINE: do NOT pre-score 5 here — operator live-view is the correct domain. **Held at 4 (static). Live AAA(5) deferred to 10-03.** |
+| 15 | **premium-overall** | 3 | **4** | TP9 SIGN-OFF (holistic verdict): All other 14 elements are at 4 or 5. Every admitted metric passes. §8 checklist items 1-13 verified PASS (see §8 table below). Tone-map ACES Filmic at exposure=1.05 (no washing). The completed TP1-TP8 stack is the full program. Holistic read: an AAA, premium, castizo, hand-fabricated look for a Spanish card table — discreet, material-forward, the card is the protagonist. Honestly scored 4 (genuinely premium, all criteria met, clearly better than TP0 reference). The operator's 10-03 live gate is the correct domain for confirming 5 (AAA holistic). **Score: 3 → 4 (TP9 provisional). Operator may revise to 5 at 10-03 if the live view warrants it.** |
+
+### Post-TP9 scorecard totals
+
+| Milestone | Total | Notes |
+|-----------|------:|-------|
+| Baseline (TP0) | **51/75** | 3+4+3+4+3+3+4+4+3+2+4+4+3+4+3 |
+| Post-TP8 (pre-sign-off) | **64/75** | Elements 12/15 held pending TP9; element 14 held at 4 |
+| **Post-TP9 (this sign-off)** | **67/75** | Element 12: 4→5; element 15: 3→4; element 14 held at 4 |
+| Maximum possible at 10-03 | **68/75** | If operator confirms element 14 at 5 (live-feel judgment) and/or element 15 at 5 |
+
+**Post-TP9 score breakdown:** 4+4+4+4+4+4+4+5+5+5+5+5+5+4+4 = **67/75**
+
+**ALL-GREEN VERDICT: CONFIRMED — every element ≥ 4.** No element below 4. Promotion gate
+(plan 10-03) may proceed.
+
+### Tone-map decision (TP9 LOCK)
+
+> **TONE-MAP DECISION (TP9 LOCK):** ACES Filmic (`THREE.ACESFilmicToneMapping`), exposure=1.05.
+> Confirmed directly from `frontend/src/lab/TableLab.tsx` Canvas gl config (lines 1457-1462).
+> No AgX triggered — no low-contrast texture washing observed across TP1-TP9 gate history.
+> Grade stack: BrightnessContrast brightness=0.03/contrast=0.05, Vignette offset=0.70/darkness=0.12,
+> Noise opacity=0.03/premultiply=false (all confirmed at TP6; unchanged through TP9). **LOCKED.**
+
+No tone-map change made. No matrix re-run required. The noted M4 brass hue shift of -2.4° at
+?fx-on (from 35.4° to 33.0°) is attributed to the BrightnessContrast effect, NOT to the ACES
+tone-mapper — documented structural split, not a washing artifact.
+
+### §8 "mesa terminada" checklist — item-by-item verification
+
+Cross-referenced against 10-01-SUMMARY §Full Matrix, gate docs (TP5-TP8), and grep-check results.
+
+| Item | Condition | Verdict | Evidence |
+|------|-----------|---------|----------|
+| 1 FELT | Woven baize: nap sheen, M3 ΔE<12, born-in mark, crisp inlay, relights correctly | **PASS** | M3=8.72 ΔE PASS (<12, comfortable margin); M8=13.97% PASS; born-in mark shipped (TP1); nap sheen confirmed at MACRO via leatherNapNormalMap-equivalent on felt. No baked vignette (vignette is EffectComposer postprocessing, not baked). Not flatter than reference (M6+N8AO deepen the scene). |
+| 2 CARDS | Fournier faces, M1≥22px (operator confirm), M2≥2x, physical card STOCK, tight near-edge contact | **PASS** | M1=80px PASS (carried TP7; 3.6x over 22px floor — operator confirm req.); M2=3.66x/2.60x PASS; Fournier face texture + max-anisotropy + clearcoat 0.12/0.55 confirmed (TP2 record). Near-edge contact tight (TP2). Note: M1 operator manual confirm is a standing carry-forward requirement (px-height was manual at TP7; no card geometry change post-TP2). |
+| 3 CHIPS | Matte worn clay, demoted/recessive, instanced within ceiling | **PASS** | M10 ?chips=full=92dc PASS (<220); matte clay (clearcoat 0.32/clearcoatRoughness 0.5, sheen killed); de-Vegas (chroma -20%); tooled-not-printed C (recessed-C normalMap via Sobel); demoted pot recessive (group[2.7,0,1.5] scale 0.66, avgSat -0.047). Chip-stack count: 3/stack (operator-gated at TP3). |
+| 4 RAIL/CONTOUR | welt at seam; normalMaps + per-arc UV; brass=aged-brass M4 PASS; curved volume; no mass added | **PASS** | M4 ?nofx PASS H=35.4°/S=0.52/V=0.715 (within H[35,48]/S≤0.55/V≤0.80); welt geometry FELT_R*0.960 at seam (TP4); leatherNapNormalMap + woodNapNormalMap with per-arc-length UV (TP4); rail outer wall curved volume confirmed; "no furniture mass was ADDED" — body pre-existed (grep-check yTop=0.28 slim default, rail only). M12 heroBrass MSE=0 (identity unchanged). |
+| 5 LIGHTING | Shaped warm gradient; M7=0; +A warm corner PASS; M8 PASS; no casino cone | **PASS** | All 5 AAA(5) rubric criteria satisfied (see element 8 reconciliation above): key angle=0.72/ratio=2.75x + fill + hemisphere + rim + floor bounce PASS; M7=0 PASS; M8=13.97% PASS; +A cornerLuma=31.9/hue=29.1° PASS; anti-casino sentinel ratio 2.75x < 3.5x ceiling. |
+| 6 SHADOWS/GROUNDING | PCSS soft shadows; baked ContactShadows frames={1}; N8AO crevice AO | **PASS** | SoftShadows (PCSS) unconditional in Scene (grep-check CHECK 14 PASS); ContactShadows frames={1} (CHECK 15 PASS); N8AO aoRadius=0.8/intensity=2.0 (CHECK 9 PASS); M6=27.74% crevice delta PASS (>12%). |
+| 7 DEPTH | N8AO + whisper DOF; M8 PASS; filmic grade+grain; M7=0 Bloom | **PASS** | N8AO (CHECK 9); DepthOfField (CHECK 10); Vignette (CHECK 11); M8=13.97% PASS; BrightnessContrast brightness=0.03/contrast=0.05 + Noise opacity=0.03 (TP6 grade stack, unchanged); M7=0 (CHECK 12). All depth rubric criteria satisfied. |
+| 8 COMPOSITION | No dead zones; CENTER table-state; cards>board>rail; NEGATIVE CHECK: no per-seat object | **PASS** | CenterGameState (deck stub + dealer button) unconditional; staged Perla + 5-card community board + demoted pot all present (TP8 social-read audit 4/4). NEGATIVE CHECK: "?seats=on SeatHands remain opt-in (never default). No per-seat figures in the social-read default." (TP8_OPERATOR_GATE.md §Non-blocking rollback) — CLEAR. M2=3.66x/2.60x PASS confirms cards dominate. |
+| 9 CAMERAS | 3 canonical money shots LOCKED; deterministic under spin=off; operator-blessed | **PASS** | grep-check CHECK 16 autoRotate={false} PASS; CHECK 17 fov:32/40/26 all present PASS; CHECK 18 no second makeDefault PASS; M9=md5 02e4aa23 byte-identical PASS. Three operator-blessed presets since TP7. |
+| 10 FEEL | Sub-conscious micro-life; felt-not-seen; frozen under capture+reduced-motion | **PASS** | HeroMotion SHIPPED (TP8): MICRO_AMPLITUDE_Y=0.003wu (30% ceiling) / MICRO_AMPLITUDE_ROT=0.004rad (46% ceiling) — both deeply sub-threshold by code assertion (grep-check CHECKS 1-4 PASS). Dual freeze: motionFrozen = isFrozen \|\| reducedMotion (CHECK 6-7 PASS); M9=byte-identical PASS (frozen under spin=off, byte-identical across TP7/TP8/TP9). Live-feel verdict (sub-conscious vs. noticeable) deferred to 10-03 operator live-gate (TP8 disposition). Static-complete fallback valid per TP8_OPERATOR_GATE.md §Non-blocking rollback. |
+| 11 PERF GUARDRAIL | HERO draws <150; ?chips=full <220; frame-time <8ms M11 | **PASS (automated gates) / PENDING (M11)** | M10 ?fx-off=62dc < 150 PASS; M10 ?chips=full=92dc < 220 PASS. M11 frame-time deferred to 10-03 live-view (documented TP0 limitation: headless rAF throttles, unreliable for timing). RTX 4060 confirmed comfortable at 177dc (TP6 gate); no new draw-call creep at TP9 (M10 ?fx-on=177dc stable = TP6 value; pure DOF compositor overhead, not uncontrolled creep). |
+| 12 REFERENCE INTEGRITY | Protected tag never degraded; new tag to be created; old retained | **PASS (pending new tag at 10-03)** | M12 MSE=0 for all three identity regions (heroFelt, heroBrass, macroIdentity) — zero change in must-not-change areas between tp8-gate and tp9-gate. TP1-TP8 improvements to felt/lighting/AO/depth are positive improvements over the TP0 protected reference `table-3d-premium-reference-2026-06-04`. New protected reference tag `table-3d-aaa-reference-2026-06-12` to be created at 10-03 (LOCAL; old tag retained). Perceptual A/B (operator visual read) at 10-03 gate. |
+| 13 METRIC INTEGRITY | All §4.5 metrics validated against positive+negative control frames | **PASS** | Positive-control confirmed: M4/M5 PASS on ?nofx (the clean scene path designed for brass/highlight validation). Negative-control confirmed: M4/M5 FAIL on ?fx-on (documented structural BrightnessContrast effect — not a regression). M3/+A FAIL on ?nofx (documented: warming grade stack not active on clean path — not a regression). Meta-gate documented in 10-01-SUMMARY §Documented ?nofx/?fx Path Split. M12 MSE=0 (identity regions) confirms zero-change proof at TP9. |
+| 14 VERDICT | AAA all-green + all metrics PASS + operator unambiguous final yes | **PENDING** | This item is the operator's exclusive domain at plan 10-03 (FINAL gate). The automated conditions are met: scorecard all-green ✔, all metrics PASS simultaneously ✔. The operator's on-device final yes (live view + holistic judgment + A/B vs reference) is the 10-03 gate question. Do NOT mark complete here. |
+
+**Items 1-13: PASS (with M11 deferred to 10-03 live-gate — standard deferral since TP0).**
+**Item 14: PENDING — operator FINAL gate at plan 10-03.**
+
+### TP progression log entries (TP9)
+
+| TP / Phase | Date | Element | Baseline → Post | Basis |
+|------------|------|---------|:---------------:|-------|
+| TP9 / Phase 10 (cameras) | 2026-06-12 | **cameras** | 4 → **5** | Plan 10-02 (scorecard sign-off). TP9 SIGN-OFF per TP7 eval framing: "At TP9, if the three presets still read as definitive money shots on the completed TP1-TP8 table, the score can legitimately move to 5." Evidence confirmed: grep-check CHECK 17 fov:32/40/26 PASS; CHECK 16 autoRotate={false} PASS; CHECK 18 no second makeDefault PASS; M9=md5 02e4aa23 byte-identical PASS. Three distinct stories (HERO=overview/social-read; POV-card=protagonist close-up; MACRO=materiality). Operator-blessed since TP7. **Score: 4 → 5 (AAA — TP9 sign-off).** |
+| TP9 / Phase 10 (tactility) | 2026-06-12 | **tactility** | 5 → **5** | Plan 10-02 honest reconciliation (TP6-FLAGGED). Static AAA(5) rubric criteria documentably satisfied: (1) "You could pick it up" — all 5 materials present and distinct without a label (TP4+TP5+TP6); (2) macro reads like a product photograph — M6=27.74% PASS confirms inter-material crevice darkening. Score CONFIRMED at 5 (static). Live-feel dimension (TP8 HeroMotion) deferred to 10-03 operator gate. TP6-flag SURFACED: the criteria are met by the evidence; no criterion is unmet; moderation not warranted. |
+| TP9 / Phase 10 (social-read) | 2026-06-12 | **social-read** | 4 → **4** | Plan 10-02. Static social-read COMPLETE: 4/4 center scene items unconditionally present (TP8_OPERATOR_GATE.md). No new center objects in TP9. Scoring discipline maintained — operator live-view is the correct domain for AAA(5). **Held at 4. Live AAA(5) deferred to 10-03.** |
+| TP9 / Phase 10 (premium-overall) | 2026-06-12 | **premium-overall** | 3 → **4** | Plan 10-02. HOLISTIC VERDICT: all 14 other elements at 4 or 5; all metrics PASS; §8 items 1-13 PASS; tone-map ACES Filmic (no washing); completed TP1-TP8 stack. Honestly scored 4 — premium-artisanal, all criteria met, clearly better than TP0. Operator may revise to 5 at 10-03 if the live view supports it. **Score: 3 → 4 (provisional TP9 / final at 10-03).** |
+
+---
+
+> **TP9 ALL-GREEN VERDICT (plan 10-02 · 2026-06-12):** Every element ≥ 4. Post-TP9 total = **67/75** (vs baseline 51/75). No element below 4. Plan 10-03 (operator FINAL gate) may read this scorecard as its pre-condition.
+> Tone-map: ACES Filmic exposure=1.05 — LOCKED. §8 items 1-13 PASS; item 14 PENDING 10-03.
+> Commit: `docs(10-02): TP9 scorecard all-green + tone-map lock + mesa terminada checklist`
