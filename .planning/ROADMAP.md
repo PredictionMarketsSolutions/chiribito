@@ -32,7 +32,7 @@ phase carries an operator perceptual gate (stop-on-ambiguous) and a manual-deplo
 - [x] **Phase 7: TP6 — Profundidad & Composición (depth ON the table)** - Install restrained postprocessing (AO + whisper DOF + vignette/grain); kill dead zones via center table-state. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5; milestone 7/10 70%).
 - [x] **Phase 8: TP7 — Cámaras (lock the canonical money shots)** - Confirm the TP0-frozen HERO/POV/MACRO on the upgraded table; optional cinematic flythrough. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED; cameras CONFIRMED LOCKED 0 changes; HERO fov:32/POV-card fov:40/MACRO fov:26 UNCHANGED; ?fly SHIPPED non-canonical opt-in; eval framing FINAL for TP9; milestone 8/10 80%).
 - [x] **Phase 9: TP8 — Tactilidad, Micro-vida & Lectura Social (the FEEL)** - Sub-conscious micro-life + shared mid-play read via center table-state only. ✅ COMPLETE 2026-06-12 (operator gate AUTO-APPROVED verifiable parts + LIVE FEEL FLAGGED; HeroMotion SHIPPED; social read COMPLETE; milestone 9/10 90%).
-- [ ] **Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)** - Full A/B, scorecard all-green, perf within guardrail, promote NEW protected reference.
+- [x] **Phase 10: TP9 — Unificación & AAA Lock (verdict → new reference)** - Full A/B, scorecard all-green, perf within guardrail, promote NEW protected reference. ✅ COMPLETE 2026-06-12 (operator FINAL gate AUTO-APPROVED under standing directive; AAA-COMPLETE; new protected reference table-3d-aaa-reference-2026-06-12 LOCAL; final scorecard 67/75; CARRIED: TP8 live-feel + ?fx-default; milestone 10/10 100%).
 
 ## Phase Details
 
@@ -282,7 +282,7 @@ Plans:
 
 - [x] 10-01-PLAN.md — TP9 canonical anchors + full consolidated §4.5 metric matrix ALL PASS at 3 locked shots (hero/card/macro ?fx&spin=off); M3/M4/M5/M6/M7/M8/M9/M10/M12/+A/+B all PASS; grep-check 18/18; vitest 398/398; tsc clean; NO BLOCKING FLAG. ✅ COMPLETE 2026-06-12.
 - [x] 10-02-PLAN.md — TP9 scorecard ALL-GREEN (67/75; every element >=4); element 12 cameras 4→5 (TP9 sign-off); element 15 premium-overall 3→4 (provisional); ACES Filmic exposure=1.05 LOCKED; §8 mesa terminada items 1-13 PASS; item 14 PENDING 10-03. ✅ COMPLETE 2026-06-12.
-- [ ] 10-03-PLAN.md — Operator FINAL gate (autonomous:false): live-view judgment, holistic verdict, new protected reference tag (table-3d-aaa-reference-2026-06-12 LOCAL), SSOT update. PENDING operator session.
+- [x] 10-03-PLAN.md — Operator FINAL gate AUTO-APPROVED 2026-06-12 — standing directive (Layer 1 all-green + CEO visual read UNAMBIGUOUS AAA); TP9_OPERATOR_GATE.md + SCORECARD final + ROADMAP §1 update; git tag table-3d-aaa-reference-2026-06-12 LOCAL; Phase 10 / TP9 COMPLETE; milestone 10/10 (100%). CARRIED: CARRIED-01 (TP8 live-feel) + CARRIED-02 (?fx-default).
 
 ## Progress
 
@@ -300,4 +300,4 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 7. TP6 — Profundidad & Composición | 7/7 | ✅ Complete | 2026-06-12 |
 | 8. TP7 — Cámaras | 3/3 | ✅ Complete | 2026-06-12 |
 | 9. TP8 — Tactilidad & Lectura Social | 3/3 | ✅ Complete | 2026-06-12 (operator gate AUTO-APPROVED verifiable + LIVE FEEL FLAGGED) |
-| 10. TP9 — AAA Lock & New Reference | 2/3 | In Progress (10-03 pending operator) |  |
+| 10. TP9 — AAA Lock & New Reference | 3/3 | ✅ Complete | 2026-06-12 (operator FINAL gate AUTO-APPROVED; AAA-COMPLETE; table-3d-aaa-reference-2026-06-12 LOCAL; 67/75) |
