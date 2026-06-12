@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T16:10:55.590Z"
+last_updated: "2026-06-12T18:35:00.000Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 37
-  completed_plans: 32
+  completed_plans: 34
   percent: 60
 ---
 
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-02 COMPLETE 2026-06-12 — N8AO mounted inside EffectComposer (aoRadius=0.8/intensity=2.0/distanceFalloff=0.7/halfRes=false); M6 PASS 33.21%; M11 +5 draws (52→57); halfRes not needed; vitest 45/45 + tsc clean + grep-check exits 0. Commit 0c7c80a. Next: 07-03 (DOF). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
+**Current focus:** Phase 7 / TP6 — Profundidad & Composición (depth ON the table: N8AO + whisper DOF + vignette/fog + filmic grade; ALL screen-space/crevice AO). Plan 07-03 COMPLETE 2026-06-12 — DepthOfField added as second EffectComposer child; worldFocusDistance=holeCardDistance (hero ~7.8wu / card ~9.5wu / macro ~4.5wu); M1 PASS 50px (hole cards RAZOR-SHARP with ?fx ON); M7 PASS; M11 delta +99 draws (57→156 with DOF); vitest 45/45 + tsc clean + grep-check exits 0. Commit 64ec79e. Next: 07-04 (Vignette + BrightnessContrast + Noise). Phase 6 / TP5 COMPLETE 2026-06-12 — operator gate AUTO-APPROVED. Milestone 6/10 (60%).
 
 ## Current Position
 
@@ -72,6 +72,7 @@ Progress: [█████████░] 86%
 | Phase 05 P02 | 12 | 1 tasks | 1 files |
 | Phase 06 P05 | 90 | 2 tasks | 6 files |
 | Phase 07 P02 | 12 | 1 tasks | 1 files |
+| Phase 07 P03 | 20 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,8 @@ Decisions logged in PROJECT.md Key Decisions table. Most relevant to current wor
 
 - [Phase 7]: Plan 07-02: N8AO crevice AO SHIPPED -- aoRadius=0.8/intensity=2.0/distanceFalloff=0.7/halfRes=false/screenSpaceRadius=false; first child in EffectComposer ?fx. M6 PASS 33.21% luma delta (underCardHero luma=124.2 vs adjacentFelt luma=186.0; threshold >= 12%). M7 PASS (grep-check exits 0, no Bloom). M11 delta: baseline=52 draws / +fx+N8AO=57 draws (+5 draws, +9.6% -- within floor, halfRes NOT enabled). Starting params required zero tuning; no halos at hero/card/macro shots. vitest 45/45; tsc src/lab/ clean. Captures: .dev-stack/diag/tp6/n8ao-{hero,card,macro}.png (RTX 4060, zero errors). Commit 0c7c80a.
 
+- [Phase 7]: Plan 07-03: DepthOfField SHIPPED -- worldFocusDistance=holeCardDistance (static useMemo: hero ~7.8wu / card ~9.5wu / macro ~4.5wu); worldFocusRange=1.5/bokehScale=2.0/focalLength=0.025; second child in EffectComposer after N8AO. M1 PASS 50px (rank-glyph "10" on Sota de Oros; threshold 22px; 2.3x margin). M7 PASS (grep-check exits 0, no Bloom). M11 delta: +99 draws from DOF compositor passes (57→156 total with N8AO+DOF); frame-time measurement deferred to operator gate (headless rAF unreliable per documented TP0 limitation). Starting params required zero tuning -- M1 PASS on first capture. DOF disposition: SHIPPED (not cut -- M1 HARD gate CLEAR). Captures: .dev-stack/diag/tp6/dof-{hero,card,macro}.png (RTX 4060, zero errors). Commit 64ec79e.
+
 ### Pending Todos
 
 None yet.
@@ -160,9 +163,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T18:09:00Z
-Stopped at: Plan 07-02 COMPLETE 2026-06-12 -- N8AO aoRadius=0.8 inside EffectComposer ?fx; M6 PASS 33.21%; M11 +5 draws (52→57); halfRes=false; vitest 45/45 + tsc clean + grep-check exits 0. Commit 0c7c80a. Do NOT auto-advance -- operator chooses.
-Next: Plan 07-03 (DOF -- worldFocusDistance per cam preset, bokehScale=2.0, worldFocusRange=1.5; M1 HARD gate: hole cards razor-sharp). Do NOT auto-advance -- operator chooses.
+Last session: 2026-06-12T18:35:00Z
+Stopped at: Plan 07-03 COMPLETE 2026-06-12 -- DepthOfField added as second EffectComposer child; worldFocusDistance=holeCardDistance (static useMemo, per cam preset); M1 PASS 50px (hole cards RAZOR-SHARP with ?fx ON); M7 PASS; M11 +99 draws (57→156 DOF compositor passes); vitest 45/45 + tsc clean + grep-check exits 0. Commit 64ec79e. Do NOT auto-advance -- operator chooses.
+Next: Plan 07-04 (Vignette + BrightnessContrast + Noise + fog tune; M8 band 8-20%; +A warm corner; M9 determinism). Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): depth/AO/vignette → TP6 · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · inter-chip AO + lighting depth → TP5/TP6 · AAA(5) chips gated on TP5/TP6 · AAA(5) rail/brass/tactility gated on TP6 AO + TP7 geometry · UV arc-length remap (Lever E) → TP7.
 Branch: `spike/table-3d-hero`. CI note: spike push does NOT run CI (verified locally: 45/45 green). use_worktrees=false (GPU/dev-server → sequential). NO push/deploy/merge without explicit operator confirmation.
 Resume file: None
