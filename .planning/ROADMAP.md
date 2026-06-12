@@ -206,7 +206,7 @@ Plans:
 - [x] 06-02-PLAN.md — KEY RESHAPING: ?light= flag + warm gradient angle 0.72 + KEY_TO_FILL_RATIO_CEILING + green-bounce hemisphere
 - [x] 06-03-PLAN.md — PER-MATERIAL SPECULAR: wood/body/card/chip deltas; brass UNCHANGED (TP4-locked); M4 re-run at END ✅ COMPLETE 2026-06-12 (all deltas shipped anti-casino; M5 PASS; M4 pre-existing fail deferred to 06-05)
 - [x] 06-04-PLAN.md — GREEN-BOUNCE + BODY VOLUME verification: ?cam=rail captures + M6/M7 at rail ✅ COMPLETE 2026-06-12 (green-bounce G-delta=+6.23 subtle/no lime-wash; body volume delta=+8.8 top lighter; hemisphere #0d3d24 confirmed; M6 PASS 21.03%; M7 PASS; M10=52)
-- [ ] 06-05-PLAN.md — METRIC SUITE + grep-check-tp5-06.cjs: 6 structural checks + full M4/M5/M6/+A/M7/M10 pre-gate confirmation
+- [x] 06-05-PLAN.md — METRIC SUITE + grep-check-tp5-06.cjs: 6 structural checks + full M4/M5/M6/+A/M7/M10 pre-gate confirmation
 - [ ] 06-06-PLAN.md — OPERATOR GATE (autonomous:false): A/B at all 3 shots; TP5_OPERATOR_GATE.md + scorecard update
 
 ### Phase 7: TP6 — Profundidad & Composición (depth ON the table)
@@ -284,7 +284,7 @@ Phases execute in numeric order, honoring the SSOT §7 dependency graph: 1 (TP0,
 | 3. TP2 — Cartas Materiality & Legibility | 6/6 | Complete   | 2026-06-11 |
 | 4. TP3 — Fichas Materiality + Perf | 4/4 | ✅ Complete | 2026-06-11 |
 | 5. TP4 — Rail & Contour Elegance | 4/4 | ✅ Complete | 2026-06-12 |
-| 6. TP5 — Iluminación & Sombras | 2/6 | In Progress|  |
+| 6. TP5 — Iluminación & Sombras | 5/6 | In Progress|  |
 | 7. TP6 — Profundidad & Composición | 0/TBD | Not started | - |
 | 8. TP7 — Cámaras | 0/TBD | Not started | - |
 | 9. TP8 — Tactilidad & Lectura Social | 0/TBD | Not started | - |
