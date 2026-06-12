@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-06-12T21:21:00.000Z"
+last_updated: "2026-06-12T20:21:41.755Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 10
   completed_phases: 9
-  total_plans: 43
-  completed_plans: 43
-  percent: 90
+  total_plans: 46
+  completed_plans: 44
+  percent: 96
 ---
 
 # Project State
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-09)
 
 **Core value:** The CARD is the absolute protagonist; premium via restraint & craft, NEVER money; the protected reference is never degraded.
-**Current focus:** Phase 10 / TP9 — Unificación & AAA Lock (verdict → new reference). [Phase 9 / TP8 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 09-03 AUTO-APPROVED verifiable parts under standing directive — 16 HARD gates green + LIVE MOTION-FEEL FLAGGED for operator batch review; HeroMotion sub-threshold breathing SHIPPED MICRO_AMPLITUDE_Y=0.003/MICRO_AMPLITUDE_ROT=0.004; M9 byte-identical (hero c0c7e124/card d7a4350d/macro cd073a0c == TP7); grep-check-tp8-09 18/18; social read COMPLETE 4/4; M2=3.66x/2.60x; scorecard tactility held 5 AAA / social-read held 4 (AAA deferred to TP9); milestone 9/10 90%). 09-01: HeroMotion + M9 PASS. 09-02: grep-check + gate anchors. 09-03: operator gate AUTO-APPROVED verifiable + LIVE FEEL FLAGGED. Record: docs/table-3d/TP8_OPERATOR_GATE.md.] [Plan 09-02 ✅ COMPLETE 2026-06-12: grep-check-tp8-09 18/18 PASS (exit 0); 3 frozen tp8-gate anchors byte-identical to TP7 (M9 HARD gate PASS); social read COMPLETE (4/4 scene items); M2=3.66x/2.60x PASS; commits b0021ab+fa417b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11. Deviation: CHECK 5 regex case-sensitive (GSAP names PascalCase; /i false-positives on JSX block-comment text).] [Plan 09-01 ✅ COMPLETE 2026-06-12: HeroMotion + dual freeze guard + M9 PASS (md5 02e4aa23a039575d07d1cdecb61e85f7); commits f717e6d+a1807b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11.] [Phase 8 / TP7 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 08-03 AUTO-APPROVED under standing directive — cameras CONFIRMED LOCKED 0 changes; HERO fov:32/POV-card fov:40/MACRO fov:26 UNCHANGED; M1=80px/M2=3.66×/M9=PASS; ?fly SHIPPED non-canonical opt-in; eval framing FINAL for TP9; milestone 8/10 80%). Record: docs/table-3d/TP7_OPERATOR_GATE.md.] Do NOT auto-advance — operator chooses.
+**Current focus:** Phase 10 / TP9 — Unificación & AAA Lock (verdict → new reference). [Plan 10-01 ✅ COMPLETE 2026-06-12: consolidated metric matrix ALL PASS at 3 locked shots (hero/card/macro ?fx&spin=off); grep-check-tp8-09 18/18; M3 ΔE=8.72/M4 H=35.4 S=0.52/M5 0%/0%/M6 27.74%/M8 13.97%/+A luma=31.9/+B 0%; M7=0 Bloom; M9 byte-identical md5=02e4aa23; M12 MSE=0 tp9-gate vs tp8-gate (3 regions); M10 ?fx-off=62dc PASS/+fx=177dc documented-arch/chips=full=92dc PASS; M1 80px CARRY TP7; M2=3.66x/2.60x PASS; vitest 398/398; tsc clean; 6 anchors committed b8b174c. NO BLOCKING FLAG.] [Phase 9 / TP8 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 09-03 AUTO-APPROVED verifiable parts under standing directive — 16 HARD gates green + LIVE MOTION-FEEL FLAGGED for operator batch review; HeroMotion sub-threshold breathing SHIPPED MICRO_AMPLITUDE_Y=0.003/MICRO_AMPLITUDE_ROT=0.004; M9 byte-identical (hero c0c7e124/card d7a4350d/macro cd073a0c == TP7); grep-check-tp8-09 18/18; social read COMPLETE 4/4; M2=3.66x/2.60x; scorecard tactility held 5 AAA / social-read held 4 (AAA deferred to TP9); milestone 9/10 90%). 09-01: HeroMotion + M9 PASS. 09-02: grep-check + gate anchors. 09-03: operator gate AUTO-APPROVED verifiable + LIVE FEEL FLAGGED. Record: docs/table-3d/TP8_OPERATOR_GATE.md.] [Plan 09-02 ✅ COMPLETE 2026-06-12: grep-check-tp8-09 18/18 PASS (exit 0); 3 frozen tp8-gate anchors byte-identical to TP7 (M9 HARD gate PASS); social read COMPLETE (4/4 scene items); M2=3.66x/2.60x PASS; commits b0021ab+fa417b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11. Deviation: CHECK 5 regex case-sensitive (GSAP names PascalCase; /i false-positives on JSX block-comment text).] [Plan 09-01 ✅ COMPLETE 2026-06-12: HeroMotion + dual freeze guard + M9 PASS (md5 02e4aa23a039575d07d1cdecb61e85f7); commits f717e6d+a1807b6; vitest 45/45, tsc clean, grep-check-tp7-08 11/11.] [Phase 8 / TP7 ✅ COMPLETE 2026-06-12 (3/3 plans done; operator gate 08-03 AUTO-APPROVED under standing directive — cameras CONFIRMED LOCKED 0 changes; HERO fov:32/POV-card fov:40/MACRO fov:26 UNCHANGED; M1=80px/M2=3.66×/M9=PASS; ?fly SHIPPED non-canonical opt-in; eval framing FINAL for TP9; milestone 8/10 80%). Record: docs/table-3d/TP7_OPERATOR_GATE.md.] Do NOT auto-advance — operator chooses.
 
 ## Current Position
 
@@ -38,7 +38,7 @@ Plan: 6 plans (03-01…03-06), 6 SEQUENTIAL waves (one perceptual variable per g
 Status: ✅ TP6 COMPLETE (Phase 7 / TP6 operator gate 07-07 AUTO-APPROVED 2026-06-12; milestone 7/10 70%). TP6 full: N8AO+DOF+BrightnessContrast+Vignette+Noise behind ?fx; CenterGameState unconditional; grep-check-tp6-07 exits 0; M8 rect recalibrated to felt edges (13.97% PASS). Scorecard: depth 3→5, shadows 4→5, composition 4→5, lighting 4→5, tactility 4→5 (all AAA). OPEN: ?fx-default decision for operator batch review. Next: Phase 8 / TP7 (Cámaras — lock the canonical money shots). Phase 6 / TP5 — 06-01 COMPLETE: SoftShadows PCSS unconditional in Scene; ContactShadows frames=1/opacity=0.35/color=#1a0e06/far=5/blur=2.0/scale=FELT_R*3.5; key spotLight shadow-normalBias=0.02/near=8/far=28; M6 PASS 21.03%; M10 improved 106→52; Commits 65d39c4+83ef5df. 06-02 COMPLETE 2026-06-12: KEY_TO_FILL_RATIO_CEILING=3.5; ?light= A/B flag; shaped: angle=0.72/intensity=2.2/fill=0.8/hemisphere ground #0d3d24 (2.75x, PASS); base: angle=0.62/intensity=2.0/fill=0.7/hemisphere ground #1a0f08 (2.86x, PASS); M5/M7/M10=52 PASS; Commits 11c082f+6f38366. 06-03 COMPLETE 2026-06-12: per-material specular deltas (wood/body/card/chip); brassMat UNCHANGED; M5/M7/M10=52 PASS; Commits 884144c+d2ba85f. 06-04 COMPLETE 2026-06-12: hemisphere #0d3d24 GI verified (bodyUnder G-delta=+6.23, not lime-wash; body volume delta=+8.8); no code changes; Commit 6ee8ed5. 06-05 COMPLETE 2026-06-12: grep-check-tp5-06.cjs exits 0 (6 checks); brassHero rect RECALIBRATED (1240,820)→(1350,368,140,4) — was sampling card stock since ENCUADRE; brass #b8915a→#b89b74 (S 0.511→0.370) + envMapIntensity 0.45→0.30; M4 PASS H=35.4 S=0.52 V=0.715; M5/M6/M7/M10 PASS; vitest 398/398; tsc src/lab/ clean; Commits a4e3adc+a119bc4+4a6e537. Next: 06-06 (TP5 operator gate, autonomous:false).
 Last activity: 2026-06-12
 
-Progress: [█████████░] 90% (9/10 phases)
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [█████████░] 90% (9/10 phases)
 | Phase 07 P02 | 12 | 1 tasks | 1 files |
 | Phase 07 P03 | 20 | 1 tasks | 1 files |
 | Phase 07 P06 | 45 | 2 tasks | 9 files |
+| Phase 10 P10-01 | 14 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -184,7 +185,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-12T22:00:00Z
+Last session: 2026-06-12T20:21:41.733Z
 Stopped at: Plan 09-03 COMPLETE 2026-06-12 -- TP8 operator gate AUTO-APPROVED (verifiable parts) + LIVE MOTION-FEEL FLAGGED; TP8_OPERATOR_GATE.md written; SCORECARD_TABLE_3D.md updated (tactility held 5, social-read held 4); STATE.md percent corrected to 90 (9/10); ROADMAP.md Phase 9 marked COMPLETE. Phase 9 / TP8 COMPLETE (3/3 plans done). Milestone 9/10 (90%). Do NOT auto-advance -- operator chooses.
 Next: Phase 10 / TP9 -- Unificación & AAA Lock (verdict → new protected reference). Plans TBD at planning. Do NOT auto-advance -- operator chooses.
 Carried forward (non-blocking): TP8 LIVE MOTION-FEEL FLAGGED for operator batch review (motion at 30%/46% SSOT ceilings; HALVE if visibly noticeable → REMOVE if still visible; non-blocking rollback = static TP7 table) · dual 2D-classic/3D-immersive view-mode → own workstream (memory: chiribito-table-dual-view-modes) · AAA(5) cameras gated on TP9 final scorecard · AAA(5) felt nap sheen → TP9 · AAA(5) cards CARD_W/encuadre call → separate workstream · AAA(5) chips denomination-suit clarity → TP9 · TP6 ?fx-default decision → operator batch review · scoring of depth/shadows/lighting/composition/tactility at AAA(5) flagged for operator batch confirmation (TP6 gate note) · social-read AAA(5) deferred to TP9 final scorecard.
