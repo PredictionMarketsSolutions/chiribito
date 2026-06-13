@@ -121,7 +121,7 @@ function evaluateHand(cards: string[], rankOrder: CardRankOrder): HandScore {
  * server file too — the live game broadcasts `winningHand` strings
  * formed by the server, so consistency matters when comparing.
  */
-function getHandName(category: number): string {
+export function getHandName(category: number): string {
   switch (category) {
     case 9:
       return "Perla";
