@@ -68,3 +68,36 @@ export function showGameEndMessage(refs: OverlayRefs): void {
   refs.tournamentResultMessage.textContent = "La mesa se ha cerrado. Puedes volver al lobby para unirte a otra.";
   refs.tournamentResultOverlay.classList.remove("hidden");
 }
+
+/**
+ * Practice-end overlay helpers.
+ * MUST NOT touch tournamentEnded, resetRoomUi, clearCurrentRoomRefs, or
+ * showTournamentResult — the practice room stays alive for "Otra partida".
+ * (Pitfall 2 — see 05-RESEARCH.md)
+ */
+export function showPracticeEndScreen(
+  champion: { name?: string; chips?: number }
+): void {
+  const overlay = document.querySelector<HTMLElement>("#practice-end-overlay");
+  const msg = document.querySelector<HTMLElement>("#practice-end-message");
+  if (msg) {
+    const name = champion?.name ?? "La máquina";
+    // WR-01 (defense-in-depth): build via textContent, never innerHTML, so a
+    // champion name can never inject markup — Phase 6 castizo roster names or a
+    // loosened username charset must stay XSS-safe.
+    msg.replaceChildren();
+    const championSpan = document.createElement("span");
+    championSpan.className = "practice-end-champion";
+    championSpan.textContent = name;
+    msg.append(championSpan, document.createTextNode(" se lleva la partida."));
+  }
+  // Re-enable "Otra partida" button for a new game (in case overlay is reused)
+  const otraBtn = document.querySelector<HTMLButtonElement>("#otra-partida-btn");
+  if (otraBtn) otraBtn.disabled = false;
+  overlay?.classList.remove("hidden");
+}
+
+export function setPracticeEndOverlayVisible(visible: boolean): void {
+  const overlay = document.querySelector<HTMLElement>("#practice-end-overlay");
+  overlay?.classList.toggle("hidden", !visible);
+}

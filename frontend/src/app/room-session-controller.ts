@@ -22,6 +22,7 @@ import {
   handleHeartbeatAckMessage,
   handlePlayerDisconnectedMessage,
 } from "./room-message-handlers";
+import { handlePracticeEndMessage } from "./practice-end-handler";
 import { bindCoreRoomEvents } from "./room-event-bindings";
 import { buildRoundEndedHistoryData } from "./round-ended-history";
 import { applyWinnerUiState } from "./round-ended-winner-ui";
@@ -181,6 +182,9 @@ export type JoinRoomSessionControllerDeps = {
   getLastRoomState: () => RoomState | null;
   setLastRoomState: (state: RoomState) => void;
 
+  // Practice mode
+  showPracticeEndScreen: (champion: { name?: string; chips?: number }) => void;
+
   /** After standard round end: collect cards in Pixi, then invoke `done`. */
   runTableRoundEndAnimation?: (done: () => void) => void;
   /** Sync community row when server sends communityCardRevealed (Pixi path). */
@@ -243,7 +247,7 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
 
   async function joinRoom(
     forceReplace = false,
-    opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
+    opts?: { mode?: JoinMode; roomId?: string; tableName?: string; practiceMode?: "practice"; practiceBotCount?: number }
   ): Promise<void> {
     const mode: JoinMode = opts?.mode ?? "joinOrCreate";
     const token = deps.getToken();
@@ -285,6 +289,8 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
             name: username,
             tableName,
             forceReplace,
+            mode: opts?.practiceMode,
+            botCount: opts?.practiceBotCount,
           } as any);
         } else {
           joinedRoom = await client.joinOrCreate("mesa", {
@@ -420,6 +426,14 @@ export function createRoomSessionController(deps: JoinRoomSessionControllerDeps)
             const last = deps.getLastRoomState();
             if (last) deps.renderState(last);
           },
+          log: deps.log,
+        });
+      });
+
+      joinedRoom.onMessage("practiceEnd", (payload: { champion?: { name?: string; chips?: number } }) => {
+        handlePracticeEndMessage({
+          payload,
+          showPracticeEndScreen: deps.showPracticeEndScreen,
           log: deps.log,
         });
       });

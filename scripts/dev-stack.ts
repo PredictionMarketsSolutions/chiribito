@@ -214,7 +214,10 @@ async function main(): Promise<void> {
   log('stack', 'Spawning services...');
   spawnService('api', 'npm', ['run', 'dev'], join(ROOT, 'api-server'), { PORT: '3000' });
   spawnService('game', 'npm', ['run', 'dev'], ROOT, { PORT: '2567' });
-  spawnService('front', 'npm', ['run', 'dev'], join(ROOT, 'frontend'));
+  spawnService('front', 'npm', ['run', 'dev'], join(ROOT, 'frontend'), {
+    VITE_API_URL: 'http://localhost:3000',
+    VITE_WS_URL: 'ws://localhost:2567',
+  });
 
   setTimeout(() => {
     console.log('');

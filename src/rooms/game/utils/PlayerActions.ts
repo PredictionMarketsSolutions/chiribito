@@ -3,9 +3,8 @@
  * Player action handlers: bet, call, check, allIn, raise, fold
  */
 
-import { Client } from "@colyseus/core";
 import logger from "../../../config/logger";
-import type { IGameRoom } from "../../../types/IGameRoom";
+import type { IGameRoom, ActionClient } from "../../../types/IGameRoom";
 import { Player } from "../../schema/MesaState";
 import { GameUtils } from "./GameUtils";
 import { GameBroadcaster } from "./GameBroadcaster";
@@ -19,7 +18,7 @@ export class PlayerActions {
     this.broadcaster = new GameBroadcaster(room);
   }
 
-  handleCheck(client: Client, endTurnCallback: () => void): void {
+  handleCheck(client: ActionClient, endTurnCallback: () => void): void {
     if (client.sessionId !== this.room.state.currentTurn) return;
 
     const player = this.room.state.users.get(client.sessionId);
@@ -44,7 +43,7 @@ export class PlayerActions {
     endTurnCallback();
   }
 
-  handleFold(client: Client, handContributions: Map<string, number>, endTurnCallback: () => void): void {
+  handleFold(client: ActionClient, handContributions: Map<string, number>, endTurnCallback: () => void): void {
     if (client.sessionId !== this.room.state.currentTurn) return;
 
     const player = this.room.state.users.get(client.sessionId);
@@ -74,6 +73,6 @@ export class PlayerActions {
   handleFoldForTimeout(sessionId: string, handContributions: Map<string, number>, endTurnCallback: () => void): void {
     const player = this.room.state.users.get(sessionId);
     if (!player || player.isFolded) return;
-    this.handleFold({ sessionId } as Client, handContributions, endTurnCallback);
+    this.handleFold({ sessionId, send: () => {} } as ActionClient, handContributions, endTurnCallback);
   }
 }

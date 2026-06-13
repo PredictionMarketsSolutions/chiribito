@@ -9,6 +9,9 @@ export type PlayerState = {
   isFolded: boolean;
   seatIndex: number;
   hand?: string[];
+  isBot?: boolean;
+  /** Castizo avatar key, resolved to a glyph by the frontend (Phase 6). */
+  avatar?: string;
 };
 
 export type RoomState = {

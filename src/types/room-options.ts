@@ -6,6 +6,10 @@
 /** Opciones al crear la sala (client.create). */
 export interface RoomOptions {
   tableName?: string;
+  /** Modo de sala: "practice" activa bots, modo sin stats, y exclusión del lobby. */
+  mode?: "practice";
+  /** Número de bots a sembrar en modo práctica (clamped a [1,5]). */
+  botCount?: number;
 }
 
 /** Usuario autenticado (JWT decoded). */

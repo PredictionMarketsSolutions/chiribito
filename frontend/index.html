@@ -178,6 +178,23 @@
               </button>
             </form>
 
+            <!-- Practice mode entry (Phase 5) -->
+            <section class="lobby-hero__practice">
+              <p class="lobby-hero__create-label">Jugar contra la máquina</p>
+              <span class="lobby-hero__create-label">Rivales</span>
+              <div class="practice-selector" role="group" aria-label="Rivales">
+                <button type="button" class="practice-selector__chip" data-bots="1" aria-pressed="false">1</button>
+                <button type="button" class="practice-selector__chip" data-bots="2" aria-pressed="false">2</button>
+                <button type="button" class="practice-selector__chip is-selected" data-bots="3" aria-pressed="true">3</button>
+                <button type="button" class="practice-selector__chip" data-bots="4" aria-pressed="false">4</button>
+                <button type="button" class="practice-selector__chip" data-bots="5" aria-pressed="false">5</button>
+              </div>
+              <button id="practice-start" type="button" class="lobby-cta lobby-cta--practice">
+                <span>Empezar</span>
+                <span class="auth-btn__shine" aria-hidden="true"></span>
+              </button>
+            </section>
+
             <details class="lobby-hero__advanced">
               <summary class="lobby-hero__advanced-summary">¿Tienes un código de mesa privada?</summary>
               <div class="lobby-hero__advanced-body">
@@ -249,6 +266,24 @@
           <p id="tournament-result-message" class="tournament-result-message"></p>
           <div class="button-row" style="margin-top: 20px;">
             <button id="tournament-back-to-lobby" class="accent">Volver al lobby</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <!-- Practice-end overlay (Phase 5 — dedicated, NOT the tournament overlay; room stays open) -->
+    <div id="practice-end-overlay" class="auth-overlay hidden">
+      <div class="auth-card">
+        <header class="panel-header">
+          <div>
+            <p class="panel-kicker">Práctica</p>
+            <h1 id="practice-end-title">Fin de la partida</h1>
+          </div>
+        </header>
+        <section class="panel-card">
+          <p id="practice-end-message" class="tournament-result-message"></p>
+          <div class="button-row">
+            <button id="otra-partida-btn" class="accent">Otra partida</button>
+            <button id="practice-salir-btn" class="lobby-cta--ghost">Salir</button>
           </div>
         </section>
       </div>

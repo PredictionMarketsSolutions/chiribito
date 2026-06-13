@@ -6,6 +6,7 @@
 import logger from "../../../config/logger";
 import type { IGameRoom } from "../../../types/IGameRoom";
 import { CardEvaluator, type CardRankOrder, type HandScore } from "./CardEvaluator";
+import { BestHand } from "./BestHand";
 import { GameUtils } from "./GameUtils";
 import { RANK_ORDER } from "../glossary";
 
@@ -26,8 +27,7 @@ export class WinnerDeterminator {
 
   private determineWinnersForEligible(eligibleIds: string[]): { winners: string[]; winningHand: string } {
     const community = this.room.state.communityCards.toArray();
-    const communityCombos = CardEvaluator.getCommunityCombos(community);
-    
+
     let winners: string[] = [];
     let bestScore: HandScore | null = null;
     let bestName = "Sin ganador";
@@ -38,7 +38,13 @@ export class WinnerDeterminator {
 
       const hole = player.hand.toArray();
 
-      // Special case: Perla (10♠J♠)
+      // Special case: Perla (Sota + 7 same suit) — outer-break stays here;
+      // BestHand cannot express a break on this outer player loop.
+      // (IN-03) This outer break is the AUTHORITATIVE Perla path for showdown;
+      // bestHandOfN's own Perla branch (BestHand.ts) is the bot-facing one. The
+      // break short-circuits before delegation, so bestHandOfN is never reached
+      // for a Perla holder here — but both paths must stay in sync (each yields
+      // { category: 9, tiebreaker: [] } / name "Perla").
       if (CardEvaluator.isPerla(hole)) {
         winners = [playerId];
         bestScore = { category: 9, tiebreaker: [] };
@@ -46,25 +52,14 @@ export class WinnerDeterminator {
         break;
       }
 
-      let playerBest: HandScore | null = null;
-      let playerBestName = "";
-
-      for (const combo of communityCombos) {
-        const fiveCards = [...hole, ...combo];
-        const score = CardEvaluator.evaluateHand(fiveCards, this.rankOrder);
-
-        if (!playerBest || CardEvaluator.compareHands(score, playerBest) > 0) {
-          playerBest = score;
-          playerBestName = CardEvaluator.getHandName(score.category);
-        }
-      }
-
-      if (playerBest) {
-        if (!bestScore || CardEvaluator.compareHands(playerBest, bestScore) > 0) {
+      // Delegate per-player evaluation to the shared BestHand utility.
+      const result = BestHand.bestHandOfN(hole, community, this.rankOrder);
+      if (result) {
+        if (!bestScore || CardEvaluator.compareHands(result.score, bestScore) > 0) {
           winners = [playerId];
-          bestScore = playerBest;
-          bestName = playerBestName;
-        } else if (bestScore && CardEvaluator.compareHands(playerBest, bestScore) === 0) {
+          bestScore = result.score;
+          bestName = result.name;
+        } else if (CardEvaluator.compareHands(result.score, bestScore) === 0) {
           winners.push(playerId);
         }
       }

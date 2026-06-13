@@ -22,6 +22,7 @@
     "loadtest": "tsx loadtest/example.ts --room mesa --numClients 99",
     "optimize:cards": "tsx scripts/optimize-cards.ts",
     "dev:stack": "tsx scripts/dev-stack.ts",
+    "test:e2e": "playwright test",
     "build": "npm run build:game && npm run build:api",
     "build:game": "tsc",
     "build:api": "cd api-server && npm install && npm run build",

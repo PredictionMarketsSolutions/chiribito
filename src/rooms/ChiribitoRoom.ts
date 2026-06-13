@@ -17,6 +17,8 @@ import {
   AuthenticationService,
   PlayerLifecycleManager
 } from "./managers";
+import { BotController } from "./managers/BotController";
+import { CASTIZO_ROSTER } from "./game/bots/profiles";
 import { CUSTOM_GAME_END } from "./close-codes";
 import { reportTournamentGameEnded } from "../services/api-server-stats";
 import {
@@ -41,25 +43,34 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
   public playersAllIn: Set<string> = new Set();
   private engine!: GameEngine;
   private reconnectionTimeoutSeconds = 60;
+  /** True when this is a practice room (no stats, no lobby listing, play-again, dispose-on-empty). */
+  private isPractice = false;
   
   /** Modo torneo: envía a cada cliente si ganó o perdió y cierra la mesa. */
   public notifyTournamentEnd(champion: { sessionId: string; name: string; chips: number }): void {
+    // gameResult broadcast: ALWAYS (practice AND normal)
     for (const client of this.clients) {
       const result = client.sessionId === champion.sessionId ? "won" : "lost";
       client.send("gameResult", { result, champion });
     }
 
-    // Persist stats in API server (server-to-server, protected by INTERNAL_API_SECRET)
-    void this.reportTournamentStats(champion);
+    if (this.isPractice) {
+      // Practice: skip stats POST, broadcast practiceEnd, do NOT disconnect
+      // The client sends "playAgain" to restart the hand in the same room.
+      this.broadcast("practiceEnd", { champion });
+    } else {
+      // Normal tournament: persist stats + disconnect (BYTE-IDENTICAL to pre-Phase-4)
+      void this.reportTournamentStats(champion);
 
-    // Cerrar cada cliente con código GAME_END para que el frontend no intente reconectar
-    this.clock.setTimeout(() => {
-      const clients = Array.from(this.clients);
-      for (const client of clients) {
-        client.leave(CUSTOM_GAME_END, "GAME_END");
-      }
-      this.disconnect();
-    }, 800);
+      // Cerrar cada cliente con código GAME_END para que el frontend no intente reconectar
+      this.clock.setTimeout(() => {
+        const clients = Array.from(this.clients);
+        for (const client of clients) {
+          client.leave(CUSTOM_GAME_END, "GAME_END");
+        }
+        this.disconnect();
+      }, 800);
+    }
   }
 
   // Managers
@@ -70,6 +81,8 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
   private analytics!: AnalyticsService;
   private authService!: AuthenticationService;
   private lifecycleManager!: PlayerLifecycleManager;
+  /** Bot turn loop — instantiated in onCreate; cleared in onDispose. Only active in bot rooms (Phase 4+). */
+  private botController!: BotController;
 
   private async reportTournamentStats(champion: { sessionId: string; name: string; chips: number }): Promise<void> {
     const internalSecret = process.env.INTERNAL_API_SECRET || "";
@@ -139,15 +152,48 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
     this.setState(new MesaState());
     this.autoDispose = false;
 
-    const requestedName = typeof options?.tableName === "string" ? options.tableName.trim() : "";
+    // Normalize options once (WR-03): the default `= {}` only covers the no-arg
+    // call; a caller passing `null`/`undefined` explicitly would still bypass it
+    // under strictNullChecks:false. Read mode/botCount/tableName from `opts`
+    // uniformly so isPractice, seeding, and metadata share the same safe reads.
+    const opts = options ?? {};
+    const mode = opts.mode;
+    const botCount = opts.botCount;
+
+    // Practice mode detection (Phase 4) — set BEFORE setMetadata and lobby exclusion
+    this.isPractice = mode === "practice";
+
+    const requestedName = typeof opts.tableName === "string" ? opts.tableName.trim() : "";
     const safeName = requestedName ? requestedName.slice(0, 32) : "";
     const defaultName = `Mesa ${this.roomId.slice(0, 6)}`;
     this.setMetadata({
       name: safeName || defaultName,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      ...(this.isPractice ? { mode: "practice" } : {})
     });
 
+    // Lobby exclusion (Phase 4) — identical pattern to LobbyRoom.ts:52.
+    // _listing.unlisted = true prevents updateLobby() from ever publishing this
+    // room to the $lobby channel, so the frontend lobby never sees practice rooms.
+    // Use bracket access + as any because _listing is a private Colyseus field.
+    // Do NOT use setPrivate(true) — that blocks joinById too (Pitfall 4).
+    // Guard the deref (WR-02): _listing is present at onCreate today (Colyseus
+    // wires it before onCreate, same as LobbyRoom.onCreate), but under
+    // strictNullChecks:false an undefined _listing (version bump / changed
+    // ordering) would throw synchronously and kill creation for ALL practice
+    // rooms. One optional guard makes this resilient.
+    if (this.isPractice) {
+      const listing = (this as any)["_listing"];
+      if (listing) listing.unlisted = true;
+    }
+
     this.engine = new GameEngine(this);
+
+    // BotController — wires the onTurnStarted hook to the bot turn loop.
+    // Phase 3 instantiates it here; Phase 4 will conditionally seed bots
+    // based on { mode, botCount } room options. Seeding is intentionally
+    // NOT called here — this phase keeps seeding test-driven.
+    this.botController = new BotController(this, this.engine);
 
     // Initialize managers
     this.sessionManager = new SessionManager(this.roomId, this.reconnectionTimeoutSeconds);
@@ -199,6 +245,55 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
     // Start managers
     this.connectionMonitor.start();
     this.analytics.start();
+
+    // Bot seeding (Phase 4) — seatManager is fully initialized above; seed after it.
+    // Clamp botCount to [1,5]: never trust client-supplied values (T-04-03).
+    if (this.isPractice) {
+      const clampedCount = Math.max(1, Math.min(5, botCount ?? 1));
+      this.botController.seedBots(clampedCount, {
+        chips: 1000,
+        profiles: CASTIZO_ROSTER,
+        seatManager: this.seatManager,
+      });
+    }
+
+    // playAgain handler (Phase 4) — re-seeds chips=1000 and starts a new hand.
+    // Non-practice rooms return immediately (T-04-02 guard).
+    // Not gated through isActionAllowed: this is an out-of-round action (like startGame).
+    this.onMessage("playAgain", (_client) => {
+      if (!this.isPractice) return;
+      // Mid-hand guard (CR-01): playAgain is only meaningful once the game has
+      // ended (champion holds all chips → roundStarted=false). Mirror the
+      // handleStartGame roundStarted guard so a client cannot send playAgain
+      // mid-hand to refill every stack to 1000 and force a re-deal (integrity
+      // break / griefing). Genuine end-of-game keeps roundStarted=false → proceeds.
+      if (this.state.roundStarted) return;
+      // Defend the read (WR-04): the handler is a client-triggered entry point;
+      // under strictNullChecks:false a missing state.users would throw
+      // "not iterable". onCreate always setState(new MesaState()) first, so this
+      // holds in production, but guarding matches the codebase convention.
+      if (!this.state?.users) return;
+      for (const [, player] of this.state.users) {
+        // Skip any undefined entry while iterating (WR-04 defensive).
+        if (!player) continue;
+        player.chips = 1000;
+        player.currentBet = 0;
+        player.isFolded = false;
+      }
+      // Clear any stale turn timer before re-dealing. After a full re-seed every
+      // player has chips, so startNewHand cannot hit its <2 / currentPlayerIndex
+      // === -1 early-return (which would skip startTurnTimer's own clear); this
+      // guards that path defensively regardless (WR-01: startNewHand owns the
+      // rest of the reset on the genuine end-of-game path, which is the only one
+      // reachable here now that the roundStarted guard is in place).
+      if (this.turnTimeout) {
+        clearTimeout(this.turnTimeout);
+        this.turnTimeout = null;
+      }
+      // Set roundStarted before startNewHand to avoid stale state (Pitfall 6)
+      this.state.roundStarted = true;
+      this.engine.startNewHand();
+    });
 
     // Game messages with rate limiting
     this.onMessage("startGame", (client) => {
@@ -348,6 +443,19 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
       (type, message, opts) => this.broadcast(type, message, opts)
     );
     this.engine.tryGameEnd();
+
+    // Dispose-on-empty for practice rooms (Phase 4, REQ-dispose-on-empty).
+    // Bots have no Colyseus Client entry, so clients.length === 0 means no humans remain.
+    // this.disconnect() triggers onDispose which calls botController.clearAll() (no timer leak).
+    // autoDispose=false means Colyseus will NOT auto-dispose; we must call disconnect() explicitly.
+    if (this.isPractice && this.clients.length === 0) {
+      this.disconnect();
+    }
+  }
+
+  /** IGameRoom hook: fires on every turn start; delegates to BotController (no-op when no bots registered). */
+  onTurnStarted(sessionId: string): void {
+    this.botController?.onTurnStarted(sessionId);
   }
 
   scheduleDelayed(callback: () => void, ms: number): void {
@@ -357,12 +465,13 @@ export class ChiribitoRoom extends Room<{ state: MesaState }> {
   onDispose() {
     logger.info(`Room disposing`, { roomId: this.roomId });
     if (this.turnTimeout) clearTimeout(this.turnTimeout);
-        
+
     // Dispose all managers
     this.connectionMonitor?.clearAll();
     this.seatManager?.clearAll();
     this.rateLimiter?.clearAll();
     this.sessionManager?.clearAll();
+    this.botController?.clearAll();
     
     // Log analytics summary
     if (this.analytics) {

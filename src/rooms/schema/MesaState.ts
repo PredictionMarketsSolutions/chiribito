@@ -25,6 +25,10 @@ export class Player extends Schema {
   @type("number") seatIndex: number = -1;
   /** Estado dentro de la sala. Solo el servidor lo actualiza (join → seated, deal hand → in_hand, end round → seated). */
   @type("string") playerStatus: string = DEFAULT_PLAYER_STATUS;
+  /** Indica si este jugador es un bot. Solo el servidor lo asigna; nunca desde mensajes del cliente. Wire index 8 (append-only). */
+  @type("boolean") isBot: boolean = false;
+  /** Castizo avatar key, resolved to a glyph/image by the frontend. Wire index 9 (append-only). */
+  @type("string") avatar: string = "";
 
   constructor(sessionId: string) {
     super();
