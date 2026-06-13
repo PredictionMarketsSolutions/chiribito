@@ -72,4 +72,9 @@ export const dom = {
   rinconOverlay: getRef<HTMLDivElement>("#rincon-overlay"),
   rinconContent: getRef<HTMLDivElement>("#rincon-content"),
   miRinconButton: getRef<HTMLButtonElement>("#mi-rincon"),
+  helpPanelOverlay: getRef<HTMLDivElement>("#help-panel-overlay"),
+  helpPanelContent: getRef<HTMLDivElement>("#help-panel-content"),
+  helpPanelClose: getRef<HTMLButtonElement>("#help-panel-close"),
+  helpButtonLobby: getRef<HTMLButtonElement>("#help-btn-lobby"),
+  helpButtonTable: getRef<HTMLButtonElement>("#help-btn-table"),
 } as const;

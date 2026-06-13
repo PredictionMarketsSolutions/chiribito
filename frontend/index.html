@@ -9,6 +9,7 @@
     <title>CHIRIBITO</title>
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="stylesheet" href="/src/app/rincon/rincon.css" />
+    <link rel="stylesheet" href="/src/app/help-panel.css" />
   </head>
   <body>
     <div id="reconnect-banner" class="reconnect-banner reconnect-banner--hidden" role="status" aria-live="polite">
@@ -148,6 +149,9 @@
             </div>
           </div>
           <div class="lobby-top__actions">
+            <button id="help-btn-lobby" type="button" class="lobby-icon-btn help-btn" title="Ayuda" aria-label="Ayuda — cómo se juega">
+              <span class="lobby-icon-btn__label">?</span>
+            </button>
             <button id="sound-toggle" type="button" class="lobby-icon-btn" title="Silenciar" aria-pressed="false">
               <span class="lobby-icon-btn__label" data-sound-label>Sonido</span>
             </button>
@@ -253,6 +257,15 @@
         <div class="rincon-scene__grain"></div>
       </div>
       <div id="rincon-content"></div>
+    </div>
+    <div id="help-panel-overlay" class="help-panel hidden" role="dialog" aria-modal="true" aria-labelledby="help-panel-title">
+      <div class="help-panel__card">
+        <div class="help-panel__top">
+          <h2 id="help-panel-title" class="help-panel__title">Cómo se juega en Chiribito</h2>
+          <button id="help-panel-close" type="button" class="help-panel__close" aria-label="Cerrar">×</button>
+        </div>
+        <div id="help-panel-content" class="help-panel__body"></div>
+      </div>
     </div>
     <div id="tournament-result-overlay" class="auth-overlay hidden">
       <div class="auth-card">
@@ -429,6 +442,7 @@
               </span>
               <span class="badge badge-meta timer">Reloj <span id="turn-timer">-</span></span>
               <span class="badge badge-meta">Jugada <span id="winning-hand-chip">-</span></span>
+              <button id="help-btn-table" type="button" class="badge badge-meta help-btn help-btn--table" title="Ayuda" aria-label="Ayuda — cómo se juega">?</button>
             </div>
           </div>
           <div id="winner-banner" class="winner-banner hidden" aria-live="polite"></div>

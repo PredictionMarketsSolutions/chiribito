@@ -1,0 +1,639 @@
+/* Panel de Ayuda — scoped to .help-panel. Reuses style.css tokens (felt/gold/ivory/wood/ease).
+   Do NOT edit style.css. This file is additive — it does NOT restyle felt/rail/rim/seats/cards. */
+
+.help-panel {
+  /* Local vars — mirrors rincon.css local-var pattern */
+  --h-felt-dark: #0b4d3c;
+  --h-gold: #f4c430;
+  --h-gold-soft: rgba(244, 196, 48, 0.18);
+  --h-ivory: #f4ecd8;
+  --h-ivory-dim: #d8cdb3;
+  --h-bg-dark: #0a0f1a;
+  --h-bg-darker: #050810;
+  --h-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 5, 12, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: help-panel-in var(--dur-base, 240ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.help-panel.hidden {
+  display: none;
+}
+
+@keyframes help-panel-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-panel,
+  .help-panel * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Panel card — warm parchment/ivory on dark, gold hairline border.
+   Flex column: a fixed header (__top) above a scrollable body (__body). */
+.help-panel__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, var(--h-bg-dark), #0d1220);
+  border: 1px solid var(--h-gold-soft);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(244, 196, 48, 0.08);
+  max-width: 560px;
+  width: calc(100% - 32px);
+  max-height: 80vh;
+  overflow: hidden;
+  color: var(--h-ivory);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  animation: help-panel-rise var(--dur-slow, 420ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+/* Scrollable body — empty in Phase 1; phases 2-3 fill it with rules + rankings. */
+.help-panel__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px 24px 28px;
+}
+
+@keyframes help-panel-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Header row: title + close button */
+.help-panel__top {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid rgba(244, 196, 48, 0.12);
+}
+
+.help-panel__title {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--h-ivory);
+  margin: 0;
+}
+
+/* Close button — quiet, gold-tinted, accessible */
+.help-panel__close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--h-ivory-dim);
+  border: 1px solid rgba(244, 196, 48, 0.22);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--dur-fast, 140ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              color var(--dur-fast, 140ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.help-panel__close:hover {
+  border-color: rgba(244, 196, 48, 0.5);
+  color: var(--h-ivory);
+}
+
+.help-panel__close:focus-visible {
+  outline: 2px solid var(--h-gold);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   Rankings section — help-panel-rankings.ts
+   Additive, scoped under .help-panel. Uses existing local vars.
+   Anti-casino: warm-gold hairline only; NO neon/glow/jackpot/spotlight.
+   ================================================================ */
+
+.help-panel .help-rankings {
+  padding: 4px 0 8px;
+}
+
+.help-panel .help-rankings__heading {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--h-ivory-dim);
+  margin: 0 0 14px;
+}
+
+/* Rankings — cards are the protagonist (stacked-block treatment).
+   The row is a vertical block: a header line (name + badge/cue + note) above a
+   full-width strip of LARGE card faces. Reuses existing local tokens only.
+   Anti-casino: warm-gold hairline + a barely-there parchment ledge; NO
+   glow/neon/jackpot/spotlight/scale-pop/drop-shadow halo. */
+
+/* Row becomes a vertical block (was a single flex line) */
+.help-panel .help-rankings__row {
+  display: block;
+  padding: 11px 12px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-bottom: 7px;
+}
+
+/* Perla row — strongest warm treatment retained */
+.help-panel .help-rankings__row--perla {
+  border-color: var(--h-gold-soft);
+  background: rgba(244, 196, 48, 0.06);
+}
+
+/* Color (6) + Full (5) — lighter warm hint retained */
+.help-panel .help-rankings__row--quirk {
+  border-color: rgba(244, 196, 48, 0.10);
+  background: rgba(244, 196, 48, 0.03);
+}
+
+/* Header line: hand name + badge/cue + note, baseline-aligned and wrap-friendly.
+   This is what frees the cards from the old rigid 112px label column. */
+.help-panel .help-rankings__header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  margin-bottom: 9px;
+}
+
+/* Label — sizes to content now (no rigid min-width); leads each block */
+.help-panel .help-rankings__label {
+  font-family: "Cinzel", serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--h-ivory);
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.help-panel .help-rankings__row--perla .help-rankings__label {
+  color: var(--h-gold);
+}
+
+/* Note — flexes beside the name on wide; wraps under it when tight */
+.help-panel .help-rankings__note {
+  font-size: 11px;
+  color: var(--h-ivory-dim);
+  line-height: 1.4;
+  margin: 0;
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
+/* Solid matte-gold Perla seal — "la más fuerte". Discreet castizo seal,
+   dark text on gold; NOT a casino chip (no glow/pulse). */
+.help-panel .help-rankings__perla-badge {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--h-bg-darker);
+  background: var(--h-gold);
+  border-radius: 4px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Color-beats-Full quirk cue badge — now lives in the header line */
+.help-panel .help-rankings__quirk-cue {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--h-gold);
+  border: 1px solid var(--h-gold-soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Card strip — full-width ledge the naipes rest on. A barely-there warm wash
+   (single low-alpha gold) keeps the calm-chrome read while giving the faces a
+   faint parchment rest. flex-wrap is a final safety net. */
+.help-panel .help-rankings__cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 5px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(244, 196, 48, 0.025);
+  border: 1px solid rgba(244, 196, 48, 0.06);
+}
+
+/* The cards — true ~0.64 naipe ratio, contain (whole face, no crop), dark
+   inset behind the contained art so letterbox gutters read as a frame.
+   Height derives from aspect-ratio → cannot distort. */
+.help-panel .help-rankings__card-img {
+  width: 50px;
+  height: auto;
+  aspect-ratio: 800 / 1240;
+  border-radius: 5px;
+  object-fit: contain;
+  background: var(--h-bg-darker);
+  border: 1px solid rgba(244, 196, 48, 0.18);
+  transition: border-color var(--dur-fast, 140ms) var(--h-ease, ease);
+}
+
+/* Perla cards — the single largest in the section (la mano máxima, 2 cards) */
+.help-panel .help-rankings__row--perla .help-rankings__cards {
+  background: rgba(244, 196, 48, 0.05);
+  border-color: rgba(244, 196, 48, 0.14);
+}
+.help-panel .help-rankings__row--perla .help-rankings__card-img {
+  width: 56px;
+  border-color: rgba(244, 196, 48, 0.40);
+}
+
+/* Calm, non-casino hover: warm hairline only — no glow/scale/shadow */
+.help-panel .help-rankings__card-img:hover {
+  border-color: rgba(244, 196, 48, 0.40);
+}
+
+/* Drawer is wider than the lobby — give the faces a touch more size there */
+.help-panel--drawer .help-rankings__card-img { width: 52px; }
+.help-panel--drawer .help-rankings__row--perla .help-rankings__card-img { width: 58px; }
+
+/* Mobile bottom sheet (≤600px): clamp so 5 cards never overflow ~312px */
+@media (max-width: 600px) {
+  .help-panel .help-rankings__card-img { width: 42px; }
+  .help-panel .help-rankings__row--perla .help-rankings__card-img { width: 48px; }
+  .help-panel--drawer .help-rankings__card-img { width: 42px; }
+  .help-panel--drawer .help-rankings__row--perla .help-rankings__card-img { width: 48px; }
+  .help-panel .help-rankings__cards { gap: 4px; padding: 6px 7px; }
+}
+
+/* ================================================================
+   Rules section — help-panel-rules.ts
+   Additive, scoped under .help-panel. Uses existing local vars.
+   Anti-casino: warm-gold hairline only; NO neon/glow/jackpot/spotlight.
+   ================================================================ */
+
+.help-panel .help-rules {
+  padding: 4px 0 16px;
+  border-bottom: 1px solid rgba(244, 196, 48, 0.12);
+  margin-bottom: 12px;
+}
+
+.help-panel .help-rules__heading {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--h-ivory-dim);
+  margin: 0 0 14px;
+}
+
+/* Mechanic cards grid — 2-column on wide, single-column stacked */
+.help-panel .help-rules__mechanics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.help-panel .help-rules__card {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(244, 196, 48, 0.10);
+  background: rgba(244, 196, 48, 0.02);
+}
+
+/* Regla de oro emphasis — warm-gold hairline, subtle parchment tint */
+.help-panel .help-rules__card--gold {
+  border-color: var(--h-gold-soft);
+  background: rgba(244, 196, 48, 0.06);
+}
+
+.help-panel .help-rules__card-title {
+  font-family: "Cinzel", serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--h-ivory);
+  margin: 0 0 5px;
+}
+
+.help-panel .help-rules__card--gold .help-rules__card-title {
+  color: var(--h-gold);
+}
+
+.help-panel .help-rules__card-desc {
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: var(--h-ivory-dim);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Betting streets block */
+.help-panel .help-rules__streets {
+  padding-top: 4px;
+}
+
+.help-panel .help-rules__streets-heading {
+  font-family: "Cinzel", serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--h-ivory-dim);
+  margin: 0 0 6px;
+}
+
+.help-panel .help-rules__streets-lead {
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: var(--h-ivory-dim);
+  line-height: 1.45;
+  margin: 0 0 10px;
+}
+
+.help-panel .help-rules__streets-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: street-counter;
+}
+
+.help-panel .help-rules__street {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  counter-increment: street-counter;
+}
+
+.help-panel .help-rules__street::before {
+  content: counter(street-counter) ".";
+  font-family: "Cinzel", serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--h-gold);
+  flex-shrink: 0;
+  min-width: 16px;
+}
+
+.help-panel .help-rules__street-label {
+  color: var(--h-ivory);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.help-panel .help-rules__street-desc {
+  color: var(--h-ivory-dim);
+}
+
+/* ================================================================
+   Variant: .help-panel--lobby
+   Explicit selector so the controller (04-01) has a class target.
+   The base .help-panel already does full-screen centered card + warm
+   scrim + blur — this rule is a no-op alias that keeps today's look.
+   ================================================================ */
+
+.help-panel--lobby {
+  /* Identical to base — full-screen, centered card, warm scrim + blur.
+     Declared explicitly so toggling .help-panel--lobby on/off is safe. */
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 5, 12, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ================================================================
+   Variant: .help-panel--drawer
+   Right-edge side drawer that slides in from the RIGHT.
+   - Overlay: position:fixed; inset:0 (kept); layout → right-aligned.
+     No opaque scrim over the felt — transparent overlay so the felt,
+     seats, and turn timer stay visible to the LEFT.
+   - Card: full viewport height, width min(58vw, 600px), flush right.
+     Slides via translateX(100%) → 0 matching the #ui slide pattern
+     (transition: transform 0.3s var(--ease-in-out)).
+   - z-index: stays in the ~1050 band (below Mi Rincón 1100).
+   ================================================================ */
+
+.help-panel--drawer {
+  align-items: stretch;
+  justify-content: flex-end;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.help-panel--drawer .help-panel__card {
+  width: min(58vw, 600px);
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  border-radius: 12px 0 0 12px;
+  /* Override the rise animation — drawer slides in from the right.
+     Use a keyframe (NOT a transition): the overlay flips display:none → flex,
+     so a transition has no rendered start state to interpolate from; a keyframe
+     animation plays on first render. */
+  animation: help-panel-drawer-in var(--dur-base, 240ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes help-panel-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* ================================================================
+   Turn-cue pill: .help-panel__turn-cue
+   A small warm-gold pill appended by the JS controller (04-01) when
+   the panel is open at the table and it's the player's turn.
+   Hidden via .help-panel__turn-cue.hidden (display:none).
+   Anti-casino: warm castizo, no neon/glow/jackpot/spotlight.
+   ================================================================ */
+
+.help-panel__turn-cue {
+  /* Mounted as the FIRST child of the scrollable body by the controller and
+     pinned to the top (sticky) so it stays visible while the player scrolls. */
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  margin: 0 0 10px;
+  border-radius: 20px;
+  background: rgba(244, 196, 48, 0.12);
+  border: 1px solid var(--h-gold-soft);
+  color: var(--h-gold);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 1;
+  animation: help-cue-in var(--dur-base, 240ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes help-cue-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.help-panel__turn-cue.hidden {
+  display: none;
+}
+
+/* ================================================================
+   Mobile responsive: drawer → bottom sheet (≤768px)
+   At ≤768px the drawer variant becomes a BOTTOM SHEET:
+   - Anchored to the bottom of the viewport (full width, ~85vh).
+   - Slides UP via translateY(100%) → 0 (same easing as slide-in).
+   - Rounded top corners; inner content reflows to single column.
+   - Lobby variant on mobile: near-full overlay (default base behavior).
+   ================================================================ */
+
+@media (max-width: 768px) {
+  .help-panel--drawer {
+    align-items: flex-end;
+    justify-content: stretch;
+  }
+
+  .help-panel--drawer .help-panel__card {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    overflow-y: auto;
+    /* Bottom-sheet: slide UP via a keyframe (same display:none → flex reason as
+       the desktop drawer — a transition can't fire on first render). */
+    animation: help-panel-sheet-in var(--dur-base, 240ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  }
+
+  @keyframes help-panel-sheet-in {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* Reflow 2-column mechanic cards grid to single column */
+  .help-panel--drawer .help-rules__mechanics {
+    grid-template-columns: 1fr;
+  }
+
+  /* Prevent horizontal overflow inside the bottom sheet */
+  .help-panel--drawer .help-panel__body {
+    overflow-x: hidden;
+  }
+
+  /* Rankings rows: allow flex-wrap so cards + note don't overflow */
+  .help-panel--drawer .help-rankings__row {
+    flex-wrap: wrap;
+  }
+
+  /* Lobby on mobile: keep near-full overlay (base rules already handle it),
+     tighten the card margins */
+  .help-panel--lobby .help-panel__card {
+    width: calc(100% - 16px);
+    max-height: 90vh;
+  }
+}
+
+/* Tighter mobile: 600px breakpoint matching app's tight breakpoints */
+@media (max-width: 600px) {
+  .help-panel--drawer .help-panel__card {
+    max-height: 88vh;
+  }
+
+  .help-panel__turn-cue {
+    font-size: 10px;
+    padding: 4px 10px;
+    margin: 8px 16px 0;
+  }
+}
+
+/* ================================================================
+   Reduced motion: extend the existing prefers-reduced-motion guard
+   to cover the new drawer slide, bottom-sheet slide, and cue fade-in.
+   The base guard already blanket-disables animation + transition on
+   .help-panel and .help-panel * — since the new transitions live on
+   .help-panel--drawer .help-panel__card (which is inside .help-panel),
+   they are already covered. This explicit block makes intent clear and
+   guards against any future specificity drift.
+   ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .help-panel--drawer .help-panel__card,
+  .help-panel--lobby .help-panel__card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .help-panel__turn-cue {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Shared ? button affordance (lobby + table) */
+.help-btn {
+  /* Lobby variant already gets .lobby-icon-btn styling — no extra rules needed beyond cursor. */
+  cursor: pointer;
+}
+
+/* Table ? button — compact variant that fits inside .badge-meta row */
+.help-btn--table {
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  line-height: 1.4;
+  cursor: pointer;
+  background: transparent;
+  /* Transparent base border so the :hover border-color has something to act on. */
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: background var(--dur-fast, 140ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              border-color var(--dur-fast, 140ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.help-btn--table:hover {
+  background: rgba(244, 196, 48, 0.1);
+  border-color: rgba(244, 196, 48, 0.5);
+}
+
+.help-btn--table:focus-visible {
+  /* Literal gold — .help-btn--table lives on the table header, OUTSIDE the
+     .help-panel scope where --h-gold is declared, so var() would be invalid here. */
+  outline: 2px solid #f4c430;
+  outline-offset: 2px;
+}

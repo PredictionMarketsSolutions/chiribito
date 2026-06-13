@@ -79,6 +79,9 @@ import { TableScene } from "./game/table/TableScene";
 import { getWinnerDisplayFromRoundEnd } from "./game/round-end-winner";
 import { refreshWinnersRanking as refreshWinnersRankingFn } from "./app/winners-ranking";
 import { openRincon, setRinconOverlayVisible } from "./app/rincon/rincon-scene";
+import { openHelpPanel, closeHelpPanel } from "./app/help-panel";
+import { renderRankings } from "./app/help-panel-rankings";
+import { renderRules } from "./app/help-panel-rules";
 import { createLobbyPollingController } from "./app/lobby-polling";
 import { bindGameActionButtons } from "./app/game-action-bindings";
 import { bindPracticeEntry } from "./app/practice-entry";
@@ -155,6 +158,11 @@ const backToAuthButton = dom.backToAuthButton!;
 const rinconOverlay = dom.rinconOverlay!;
 const rinconContent = dom.rinconContent!;
 const miRinconButton = dom.miRinconButton;
+const helpPanelOverlay = dom.helpPanelOverlay!;
+const helpPanelContent = dom.helpPanelContent!;
+const helpPanelClose = dom.helpPanelClose;
+const helpButtonLobby = dom.helpButtonLobby;
+const helpButtonTable = dom.helpButtonTable;
 const joinRoomIdInput = dom.joinRoomIdInput!;
 const joinByIdButton = dom.joinByIdButton!;
 const tournamentBackToLobbyButton = dom.tournamentBackToLobbyButton!;
@@ -1086,6 +1094,33 @@ if (miRinconButton) {
       },
     });
   });
+}
+
+// Help panel — wired to BOTH ? buttons (lobby + table) and the close button.
+// Phase 1: opens as a plain centered overlay in both contexts (adaptive split is Phase 4).
+// Phase 2: rankings section rendered into helpPanelContent on init (idempotent).
+// Phase 3: rules section composed FIRST (stacked above rankings) into helpPanelContent.
+// Pure DOM: no engine/state/Pixi import or call added here.
+renderRules(helpPanelContent);
+renderRankings(helpPanelContent);
+
+const helpDeps = {
+  overlay: helpPanelOverlay,
+  content: helpPanelContent,
+  closeButton: helpPanelClose ?? undefined,
+  onClose: () => {},
+};
+
+if (helpButtonLobby) {
+  helpButtonLobby.addEventListener("click", () => openHelpPanel(helpDeps));
+}
+
+if (helpButtonTable) {
+  helpButtonTable.addEventListener("click", () => openHelpPanel(helpDeps));
+}
+
+if (helpPanelClose) {
+  helpPanelClose.addEventListener("click", () => closeHelpPanel(helpDeps));
 }
 
 tournamentBackToLobbyButton.addEventListener("click", () => {
