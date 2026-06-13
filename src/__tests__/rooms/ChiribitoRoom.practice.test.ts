@@ -477,6 +477,47 @@ describe("ChiribitoRoom playAgain handler", () => {
     // (the test is: startNewHand must NOT be called)
     expect(startNewHandSpy).not.toHaveBeenCalled();
   });
+
+  it("clears a stale active turnTimeout before re-dealing (clearTimeout branch)", () => {
+    const messageHandlers: Map<string, (client: any, data?: any) => void> = new Map();
+    const fakeRoom = makeOnCreateRoom();
+    fakeRoom.onMessage = jest.fn((type: string, cb: (client: any, data?: any) => void) => {
+      messageHandlers.set(type, cb);
+    });
+    fakeRoom.state = {
+      users: new Map([
+        ["human-1", { chips: 0, currentBet: 50, isFolded: false }],
+        ["bot-1", { chips: 2000, currentBet: 0, isFolded: false, isBot: true }],
+      ]),
+      roundStarted: false,
+    };
+    ChiribitoRoom.prototype.onCreate.call(fakeRoom, { mode: "practice", botCount: 1 });
+
+    // A stale turn timer lingers from the finished hand → the handler must clear it.
+    const staleTimer = setTimeout(() => {}, 100000);
+    fakeRoom.turnTimeout = staleTimer;
+
+    messageHandlers.get("playAgain")!({ sessionId: "human-1" });
+
+    expect(fakeRoom.turnTimeout).toBeNull();
+    expect(startNewHandSpy).toHaveBeenCalledTimes(1);
+    clearTimeout(staleTimer);
+  });
+
+  it("returns early (no startNewHand, no throw) when state.users is missing — WR-04 guard", () => {
+    const messageHandlers: Map<string, (client: any, data?: any) => void> = new Map();
+    const fakeRoom = makeOnCreateRoom();
+    fakeRoom.onMessage = jest.fn((type: string, cb: (client: any, data?: any) => void) => {
+      messageHandlers.set(type, cb);
+    });
+    // Practice, not mid-hand, but a degenerate state with no users map.
+    fakeRoom.state = { roundStarted: false };
+    ChiribitoRoom.prototype.onCreate.call(fakeRoom, { mode: "practice", botCount: 1 });
+
+    const handler = messageHandlers.get("playAgain")!;
+    expect(() => handler({ sessionId: "human-1" })).not.toThrow();
+    expect(startNewHandSpy).not.toHaveBeenCalled();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────

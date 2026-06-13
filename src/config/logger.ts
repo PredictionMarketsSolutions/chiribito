@@ -4,6 +4,7 @@ import { LogtailTransport } from '@logtail/winston';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isTest = process.env.NODE_ENV === 'test';
 
 // Custom format for development (colored and readable)
 const devFormat = winston.format.combine(
@@ -27,6 +28,12 @@ const prodFormat = winston.format.combine(
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  // Silence log output under tests (NODE_ENV=test, set by Jest). The bot
+  // integration tests play full games that emit thousands of winston lines;
+  // Jest captures and retains console output, and under --coverage that
+  // exhausted the CI heap (OOM / exit 134). Tests assert on behavior, never
+  // on log output. Override with LOG_LEVEL if a test ever needs logs.
+  silent: isTest && !process.env.LOG_LEVEL,
   format: isProduction ? prodFormat : devFormat,
   defaultMeta: { service: 'chiribito-backend' },
   transports: [
