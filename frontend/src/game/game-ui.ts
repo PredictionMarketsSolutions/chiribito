@@ -23,6 +23,7 @@ import { chipBurstCount } from "./table/chip-motion";
 import { renderPotPile } from "./table/pot-pile";
 import { potChipLayout } from "./table/chip-stack";
 import { deliverPotToWinner } from "./table/pot-delivery";
+import { resolveAvatarGlyph } from "./avatars";
 
 function usePixiTableCards(ctx: GameUiContext): boolean {
   return Boolean(ctx.tableScene?.isActive());
@@ -68,7 +69,19 @@ export function renderSeats(
     seat.classList.toggle("dealer", player.seatIndex === dealerIndex);
     seat.classList.toggle("turn", player.sessionId === currentTurn);
     seat.classList.toggle("winner", isWinner);
-    if (badgeEl) badgeEl.textContent = `Seat ${player.seatIndex + 1}`;
+    if (badgeEl) {
+      if (player.isBot) {
+        // Phase 6: prepend the castizo avatar glyph (muted — never gold, never adds winner/turn class).
+        // resolveAvatarGlyph maps "pato"->"🦆", "toro"->"🐂", and any unknown/empty key to "♟".
+        // Use textContent (NOT innerHTML) — XSS-safe per Phase 5 WR-01; glyph is from a fixed local map.
+        const glyph = resolveAvatarGlyph(player.avatar ?? "");
+        badgeEl.textContent = `${glyph} Máquina`;
+        badgeEl.classList.add("seat-badge--bot");
+      } else {
+        badgeEl.textContent = `Seat ${player.seatIndex + 1}`;
+        badgeEl.classList.remove("seat-badge--bot");
+      }
+    }
     nameEl.textContent = `${player.name}${isYou ? " (tu)" : ""}`;
 
     metaEl.innerHTML = "";

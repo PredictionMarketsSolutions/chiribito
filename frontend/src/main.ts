@@ -27,8 +27,11 @@ import {
   showTournamentResult as showTournamentResultFn,
   setTournamentResultVisible as setTournamentResultVisibleFn,
   showGameEndMessage as showGameEndMessageFn,
+  showPracticeEndScreen as showPracticeEndScreenFn,
+  setPracticeEndOverlayVisible,
   type OverlayRefs
 } from "./overlays";
+import { bindPracticeEndOverlay } from "./app/practice-end-handler";
 import {
   getWsClient as getWsClientFromConnection,
   startClientHeartbeat as startClientHeartbeatFn,
@@ -78,6 +81,7 @@ import { refreshWinnersRanking as refreshWinnersRankingFn } from "./app/winners-
 import { openRincon, setRinconOverlayVisible } from "./app/rincon/rincon-scene";
 import { createLobbyPollingController } from "./app/lobby-polling";
 import { bindGameActionButtons } from "./app/game-action-bindings";
+import { bindPracticeEntry } from "./app/practice-entry";
 import { bindForgotPasswordUi } from "./app/forgot-password-ui";
 import { openLobbyFlow } from "./app/lobby-controller";
 import { bindAuthEntryButtons } from "./app/auth-entry-bindings";
@@ -891,6 +895,7 @@ const roomSessionController = createRoomSessionController({
   setPreviousWinnersKey: (k) => { previousWinnersKey = k; },
   getLastRoomState: () => lastRoomState, setLastRoomState: (s) => { lastRoomState = s; },
   startTurnTimer: (turnId, timeoutMs, deadlineMs) => startTurnTimerFn(turnTimerState, turnId, timeoutMs, turnTimerChip, deadlineMs),
+  showPracticeEndScreen: (champion) => showPracticeEndScreenFn(champion),
   playActionSound: (a) => audio.playActionSound(a),
   playWinEffect: () => audio.playEffect("win"),
   playLoseEffect: () => audio.playEffect("lose"),
@@ -937,7 +942,7 @@ reconnectDirector = createReconnectDirector({
 
 async function joinRoom(
   forceReplace = false,
-  opts?: { mode?: JoinMode; roomId?: string; tableName?: string }
+  opts?: { mode?: JoinMode; roomId?: string; tableName?: string; practiceMode?: "practice"; practiceBotCount?: number }
 ) {
   await roomSessionController.joinRoom(forceReplace, opts);
   if (room !== null) music.setState("mesa");
@@ -1103,6 +1108,27 @@ bindGameActionButtons(
   queueAction,
   log
 );
+
+bindPracticeEntry({
+  getSelectorEl: () => document.querySelector(".practice-selector") as HTMLElement,
+  getStartBtn: () => document.querySelector("#practice-start") as HTMLButtonElement,
+  joinRoom,
+  log,
+});
+
+bindPracticeEndOverlay({
+  otraPartidaBtn: document.querySelector("#otra-partida-btn") as HTMLButtonElement,
+  salirBtn: document.querySelector("#practice-salir-btn") as HTMLButtonElement,
+  // Direct room.send — out-of-band restart, NOT queueAction (RESEARCH Q5)
+  sendPlayAgain: () => {
+    setPracticeEndOverlayVisible(false);
+    room?.send("playAgain");
+  },
+  leave: () => {
+    setPracticeEndOverlayVisible(false);
+    resetRoomUi();
+  },
+});
 
 (document.querySelector("#toggle-panel") as HTMLButtonElement).addEventListener("click", () => {
   const app = document.querySelector("#app");

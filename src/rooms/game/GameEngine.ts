@@ -5,7 +5,7 @@
  */
 
 import { Client } from "@colyseus/core";
-import type { IGameRoom } from "../../types/IGameRoom";
+import type { IGameRoom, ActionClient } from "../../types/IGameRoom";
 import { PLAYER_STATUS } from "../schema/MesaState";
 import { TURN_TIMEOUT, ALLIN_REVEAL_DELAY_MS } from "./constants";
 import { PHASES, TOTAL_COMMUNITY_CARDS } from "./glossary";
@@ -198,7 +198,7 @@ export class GameEngine {
 
   // ============ Betting Actions ============
 
-  handleBet(client: Client, amount: number): void {
+  handleBet(client: ActionClient, amount: number): void {
     const validation = this._validateBetAction(client, amount);
     if (!validation.valid) return;
 
@@ -210,7 +210,7 @@ export class GameEngine {
     this._broadcastAndEndTurn(player, betAmounts);
   }
 
-  handleCall(client: Client): void {
+  handleCall(client: ActionClient): void {
     if (client.sessionId !== this.room.state.currentTurn) return;
 
     const player = this.room.state.users.get(client.sessionId);
@@ -243,11 +243,11 @@ export class GameEngine {
     this.endTurn();
   }
 
-  handleCheck(client: Client): void {
+  handleCheck(client: ActionClient): void {
     this.playerActions.handleCheck(client, () => this.endTurn());
   }
 
-  handleAllIn(client: Client): void {
+  handleAllIn(client: ActionClient): void {
     if (client.sessionId !== this.room.state.currentTurn) return;
 
     const player = this.room.state.users.get(client.sessionId);
@@ -257,11 +257,11 @@ export class GameEngine {
     this.handleBet(client, allInAmount);
   }
 
-  handleRaise(client: Client, amount: number): void {
+  handleRaise(client: ActionClient, amount: number): void {
     this.handleBet(client, this.room.state.currentBet + amount);
   }
 
-  handleFold(client: Client): void {
+  handleFold(client: ActionClient): void {
     this.playerActions.handleFold(client, this.handContributions, () => {
       if (this.room.playersInHand.length === 1) {
         this.endRound([this.room.playersInHand[0]], "Gana por fold");
@@ -336,6 +336,7 @@ export class GameEngine {
     this.room.turnTimeout = setTimeout(() => {
       this.handleFoldForTimeout(this.room.state.currentTurn);
     }, timeoutMs);
+    this.room.onTurnStarted?.(this.room.state.currentTurn);
   }
 
   // ============ Round End ============
@@ -476,7 +477,7 @@ export class GameEngine {
 
   // ============ Betting Helpers ============
 
-  private _validateBetAction(client: Client, amount: number): { valid: boolean } {
+  private _validateBetAction(client: ActionClient, amount: number): { valid: boolean } {
     if (client.sessionId !== this.room.state.currentTurn) return { valid: false };
 
     const player = this.room.state.users.get(client.sessionId);

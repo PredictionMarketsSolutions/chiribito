@@ -9,6 +9,7 @@ import type {
   JoinOptionsWithAuth,
   AuthUser,
 } from "../../types/room-options";
+import type { ActionClient } from "../../types/IGameRoom";
 
 describe("room-options types", () => {
   it("RoomOptions allows optional tableName", () => {
@@ -34,5 +35,12 @@ describe("room-options types", () => {
     };
     expect(opts.authUser?.userId).toBe(1);
     expect(opts.replaceSessionId).toBe("old-session-123");
+  });
+});
+
+describe("ActionClient (type)", () => {
+  it("bot stub shape satisfies ActionClient structurally", () => {
+    const stub: ActionClient = { sessionId: "bot-1", send: () => {} };
+    expect(stub.sessionId).toBe("bot-1");
   });
 });
